@@ -16,7 +16,8 @@
   ],
   "security": [
     {
-      "bearerAuth": []
+      "bearerAuth": [],
+      "apiKeyAuth": []
     }
   ],
   "paths": {
@@ -209,6 +210,11 @@
     "/generate-image": {
       "post": {
         "description": "Generates an image from a text prompt",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
         "requestBody": {
           "description": "Parameters for image generation",
           "content": {
@@ -462,7 +468,7 @@
           "max_tokens": {
             "type": "integer",
             "description": "Maximum number of tokens to generate",
-            "default": 1000
+            "default": 4000
           },
           "temperature": {
             "type": "number",
@@ -579,11 +585,13 @@
         "properties": {
           "prompt": {
             "type": "string",
-            "description": "The text description of the image to generate"
+            "description": "The text description of the image to generate",
+            "example": "RAW photo, a portrait photo of a latina woman in casual clothes, natural skin, 8k uhd, high quality, film grain, Fujifilm XT3"
           },
           "model": {
             "type": "string",
-            "description": "The model to use for generation"
+            "description": "The model to use for generation",
+            "default": "recraft-v3"
           },
           "width": {
             "type": "integer",
@@ -607,7 +615,7 @@
           "num_steps": {
             "type": "integer",
             "description": "Number of denoising steps",
-            "default": 30
+            "default": 10
           },
           "resolution": {
             "type": "string",
@@ -616,8 +624,7 @@
           },
           "sampler_name": {
             "type": "string",
-            "description": "Sampling method",
-            "default": "DPM++ 2M Karras"
+            "description": "Sampling method"
           },
           "scale": {
             "type": "number",
@@ -668,6 +675,11 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
       }
     }
   }
