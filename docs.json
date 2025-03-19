@@ -40,10 +40,6 @@
       {
         "group": "Endpoint Examples",
         "pages": [
-          "api-reference/endpoint/get",
-          "api-reference/endpoint/create",
-          "api-reference/endpoint/delete",
-          "api-reference/endpoint/webhook",
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/completion",
           "api-reference/endpoint/image-generation"
