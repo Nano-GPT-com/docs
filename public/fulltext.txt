@@ -1,0 +1,498 @@
+# NanoGPT API Documentation
+
+## Introduction
+
+The NanoGPT API allows you to generate text, images and video using any AI model available. Our implementation for text generation generally matches the OpenAI standards.
+
+## Endpoints
+
+### Models (GET /v1/models)
+
+OpenAI-compatible endpoint for retrieving available models.
+
+**Authentication:** Bearer token
+
+**Example Request:**
+```
+GET https://nano-gpt.com/api/v1/models
+Authorization: Bearer YOUR_API_KEY
+```
+
+**Example Response:**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "chatgpt-4o-latest",
+      "object": "model",
+      "created": 1677649963,
+      "owned_by": "nanogpt"
+    }
+  ]
+}
+```
+
+### Models (Old) (GET /models)
+
+Legacy endpoint for retrieving available models.
+
+**Authentication:** API Key (x-api-key header)
+
+**Example Request:**
+```
+GET https://nano-gpt.com/api/models
+x-api-key: YOUR_API_KEY
+```
+
+**Example Response:**
+```json
+{
+  "models": ["chatgpt-4o-latest", "gpt-4-latest", "gpt-3.5-turbo-latest"]
+}
+```
+
+### Chat Completion (POST /v1/chat/completions)
+
+OpenAI-compatible endpoint for chat completions.
+
+**Authentication:** Bearer token
+
+**Example Request:**
+```json
+POST https://nano-gpt.com/api/v1/chat/completions
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "model": "chatgpt-4o-latest",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant."
+    },
+    {
+      "role": "user",
+      "content": "Please explain the concept of artificial intelligence."
+    }
+  ],
+  "stream": true,
+  "temperature": 0.7,
+  "max_tokens": 4000,
+  "top_p": 1,
+  "frequency_penalty": 0,
+  "presence_penalty": 0
+}
+```
+
+**Example Response:**
+```json
+{
+  "id": "chatcmpl-123",
+  "object": "chat.completion",
+  "created": 1677652288,
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Artificial intelligence (AI) is..."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 9,
+    "completion_tokens": 12,
+    "total_tokens": 21
+  }
+}
+```
+
+### Completions (POST /v1/completions)
+
+OpenAI-compatible endpoint for text completions.
+
+**Authentication:** Bearer token
+
+**Example Request:**
+```json
+POST https://nano-gpt.com/api/v1/completions
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "model": "chatgpt-4o-latest",
+  "prompt": "Write a short story about a robot learning to paint:",
+  "max_tokens": 4000,
+  "temperature": 0.7,
+  "top_p": 1,
+  "stream": false,
+  "stop": null,
+  "presence_penalty": 0,
+  "frequency_penalty": 0
+}
+```
+
+**Example Response:**
+```json
+{
+  "id": "cmpl-123",
+  "object": "text_completion",
+  "created": 1677652288,
+  "model": "chatgpt-4o-latest",
+  "choices": [
+    {
+      "text": "Once upon a time, there was a robot named Pixel...",
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 5,
+    "completion_tokens": 7,
+    "total_tokens": 12
+  }
+}
+```
+
+### Image Generation (POST /generate-image)
+
+Generate images from text prompts.
+
+**Authentication:** API Key (x-api-key header)
+
+**Example Request:**
+```json
+POST https://nano-gpt.com/api/generate-image
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "prompt": "A serene landscape with mountains and a lake at sunset, digital art style",
+  "model": "recraft-v3",
+  "width": 1024,
+  "height": 1024,
+  "negative_prompt": "blurry, bad quality, distorted, deformed",
+  "nImages": 1,
+  "num_steps": 10,
+  "resolution": "1024x1024",
+  "scale": 7.5
+}
+```
+
+**Example Response:**
+```json
+{
+  "image": "base64_encoded_image_data",
+  "cost": 0.05,
+  "inputTokens": 10,
+  "outputTokens": 0
+}
+```
+
+### Video Generation (POST /v1/video)
+
+Generate high-quality short-form videos.
+
+**Authentication:** API Key (x-api-key header)
+
+**Example Request:**
+```json
+POST https://nano-gpt.com/api/v1/video
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "prompt": "Create a whimsical animated story about a young inventor who creates a flying bicycle",
+  "framework": "emotional_story",
+  "targetLengthInWords": 70,
+  "directorNotes": "Use warm, golden lighting and make the workshop scenes feel cozy and inviting",
+  "imageConfig": {
+    "model": "recraft",
+    "style": "realistic_image/studio_portrait"
+  },
+  "voice": "pNInz6obpgDQGcFmaJgB",
+  "captionsShow": true,
+  "captionsStyle": "default",
+  "effects": {
+    "transition": "fade",
+    "floating": false
+  },
+  "quality": "medium",
+  "motion": {
+    "enabled": false,
+    "strength": 3
+  },
+  "music": "video-creation/music/dramatic_cinematic_score.mp3"
+}
+```
+
+**Example Response:**
+```json
+{
+  "runId": "run_123456",
+  "projectId": "proj_123456",
+  "cost": 0.50,
+  "paymentSource": "balance",
+  "status": "PENDING"
+}
+```
+
+### Video Status (GET /v1/video/status)
+
+Check the status of a video generation request.
+
+**Authentication:** API Key (x-api-key header)
+
+**Example Request:**
+```
+GET https://nano-gpt.com/api/v1/video/status?runId=run_123456&projectId=proj_123456
+x-api-key: YOUR_API_KEY
+```
+
+**Example Response:**
+```json
+{
+  "status": "COMPLETED",
+  "data": {
+    "isCompleted": true,
+    "isSuccess": true,
+    "output": {
+      "url": "https://storage.nano-gpt.com/videos/output_123456.mp4"
+    }
+  }
+}
+```
+
+### Talk to GPT (Legacy) (POST /talk-to-gpt)
+
+Legacy endpoint for chat interactions with the GPT model.
+
+**Authentication:** API Key (x-api-key header)
+
+**Example Request:**
+```json
+POST https://nano-gpt.com/api/talk-to-gpt
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "prompt": "",
+  "model": "chatgpt-4o-latest",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hi, I'm just testing!"
+    }
+  ]
+}
+```
+
+**Example Response:**
+Plain text response followed by metadata in <NanoGPT> tags
+
+### Check Balance (POST /check-balance)
+
+Check the account balance.
+
+**Authentication:** API Key (x-api-key header)
+
+**Example Request:**
+```
+POST https://nano-gpt.com/api/check-balance
+x-api-key: YOUR_API_KEY
+```
+
+**Example Response:**
+```json
+{
+  "usd_balance": "129.46956147",
+  "nano_balance": "26.71801147",
+  "nanoDepositAddress": "nano_1gx385nnj7rw67hsksa3pyxwnfr48zu13t35ncjmtnqb9zdebtjhh7ahks34"
+}
+```
+
+### Receive Nano (POST /receive-nano)
+
+Process pending Nano transactions for the account.
+
+**Authentication:** API Key (x-api-key header)
+
+**Example Request:**
+```
+POST https://nano-gpt.com/api/receive-nano
+x-api-key: YOUR_API_KEY
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "received_blocks": ["block_hash_1", "block_hash_2"],
+  "total_received": "2.5"
+}
+```
+
+## Integrations
+
+### Cline
+
+Cline is a powerful command-line interface for interacting with various AI models, including those available through NanoGPT.
+
+**Setup Instructions:**
+
+1. Get your API key from [nano-gpt.com/api](https://nano-gpt.com/api)
+2. In Cline settings, add a new Custom Model with these details:
+   - API Provider: OpenAI Compatible
+   - Base URL: https://nano-gpt.com/api/v1/
+   - API Key: Your key from step 1
+   - Model ID: gpt-4o
+
+Available models include o1, claude-3-5-sonnet-20241022, yi-lightning, deepseek/deepseek-chat and many more.
+
+### Cursor
+
+Cursor is an AI-powered code editor that enhances coding productivity.
+
+**Setup Instructions:**
+
+1. Get your API key from [nano-gpt.com/api](https://nano-gpt.com/api)
+2. In Cursor settings:
+   - Override OpenAI Base URL with: https://nano-gpt.com/api/v1/
+   - Set the API Key to your NanoGPT API key
+   - Click "+ Add Model" to add any of our models you want to use
+
+### SillyTavern
+
+SillyTavern is a popular web-based chat interface designed for roleplaying and character-based interactions.
+
+**Setup Instructions:**
+
+1. Launch SillyTavern and navigate to the "API Connections" tab.
+2. Configure NanoGPT:
+   - Select "OpenAI" as the API type (NanoGPT uses an OpenAI-compatible API)
+   - Enter your NanoGPT API key
+   - Set the API URL to: `https://nano-gpt.com/api`
+   - Set the Model to: `chatgpt-4o-latest` (or another model of your choice)
+
+If you choose the Chat Completions endpoint in SillyTavern, you will see NanoGPT automatically appear as an option.
+
+### OpenWebUI
+
+OpenWebUI is an open-source web interface for interacting with AI models.
+
+**Setup Instructions:**
+
+1. Get your API key from [nano-gpt.com/api](https://nano-gpt.com/api)
+2. In OpenWebUI, go to Settings and find the "Add Connection" option
+3. Enter the following details:
+   - URL: `https://nano-gpt.com/api/v1`
+   - API Key: Your key from step 1
+   - Prefix ID: (Optional) Leave empty or add a custom prefix
+   - Model IDs: Leave empty to include all available models
+
+### TypingMind
+
+TypingMind is a powerful alternative web UI for ChatGPT with advanced features.
+
+**Setup Instructions:**
+
+1. Get your API key from your [API page](https://nano-gpt.com/api)
+2. In TypingMind, go to add custom model
+3. Select "Create Manually"
+4. Enter the following details:
+   - Name: NanoGPT
+   - API Type: OpenAI Compatible API
+   - Icon URL (Optional): https://nano-gpt.com/logo.png
+   - Endpoint: `https://nano-gpt.com/api/v1/chat/completions`
+   - Model ID: chatgpt-4o-latest (or any other model)
+   - Authorization: Bearer YOUR_API_KEY
+5. Click "Test" to verify the connection, then "Add Model"
+
+## Miscellaneous Information
+
+### Client Libraries
+
+#### JavaScript - NanoGPTJS
+
+[NanoGPTJS](https://github.com/kilkelly/nanogptjs) is a Node.js library to interact with NanoGPT's API. The NanoGPT service enables pay-per-prompt interaction with chat and image generation models. You will need a prefilled NanoGPT wallet and API key to use this library effectively.
+
+**Installation:**
+```bash
+npm install nanogptjs
+```
+
+**Basic Usage:**
+```javascript
+const NanoGPT = require('nanogptjs');
+const nanogpt = new NanoGPT('your-api-key');
+
+async function chatExample() {
+  const response = await nanogpt.chat({
+    model: 'chatgpt-4o-latest',
+    messages: [
+      { role: 'user', content: 'Hello!' }
+    ]
+  });
+  console.log(response);
+}
+```
+
+#### TypeScript - NanoGPT-client
+
+[NanoGPT-client](https://github.com/aspic/nanogpt-client) is an unofficial implementation of the NanoGPT API. This library aims to provide a TypeScript client for both browser and node environments. It's built on the inferred OpenAPI spec.
+
+**Installation:**
+```bash
+npm install nanogpt-client
+```
+
+**Basic Usage:**
+```typescript
+import { NanoGPTClient } from 'nanogpt-client';
+
+const client = new NanoGPTClient({
+  apiKey: 'your-api-key'
+});
+
+async function main() {
+  const response = await client.chatCompletions.create({
+    model: 'chatgpt-4o-latest',
+    messages: [
+      { role: 'user', content: 'Hello!' }
+    ]
+  });
+  console.log(response.choices[0].message.content);
+}
+```
+
+### Rate Limits
+
+The NanoGPT API currently does not impose any rate limits on API requests. You can make as many requests as needed without worrying about hitting artificial limits.
+
+However, we recommend implementing reasonable request patterns in your applications to ensure optimal performance and fairness for all users.
+
+### Pricing
+
+Detailed pricing information can be found on our [pricing page](https://nano-gpt.com/pricing).
+
+### For Providers
+
+We work together with many providers. If you think you offer models that we don't have yet, or can offer models for a lower price, feel free to reach out to us either at support@nano-gpt.com or find us on our Discord.
+
+To speed things up, mention the following in your email:
+
+- Company name
+- How to best get in touch with you. We mostly Discord, email and Twitter in that order.
+- Why should we add you?
+  - Do you have low prices?
+  - Any models others don't have?
+  - Any volume discounts you can offer?
+  - Do you run models in a special way (decentralized backend, etc)
+- What rate limits do you have?
+- Do you support credit card payments? Crypto payments? Automaticp ayments?
+- Do you have an OpenAI compatible endpoint?
+- What is your privacy policy? Do you log prompts? If so, how long do you store them?
+- Any other information that seems relevant 
