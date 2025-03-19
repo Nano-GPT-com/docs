@@ -320,6 +320,12 @@
           "messages": {
             "type": "array",
             "description": "Array of message objects with role and content",
+            "default": [
+              {
+                "role": "user",
+                "content": "Testing, please reply!"
+              }
+            ],
             "items": {
               "type": "object",
               "required": [
@@ -352,7 +358,7 @@
           "max_tokens": {
             "type": "integer",
             "description": "Maximum number of tokens to generate",
-            "default": 1000
+            "default": 4000
           },
           "top_p": {
             "type": "number",
