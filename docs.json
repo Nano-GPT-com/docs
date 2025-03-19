@@ -41,17 +41,6 @@
         ]
       },
       {
-        "group": "Integrations",
-        "pages": [
-          "integrations/cline",
-          "integrations/cursor",
-          "integrations/sillytavern",
-          "integrations/openwebui",
-          "integrations/typingmind"
-        ]
-      },
-     
-      {
         "group": "Miscellaneous",
         "pages": [
           "api-reference/miscellaneous/rate-limits",
@@ -60,7 +49,19 @@
           "api-reference/miscellaneous/javascript",
           "api-reference/miscellaneous/typescript"
         ]
+      },
+      {
+        "group": "Integrations",
+        "pages": [
+          "integrations/cline",
+          "integrations/cursor",
+          "integrations/sillytavern",
+          "integrations/openwebui",
+          "integrations/typingmind"
+        ]
       }
+     
+     
     ],
     "global": {
       "anchors": [
