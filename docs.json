@@ -14,19 +14,16 @@
         "group": "Get Started",
         "pages": [
           "introduction",
-          "quickstart",
-          "development"
+          "quickstart"
         ]
       },
       {
-        "group": "Essentials",
+        "group": "Endpoint Examples",
         "pages": [
-          "essentials/markdown",
-          "essentials/code",
-          "essentials/images",
-          "essentials/settings",
-          "essentials/navigation",
-          "essentials/reusable-snippets"
+          "api-reference/endpoint/chat-completion",
+          "api-reference/endpoint/completion",
+          "api-reference/endpoint/image-generation",
+          "api-reference/endpoint/talk-to-gpt"
         ]
       },
       {
@@ -35,14 +32,6 @@
           "api-reference/text-generation",
           "api-reference/image-generation",
           "api-reference/video-generation"
-        ]
-      },
-      {
-        "group": "Endpoint Examples",
-        "pages": [
-          "api-reference/endpoint/chat-completion",
-          "api-reference/endpoint/completion",
-          "api-reference/endpoint/image-generation"
         ]
       }
     ],

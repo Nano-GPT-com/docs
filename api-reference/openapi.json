@@ -143,6 +143,50 @@
           }
         }
       }
+    },
+    "/talk-to-gpt": {
+      "post": {
+        "description": "Legacy endpoint for chat interactions with the GPT model",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Parameters for talking to GPT",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TalkToGptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Talk to GPT response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Text response followed by metadata in <NanoGPT> tags"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -503,6 +547,57 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "TalkToGptRequest": {
+        "type": "object",
+        "required": [
+          "prompt",
+          "model"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The text prompt to send to GPT",
+            "example": "Please explain the concept of artificial intelligence."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model to use for generation",
+            "default": "chatgpt-4o-latest"
+          },
+          "messages": {
+            "type": "array",
+            "description": "Array of previous message objects for context",
+            "default": [
+              {
+                "role": "user",
+                "content": "Hello, how are you?"
+              },
+              {
+                "role": "assistant",
+                "content": "I'm doing well, thank you! How can I assist you today?"
+              }
+            ],
+            "items": {
+              "type": "object",
+              "required": [
+                "role",
+                "content"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string", 
+                  "description": "The role of the message author",
+                  "enum": ["user", "assistant"]
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The content of the message"
+                }
+              }
+            }
           }
         }
       }
