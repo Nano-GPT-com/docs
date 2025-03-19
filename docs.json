@@ -47,6 +47,16 @@
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/for-providers"
         ]
+      },
+      {
+        "group": "Integrations",
+        "pages": [
+          "integrations/cline",
+          "integrations/cursor",
+          "integrations/sillytavern",
+          "integrations/openwebui",
+          "integrations/typingmind"
+        ]
       }
     ],
     "global": {
@@ -57,7 +67,7 @@
           "icon": "book-open-cover"
         },
         {
-          "anchor": "Community",
+          "anchor": "Discord",
           "href": "https://discord.gg/KaQt8gPG6V",
           "icon": "discord"
         },
@@ -88,8 +98,8 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/nanogpt",
-      "github": "https://github.com/nanogpt",
+      "x": "https://x.com/nanogptcom",
+      "discord": "https://discord.gg/KaQt8gPG6V",
       "linkedin": "https://linkedin.com/company/nanogpt"
     }
   }
