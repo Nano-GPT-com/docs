@@ -10,7 +10,11 @@
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://nano-gpt.com/api"
+    },
+    {
+      "url": "https://nano-gpt.com/api/v1",
+      "description": "OpenAI-compatible endpoints"
     }
   ],
   "security": [
@@ -129,7 +133,7 @@
         }
       }
     },
-    "/v1/chat/completions": {
+    "/chat/completions": {
       "post": {
         "description": "Creates a chat completion for the provided messages",
         "requestBody": {
@@ -167,7 +171,7 @@
         }
       }
     },
-    "/v1/completions": {
+    "/completions": {
       "post": {
         "description": "Creates a completion for the provided prompt",
         "requestBody": {
