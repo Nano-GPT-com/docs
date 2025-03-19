@@ -10,12 +10,8 @@
   },
   "servers": [
     {
-      "url": "https://nano-gpt.com/api/v1",
-      "description": "OpenAI-compatible endpoints"
-    },
-    {
       "url": "https://nano-gpt.com/api",
-      "description": "Legacy endpoints"
+      "description": "NanoGPT API Server"
     }
   ],
   "security": [
