@@ -1,0 +1,131 @@
+---
+title: "Image Generation"
+description: "Complete guide to image generation APIs"
+---
+
+## Overview
+
+The NanoGPT API offers access to all the state-of-the-art image models. This guide covers how to use our image generation endpoint.
+
+## Image Generation
+
+Here's a complete example using the Recraft model:
+
+```python
+import requests
+import json
+import base64
+from PIL import Image
+import io
+
+BASE_URL = "https://nano-gpt.com/api"
+API_KEY = "YOUR_API_KEY"
+
+headers = {
+    "x-api-key": API_KEY,
+    "Content-Type": "application/json"
+}
+
+def generate_image(prompt, model="recraft-v3", width=1024, height=1024):
+    """
+    Generate an image using the Recraft model.
+    """
+    data = {
+        "prompt": prompt,
+        "model": model,
+        "width": width,
+        "height": height,
+        "negative_prompt": "blurry, bad quality, distorted, deformed",
+        "nImages": 1,
+        "num_steps": 30,
+        "resolution": "1024x1024",
+        "sampler_name": "DPM++ 2M Karras",
+        "scale": 7.5
+    }
+
+    response = requests.post(
+        f"{BASE_URL}/generate-image",
+        headers=headers,
+        json=data
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Error: {response.status_code}")
+
+    result = response.json()
+    
+    # Decode and save the image
+    image_data = base64.b64decode(result['image'])
+    image = Image.open(io.BytesIO(image_data))
+    image.save("generated_image.png")
+    
+    return result
+
+# Example usage
+prompt = "A serene landscape with mountains and a lake at sunset, digital art style"
+try:
+    result = generate_image(prompt)
+    print("Image generated successfully!")
+    print("Cost:", result.get('cost', 'N/A'))
+    print("Image saved as 'generated_image.png'")
+except Exception as e:
+    print(f"Error: {str(e)}")
+```
+
+## Parameters
+
+The image generation API accepts the following parameters:
+
+- `prompt` (string): The text description of the image you want to generate
+- `model` (string): The model to use for generation
+- `width` (integer): Width of the generated image (default: 1024)
+- `height` (integer): Height of the generated image (default: 1024)
+- `negative_prompt` (string): Things to avoid in the generated image
+- `nImages` (integer): Number of images to generate (default: 1)
+- `num_steps` (integer): Number of denoising steps (default: 30)
+- `resolution` (string): Output resolution (default: "1024x1024")
+- `sampler_name` (string): Sampling method (default: "DPM++ 2M Karras")
+- `scale` (float): Guidance scale (default: 7.5)
+
+## Best Practices
+
+1. **Prompt Engineering**
+   - Be specific and detailed in your prompts
+   - Include style references when needed
+   - Use the negative prompt to avoid unwanted elements
+
+2. **Image Quality**
+   - Higher resolution settings produce better quality but take longer
+   - More steps generally mean better quality but slower generation
+   - Adjust the guidance scale based on how closely you want to follow the prompt
+
+3. **Cost Optimization**
+   - Start with lower resolution for testing
+   - Use fewer steps during development
+   - Generate one image at a time unless multiple variations are needed
+
+## Error Handling
+
+The API may return various error codes:
+
+- 400: Bad Request (invalid parameters)
+- 401: Unauthorized (invalid API key)
+- 429: Too Many Requests (rate limit exceeded)
+- 500: Internal Server Error
+
+Always implement proper error handling in your applications:
+
+```python
+try:
+    result = generate_image(prompt)
+except requests.exceptions.RequestException as e:
+    if e.response:
+        if e.response.status_code == 401:
+            print("Invalid API key. Please check your credentials.")
+        elif e.response.status_code == 429:
+            print("Rate limit exceeded. Please wait before trying again.")
+        else:
+            print(f"API Error: {e.response.status_code}")
+    else:
+        print(f"Network Error: {str(e)}")
+``` 
