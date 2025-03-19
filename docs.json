@@ -52,8 +52,8 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://nano-gpt.com/docs",
+          "anchor": "Back to NanoGPT",
+          "href": "https://nano-gpt.com",
           "icon": "book-open-cover"
         },
         {
