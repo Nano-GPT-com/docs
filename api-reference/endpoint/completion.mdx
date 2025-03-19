@@ -1,0 +1,102 @@
+---
+title: 'Completion'
+openapi: 'POST /v1/completions'
+---
+
+## Request Body
+
+```json
+{
+  "model": "chatgpt-4o-latest",
+  "prompt": "Write a short story about a robot learning to paint:",
+  "max_tokens": 1000,
+  "temperature": 0.7,
+  "top_p": 1,
+  "stream": false,
+  "stop": null,
+  "presence_penalty": 0,
+  "frequency_penalty": 0
+}
+```
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| model | string | Yes | The model to use for completion |
+| prompt | string | Yes | The text prompt to complete |
+| max_tokens | integer | No | Maximum number of tokens to generate |
+| temperature | number | No | Controls randomness (0-2, default: 0.7) |
+| top_p | number | No | Nucleus sampling parameter (0-1, default: 1) |
+| stream | boolean | No | Whether to stream the response (default: false) |
+| stop | string/array | No | Up to 4 sequences where the API will stop generating |
+| presence_penalty | number | No | Penalty for presence of tokens (-2 to 2, default: 0) |
+| frequency_penalty | number | No | Penalty for frequency of tokens (-2 to 2, default: 0) |
+
+## Example Response
+
+```json
+{
+  "id": "cmpl-123",
+  "object": "text_completion",
+  "created": 1677652288,
+  "model": "chatgpt-4o-latest",
+  "choices": [
+    {
+      "text": "Once upon a time, there was a robot named Pixel...",
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 5,
+    "completion_tokens": 7,
+    "total_tokens": 12
+  }
+}
+```
+
+## Example Usage
+
+```python
+import requests
+import json
+
+BASE_URL = "https://nano-gpt.com/api/v1"
+API_KEY = "YOUR_API_KEY"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+def get_completion(prompt, model="chatgpt-4o-latest"):
+    data = {
+        "model": model,
+        "prompt": prompt,
+        "max_tokens": 1000,
+        "temperature": 0.7,
+        "top_p": 1,
+        "stream": False
+    }
+
+    response = requests.post(
+        f"{BASE_URL}/completions",
+        headers=headers,
+        json=data
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Error: {response.status_code}")
+
+    return response.json()
+
+# Example usage
+prompt = "Write a short story about a robot learning to paint:"
+try:
+    response = get_completion(prompt)
+    print("Completion:", response['choices'][0]['text'])
+except Exception as e:
+    print(f"Error: {str(e)}")
+``` 
