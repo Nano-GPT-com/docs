@@ -25,8 +25,11 @@
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/completion",
           "api-reference/endpoint/image-generation",
+          "api-reference/endpoint/video-generation",
+          "api-reference/endpoint/video-status",
           "api-reference/endpoint/talk-to-gpt",
-          "api-reference/endpoint/check-balance"
+          "api-reference/endpoint/check-balance",
+          "api-reference/endpoint/receive-nano"
         ]
       },
       {

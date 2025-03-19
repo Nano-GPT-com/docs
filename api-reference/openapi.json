@@ -283,6 +283,151 @@
           }
         }
       }
+    },
+    "/receive-nano": {
+      "post": {
+        "description": "Process pending Nano transactions for the account",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nano receive operation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiveNanoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/video": {
+      "post": {
+        "description": "Generate high-quality short-form videos",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Parameters for video generation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Video generation request submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoGenerationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/video/status": {
+      "get": {
+        "description": "Check the status of a video generation request",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "query",
+            "description": "Run ID from the generation request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "description": "Project ID from the generation request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cost",
+            "in": "query",
+            "description": "Cost of the video generation",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paymentSource",
+            "in": "query",
+            "description": "Payment source used",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video generation status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -762,6 +907,213 @@
             "type": "string",
             "description": "Nano deposit address for the account",
             "example": "nano_1gx385nnj7rw67hsksa3pyxwnfr48zu13t35ncjmtnqb9zdebtjhh7ahks34"
+          }
+        }
+      },
+      "ReceiveNanoResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation was successful"
+          },
+          "received_blocks": {
+            "type": "array",
+            "description": "Array of received block hashes",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total_received": {
+            "type": "string",
+            "description": "Total amount of Nano received"
+          }
+        }
+      },
+      "VideoGenerationRequest": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The prompt for video generation (mutually exclusive with script)",
+            "example": "Create a whimsical animated story about a young inventor who creates a flying bicycle"
+          },
+          "script": {
+            "type": "string",
+            "description": "A fully-written script to skip AI script generation (takes precedence over prompt)",
+            "example": "A young inventor's workshop filled with whimsical contraptions and floating gears."
+          },
+          "framework": {
+            "type": "string",
+            "description": "The story framework to use",
+            "default": "default",
+            "enum": ["default", "emotional_story", "product_showcase", "tutorial"]
+          },
+          "targetLengthInWords": {
+            "type": "integer",
+            "description": "Target length in words",
+            "default": 70,
+            "example": 70
+          },
+          "directorNotes": {
+            "type": "string",
+            "description": "Specific instructions for the image generation engine",
+            "example": "Use warm, golden lighting and make the workshop scenes feel cozy and inviting"
+          },
+          "imageConfig": {
+            "type": "object",
+            "description": "Configuration for image generation",
+            "properties": {
+              "model": {
+                "type": "string",
+                "description": "The image model to use",
+                "enum": ["recraft", "flux_lora"],
+                "default": "recraft"
+              },
+              "style": {
+                "type": "string",
+                "description": "Style for Recraft model (when model is 'recraft')",
+                "example": "realistic_image/studio_portrait"
+              },
+              "loraConfig": {
+                "type": "object",
+                "description": "Configuration for Flux LoRA model (when model is 'flux_lora')",
+                "properties": {
+                  "loraSlug": {
+                    "type": "string",
+                    "description": "The LoRA style to use",
+                    "example": "ghibsky-comic-book"
+                  }
+                }
+              }
+            }
+          },
+          "voice": {
+            "type": "string",
+            "description": "Voice ID to use for narration",
+            "example": "pNInz6obpgDQGcFmaJgB"
+          },
+          "captionsShow": {
+            "type": "boolean",
+            "description": "Whether to show captions",
+            "default": true
+          },
+          "captionsStyle": {
+            "type": "string",
+            "description": "Style for captions",
+            "default": "default",
+            "enum": ["default", "minimal", "neon", "cinematic", "fancy", "tiktok", "highlight", "gradient", "instagram", "vida", "manuscripts"]
+          },
+          "effects": {
+            "type": "object",
+            "description": "Video effects configuration",
+            "properties": {
+              "transition": {
+                "type": "string",
+                "description": "Transition type",
+                "default": "fade"
+              },
+              "floating": {
+                "type": "boolean",
+                "description": "Whether to enable floating effect",
+                "default": false
+              }
+            }
+          },
+          "quality": {
+            "type": "string",
+            "description": "Video quality",
+            "default": "medium",
+            "enum": ["low", "medium", "high"]
+          },
+          "motion": {
+            "type": "object",
+            "description": "Motion configuration",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether to enable motion",
+                "default": false
+              },
+              "strength": {
+                "type": "integer",
+                "description": "Motion strength",
+                "default": 3,
+                "minimum": 1,
+                "maximum": 10
+              }
+            }
+          },
+          "music": {
+            "type": "string",
+            "description": "Music track to use",
+            "example": "video-creation/music/dramatic_cinematic_score.mp3"
+          }
+        },
+        "oneOf": [
+          {
+            "required": ["prompt"]
+          },
+          {
+            "required": ["script"]
+          }
+        ]
+      },
+      "VideoGenerationResponse": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Unique identifier for the generation run"
+          },
+          "projectId": {
+            "type": "string",
+            "description": "Unique identifier for the project"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost of the video generation"
+          },
+          "paymentSource": {
+            "type": "string",
+            "description": "Payment source used"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the generation",
+            "enum": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"]
+          }
+        }
+      },
+      "VideoStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Current status of the generation",
+            "enum": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "isCompleted": {
+                "type": "boolean",
+                "description": "Whether the generation is completed"
+              },
+              "isSuccess": {
+                "type": "boolean",
+                "description": "Whether the generation was successful"
+              },
+              "output": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "URL to the generated video"
+                  }
+                }
+              }
+            }
           }
         }
       }
