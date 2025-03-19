@@ -57,7 +57,7 @@
           "api-reference/miscellaneous/rate-limits",
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/for-providers",
-            "api-reference/miscellaneous/javascript",
+          "api-reference/miscellaneous/javascript",
           "api-reference/miscellaneous/typescript"
         ]
       }
@@ -78,11 +78,6 @@
           "anchor": "Blog",
           "href": "https://nano-gpt.com/blog",
           "icon": "newspaper"
-        },
-        {
-          "anchor": "Full Documentation (TXT)",
-          "href": "/fulltext.txt",
-          "icon": "document-text"
         }
       ]
     }
@@ -106,8 +101,8 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/nanogpt",
-      "github": "https://github.com/nanogpt",
+      "x": "https://x.com/nanogptcom",
+      "discord": "https://discord.gg/KaQt8gPG6V",
       "linkedin": "https://linkedin.com/company/nanogpt"
     }
   }
