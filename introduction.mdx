@@ -9,7 +9,169 @@ The NanoGPT API allows you to generate text, images and video using any AI model
 
 ## Text Completions
 
-### OpenAI Compatible Chat Completions
+### OpenAI Compatible Endpoints
+
+We offer OpenAI-compatible endpoints for text generation. We support both chat completions and text completions endpoints:
+
+#### Chat Completions (v1/chat/completions)
+
+This endpoint mimics OpenAI's chat completions API:
+
+```python
+import requests
+import json
+
+BASE_URL = "https://nano-gpt.com/api/v1"
+API_KEY = "YOUR_API_KEY"  # Replace with your API key
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "text/event-stream"  # Required for SSE streaming
+}
+
+def stream_chat_completion(messages, model="chatgpt-4o-latest"):
+    """
+    Send a streaming chat completion request using the OpenAI-compatible endpoint.
+    """
+    data = {
+        "model": model,
+        "messages": messages,
+        "stream": True  # Enable streaming
+    }
+
+    response = requests.post(
+        f"{BASE_URL}/chat/completions",
+        headers=headers,
+        json=data,
+        stream=True
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Error: {response.status_code}")
+
+    for line in response.iter_lines():
+        if line:
+            line = line.decode('utf-8')
+            if line.startswith('data: '):
+                line = line[6:]
+            if line == '[DONE]':
+                break
+            try:
+                chunk = json.loads(line)
+                if chunk['choices'][0]['delta'].get('content'):
+                    yield chunk['choices'][0]['delta']['content']
+            except json.JSONDecodeError:
+                continue
+
+# Example usage
+messages = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Please explain the concept of artificial intelligence."}
+]
+
+try:
+    print("Assistant's Response:")
+    for content_chunk in stream_chat_completion(messages):
+        print(content_chunk, end='', flush=True)
+    print("")
+except Exception as e:
+    print(f"Error: {str(e)}")
+```
+
+#### Text Completions (v1/completions)
+
+This endpoint mimics OpenAI's text completions API:
+
+```python
+import requests
+import json
+
+BASE_URL = "https://nano-gpt.com/api/v1"
+API_KEY = "YOUR_API_KEY"  # Replace with your API key
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+def get_completion(prompt, model="chatgpt-4o-latest"):
+    """
+    Send a text completion request using the OpenAI-compatible endpoint.
+    """
+    data = {
+        "model": model,
+        "prompt": prompt,
+        "max_tokens": 1000,  # Optional: maximum number of tokens to generate
+        "temperature": 0.7,  # Optional: controls randomness (0-2)
+        "top_p": 1,         # Optional: nucleus sampling parameter
+        "stream": False     # Set to True for streaming responses
+    }
+
+    response = requests.post(
+        f"{BASE_URL}/completions",
+        headers=headers,
+        json=data
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Error: {response.status_code}")
+
+    return response.json()
+
+# Example usage
+prompt = "Write a short story about a robot learning to paint:"
+try:
+    response = get_completion(prompt)
+    print("Completion:", response['choices'][0]['text'])
+except Exception as e:
+    print(f"Error: {str(e)}")
+```
+
+### Legacy Text Completions
+
+Our older, non-OpenAI compatible endpoint works well for non-streaming implementations. 
+
+```python
+import requests
+import json
+
+BASE_URL = "https://nano-gpt.com/api"
+API_KEY = "YOUR_API_KEY"
+
+headers = {
+    "x-api-key": API_KEY,
+    "Content-Type": "application/json"
+}
+
+def talk_to_gpt(prompt, model="chatgpt-4o-latest", messages=[]):
+    data = {
+        "prompt": prompt,
+        "model": model,
+        "messages": messages
+    }
+    response = requests.post(f"{BASE_URL}/talk-to-gpt", headers=headers, json=data)
+    return response.text if response.status_code == 200 else None
+
+# Example usage
+messages = [
+    {"role": "user", "content": "Hello, how are you?"},
+    {"role": "assistant", "content": "I'm doing well, thank you! How can I assist you today?"}
+]
+prompt = "Please explain the concept of artificial intelligence."
+response = talk_to_gpt(prompt, messages=messages)
+if response:
+    # Split the response to separate the text and NanoGPT info
+    parts = response.split('<NanoGPT>')
+    text_response = parts[0].strip()
+    nano_info = json.loads(parts[1].split('</NanoGPT>')[0])
+
+    print("NanoGPT Response:", text_response)
+    print("Cost:", nano_info['cost'])
+    print("Input Tokens:", nano_info['inputTokens'])
+    print("Output Tokens:", nano_info['outputTokens'])
+else:
+    print("Failed to get response from GPT")
 
 ## Image generation
 
