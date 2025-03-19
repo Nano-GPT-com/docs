@@ -10,11 +10,12 @@
   },
   "servers": [
     {
-      "url": "https://nano-gpt.com/api"
-    },
-    {
       "url": "https://nano-gpt.com/api/v1",
       "description": "OpenAI-compatible endpoints"
+    },
+    {
+      "url": "https://nano-gpt.com/api",
+      "description": "Legacy endpoints"
     }
   ],
   "security": [
@@ -133,7 +134,7 @@
         }
       }
     },
-    "/chat/completions": {
+    "/v1/chat/completions": {
       "post": {
         "description": "Creates a chat completion for the provided messages",
         "requestBody": {
@@ -171,7 +172,7 @@
         }
       }
     },
-    "/completions": {
+    "/v1/completions": {
       "post": {
         "description": "Creates a completion for the provided prompt",
         "requestBody": {
@@ -317,7 +318,8 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion"
+            "description": "The model to use for completion",
+            "default": "chatgpt-4o-latest"
           },
           "messages": {
             "type": "array",
@@ -448,7 +450,8 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion"
+            "description": "The model to use for completion",
+            "default": "chatgpt-4o-latest"
           },
           "prompt": {
             "type": "string",
