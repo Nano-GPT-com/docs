@@ -18,35 +18,3 @@ A quick guide to setting up Cursor with NanoGPT's API.
 That's it! You can now use any of our models in Cursor. Available models include o1, claude-3-5-sonnet-20241022, yi-lightning, deepseek/deepseek-chat, and many more.
 
 Want to explore available models? Visit our [pricing page](https://nano-gpt.com/pricing).
-
-## Usage Tips
-
-1. **Smart Code Completion**: Press Tab when Cursor suggests code completions
-2. **Chat Interface**: Use Ctrl+L (or Cmd+L on Mac) to open the AI chat
-3. **Code Explanation**: Select code and press Ctrl+Shift+E to explain it
-4. **Generate Tests**: Select a function and use the command palette to generate tests
-
-## Custom Commands
-
-Cursor allows you to create custom commands for specific coding tasks. For example:
-
-1. Open Command Palette (Ctrl+Shift+P or Cmd+Shift+P)
-2. Type "Edit Custom Commands"
-3. Add a new command like:
-
-```json
-{
-  "name": "Document Function",
-  "description": "Create documentation for the selected function",
-  "prompt": "Write comprehensive documentation for this function following the project's style. Include parameters, return values, and examples:\n\n{{selection}}"
-}
-```
-
-## Recommended Workflow
-
-1. Start by describing what you want to build to Cursor
-2. Let Cursor generate the initial code structure
-3. Iteratively refine the code with more specific prompts
-4. Ask for optimizations or improvements to your code
-
-For more details, visit the [Cursor documentation](https://docs.cursor.sh/). 

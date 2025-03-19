@@ -5,68 +5,10 @@ description: 'Using NanoGPT with SillyTavern for character-based chat'
 
 # SillyTavern Integration
 
-[SillyTavern](https://github.com/SillyTavern/SillyTavern) is a popular web-based chat interface designed for roleplaying and character-based interactions with AI language models. You can use NanoGPT's powerful models with SillyTavern for enhanced character interactions.
-
-## Setup
-
-1. Install SillyTavern by following the instructions on their [GitHub repository](https://github.com/SillyTavern/SillyTavern).
-
-2. Launch SillyTavern and navigate to the "API Connections" tab.
-
-3. Configure NanoGPT:
-   - Select "OpenAI" as the API type (NanoGPT uses an OpenAI-compatible API)
-   - Enter your NanoGPT API key
-   - Set the API URL to: `https://nano-gpt.com/api`
-   - Set the Model to: `chatgpt-4o-latest` (or another model of your choice)
+Configure NanoGPT:
+- Select "OpenAI" as the API type (NanoGPT uses an OpenAI-compatible API)
+- Enter your NanoGPT API key
+- Set the API URL to: `https://nano-gpt.com/api`
+- Set the Model to: `chatgpt-4o-latest` (or another model of your choice)
 
 **Important Note**: If you choose the Chat Completions endpoint in SillyTavern, you will see NanoGPT automatically appear as an option.
-
-## Advanced Configuration
-
-### Context Settings
-
-For optimal character interaction, configure your context settings:
-- Navigate to "Advanced Context Settings"
-- Recommended settings:
-  - Context Size: 4000 tokens
-  - Memory: Enabled
-  - Chat History Length: 20 messages
-  - Summary Method: "Chat History"
-
-### Custom Formatting
-
-SillyTavern allows you to customize the prompt format sent to the API:
-
-1. Go to "Advanced Formatting Settings"
-2. You can modify:
-   - System Prompt: Define the overall behavior
-   - User Message Format: How your messages are formatted
-   - Assistant Message Format: How character responses are formatted
-
-## Character Creation
-
-Create engaging characters to interact with:
-
-1. Click the "+" button in the character selection panel
-2. Fill in:
-   - Name and visual appearance
-   - Personality
-   - Example dialogue
-   - Scenario and background
-
-## Tips for Better Interactions
-
-1. **Provide detailed character descriptions** for more consistent roleplaying
-2. **Use the memory feature** to maintain long-term story elements
-3. **Adjust temperature settings** (0.7-0.9 recommended for creative roleplay)
-4. **Utilize world info cards** for consistent world-building elements
-
-## Troubleshooting
-
-If you encounter issues:
-- Verify your API key is correct
-- Check that the API URL is properly configured
-- Ensure you have sufficient balance in your NanoGPT account
-- Try reducing context length if responses are slow
-
-For more information, visit the [SillyTavern Wiki](https://docs.sillytavern.app/). 
