@@ -50,13 +50,14 @@
           "integrations/typingmind"
         ]
       },
+     
       {
         "group": "Miscellaneous",
         "pages": [
           "api-reference/miscellaneous/rate-limits",
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/for-providers",
-          "api-reference/miscellaneous/javascript",
+            "api-reference/miscellaneous/javascript",
           "api-reference/miscellaneous/typescript"
         ]
       }
