@@ -41,7 +41,8 @@
         "group": "Miscellaneous",
         "pages": [
           "api-reference/miscellaneous/rate-limits",
-          "api-reference/miscellaneous/pricing"
+          "api-reference/miscellaneous/pricing",
+          "api-reference/miscellaneous/for-providers"
         ]
       }
     ],
@@ -84,8 +85,8 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/nanogpt",
-      "github": "https://github.com/nanogpt",
+      "x": "https://x.com/nanogptcom",
+      "discord": "https://discord.gg/KaQt8gPG6V",
       "linkedin": "https://linkedin.com/company/nanogpt"
     }
   }
