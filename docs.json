@@ -82,14 +82,14 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.nano-gpt.com"
+      "label": "Back to NanoGPT",
+      "href": "https://nano-gpt.com"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/nanogptcom",
-      "discord": "https://discord.gg/KaQt8gPG6V",
+      "x": "https://x.com/nanogpt",
+      "github": "https://github.com/nanogpt",
       "linkedin": "https://linkedin.com/company/nanogpt"
     }
   }
