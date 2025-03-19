@@ -20,10 +20,13 @@
       {
         "group": "Endpoint Examples",
         "pages": [
+          "api-reference/endpoint/models",
+          "api-reference/endpoint/models-old",
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/completion",
           "api-reference/endpoint/image-generation",
-          "api-reference/endpoint/talk-to-gpt"
+          "api-reference/endpoint/talk-to-gpt",
+          "api-reference/endpoint/check-balance"
         ]
       },
       {
@@ -32,6 +35,13 @@
           "api-reference/text-generation",
           "api-reference/image-generation",
           "api-reference/video-generation"
+        ]
+      },
+      {
+        "group": "Miscellaneous",
+        "pages": [
+          "api-reference/miscellaneous/rate-limits",
+          "api-reference/miscellaneous/pricing"
         ]
       }
     ],

@@ -187,6 +187,102 @@
           }
         }
       }
+    },
+    "/v1/models": {
+      "get": {
+        "description": "List available models",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models": {
+      "get": {
+        "description": "Legacy endpoint to list available models",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available models (legacy format)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsLegacyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-balance": {
+      "post": {
+        "description": "Check the account balance",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account balance information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -553,13 +649,13 @@
       "TalkToGptRequest": {
         "type": "object",
         "required": [
-          "prompt",
           "model"
         ],
         "properties": {
           "prompt": {
             "type": "string",
-            "description": "The text prompt to send to GPT",
+            "description": "The text prompt to send to GPT (optional)",
+            "default": "",
             "example": "Please explain the concept of artificial intelligence."
           },
           "model": {
@@ -569,15 +665,11 @@
           },
           "messages": {
             "type": "array",
-            "description": "Array of previous message objects for context",
+            "description": "Array of previous message objects for context (optional)",
             "default": [
               {
                 "role": "user",
-                "content": "Hello, how are you?"
-              },
-              {
-                "role": "assistant",
-                "content": "I'm doing well, thank you! How can I assist you today?"
+                "content": "Hi, I'm just testing!"
               }
             ],
             "items": {
@@ -598,6 +690,78 @@
                 }
               }
             }
+          }
+        }
+      },
+      "ModelsResponse": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": "Type of object, always 'list' for the models response",
+            "default": "list"
+          },
+          "data": {
+            "type": "array",
+            "description": "List of available models",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the model",
+                  "example": "chatgpt-4o-latest"
+                },
+                "object": {
+                  "type": "string",
+                  "description": "Type of object, always 'model'",
+                  "default": "model"
+                },
+                "created": {
+                  "type": "integer",
+                  "description": "Unix timestamp when the model was created"
+                },
+                "owned_by": {
+                  "type": "string",
+                  "description": "Organization that owns the model",
+                  "example": "nanogpt"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ModelsLegacyResponse": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "description": "List of available model names",
+            "items": {
+              "type": "string",
+              "description": "Model identifier",
+              "example": "chatgpt-4o-latest"
+            }
+          }
+        }
+      },
+      "BalanceResponse": {
+        "type": "object",
+        "properties": {
+          "usd_balance": {
+            "type": "string",
+            "description": "Account balance in USD",
+            "example": "129.46956147"
+          },
+          "nano_balance": {
+            "type": "string",
+            "description": "Account balance in Nano",
+            "example": "26.71801147"
+          },
+          "nanoDepositAddress": {
+            "type": "string",
+            "description": "Nano deposit address for the account",
+            "example": "nano_1gx385nnj7rw67hsksa3pyxwnfr48zu13t35ncjmtnqb9zdebtjhh7ahks34"
           }
         }
       }
