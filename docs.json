@@ -46,9 +46,9 @@
           "api-reference/miscellaneous/rate-limits",
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/for-providers",
+          "api-reference/miscellaneous/auto-recharge",
           "api-reference/miscellaneous/javascript",
-          "api-reference/miscellaneous/typescript",
-          "api-reference/miscellaneous/auto-recharge"
+          "api-reference/miscellaneous/typescript"
         ]
       },
       {
