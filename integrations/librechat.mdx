@@ -1,0 +1,38 @@
+---
+title: 'Setting up LibreChat with NanoGPT's API'
+description: 'Learn how to configure LibreChat to work with NanoGPT's API through a simple YAML configuration.'
+image: /Librechat.png
+keywords: LibreChat, NanoGPT API, YAML configuration, API integration, LLMs, chatbots
+date: 2025-03-28
+---
+
+## Quick Setup Guide
+
+1. Get your API key from [nano-gpt.com/api](https://nano-gpt.com/api)
+2. Locate your LibreChat installation's `librechat.example.yml` file
+3. Create a copy named `librechat.yml`
+4. Add the following configuration to your `librechat.yml`:
+
+```yaml
+# NanoGPT Example
+- name: 'NanoGPT'
+  apiKey: '${NANO_GPT_API_KEY}'
+  baseURL: 'https://nano-gpt.com/api/v1/'
+  models:
+      default: [
+        "chatgpt-4o-latest",
+        "gpt-4o-mini",
+        ]
+      fetch: true
+  titleConvo: true
+  titleModel: 'gpt-4o-mini'
+  modelDisplayLabel: 'NanoGPT'
+  iconUrl: https://nano-gpt.com/logo.png
+```
+
+5. Set your API key in your environment variables:
+   ```bash
+   export NANO_GPT_API_KEY='your-api-key-here'
+   ```
+
+That's it! Restart LibreChat, and you'll have access to all NanoGPT models through the interface.
