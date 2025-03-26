@@ -59,7 +59,8 @@
           "integrations/cursor",
           "integrations/sillytavern",
           "integrations/openwebui",
-          "integrations/typingmind"
+          "integrations/typingmind",
+          "integrations/librechat"
         ]
       }
      
