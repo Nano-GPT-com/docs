@@ -7,7 +7,7 @@
     "light": "#07C983",
     "dark": "#15803D"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.ico",
   "navigation": {
     "groups": [
       {
@@ -46,6 +46,8 @@
           "api-reference/miscellaneous/rate-limits",
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/for-providers",
+          "api-reference/miscellaneous/auto-recharge",
+          "api-reference/miscellaneous/chrome-extension",
           "api-reference/miscellaneous/javascript",
           "api-reference/miscellaneous/typescript"
         ]
@@ -57,7 +59,8 @@
           "integrations/cursor",
           "integrations/sillytavern",
           "integrations/openwebui",
-          "integrations/typingmind"
+          "integrations/typingmind",
+          "integrations/librechat"
         ]
       }
      
