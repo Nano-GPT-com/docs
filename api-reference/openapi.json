@@ -284,6 +284,52 @@
         }
       }
     },
+    "/check-midjourney-status": {
+      "post": {
+        "description": "Check the status of an asynchronous Midjourney image generation task",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Task ID to check status for",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckMidjourneyStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Midjourney task status response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckMidjourneyStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (e.g., missing task_id)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (invalid API key)"
+          }
+        }
+      }
+    },
     "/receive-nano": {
       "post": {
         "description": "Process pending Nano transactions for the account",
@@ -1114,6 +1160,53 @@
                 }
               }
             }
+          }
+        }
+      },
+      "CheckMidjourneyStatusRequest": {
+        "type": "object",
+        "required": ["task_id"],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier for the Midjourney generation task.",
+            "example": "1744449927914205"
+          }
+        }
+      },
+      "CheckMidjourneyStatusResponse": {
+        "type": "object",
+        "required": ["status", "task_id"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The current status of the Midjourney task.",
+            "enum": ["SUCCESS", "FAILED", "PENDING", "RUNNING", "IN_PROGRESS", "submitted", "NOT_START", "unknown"],
+            "example": "SUCCESS"
+          },
+          "task_id": {
+            "type": "string",
+            "description": "The unique identifier for the Midjourney generation task.",
+            "example": "1744449927914205"
+          },
+          "progress": {
+            "type": "string",
+            "description": "Optional progress indicator (e.g., \"0%\")",
+            "example": "50%",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL of the generated image (present on SUCCESS).",
+            "example": "https://image-url.com/generated_image.png",
+            "nullable": true
+          },
+          "failReason": {
+            "type": "string",
+            "description": "The reason for failure (present on FAILED).",
+            "example": "Content moderation filter triggered.",
+            "nullable": true
           }
         }
       }
