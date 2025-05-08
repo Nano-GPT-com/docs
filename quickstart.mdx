@@ -83,6 +83,22 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
   </Accordion>
 
   <Accordion icon="image" title="Image Generation">
+    #### OpenAI-Compatible Endpoint (v1/images/generations)
+
+    You can also generate images using our OpenAI-compatible endpoint:
+
+    ```bash
+    curl https://nano-gpt.com/api/v1/images/generations \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "hidream",
+        "prompt": "A serene landscape at sunset",
+        "n": 1,
+        "size": "1024x1024"
+      }'
+    ```
+
     Here's an example using our image generation endpoint with the Recraft model:
 
     ```python

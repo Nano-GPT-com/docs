@@ -25,6 +25,7 @@
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/completion",
           "api-reference/endpoint/image-generation",
+          "api-reference/endpoint/image-generation-openai",
           "api-reference/endpoint/check-midjourney-status",
           "api-reference/endpoint/video-generation",
           "api-reference/endpoint/video-status",

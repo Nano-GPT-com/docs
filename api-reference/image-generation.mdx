@@ -7,9 +7,25 @@ description: "Complete guide to image generation APIs"
 
 The NanoGPT API offers access to all the state-of-the-art image models. This guide covers how to use our image generation endpoint.
 
+## OpenAI-Compatible Endpoint (v1/images/generations)
+
+This endpoint follows the OpenAI specification for image generation and returns a list of base64-encoded images.
+
+```bash
+curl https://nano-gpt.com/api/v1/images/generations \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "hidream",
+    "prompt": "A sunset over a mountain range",
+    "n": 1,
+    "size": "1024x1024"
+  }'
+```
+
 ## Image Generation
 
-Here's a complete example using the Recraft model:
+Here's a complete example using the Recraft model and our older API standard:
 
 ```python
 import requests
