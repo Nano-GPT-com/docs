@@ -474,6 +474,41 @@
           }
         }
       }
+    },
+    "/v1/images/generations": {
+      "post": {
+        "description": "Creates an image generation for the provided prompt (OpenAI-compatible)",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "description": "Parameters for image generation",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OpenAIImageGenerationsRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image generation response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpenAIImageGenerationsResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1207,6 +1242,74 @@
             "description": "The reason for failure (present on FAILED).",
             "example": "Content moderation filter triggered.",
             "nullable": true
+          }
+        }
+      },
+      "OpenAIImageGenerationsRequest": {
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "The model to use for generation",
+            "default": "dall-e-3"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The text prompt to generate an image from"
+          },
+          "n": {
+            "type": "integer",
+            "description": "Number of images to generate",
+            "default": 1
+          },
+          "size": {
+            "type": "string",
+            "description": "The size of the generated images",
+            "enum": ["256x256", "512x512", "1024x1024"]
+          },
+          "response_format": {
+            "type": "string",
+            "description": "The format in which the generated images are returned",
+            "enum": ["url", "b64_json"]
+          },
+          "user": {
+            "type": "string",
+            "description": "A unique identifier representing your end-user"
+          }
+        }
+      },
+      "OpenAIImageGenerationsResponse": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "integer",
+            "description": "Unix timestamp of when the image was created"
+          },
+          "data": {
+            "type": "array",
+            "description": "List of generated images",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": { "type": "string", "description": "URL to the generated image" },
+                "b64_json": { "type": "string", "description": "Base64 encoded image data" }
+              }
+            }
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost of the generation"
+          },
+          "paymentSource": {
+            "type": "string",
+            "description": "Payment source used"
+          },
+          "remainingBalance": {
+            "type": "number",
+            "description": "Remaining balance after the generation"
           }
         }
       }
