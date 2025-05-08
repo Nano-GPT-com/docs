@@ -476,6 +476,12 @@
       }
     },
     "/v1/images/generations": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com",
+          "description": "Root server for OpenAI-compatible endpoints"
+        }
+      ],
       "post": {
         "description": "Creates an image generation for the provided prompt (OpenAI-compatible)",
         "security": [
