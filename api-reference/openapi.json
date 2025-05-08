@@ -1254,7 +1254,7 @@
           "model": {
             "type": "string",
             "description": "The model to use for generation",
-            "default": "dall-e-3"
+            "default": "hidream"
           },
           "prompt": {
             "type": "string",
