@@ -26,7 +26,8 @@
           "api-reference/endpoint/completion",
           "api-reference/endpoint/image-generation",
           "api-reference/endpoint/image-generation-openai",
-          "api-reference/endpoint/tee-verification",
+          "api-reference/endpoint/tee-attestation",
+          "api-reference/endpoint/tee-signature",
           "api-reference/endpoint/check-midjourney-status",
           "api-reference/endpoint/video-generation",
           "api-reference/endpoint/video-status",
@@ -40,7 +41,8 @@
         "pages": [
           "api-reference/text-generation",
           "api-reference/image-generation",
-          "api-reference/video-generation"
+          "api-reference/video-generation",
+          "api-reference/tee-verification"
         ]
       },
       {
