@@ -30,6 +30,8 @@ python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --mod
 ```
 
 ```python
+
+"""
 #!/usr/bin/env python3
 """
 TEE Attestation & Signature Verification Example for NanoGPT.
@@ -37,18 +39,20 @@ TEE Attestation & Signature Verification Example for NanoGPT.
 Usage:
     python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/hermes-3-llama-3.1-70b
 """
-import argparse
 import requests
 import json
+import hashlib
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+import base64
+from eth_keys import keys  # import for Ethereum ECDSA recovery
+from eth_utils import keccak  # import for Ethereum message hashing
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Verify TEE attestation & signatures for NanoGPT TEE models.")
-    parser.add_argument("--api-key", required=True, help="NanoGPT API key")
-    parser.add_argument("--base-url", default="https://nano-gpt.com", help="NanoGPT server base URL")
-    parser.add_argument("--model", required=True, help="TEE model identifier (e.g. TEE/hermes-3-llama-3.1-70b)")
-    return parser.parse_args()
-
+# Hardcoded configuration - set your values here
+API_KEY = "INSERT_API_KEY"
+BASE_URL = "https://nano-gpt.com/api"
+MODEL = "TEE/hermes-3-llama-3.1-70b"
 
 def fetch_attestation(base_url, api_key, model):
     url = f"{base_url}/v1/tee/attestation"
@@ -58,9 +62,12 @@ def fetch_attestation(base_url, api_key, model):
     print("=== Attestation Report ===")
     print(f"Status: {resp.status_code}")
     try:
-        print(json.dumps(resp.json(), indent=2))
+        data = resp.json()
+        print(json.dumps(data, indent=2))
     except ValueError:
         print(resp.text)
+        data = None
+    return data
 
 
 def chat_completion(base_url, api_key, model, stream=False):
@@ -93,11 +100,17 @@ def chat_completion(base_url, api_key, model, stream=False):
                     request_id = chunk["id"]
         return request_id
     else:
+        payload_str = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+        req_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
         resp = requests.post(url, headers=headers, json=payload)
+        resp_text = resp.text
+        resp_hash = hashlib.sha256(resp_text.encode("utf-8")).hexdigest()
         print("=== Chat Completion ===")
-        result = resp.json()
-        print(json.dumps(result, indent=2))
-        return result.get("id")
+        print("Request Payload Hash:", req_hash)
+        print(resp_text)
+        print("Response Body Hash:", resp_hash)
+        result = json.loads(resp_text)
+        return {"id": result.get("id"), "request_hash": req_hash, "response_hash": resp_hash}
 
 
 def fetch_signature(base_url, api_key, model, request_id, algo="ecdsa"):
@@ -108,21 +121,89 @@ def fetch_signature(base_url, api_key, model, request_id, algo="ecdsa"):
     print("=== Signature ===")
     print(f"Status: {resp.status_code}")
     try:
-        print(json.dumps(resp.json(), indent=2))
+        data = resp.json()
+        print(json.dumps(data, indent=2))
     except ValueError:
         print(resp.text)
+        data = None
+    return data
+
+
+def verify_signature(signing_address, message, signature_hex):
+    print("=== Verifying Signature ===")
+    try:
+        # decode raw signature hex (r||s||v)
+        sig_hex = signature_hex[2:] if signature_hex.lower().startswith("0x") else signature_hex
+        sig_bytes = bytes.fromhex(sig_hex)
+        # prepare Ethereum prefixed message hash (personal_sign)
+        message_bytes = message.encode("utf-8")
+        prefix = f"\x19Ethereum Signed Message:\n{len(message_bytes)}".encode("utf-8")
+        message_hash = keccak(prefix + message_bytes)
+        # parse r, s, v and normalize v
+        r = int.from_bytes(sig_bytes[:32], byteorder="big")
+        s = int.from_bytes(sig_bytes[32:64], byteorder="big")
+        v = sig_bytes[64]
+        # Ethereum v is 27 or 28; convert to 0 or 1
+        if v >= 27:
+            v -= 27
+        sig = keys.Signature(vrs=(v, r, s))
+        pub_key = sig.recover_public_key_from_msg_hash(message_hash)
+        recovered_address = pub_key.to_checksum_address()
+        # compare recovered address to expected
+        if recovered_address.lower() == signing_address.lower():
+            print("Signature verification succeeded.")
+        else:
+            print(f"Signature verification failed: expected address {signing_address}, got {recovered_address}")
+    except Exception as e:
+        print("Signature verification failed:", e)
 
 
 def main():
-    args = parse_args()
-    fetch_attestation(args.base_url, args.api_key, args.model)
-    request_id = chat_completion(args.base_url, args.api_key, args.model, stream=False)
-    if request_id:
-        fetch_signature(args.base_url, args.api_key, args.model, request_id)
-    stream_id = chat_completion(args.base_url, args.api_key, args.model, stream=True)
+    # will hold cryptography public key object for verification
+    pub_key_obj = None
+    attestation = fetch_attestation(BASE_URL, API_KEY, MODEL)
+    # Extract raw EC public key from certificate in the attestation report
+    public_key = None
+    if attestation and "nvidia_payload" in attestation:
+        try:
+            # parse nvidia_payload JSON string if needed
+            payload = attestation["nvidia_payload"]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            # certificate is base64-encoded PEM; decode to get actual PEM bytes
+            cert_b64 = payload["evidence_list"][0]["certificate"]
+            pem_data = base64.b64decode(cert_b64)
+            cert_obj = x509.load_pem_x509_certificate(pem_data, default_backend())
+            # get cryptography public key object
+            pub_key_obj = cert_obj.public_key()
+            # serialize for debugging if needed
+            public_key = pub_key_obj.public_bytes(
+                encoding=serialization.Encoding.X962,
+                format=serialization.PublicFormat.UncompressedPoint
+            ).hex()
+        except Exception as e:
+            print("Failed to extract public key from certificate:", e)
+            public_key = None
+    # Non-streaming chat and signature verification
+    chat_data = chat_completion(BASE_URL, API_KEY, MODEL, stream=False)
+    if chat_data and isinstance(chat_data, dict) and "id" in chat_data:
+        request_id = chat_data["id"]
+        signature_data = fetch_signature(BASE_URL, API_KEY, MODEL, request_id)
+        if signature_data and "text" in signature_data and "signature" in signature_data and "signing_address" in signature_data:
+            signing_address = signature_data["signing_address"]
+            message = signature_data["text"]
+            signature = signature_data["signature"]
+            verify_signature(signing_address, message, signature)
+    # Streaming chat and signature verification (no local hashing)
+    stream_id = chat_completion(BASE_URL, API_KEY, MODEL, stream=True)
     if stream_id:
-        fetch_signature(args.base_url, args.api_key, args.model, stream_id)
+        signature_data = fetch_signature(BASE_URL, API_KEY, MODEL, stream_id)
+        if signature_data and "text" in signature_data and "signature" in signature_data and "signing_address" in signature_data:
+            signing_address = signature_data["signing_address"]
+            message = signature_data["text"]
+            signature = signature_data["signature"]
+            verify_signature(signing_address, message, signature)
 
 
 if __name__ == "__main__":
-    main() 
+    main()
