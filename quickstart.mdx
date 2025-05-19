@@ -170,7 +170,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
 
     Here's how to fetch an attestation report:
     ```bash
-    curl "https://nano-gpt.com/v1/tee/attestation?model=TEE/hermes-3-llama-3.1-70b" \
+    curl "https://nano-gpt.com/api/v1/tee/attestation?model=TEE/hermes-3-llama-3.1-70b" \
       -H "Authorization: Bearer YOUR_API_KEY"
     ```
 
@@ -178,7 +178,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
     ```bash
     # First, make a chat request (see Text Generation accordion or TEE Verification guide)
     # Then, use the request_id from the chat response:
-    curl "https://nano-gpt.com/v1/tee/signature/YOUR_CHAT_REQUEST_ID?model=TEE/hermes-3-llama-3.1-70b&signing_algo=ecdsa" \
+    curl "https://nano-gpt.com/api/v1/tee/signature/YOUR_CHAT_REQUEST_ID?model=TEE/hermes-3-llama-3.1-70b&signing_algo=ecdsa" \
       -H "Authorization: Bearer YOUR_API_KEY"
     ```
 

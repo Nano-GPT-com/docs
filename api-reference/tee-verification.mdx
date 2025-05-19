@@ -10,14 +10,14 @@ NanoGPT supports private TEE-backed models. Use these endpoints to verify enclav
 ### Fetch Attestation Report
 
 ```bash
-curl "https://nano-gpt.com/v1/tee/attestation?model=TEE/hermes-3-llama-3.1-70b" \
+curl "https://nano-gpt.com/api/v1/tee/attestation?model=TEE/hermes-3-llama-3.1-70b" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
 ### Fetch ECDSA Signature
 
 ```bash
-curl "https://nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/hermes-3-llama-3.1-70b&signing_algo=ecdsa" \
+curl "https://nano-gpt.com/api/v1/tee/signature/{requestId}?model=TEE/hermes-3-llama-3.1-70b&signing_algo=ecdsa" \
   -H "Authorization: Bearer $API_KEY"
 ```
 

@@ -516,7 +516,7 @@
         }
       }
     },
-    "/v1/tee/attestation": {
+    "/api/v1/tee/attestation": {
       "servers": [
         { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
       ],
@@ -537,7 +537,7 @@
         }
       }
     },
-    "/v1/tee/signature/{requestId}": {
+    "/api/v1/tee/signature/{requestId}": {
       "servers": [
         { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
       ],
