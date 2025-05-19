@@ -1,0 +1,128 @@
+---
+ title: 'TEE Verification'
+ openapi: 'GET /v1/tee/attestation, GET /v1/tee/signature/{requestId}'
+---
+
+## Overview
+
+NanoGPT supports private TEE-backed models. Use these endpoints to verify enclave attestation and signatures for chat completions.
+
+### Fetch Attestation Report
+
+```bash
+curl "https://nano-gpt.com/v1/tee/attestation?model=TEE/hermes-3-llama-3.1-70b" \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+### Fetch ECDSA Signature
+
+```bash
+curl "https://nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/hermes-3-llama-3.1-70b&signing_algo=ecdsa" \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+## Python Example
+
+Save the following as `test_tee.py` and run:
+
+```bash
+python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/hermes-3-llama-3.1-70b
+```
+
+```python
+#!/usr/bin/env python3
+"""
+TEE Attestation & Signature Verification Example for NanoGPT.
+
+Usage:
+    python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/hermes-3-llama-3.1-70b
+"""
+import argparse
+import requests
+import json
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Verify TEE attestation & signatures for NanoGPT TEE models.")
+    parser.add_argument("--api-key", required=True, help="NanoGPT API key")
+    parser.add_argument("--base-url", default="https://nano-gpt.com", help="NanoGPT server base URL")
+    parser.add_argument("--model", required=True, help="TEE model identifier (e.g. TEE/hermes-3-llama-3.1-70b)")
+    return parser.parse_args()
+
+
+def fetch_attestation(base_url, api_key, model):
+    url = f"{base_url}/v1/tee/attestation"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    params = {"model": model}
+    resp = requests.get(url, headers=headers, params=params)
+    print("=== Attestation Report ===")
+    print(f"Status: {resp.status_code}")
+    try:
+        print(json.dumps(resp.json(), indent=2))
+    except ValueError:
+        print(resp.text)
+
+
+def chat_completion(base_url, api_key, model, stream=False):
+    url = f"{base_url}/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": model,
+        "stream": stream,
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user",   "content": "What is your model name?"}
+        ]
+    }
+    if stream:
+        resp = requests.post(url, headers=headers, json=payload, stream=True)
+        print("=== Streaming Chat Completion ===")
+        request_id = None
+        for line in resp.iter_lines(decode_unicode=True):
+            if line.startswith("data: "):
+                data_str = line[len("data: "):]
+                if data_str == "[DONE]":
+                    print("[DONE]")
+                    break
+                chunk = json.loads(data_str)
+                print(json.dumps(chunk, indent=2))
+                if not request_id and "id" in chunk:
+                    request_id = chunk["id"]
+        return request_id
+    else:
+        resp = requests.post(url, headers=headers, json=payload)
+        print("=== Chat Completion ===")
+        result = resp.json()
+        print(json.dumps(result, indent=2))
+        return result.get("id")
+
+
+def fetch_signature(base_url, api_key, model, request_id, algo="ecdsa"):
+    url = f"{base_url}/v1/tee/signature/{request_id}"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    params = {"model": model, "signing_algo": algo}
+    resp = requests.get(url, headers=headers, params=params)
+    print("=== Signature ===")
+    print(f"Status: {resp.status_code}")
+    try:
+        print(json.dumps(resp.json(), indent=2))
+    except ValueError:
+        print(resp.text)
+
+
+def main():
+    args = parse_args()
+    fetch_attestation(args.base_url, args.api_key, args.model)
+    request_id = chat_completion(args.base_url, args.api_key, args.model, stream=False)
+    if request_id:
+        fetch_signature(args.base_url, args.api_key, args.model, request_id)
+    stream_id = chat_completion(args.base_url, args.api_key, args.model, stream=True)
+    if stream_id:
+        fetch_signature(args.base_url, args.api_key, args.model, stream_id)
+
+
+if __name__ == "__main__":
+    main() 

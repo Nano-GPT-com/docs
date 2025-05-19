@@ -515,6 +515,50 @@
           }
         }
       }
+    },
+    "/v1/tee/attestation": {
+      "servers": [
+        { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
+      ],
+      "get": {
+        "description": "Fetch TEE attestation report for a model",
+        "security": [ { "bearerAuth": [] } ],
+        "parameters": [
+          { "name": "model", "in": "query", "description": "TEE model to attest", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "TEE attestation report",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TEEAttestationResponse" } } }
+          },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/v1/tee/signature/{requestId}": {
+      "servers": [
+        { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
+      ],
+      "get": {
+        "description": "Fetch ECDSA signature for a chat request",
+        "security": [ { "bearerAuth": [] } ],
+        "parameters": [
+          { "name": "requestId", "in": "path", "description": "Chat request ID", "required": true, "schema": { "type": "string" } },
+          { "name": "model", "in": "query", "description": "TEE model to attest", "required": true, "schema": { "type": "string" } },
+          { "name": "signing_algo", "in": "query", "description": "Signing algorithm to use", "required": false, "schema": { "type": "string" }, "example": "ecdsa" }
+        ],
+        "responses": {
+          "200": {
+            "description": "TEE signature response",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TEESignatureResponse" } } }
+          },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Server Error" }
+        }
+      }
     }
   },
   "components": {
@@ -1316,6 +1360,24 @@
           "remainingBalance": {
             "type": "number",
             "description": "Remaining balance after the generation"
+          }
+        }
+      },
+      "TEEAttestationResponse": {
+        "type": "object",
+        "properties": {
+          "attestation": {
+            "type": "string",
+            "description": "The attestation report"
+          }
+        }
+      },
+      "TEESignatureResponse": {
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "description": "The ECDSA signature"
           }
         }
       }
