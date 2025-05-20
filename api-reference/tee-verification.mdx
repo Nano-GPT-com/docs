@@ -34,9 +34,6 @@ python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --mod
 #!/usr/bin/env python3
 """
 TEE Attestation & Signature Verification Example for NanoGPT.
-
-Usage:
-    python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/hermes-3-llama-3.1-70b
 """
 import requests
 import json
@@ -45,18 +42,25 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 import base64
-from eth_keys import keys  # import for Ethereum ECDSA recovery
-from eth_utils import keccak  # import for Ethereum message hashing
+try:
+    from eth_account.messages import encode_defunct
+    from eth_account.account import Account
+except ImportError:
+    raise ImportError("Please install eth_account: pip install eth-account")
+import os
+from cryptography.x509.oid import ObjectIdentifier  # if needed
 
-# Hardcoded configuration - set your values here
+# Hardcoded configuration - set your values here or even better use env vars!
 API_KEY = "INSERT_API_KEY"
-BASE_URL = "https://nano-gpt.com/api"
+BASE_URL = "http://nano-gpt.com/api"  # Production base URL
 MODEL = "TEE/hermes-3-llama-3.1-70b"
 
 def fetch_attestation(base_url, api_key, model):
     url = f"{base_url}/v1/tee/attestation"
     headers = {"Authorization": f"Bearer {api_key}"}
-    params = {"model": model}
+    # generate challenge nonce to prevent replay attacks
+    nonce = base64.b64encode(os.urandom(16)).decode()
+    params = {"model": model, "nonce": nonce}
     resp = requests.get(url, headers=headers, params=params)
     print("=== Attestation Report ===")
     print(f"Status: {resp.status_code}")
@@ -66,6 +70,10 @@ def fetch_attestation(base_url, api_key, model):
     except ValueError:
         print(resp.text)
         data = None
+    # verify the nonce was echoed back
+    if data and data.get("nonce") != nonce:
+        raise Exception(f"Nonce mismatch! Expected {nonce}, got {data.get('nonce')}")
+    print("Nonce successfully verified.")
     return data
 
 
@@ -130,37 +138,94 @@ def fetch_signature(base_url, api_key, model, request_id, algo="ecdsa"):
 
 def verify_signature(signing_address, message, signature_hex):
     print("=== Verifying Signature ===")
+    # Use eth_account for ECDSA recovery with Ethereum prefixed message
+    signature = signature_hex if signature_hex.startswith("0x") else "0x" + signature_hex
+    msg = encode_defunct(text=message)
+    recovered = Account.recover_message(msg, signature=signature)
+    if recovered.lower() == signing_address.lower():
+        print("Signature verification succeeded.")
+    else:
+        raise Exception(f"Signature verification failed: expected address {signing_address}, got {recovered}")
+
+
+def verify_nvidia_attestation(nvidia_payload):
+    print("=== Verifying NVIDIA Attestation via NVIDIA Attestation Service ===")
+    # ensure payload is a dict
+    payload_json = json.loads(nvidia_payload) if isinstance(nvidia_payload, str) else nvidia_payload
+    url = "https://nras.attestation.nvidia.com/v3/attest/gpu"
+    headers = {"accept": "application/json", "content-type": "application/json"}
+    resp = requests.post(url, headers=headers, json=payload_json)
+    print(f"Status: {resp.status_code}")
     try:
-        # decode raw signature hex (r||s||v)
-        sig_hex = signature_hex[2:] if signature_hex.lower().startswith("0x") else signature_hex
-        sig_bytes = bytes.fromhex(sig_hex)
-        # prepare Ethereum prefixed message hash (personal_sign)
-        message_bytes = message.encode("utf-8")
-        prefix = f"\x19Ethereum Signed Message:\n{len(message_bytes)}".encode("utf-8")
-        message_hash = keccak(prefix + message_bytes)
-        # parse r, s, v and normalize v
-        r = int.from_bytes(sig_bytes[:32], byteorder="big")
-        s = int.from_bytes(sig_bytes[32:64], byteorder="big")
-        v = sig_bytes[64]
-        # Ethereum v is 27 or 28; convert to 0 or 1
-        if v >= 27:
-            v -= 27
-        sig = keys.Signature(vrs=(v, r, s))
-        pub_key = sig.recover_public_key_from_msg_hash(message_hash)
-        recovered_address = pub_key.to_checksum_address()
-        # compare recovered address to expected
-        if recovered_address.lower() == signing_address.lower():
-            print("Signature verification succeeded.")
-        else:
-            print(f"Signature verification failed: expected address {signing_address}, got {recovered_address}")
-    except Exception as e:
-        print("Signature verification failed:", e)
+        result = resp.json()
+        print(json.dumps(result, indent=2))
+    except ValueError:
+        print(resp.text)
+        result = None
+    if resp.status_code != 200:
+        raise Exception(f"NVIDIA attestation verification failed with status {resp.status_code}")
+    print("NVIDIA attestation verified successfully.")
+
+
+# Helpers for enclave identity pinning
+def verify_enclave_identity(reported, expected, label):
+    print(f"=== Verifying {label} ===")
+    if not reported or not expected:
+        raise Exception(f"Missing reported or expected {label}")
+    if reported.lower() != expected.lower():
+        raise Exception(f"{label} mismatch: expected {expected}, got {reported}")
+    print(f"{label} matches expected value.")
+
+
+def parse_nvidia_measurement(nvidia_payload):
+    payload = json.loads(nvidia_payload) if isinstance(nvidia_payload, str) else nvidia_payload
+    if "evidence" in payload:
+        b64 = payload["evidence"]
+    elif payload.get("evidence_list") and "evidence" in payload["evidence_list"][0]:
+        b64 = payload["evidence_list"][0]["evidence"]
+    else:
+        raise Exception("no evidence field for NVIDIA payload")
+    q = base64.b64decode(b64)
+    body = q[48:48+384]
+    return body[48:80].hex(), body[112:144].hex()
+
+
+def parse_intel_measurement(intel_quote):
+    qb = bytes.fromhex(intel_quote)
+    body = qb[48:48+384]
+    return body[48:80].hex(), body[112:144].hex()
 
 
 def main():
     # will hold cryptography public key object for verification
     pub_key_obj = None
     attestation = fetch_attestation(BASE_URL, API_KEY, MODEL)
+    # Full attestation-report verification: NVIDIA payload
+    if attestation and "nvidia_payload" in attestation:
+        try:
+            verify_nvidia_attestation(attestation["nvidia_payload"])
+        except Exception as e:
+            raise Exception(f"NVIDIA payload verification error: {e}")
+    # Intel TDX quote verification instructions
+    if attestation and "intel_quote" in attestation:
+        print("=== Intel TDX Quote Verification ===")
+        intel_quote = attestation["intel_quote"]
+        print("To verify the Intel TDX quote, go to https://proof.t16z.com, paste the quote below, and follow the instructions:")
+        print(intel_quote)
+    # Enclave identity pinning against published measurements
+    print("=== Enclave Identity Pinning ===")
+    # NVIDIA measurement
+    exp_nm = '00000000020133000130008048dfd18fe229bf16eb9d30cca0f11a24dafe6eb7'
+    exp_ns = '3000ec80d19d78143549a41d62d0078c56b2d538ed5d394f19e5af7d93bd1a24'
+    rep_nm, rep_ns = parse_nvidia_measurement(attestation["nvidia_payload"])
+    verify_enclave_identity(rep_nm, exp_nm, "NVIDIA MRENCLAVE")
+    verify_enclave_identity(rep_ns, exp_ns, "NVIDIA MRSIGNER")
+    # Intel measurement
+    exp_im = '6489d6c8e4f92f160b7cad34207b00c100000000000000000000000000000000'
+    exp_is = '00000000000000000000001000000000e702060000000000924f8a6140332b2c'
+    rep_im, rep_is = parse_intel_measurement(attestation.get("intel_quote", ""))
+    verify_enclave_identity(rep_im, exp_im, "Intel MRENCLAVE")
+    verify_enclave_identity(rep_is, exp_is, "Intel MRSIGNER")
     # Extract raw EC public key from certificate in the attestation report
     public_key = None
     if attestation and "nvidia_payload" in attestation:
@@ -183,13 +248,19 @@ def main():
         except Exception as e:
             print("Failed to extract public key from certificate:", e)
             public_key = None
+    # get enclave signing address from attestation
+    signing_address = attestation.get("signing_address")
+    if not signing_address:
+        raise Exception("Attestation response missing 'signing_address'")
     # Non-streaming chat and signature verification
     chat_data = chat_completion(BASE_URL, API_KEY, MODEL, stream=False)
     if chat_data and isinstance(chat_data, dict) and "id" in chat_data:
         request_id = chat_data["id"]
         signature_data = fetch_signature(BASE_URL, API_KEY, MODEL, request_id)
-        if signature_data and "text" in signature_data and "signature" in signature_data and "signing_address" in signature_data:
-            signing_address = signature_data["signing_address"]
+        if signature_data and "text" in signature_data and "signature" in signature_data:
+            # ensure signing_address matches the attested one
+            if signature_data.get("signing_address") and signature_data["signing_address"].lower() != signing_address.lower():
+                raise Exception(f"Unexpected signing_address from signature: {signature_data['signing_address']}")
             message = signature_data["text"]
             signature = signature_data["signature"]
             verify_signature(signing_address, message, signature)
@@ -197,12 +268,12 @@ def main():
     stream_id = chat_completion(BASE_URL, API_KEY, MODEL, stream=True)
     if stream_id:
         signature_data = fetch_signature(BASE_URL, API_KEY, MODEL, stream_id)
-        if signature_data and "text" in signature_data and "signature" in signature_data and "signing_address" in signature_data:
-            signing_address = signature_data["signing_address"]
+        if signature_data and "text" in signature_data and "signature" in signature_data:
+            if signature_data.get("signing_address") and signature_data["signing_address"].lower() != signing_address.lower():
+                raise Exception(f"Unexpected signing_address from signature: {signature_data['signing_address']}")
             message = signature_data["text"]
             signature = signature_data["signature"]
             verify_signature(signing_address, message, signature)
-
 
 if __name__ == "__main__":
     main()
