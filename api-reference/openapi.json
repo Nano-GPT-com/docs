@@ -475,6 +475,70 @@
         }
       }
     },
+    "/api/video/status": {
+      "get": {
+        "description": "Unified video status endpoint that works with any provider. Check the status of a video generation request using only the request ID - the system automatically determines the provider and returns normalized status information.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "query",
+            "description": "The unique request ID returned from any video generation endpoint",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "fal-1234567890"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unified video generation status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedVideoStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing requestId parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video generation request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error - Failed to check video generation status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/images/generations": {
       "servers": [
         {
@@ -1394,6 +1458,58 @@
           "signature": {
             "type": "string",
             "description": "The ECDSA signature"
+          }
+        }
+      },
+      "UnifiedVideoStatusResponse": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "status",
+          "videoUrl",
+          "error",
+          "createdAt",
+          "completedAt"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "The unique request ID for the video generation"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current normalized status of the video generation",
+            "enum": ["queued", "processing", "completed", "failed", "cancelled", "unknown"]
+          },
+          "progress": {
+            "type": "number",
+            "nullable": true,
+            "description": "Generation progress as a percentage (0-100), if available"
+          },
+          "estimatedTimeRemaining": {
+            "type": "number",
+            "nullable": true,
+            "description": "Estimated time remaining in seconds, if available"
+          },
+          "videoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL to the generated video (available when status is 'completed')"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message if the generation failed"
+          },
+          "createdAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO timestamp when the request was created"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO timestamp when the generation completed"
           }
         }
       }
