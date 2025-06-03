@@ -632,6 +632,22 @@
             "type": "number",
             "description": "Penalty for presence of tokens (-2 to 2)",
             "default": 0
+          },
+          "cache_control": {
+            "type": "object",
+            "description": "Cache control settings for Claude models only",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether to enable caching",
+                "default": false
+              },
+              "ttl": {
+                "type": "string",
+                "description": "Cache time-to-live ('5m', '1h')",
+                "example": "5m"
+              }
+            }
           }
         }
       },

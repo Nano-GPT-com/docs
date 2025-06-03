@@ -172,3 +172,49 @@ else:
     print("Failed to get response from GPT")
 ```
 
+### Chat Completions with Cache Control (Claude Models)
+
+For Claude models, you can enable caching to improve performance and reduce costs for repeated conversations. 5m cache costs 1.25x, 1h costs 2x on initial message, both give a 90% discount after.
+```python
+def chat_completion_with_cache(messages, model="claude-3-5-sonnet-20241022"):
+    """
+    Send a chat completion request with caching enabled (Claude models only).
+    """
+    data = {
+        "model": model,
+        "messages": messages,
+        "stream": False,
+        "temperature": 0.7,
+        "max_tokens": 4000,
+        "cache_control": {
+            "enabled": True,
+            "ttl": "5m"  # Cache for 5 minutes, or 1h for 1 hour.
+        }
+    }
+
+    response = requests.post(
+        f"{BASE_URL}/chat/completions",
+        headers=headers,
+        json=data
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Error: {response.status_code}")
+
+    return response.json()
+
+# Example with cache control
+messages_with_context = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Previous conversation context..."},
+    {"role": "assistant", "content": "Previous response..."},
+    {"role": "user", "content": "New question here"}
+]
+
+try:
+    response = chat_completion_with_cache(messages_with_context)
+    print("Assistant's Response:", response['choices'][0]['message']['content'])
+except Exception as e:
+    print(f"Error: {str(e)}")
+```
+
