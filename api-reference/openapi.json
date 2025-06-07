@@ -649,8 +649,9 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion",
-            "default": "chatgpt-4o-latest"
+            "description": "The model to use for completion. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
+            "default": "chatgpt-4o-latest",
+            "examples": ["chatgpt-4o-latest", "chatgpt-4o-latest:online", "chatgpt-4o-latest:online/linkup-deep", "claude-3-5-sonnet-20241022:online"]
           },
           "messages": {
             "type": "array",
@@ -803,8 +804,9 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion",
-            "default": "chatgpt-4o-latest"
+            "description": "The model to use for completion. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
+            "default": "chatgpt-4o-latest",
+            "examples": ["chatgpt-4o-latest", "chatgpt-4o-latest:online", "chatgpt-4o-latest:online/linkup-deep", "claude-3-5-sonnet-20241022:online"]
           },
           "prompt": {
             "type": "string",
@@ -1029,8 +1031,9 @@
           },
           "model": {
             "type": "string",
-            "description": "The model to use for generation",
-            "default": "chatgpt-4o-latest"
+            "description": "The model to use for generation. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
+            "default": "chatgpt-4o-latest",
+            "examples": ["chatgpt-4o-latest", "chatgpt-4o-latest:online", "claude-3-5-sonnet-20241022:online/linkup-deep"]
           },
           "messages": {
             "type": "array",

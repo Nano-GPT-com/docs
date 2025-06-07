@@ -1,4 +1,140 @@
 ---
 title: 'Chat Completion'
 openapi: 'POST /v1/chat/completions'
---- 
+---
+
+## Overview
+
+The Chat Completion endpoint provides OpenAI-compatible chat completions with support for web search capabilities through our LinkUp integration.
+
+## Web Search
+
+All models can access real-time web information by appending special suffixes to the model name:
+
+- **`:online`** - Standard web search ($0.005 per request)
+  - Returns 10 search results
+  - Perfect for straightforward questions
+  
+- **`:online/linkup-deep`** - Deep web search ($0.05 per request)
+  - Iteratively searches for comprehensive information
+  - Ideal when initial results aren't sufficient
+
+### Examples
+
+<CodeGroup>
+
+```python Python
+import requests
+import json
+
+BASE_URL = "https://nano-gpt.com/api/v1"
+API_KEY = "YOUR_API_KEY"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+# Standard web search
+data = {
+    "model": "chatgpt-4o-latest:online",
+    "messages": [
+        {"role": "user", "content": "What are the latest developments in AI?"}
+    ]
+}
+
+response = requests.post(
+    f"{BASE_URL}/chat/completions",
+    headers=headers,
+    json=data
+)
+
+# Deep web search
+data_deep = {
+    "model": "chatgpt-4o-latest:online/linkup-deep",
+    "messages": [
+        {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
+    ]
+}
+```
+
+```javascript JavaScript
+const BASE_URL = "https://nano-gpt.com/api/v1";
+const API_KEY = "YOUR_API_KEY";
+
+// Standard web search
+const response = await fetch(`${BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        model: 'chatgpt-4o-latest:online',
+        messages: [
+            { role: 'user', content: 'What are the latest developments in AI?' }
+        ]
+    })
+});
+
+// Deep web search
+const deepResponse = await fetch(`${BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        model: 'chatgpt-4o-latest:online/linkup-deep',
+        messages: [
+            { role: 'user', content: 'Provide a comprehensive analysis of recent AI breakthroughs' }
+        ]
+    })
+});
+```
+
+```bash cURL
+# Standard web search
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "chatgpt-4o-latest:online",
+    "messages": [
+      {"role": "user", "content": "What are the latest developments in AI?"}
+    ]
+  }'
+
+# Deep web search
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "chatgpt-4o-latest:online/linkup-deep",
+    "messages": [
+      {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
+    ]
+  }'
+```
+
+</CodeGroup>
+
+## Performance Benchmarks
+
+LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
+
+| Provider | Score |
+|----------|-------|
+| LinkUp Deep Search | 90.10% |
+| Exa | 90.04% |
+| Perplexity Sonar Pro | 86% |
+| LinkUp Standard Search | 85% |
+| Perplexity Sonar | 77% |
+| Tavily | 73% |
+
+## Important Notes
+
+- Web search increases input token count, which affects total cost
+- Models gain access to real-time information published less than a minute ago
+- Internet connectivity can provide up to 10x improvement in factuality
+- All models support web search - simply append the suffix to any model name 

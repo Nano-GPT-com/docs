@@ -165,6 +165,62 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
     For more detailed examples and other image generation options, check out our [Image Generation Guide](/api-reference/image-generation).
   </Accordion> 
 
+  <Accordion icon="globe" title="Web Search">
+    Enable real-time web search for any model by adding suffixes to the model name:
+
+    ```python
+    import requests
+    import json
+
+    BASE_URL = "https://nano-gpt.com/api/v1"
+    API_KEY = "YOUR_API_KEY"
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    # Standard web search ($0.005 per request)
+    data = {
+        "model": "chatgpt-4o-latest:online",
+        "messages": [
+            {"role": "user", "content": "What are the latest AI announcements this week?"}
+        ],
+        "stream": False
+    }
+
+    response = requests.post(
+        f"{BASE_URL}/chat/completions",
+        headers=headers,
+        json=data
+    )
+
+    print("Response:", response.json()['choices'][0]['message']['content'])
+
+    # Deep web search for comprehensive research ($0.05 per request)
+    deep_data = {
+        "model": "claude-3-5-sonnet-20241022:online/linkup-deep",
+        "messages": [
+            {"role": "user", "content": "Provide a detailed analysis of recent breakthroughs in quantum computing"}
+        ]
+    }
+
+    deep_response = requests.post(
+        f"{BASE_URL}/chat/completions",
+        headers=headers,
+        json=deep_data
+    )
+    ```
+
+    Web search works with all models and provides:
+    - Access to real-time information (updated less than a minute ago)
+    - 10x improvement in factuality
+    - Standard search: 10 results quickly
+    - Deep search: Iterative searching for comprehensive information
+
+    Check out our [Chat Completion Guide](/api-reference/endpoint/chat-completion) for more examples.
+  </Accordion>
+
   <Accordion icon="shield-check" title="TEE Model Verification">
     NanoGPT supports TEE-backed models for verifiable privacy. You can fetch attestation reports and signatures for chat completions made with these models.
 

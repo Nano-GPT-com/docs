@@ -1,4 +1,131 @@
 ---
 title: 'Talk to GPT (Legacy)'
 openapi: 'POST /talk-to-gpt'
---- 
+---
+
+## Overview
+
+The Talk to GPT endpoint is our legacy text generation API that also supports web search capabilities through LinkUp integration.
+
+## Web Search
+
+Enable web search by appending suffixes to the model name:
+
+- **`:online`** - Standard web search ($0.005 per request)
+- **`:online/linkup-deep`** - Deep web search ($0.05 per request)
+
+### Example with Web Search
+
+<CodeGroup>
+
+```python Python
+import requests
+import json
+
+BASE_URL = "https://nano-gpt.com/api"
+API_KEY = "YOUR_API_KEY"
+
+headers = {
+    "x-api-key": API_KEY,
+    "Content-Type": "application/json"
+}
+
+# Standard web search
+data = {
+    "prompt": "What are the latest AI breakthroughs this month?",
+    "model": "chatgpt-4o-latest:online",
+    "messages": []
+}
+
+response = requests.post(
+    f"{BASE_URL}/talk-to-gpt",
+    headers=headers,
+    json=data
+)
+
+# Deep web search for comprehensive research
+data_deep = {
+    "prompt": "Provide a detailed analysis of recent quantum computing advances",
+    "model": "chatgpt-4o-latest:online/linkup-deep",
+    "messages": []
+}
+
+response_deep = requests.post(
+    f"{BASE_URL}/talk-to-gpt",
+    headers=headers,
+    json=data_deep
+)
+
+# Parse response
+if response.status_code == 200:
+    parts = response.text.split('<NanoGPT>')
+    text_response = parts[0].strip()
+    nano_info = json.loads(parts[1].split('</NanoGPT>')[0])
+    
+    print("Response:", text_response)
+    print("Cost:", nano_info['cost'])
+```
+
+```javascript JavaScript
+const BASE_URL = "https://nano-gpt.com/api";
+const API_KEY = "YOUR_API_KEY";
+
+// Standard web search
+const response = await fetch(`${BASE_URL}/talk-to-gpt`, {
+    method: 'POST',
+    headers: {
+        'x-api-key': API_KEY,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        prompt: 'What are the latest AI breakthroughs this month?',
+        model: 'chatgpt-4o-latest:online',
+        messages: []
+    })
+});
+
+// Deep web search
+const deepResponse = await fetch(`${BASE_URL}/talk-to-gpt`, {
+    method: 'POST',
+    headers: {
+        'x-api-key': API_KEY,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        prompt: 'Provide a detailed analysis of recent quantum computing advances',
+        model: 'chatgpt-4o-latest:online/linkup-deep',
+        messages: []
+    })
+});
+```
+
+```bash cURL
+# Standard web search
+curl -X POST https://nano-gpt.com/api/talk-to-gpt \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "What are the latest AI breakthroughs this month?",
+    "model": "chatgpt-4o-latest:online",
+    "messages": []
+  }'
+
+# Deep web search
+curl -X POST https://nano-gpt.com/api/talk-to-gpt \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Provide a detailed analysis of recent quantum computing advances",
+    "model": "chatgpt-4o-latest:online/linkup-deep",
+    "messages": []
+  }'
+```
+
+</CodeGroup>
+
+## Important Notes
+
+- Web search works with all models - simply append the suffix
+- Increases input token count which affects total cost
+- Provides access to real-time information
+- For new projects, consider using the OpenAI-compatible `/v1/chat/completions` endpoint instead 

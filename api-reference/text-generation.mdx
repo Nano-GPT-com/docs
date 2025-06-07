@@ -218,3 +218,79 @@ except Exception as e:
     print(f"Error: {str(e)}")
 ```
 
+### Chat Completions with Web Search
+
+Enable real-time web access for any model by appending special suffixes:
+
+```python
+def chat_completion_with_web_search(messages, model="chatgpt-4o-latest", search_depth="standard"):
+    """
+    Send a chat completion request with web search enabled.
+    
+    Args:
+        messages: List of message objects
+        model: Base model name
+        search_depth: "standard" ($0.005) or "deep" ($0.05)
+    """
+    # Append the appropriate suffix for web search
+    if search_depth == "deep":
+        model_with_search = f"{model}:online/linkup-deep"
+    else:
+        model_with_search = f"{model}:online"
+    
+    data = {
+        "model": model_with_search,
+        "messages": messages,
+        "stream": True
+    }
+    
+    response = requests.post(
+        f"{BASE_URL}/chat/completions",
+        headers=headers,
+        json=data,
+        stream=True
+    )
+    
+    if response.status_code != 200:
+        raise Exception(f"Error: {response.status_code}")
+    
+    for line in response.iter_lines():
+        if line:
+            line = line.decode('utf-8')
+            if line.startswith('data: '):
+                line = line[6:]
+            if line == '[DONE]':
+                break
+            try:
+                chunk = json.loads(line)
+                if chunk['choices'][0]['delta'].get('content'):
+                    yield chunk['choices'][0]['delta']['content']
+            except json.JSONDecodeError:
+                continue
+
+# Example: Get current information
+messages = [
+    {"role": "user", "content": "What happened in the tech industry this week?"}
+]
+
+print("Standard web search:")
+for content in chat_completion_with_web_search(messages):
+    print(content, end='', flush=True)
+
+# Example: Deep research
+research_messages = [
+    {"role": "user", "content": "Provide a comprehensive analysis of the latest developments in quantum computing"}
+]
+
+print("\n\nDeep web search:")
+for content in chat_completion_with_web_search(research_messages, search_depth="deep"):
+    print(content, end='', flush=True)
+```
+
+#### Web Search Options
+
+- **`:online`** - Standard search with 10 results ($0.005 per request)
+- **`:online/linkup-deep`** - Deep iterative search ($0.05 per request)
+
+Web search dramatically improves factuality - GPT-4o-mini with web access shows a 10x improvement in accuracy, making it twice as accurate as models like o1 without web access.
+
