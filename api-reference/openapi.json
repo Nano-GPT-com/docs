@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "NanoGPT API",
-    "description": "API documentation for the NanoGPT language and image generation services",
+    "description": "API documentation for the NanoGPT language, image, video, speech-to-text, and text-to-speech generation services",
     "license": {
       "name": "MIT"
     },
@@ -634,6 +634,294 @@
           "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "401": { "description": "Unauthorized" },
           "500": { "description": "Server Error" }
+        }
+      }
+    },
+    "/api/transcribe": {
+      "post": {
+        "description": "Transcribe audio files into text using state-of-the-art speech recognition models. Supports multiple languages, speaker diarization, and various audio formats. Returns synchronous results for Whisper/Wizper models and asynchronous job IDs for Elevenlabs-STT.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Audio transcription parameters. Use multipart/form-data for file uploads or application/json for URL-based requests.",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeFormRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeJsonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Synchronous transcription response (Whisper/Wizper models)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscribeResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Asynchronous transcription job started (Elevenlabs-STT model)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscribeAsyncResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or file format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large - File exceeds size limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transcribe/status": {
+      "post": {
+        "description": "Check the status of an asynchronous transcription job (Elevenlabs-STT). Poll this endpoint to get the transcription results when the job is completed.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Status check parameters including runId from the initial transcription request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Transcription status response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscribeStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing required parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "404": {
+            "description": "Not Found - Transcription job not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tts": {
+      "post": {
+        "description": "Convert text into natural-sounding speech using various TTS models from different providers. Supports multiple languages, voices, and customization options including speed control, voice instructions, and audio format selection.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Text-to-speech generation parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TTSRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Text-to-speech response. Returns either JSON with audio URL or binary audio data depending on the model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TTSResponse"
+                }
+              },
+              "audio/mp3": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Binary audio data (for OpenAI models)"
+                }
+              },
+              "audio/wav": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Binary audio data"
+                }
+              },
+              "audio/opus": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Binary audio data (OpenAI models)"
+                }
+              },
+              "audio/aac": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Binary audio data (OpenAI models)"
+                }
+              },
+              "audio/flac": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Binary audio data (OpenAI models)"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or missing text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large - Text exceeds model limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not Implemented - Model not yet implemented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -1844,6 +2132,449 @@
             "type": "string",
             "nullable": true,
             "description": "ISO timestamp when the generation completed"
+          }
+        }
+      },
+      "TranscribeFormRequest": {
+        "type": "object",
+        "properties": {
+          "audio": {
+            "type": "string",
+            "format": "binary",
+            "description": "Direct file upload (max 3MB). Supported formats: MP3, WAV, M4A, OGG, AAC"
+          },
+          "audioUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to audio file (alternative to direct upload, supports up to 500MB)"
+          },
+          "model": {
+            "type": "string",
+            "description": "The STT model to use for transcription",
+            "enum": ["Whisper-Large-V3", "Wizper", "Elevenlabs-STT"],
+            "default": "Whisper-Large-V3"
+          },
+          "language": {
+            "type": "string",
+            "description": "Language code for transcription (ISO 639-1 or ISO 639-3). Use 'auto' for auto-detection",
+            "default": "auto",
+            "example": "en"
+          },
+          "actualDuration": {
+            "type": "string",
+            "description": "Actual audio duration in minutes for accurate billing"
+          },
+          "diarize": {
+            "type": "string",
+            "description": "Enable speaker diarization (Elevenlabs-STT only)",
+            "enum": ["true", "false"],
+            "default": "false"
+          },
+          "tagAudioEvents": {
+            "type": "string",
+            "description": "Tag non-speech audio events like [laughter], [applause] (Elevenlabs-STT only)",
+            "enum": ["true", "false"],
+            "default": "false"
+          }
+        }
+      },
+      "TranscribeJsonRequest": {
+        "type": "object",
+        "properties": {
+          "audioUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to audio file to transcribe",
+            "example": "https://example.com/audio.mp3"
+          },
+          "model": {
+            "type": "string",
+            "description": "The STT model to use for transcription",
+            "enum": ["Whisper-Large-V3", "Wizper", "Elevenlabs-STT"],
+            "default": "Whisper-Large-V3"
+          },
+          "language": {
+            "type": "string",
+            "description": "Language code for transcription (ISO 639-1 or ISO 639-3). Use 'auto' for auto-detection",
+            "default": "auto",
+            "example": "en"
+          },
+          "actualDuration": {
+            "type": "string",
+            "description": "Actual audio duration in minutes for accurate billing"
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Enable speaker diarization (Elevenlabs-STT only)",
+            "default": false
+          },
+          "tagAudioEvents": {
+            "type": "boolean",
+            "description": "Tag non-speech audio events like [laughter], [applause] (Elevenlabs-STT only)",
+            "default": false
+          }
+        },
+        "required": ["audioUrl"]
+      },
+      "TranscribeResponse": {
+        "type": "object",
+        "required": ["transcription", "metadata"],
+        "properties": {
+          "transcription": {
+            "type": "string",
+            "description": "The transcribed text",
+            "example": "Hello, this is a test transcription."
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["model", "cost", "currency"],
+            "properties": {
+              "fileName": {
+                "type": "string",
+                "description": "Original file name"
+              },
+              "fileSize": {
+                "type": "integer",
+                "description": "File size in bytes"
+              },
+              "chargedDuration": {
+                "type": "number",
+                "description": "Duration charged for billing (in minutes)"
+              },
+              "actualDuration": {
+                "type": "number",
+                "description": "Actual audio duration (in minutes)"
+              },
+              "language": {
+                "type": "string",
+                "description": "Detected or specified language code"
+              },
+              "cost": {
+                "type": "number",
+                "description": "Cost of the transcription"
+              },
+              "currency": {
+                "type": "string",
+                "description": "Currency of the cost",
+                "default": "USD"
+              },
+              "model": {
+                "type": "string",
+                "description": "Model used for transcription"
+              }
+            }
+          }
+        }
+      },
+      "TranscribeAsyncResponse": {
+        "type": "object",
+        "required": ["runId", "status", "model"],
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Unique identifier for the transcription job",
+            "example": "abc123def456"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the transcription job",
+            "enum": ["pending", "processing", "completed", "failed"],
+            "default": "pending"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used for transcription"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost of the transcription"
+          },
+          "paymentSource": {
+            "type": "string",
+            "description": "Payment source used (USD or XNO)"
+          },
+          "isApiRequest": {
+            "type": "boolean",
+            "description": "Whether this is an API request"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Original file name"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "File size in bytes"
+          },
+          "chargedDuration": {
+            "type": "number",
+            "description": "Duration charged for billing (in minutes)"
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Whether speaker diarization is enabled"
+          }
+        }
+      },
+      "TranscribeStatusRequest": {
+        "type": "object",
+        "required": ["runId"],
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Unique identifier for the transcription job",
+            "example": "abc123def456"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost of the transcription (from initial response)"
+          },
+          "paymentSource": {
+            "type": "string",
+            "description": "Payment source used (from initial response)"
+          },
+          "isApiRequest": {
+            "type": "boolean",
+            "description": "Whether this is an API request (from initial response)"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Original file name (from initial response)"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "File size in bytes (from initial response)"
+          },
+          "chargedDuration": {
+            "type": "number",
+            "description": "Duration charged for billing (from initial response)"
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Whether speaker diarization is enabled (from initial response)"
+          }
+        }
+      },
+      "TranscribeStatusResponse": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Current status of the transcription job",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "transcription": {
+            "type": "string",
+            "description": "The transcribed text (available when status is 'completed')",
+            "example": "Speaker 1: Hello everyone. Speaker 2: Hi there!"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Transcription metadata (available when status is 'completed')",
+            "properties": {
+              "fileName": {
+                "type": "string",
+                "description": "Original file name"
+              },
+              "fileSize": {
+                "type": "integer",
+                "description": "File size in bytes"
+              },
+              "chargedDuration": {
+                "type": "number",
+                "description": "Duration charged for billing (in minutes)"
+              },
+              "actualDuration": {
+                "type": "number",
+                "description": "Actual audio duration (in minutes)"
+              },
+              "language": {
+                "type": "string",
+                "description": "Detected language code"
+              },
+              "cost": {
+                "type": "number",
+                "description": "Cost of the transcription"
+              },
+              "currency": {
+                "type": "string",
+                "description": "Currency of the cost"
+              },
+              "model": {
+                "type": "string",
+                "description": "Model used for transcription"
+              }
+            }
+          },
+          "words": {
+            "type": "array",
+            "description": "Word-level timestamps and speaker information (Elevenlabs-STT only)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "description": "The word or text segment"
+                },
+                "start": {
+                  "type": "number",
+                  "description": "Start time in seconds"
+                },
+                "end": {
+                  "type": "number",
+                  "description": "End time in seconds"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of segment",
+                  "enum": ["word", "punctuation"]
+                },
+                "speaker_id": {
+                  "type": "string",
+                  "description": "Speaker identifier (when diarization is enabled)"
+                }
+              }
+            }
+          },
+          "diarization": {
+            "type": "object",
+            "description": "Speaker diarization results (when enabled)",
+            "properties": {
+              "segments": {
+                "type": "array",
+                "description": "Speaker segments with timestamps",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "speaker": {
+                      "type": "string",
+                      "description": "Speaker label (e.g., 'Speaker 1')"
+                    },
+                    "text": {
+                      "type": "string",
+                      "description": "Text spoken by this speaker"
+                    },
+                    "start": {
+                      "type": "number",
+                      "description": "Start time in seconds"
+                    },
+                    "end": {
+                      "type": "number",
+                      "description": "End time in seconds"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message (available when status is 'failed')"
+          }
+        }
+      },
+      "TTSRequest": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text to convert to speech",
+            "example": "Hello! This is a test of the text-to-speech API."
+          },
+          "model": {
+            "type": "string",
+            "description": "The TTS model to use for generation",
+            "enum": ["Kokoro-82m", "Dia-TTS", "Elevenlabs-Turbo-V2.5", "tts-1", "tts-1-hd", "gpt-4o-mini-tts"],
+            "default": "Kokoro-82m"
+          },
+          "voice": {
+            "type": "string",
+            "description": "The voice to use for synthesis (available voices depend on selected model)",
+            "example": "af_bella"
+          },
+          "speed": {
+            "type": "number",
+            "description": "Speech speed multiplier (0.1-5, not supported for gpt-4o-mini-tts)",
+            "minimum": 0.1,
+            "maximum": 5,
+            "default": 1
+          },
+          "response_format": {
+            "type": "string",
+            "description": "Audio output format (OpenAI models only)",
+            "enum": ["mp3", "opus", "aac", "flac", "wav", "pcm"],
+            "default": "mp3"
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Voice instructions for fine-tuning (gpt-4o-mini-tts and tts-1-hd only)",
+            "example": "speak with enthusiasm"
+          },
+          "stability": {
+            "type": "number",
+            "description": "Voice stability (Elevenlabs-Turbo-V2.5 only, 0-1)",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.5
+          },
+          "similarity_boost": {
+            "type": "number",
+            "description": "Voice similarity boost (Elevenlabs-Turbo-V2.5 only, 0-1)",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.75
+          },
+          "style": {
+            "type": "number",
+            "description": "Style exaggeration (Elevenlabs-Turbo-V2.5 only, 0-1)",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0
+          }
+        }
+      },
+      "TTSResponse": {
+        "type": "object",
+        "properties": {
+          "audioUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the generated audio file",
+            "example": "https://storage.url/audio-file.wav"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "MIME type of the audio file",
+            "example": "audio/wav"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used for generation"
+          },
+          "text": {
+            "type": "string",
+            "description": "The input text that was synthesized"
+          },
+          "voice": {
+            "type": "string",
+            "description": "Voice used for synthesis"
+          },
+          "speed": {
+            "type": "number",
+            "description": "Speed multiplier used"
+          },
+          "duration": {
+            "type": "number",
+            "description": "Duration of the generated audio in seconds"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost of the generation"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency of the cost"
           }
         }
       }

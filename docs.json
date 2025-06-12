@@ -42,6 +42,8 @@
           "api-reference/text-generation",
           "api-reference/image-generation",
           "api-reference/video-generation",
+          "api-reference/speech-to-text",
+          "api-reference/text-to-speech",
           "api-reference/tee-verification"
         ]
       },
