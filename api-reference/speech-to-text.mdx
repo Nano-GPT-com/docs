@@ -511,22 +511,5 @@ def validate_audio_file(file_path):
 - **Wizper**: $0.01 per minute  
 - **Elevenlabs-STT**: $0.03 per minute
 
-Costs are calculated based on audio duration with a 10% profit margin. Minimum billing is $0.001 per request.
+Costs are calculated based on audio duration.
 
-```python
-def estimate_cost(duration_minutes, model="Whisper-Large-V3"):
-    """Estimate transcription cost"""
-    rates = {
-        "Whisper-Large-V3": 0.01,
-        "Wizper": 0.01,
-        "Elevenlabs-STT": 0.03
-    }
-    
-    base_cost = duration_minutes * rates.get(model, 0.01)
-    final_cost = base_cost * 1.1  # 10% profit margin
-    
-    return max(final_cost, 0.001)  # Minimum $0.001
-
-# Example
-print(f"5 minute file with Elevenlabs-STT: ${estimate_cost(5, 'Elevenlabs-STT'):.4f}")
-``` 

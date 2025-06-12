@@ -1,0 +1,382 @@
+---
+title: 'Text-to-Speech'
+openapi: 'POST /api/tts'
+---
+
+## Overview
+
+Convert text into natural-sounding speech using various TTS models. Supports multiple languages, voices, and customization options including speed control and voice instructions.
+
+## Supported Models
+
+- **Kokoro-82m**: 44 multilingual voices ($0.001/1k chars)
+- **Dia-TTS**: Multi-speaker conversations ($0.05/1k chars)
+- **Elevenlabs-Turbo-V2.5**: Premium quality with style controls ($0.06/1k chars)
+- **tts-1**: OpenAI standard quality ($0.015/1k chars)
+- **tts-1-hd**: OpenAI high definition ($0.030/1k chars)
+- **gpt-4o-mini-tts**: Ultra-low cost ($0.0006/1k chars)
+
+## Basic Usage
+
+<CodeGroup>
+
+```python Python
+import requests
+
+def text_to_speech(text, model="Kokoro-82m", voice=None, **kwargs):
+    headers = {
+        "x-api-key": "YOUR_API_KEY",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "text": text,
+        "model": model
+    }
+    
+    if voice:
+        payload["voice"] = voice
+    
+    payload.update(kwargs)
+    
+    response = requests.post(
+        "https://nano-gpt.com/api/tts",
+        headers=headers,
+        json=payload
+    )
+    
+    if response.status_code == 200:
+        content_type = response.headers.get('content-type', '')
+        
+        if 'application/json' in content_type:
+            # JSON response with audio URL
+            data = response.json()
+            audio_response = requests.get(data['audioUrl'])
+            with open('output.wav', 'wb') as f:
+                f.write(audio_response.content)
+        else:
+            # Binary audio data (OpenAI models)
+            with open('output.mp3', 'wb') as f:
+                f.write(response.content)
+        
+        return response
+    else:
+        raise Exception(f"Error: {response.status_code}")
+
+# Basic usage
+text_to_speech(
+    "Hello! Welcome to our service.",
+    model="Kokoro-82m",
+    voice="af_bella"
+)
+```
+
+```javascript JavaScript
+async function textToSpeech(text, options = {}) {
+    const payload = {
+        text: text,
+        model: options.model || 'Kokoro-82m',
+        ...options
+    };
+    
+    const response = await fetch('https://nano-gpt.com/api/tts', {
+        method: 'POST',
+        headers: {
+            'x-api-key': 'YOUR_API_KEY',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+    
+    if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType.includes('application/json')) {
+            const data = await response.json();
+            console.log('Audio URL:', data.audioUrl);
+            return data;
+        } else {
+            // Binary audio data
+            const audioBlob = await response.blob();
+            const url = URL.createObjectURL(audioBlob);
+            console.log('Audio blob URL:', url);
+            return { audioBlob, url };
+        }
+    } else {
+        throw new Error(`Error: ${response.status}`);
+    }
+}
+
+// Usage
+textToSpeech('Hello world!', {
+    model: 'Kokoro-82m',
+    voice: 'af_bella',
+    speed: 1.1
+});
+```
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/tts \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello! Welcome to our service.",
+    "model": "Kokoro-82m",
+    "voice": "af_bella",
+    "speed": 1.0
+  }'
+```
+
+</CodeGroup>
+
+## Model-Specific Examples
+
+### Kokoro-82m - Multilingual Voices
+
+44 voices across 13 language groups:
+
+<CodeGroup>
+
+```python Python
+# Popular voice examples by category
+voices = {
+    "american_female": ["af_bella", "af_nova", "af_aoede"],
+    "american_male": ["am_adam", "am_onyx", "am_eric"],
+    "british_female": ["bf_alice", "bf_emma"],
+    "british_male": ["bm_daniel", "bm_george"],
+    "japanese_female": ["jf_alpha", "jf_gongitsune"],
+    "chinese_female": ["zf_xiaoxiao", "zf_xiaoyi"],
+    "french_female": ["ff_siwis"],
+    "italian_male": ["im_nicola"]
+}
+
+# Generate multilingual samples
+samples = [
+    {"text": "Hello, welcome!", "voice": "af_bella", "lang": "English"},
+    {"text": "Bonjour et bienvenue!", "voice": "ff_siwis", "lang": "French"},
+    {"text": "こんにちは！", "voice": "jf_alpha", "lang": "Japanese"},
+    {"text": "你好，欢迎！", "voice": "zf_xiaoxiao", "lang": "Chinese"}
+]
+
+for sample in samples:
+    text_to_speech(
+        text=sample["text"],
+        model="Kokoro-82m",
+        voice=sample["voice"]
+    )
+```
+
+</CodeGroup>
+
+### Dia-TTS - Multi-Speaker Conversations
+
+Create dialogues with speaker tags:
+
+<CodeGroup>
+
+```python Python
+# Multi-speaker conversation
+dialogue = "[S1] Welcome to our podcast! [S2] Thanks for having me. [S1] Let's begin!"
+
+text_to_speech(
+    text=dialogue,
+    model="Dia-TTS",
+    speed=1.1
+)
+
+# Single speaker with specific voice
+text_to_speech(
+    text="[S1] This is a single speaker narration.",
+    model="Dia-TTS",
+    voice="S2"  # Use S2 voice for all text
+)
+```
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/tts \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "[S1] Hello there! [S2] Hi, how are you? [S1] I'\''m doing great!",
+    "model": "Dia-TTS"
+  }'
+```
+
+</CodeGroup>
+
+### Elevenlabs-Turbo-V2.5 - Advanced Voice Controls
+
+Premium quality with style adjustments:
+
+<CodeGroup>
+
+```python Python
+# Stable, consistent voice
+text_to_speech(
+    text="This is a professional announcement.",
+    model="Elevenlabs-Turbo-V2.5",
+    voice="Rachel",
+    stability=0.9,
+    similarity_boost=0.8,
+    style=0
+)
+
+# Expressive, dynamic voice  
+text_to_speech(
+    text="This is so exciting!",
+    model="Elevenlabs-Turbo-V2.5",
+    voice="Rachel",
+    stability=0.3,
+    similarity_boost=0.7,
+    style=0.8,
+    speed=1.2
+)
+
+# Available voices: Rachel, Adam, Bella, Brian, etc.
+```
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/tts \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Welcome to our premium service!",
+    "model": "Elevenlabs-Turbo-V2.5",
+    "voice": "Rachel",
+    "stability": 0.7,
+    "similarity_boost": 0.8,
+    "style": 0.3
+  }'
+```
+
+</CodeGroup>
+
+### OpenAI Models - Multiple Formats & Instructions
+
+<CodeGroup>
+
+```python Python
+# High-definition with voice instructions
+text_to_speech(
+    text="Welcome to customer service.",
+    model="tts-1-hd",
+    voice="nova",
+    instructions="Speak warmly and professionally like a customer service representative",
+    response_format="flac"
+)
+
+# Ultra-low cost option
+text_to_speech(
+    text="This is a cost-effective option.",
+    model="gpt-4o-mini-tts",
+    voice="alloy",
+    instructions="Speak clearly and cheerfully",
+    response_format="mp3"
+)
+
+# Different format examples
+formats = ["mp3", "wav", "opus", "flac", "aac"]
+for fmt in formats:
+    text_to_speech(
+        text=f"This is {fmt.upper()} format.",
+        model="tts-1",
+        voice="echo",
+        response_format=fmt
+    )
+```
+
+```bash cURL
+# With voice instructions
+curl -X POST https://nano-gpt.com/api/tts \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Breaking news update!",
+    "model": "tts-1-hd",
+    "voice": "nova",
+    "instructions": "Speak with the urgency of a news reporter",
+    "response_format": "wav"
+  }'
+
+# Ultra-low cost
+curl -X POST https://nano-gpt.com/api/tts \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Budget-friendly text-to-speech.",
+    "model": "gpt-4o-mini-tts",
+    "voice": "alloy"
+  }'
+```
+
+</CodeGroup>
+
+## Response Examples
+
+### JSON Response (Most Models)
+
+```json
+{
+  "audioUrl": "https://storage.url/audio-file.wav",
+  "contentType": "audio/wav",
+  "model": "Kokoro-82m",
+  "text": "Hello world",
+  "voice": "af_bella",
+  "speed": 1,
+  "duration": 2.3,
+  "cost": 0.001,
+  "currency": "USD"
+}
+```
+
+### Binary Response (OpenAI Models)
+
+OpenAI models return audio data directly as binary with appropriate headers:
+
+```http
+Content-Type: audio/mp3
+Content-Length: 123456
+[Binary audio data]
+```
+
+## Voice Options
+
+### Kokoro-82m Voices
+- **American Female**: af_bella, af_nova, af_aoede, af_jessica, af_sarah
+- **American Male**: am_adam, am_onyx, am_eric, am_liam
+- **British**: bf_alice, bf_emma, bm_daniel, bm_george
+- **Asian Languages**: jf_alpha (Japanese), zf_xiaoxiao (Chinese)
+- **European**: ff_siwis (French), im_nicola (Italian)
+
+### Elevenlabs-Turbo-V2.5 Voices
+Rachel, Adam, Bella, Brian, Sarah, Michael, Emily, James, Nicole, and 37 more
+
+### OpenAI Voices  
+alloy, echo, fable, onyx, nova, shimmer, ash, ballad, coral, sage, verse
+
+## Error Handling
+
+<CodeGroup>
+
+```python Python
+try:
+    result = text_to_speech("Hello world!", model="Kokoro-82m")
+    print("Success!")
+except Exception as e:
+    if "400" in str(e):
+        print("Bad request - check parameters")
+    elif "401" in str(e):
+        print("Unauthorized - check API key")
+    elif "413" in str(e):
+        print("Text too long for model")
+    else:
+        print(f"Error: {e}")
+```
+
+</CodeGroup>
+
+Common errors:
+- **400**: Invalid parameters or missing text
+- **401**: Invalid or missing API key
+- **413**: Text exceeds model character limit
+- **429**: Rate limit exceeded 

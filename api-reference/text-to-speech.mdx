@@ -505,17 +505,6 @@ class NanoGPTTTS:
         else:
             raise Exception(f"API Error: {error_msg}")
     
-    def estimate_cost(self, text, model="Kokoro-82m"):
-        """Estimate generation cost"""
-        model_config = self.model_info.get(model, {})
-        cost_per_1k = model_config.get("cost_per_1k", 0.001)
-        
-        char_count = len(text)
-        base_cost = (char_count / 1000) * cost_per_1k
-        final_cost = base_cost * 1.1  # 10% profit margin
-        
-        return final_cost
-    
     def get_model_info(self, model=None):
         """Get information about available models"""
         if model:
@@ -743,4 +732,3 @@ else:
 | tts-1-hd | $0.030 | 4,096 | HD quality, voice instructions |
 | gpt-4o-mini-tts | $0.0006 | 4,096 | Ultra-low cost |
 
-All prices include a 10% profit margin. Minimum charge is $0.001 per request. 
