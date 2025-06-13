@@ -190,10 +190,25 @@
     },
     "/v1/models": {
       "get": {
-        "description": "List available models",
+        "description": "List available models with optional detailed information including pricing",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "detailed",
+            "in": "query",
+            "description": "Returns detailed model information including pricing",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -1384,7 +1399,48 @@
                 "owned_by": {
                   "type": "string",
                   "description": "Organization that owns the model",
-                  "example": "nanogpt"
+                  "example": "openai"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Human-readable model name (detailed mode only)",
+                  "example": "GPT-4o Mini"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Detailed model description (detailed mode only)",
+                  "example": "OpenAI's affordable and intelligent small model for fast, lightweight tasks"
+                },
+                "context_length": {
+                  "type": "integer",
+                  "description": "Maximum input tokens (detailed mode only, null if not available)",
+                  "example": 128000
+                },
+                "pricing": {
+                  "type": "object",
+                  "description": "Pricing information object (detailed mode only)",
+                  "properties": {
+                    "prompt": {
+                      "type": "number",
+                      "description": "Cost per million input tokens in USD",
+                      "example": 0.00015
+                    },
+                    "completion": {
+                      "type": "number",
+                      "description": "Cost per million output tokens in USD",
+                      "example": 0.0006
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "Always 'USD'",
+                      "default": "USD"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "description": "Always 'per_million_tokens'",
+                      "default": "per_million_tokens"
+                    }
+                  }
                 }
               }
             }

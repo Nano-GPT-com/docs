@@ -1,4 +1,184 @@
 ---
 title: 'Models'
 openapi: 'GET /v1/models'
---- 
+---
+
+## Overview
+
+The `/api/v1/models` endpoint provides a list of available models. It supports optional detailed information including pricing data and user-specific pricing adjustments. The endpoint maintains full backwards compatibility while adding powerful new features.
+
+## Features
+
+- **Basic Mode**: Standard OpenAI-compatible model listing
+- **Detailed Mode**: Enhanced information with pricing and model descriptions  
+- **User-Specific Pricing**: Personalized rates based on user policies when authenticated
+- **Model Filtering**: Automatically filters visible models and excludes free/custom models
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `detailed` | boolean | `false` | Returns detailed model information including pricing |
+
+## Authentication
+
+Authentication is optional but enables user-specific pricing in detailed mode:
+
+| Header | Format | Required | Description |
+|--------|--------|----------|-------------|
+| `Authorization` | `Bearer {api_key}` | Optional | API key for user-specific pricing |
+| `x-api-key` | `{api_key}` | Optional | Alternative API key header |
+
+## Response Formats
+
+### Basic Response (Default)
+
+Standard OpenAI-compatible format without pricing information:
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gpt-4o-mini",
+      "object": "model",
+      "created": 1704067200,
+      "owned_by": "openai"
+    },
+    {
+      "id": "claude-3-5-sonnet-20241022",
+      "object": "model", 
+      "created": 1704067200,
+      "owned_by": "anthropic"
+    }
+  ]
+}
+```
+
+### Detailed Response
+
+Enhanced format with model descriptions, context lengths, and pricing:
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gpt-4o-mini",
+      "object": "model",
+      "created": 1704067200,
+      "owned_by": "openai",
+      "name": "GPT-4o Mini",
+      "description": "OpenAI's affordable and intelligent small model for fast, lightweight tasks",
+      "context_length": 128000,
+      "pricing": {
+        "prompt": 0.00015,
+        "completion": 0.0006,
+        "currency": "USD",
+        "unit": "per_million_tokens"
+      }
+    },
+    {
+      "id": "claude-3-5-sonnet-20241022",
+      "object": "model",
+      "created": 1704067200,
+      "owned_by": "anthropic",
+      "name": "Claude 3.5 Sonnet",
+      "description": "Anthropic's most intelligent model, combining top-tier performance with improved speed",
+      "context_length": 200000,
+      "pricing": {
+        "prompt": 0.003,
+        "completion": 0.015,
+        "currency": "USD", 
+        "unit": "per_million_tokens"
+      }
+    }
+  ]
+}
+```
+
+## Field Descriptions
+
+### Basic Fields (Always Present)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique model identifier |
+| `object` | string | Always "model" for OpenAI compatibility |
+| `created` | number | Unix timestamp of response creation |
+| `owned_by` | string | Model provider (openai, anthropic, meta, google, etc.) |
+
+### Enhanced Fields (Detailed Mode Only)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Human-readable model name |
+| `description` | string | Detailed model description |
+| `context_length` | number | Maximum input tokens (null if not available) |
+| `pricing` | object | Pricing information object |
+
+### Pricing Object Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `prompt` | number | Cost per million input tokens in USD |
+| `completion` | number | Cost per million output tokens in USD |
+| `currency` | string | Always "USD" |
+| `unit` | string | Always "per_million_tokens" |
+
+## Model Ownership Mapping
+
+Models are automatically categorized by provider based on their ID patterns:
+
+| Provider | Model ID Patterns | Examples |
+|----------|------------------|----------|
+| `openai` | `gpt-*`, `chatgpt-*`, `o1-*`, `o3-*`, `o4-*` | gpt-4o-mini, o1-preview |
+| `anthropic` | `claude-*` | claude-3-5-sonnet-20241022 |
+| `meta` | `llama-*`, `meta-llama/*` | llama-3.3-70b-instruct |
+| `google` | `gemini-*` | gemini-2.0-flash-exp |
+| `nanogpt` | All others | Default fallback |
+
+## User-Specific Pricing
+
+When authenticated with an API key in detailed mode, pricing is adjusted based on user policies:
+
+- **Default Users**: Standard rates with profit markup
+- **At-Cost Users**: Special policy providing near-cost pricing  
+- **Referral Discounts**: 5% discount for referred users
+- **Nano Payment Discount**: 5% discount for payments in Nano cryptocurrency
+
+## Usage Examples
+
+### Basic Request
+
+```bash
+curl "https://nano-gpt.com/api/v1/models"
+```
+
+### Detailed Request
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?detailed=true"
+```
+
+### Detailed with Authentication
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?detailed=true" \
+  -H "Authorization: Bearer your_api_key_here"
+```
+
+### Alternative API Key Header
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?detailed=true" \
+  -H "x-api-key: your_api_key_here"
+```
+
+## Backwards Compatibility
+
+✅ **Full backwards compatibility maintained**
+- Default response format unchanged
+- All existing fields preserved  
+- New fields are additive only
+- No breaking changes to existing integrations 

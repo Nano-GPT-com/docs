@@ -8,26 +8,59 @@ The NanoGPT API allows you to generate text, images and video using any AI model
 
 ### Models (GET /v1/models)
 
-OpenAI-compatible endpoint for retrieving available models.
+OpenAI-compatible endpoint for retrieving available models with optional detailed information including pricing.
 
-**Authentication:** Bearer token
+**Authentication:** Bearer token (optional, enables user-specific pricing in detailed mode)
 
-**Example Request:**
+**Query Parameters:**
+- `detailed` (boolean, default: false): Returns detailed model information including pricing
+
+**Example Basic Request:**
 ```
 GET https://nano-gpt.com/api/v1/models
 Authorization: Bearer YOUR_API_KEY
 ```
 
-**Example Response:**
+**Example Basic Response:**
 ```json
 {
   "object": "list",
   "data": [
     {
-      "id": "chatgpt-4o-latest",
+      "id": "gpt-4o-mini",
       "object": "model",
       "created": 1677649963,
-      "owned_by": "nanogpt"
+      "owned_by": "openai"
+    }
+  ]
+}
+```
+
+**Example Detailed Request:**
+```
+GET https://nano-gpt.com/api/v1/models?detailed=true
+Authorization: Bearer YOUR_API_KEY
+```
+
+**Example Detailed Response:**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gpt-4o-mini",
+      "object": "model",
+      "created": 1677649963,
+      "owned_by": "openai",
+      "name": "GPT-4o Mini",
+      "description": "OpenAI's affordable and intelligent small model for fast, lightweight tasks",
+      "context_length": 128000,
+      "pricing": {
+        "prompt": 0.00015,
+        "completion": 0.0006,
+        "currency": "USD",
+        "unit": "per_million_tokens"
+      }
     }
   ]
 }
