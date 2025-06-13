@@ -5,14 +5,12 @@ openapi: 'GET /v1/models'
 
 ## Overview
 
-The `/api/v1/models` endpoint provides a list of available models. It supports optional detailed information including pricing data and user-specific pricing adjustments. The endpoint maintains full backwards compatibility while adding powerful new features.
+The `/api/v1/models` endpoint provides a list of available models. It supports optional detailed information including pricing data. The endpoint maintains full backwards compatibility while adding powerful new features.
 
 ## Features
 
 - **Basic Mode**: Standard OpenAI-compatible model listing
 - **Detailed Mode**: Enhanced information with pricing and model descriptions  
-- **User-Specific Pricing**: Personalized rates based on user policies when authenticated
-- **Model Filtering**: Automatically filters visible models and excludes free/custom models
 
 ## Query Parameters
 
@@ -126,26 +124,6 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `currency` | string | Always "USD" |
 | `unit` | string | Always "per_million_tokens" |
 
-## Model Ownership Mapping
-
-Models are automatically categorized by provider based on their ID patterns:
-
-| Provider | Model ID Patterns | Examples |
-|----------|------------------|----------|
-| `openai` | `gpt-*`, `chatgpt-*`, `o1-*`, `o3-*`, `o4-*` | gpt-4o-mini, o1-preview |
-| `anthropic` | `claude-*` | claude-3-5-sonnet-20241022 |
-| `meta` | `llama-*`, `meta-llama/*` | llama-3.3-70b-instruct |
-| `google` | `gemini-*` | gemini-2.0-flash-exp |
-| `nanogpt` | All others | Default fallback |
-
-## User-Specific Pricing
-
-When authenticated with an API key in detailed mode, pricing is adjusted based on user policies:
-
-- **Default Users**: Standard rates with profit markup
-- **At-Cost Users**: Special policy providing near-cost pricing  
-- **Referral Discounts**: 5% discount for referred users
-- **Nano Payment Discount**: 5% discount for payments in Nano cryptocurrency
 
 ## Usage Examples
 
@@ -177,7 +155,6 @@ curl "https://nano-gpt.com/api/v1/models?detailed=true" \
 
 ## Backwards Compatibility
 
-✅ **Full backwards compatibility maintained**
 - Default response format unchanged
 - All existing fields preserved  
 - New fields are additive only
