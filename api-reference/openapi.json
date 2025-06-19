@@ -809,6 +809,75 @@
         }
       }
     },
+    "/api/youtube-transcribe": {
+      "post": {
+        "description": "Extract transcripts from YouTube videos programmatically. Supports multiple URLs per request and provides detailed response information including success/failure status for each video.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "YouTube transcription parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/YouTubeTranscribeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "YouTube transcription response with results for each URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YouTubeTranscribeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Please provide an array of YouTube URLs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/tts": {
       "post": {
         "description": "Convert text into natural-sounding speech using various TTS models from different providers. Supports multiple languages, voices, and customization options including speed control, voice instructions, and audio format selection.",
@@ -2631,6 +2700,89 @@
           "currency": {
             "type": "string",
             "description": "Currency of the cost"
+          }
+        }
+      },
+      "YouTubeTranscribeRequest": {
+        "type": "object",
+        "required": ["urls"],
+        "properties": {
+          "urls": {
+            "type": "array",
+            "description": "Array of YouTube URLs to transcribe (maximum 10 URLs per request)",
+            "items": {
+              "type": "string",
+              "format": "uri",
+              "description": "YouTube URL in supported format"
+            },
+            "minItems": 1,
+            "maxItems": 10,
+            "example": [
+              "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+              "https://youtu.be/kJQP7kiw5Fk"
+            ]
+          }
+        }
+      },
+      "YouTubeTranscribeResponse": {
+        "type": "object",
+        "required": ["transcripts", "summary"],
+        "properties": {
+          "transcripts": {
+            "type": "array",
+            "description": "Array of transcript results for each URL",
+            "items": {
+              "type": "object",
+              "required": ["url", "success"],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "The original YouTube URL"
+                },
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether the transcript was successfully retrieved"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Video title (only if successful)"
+                },
+                "transcript": {
+                  "type": "string",
+                  "description": "The full transcript text (only if successful)"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Error message (only if failed)"
+                }
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "required": ["requested", "processed", "successful", "failed", "totalCost"],
+            "properties": {
+              "requested": {
+                "type": "integer",
+                "description": "Number of URLs provided in the request"
+              },
+              "processed": {
+                "type": "integer",
+                "description": "Number of valid YouTube URLs found and processed"
+              },
+              "successful": {
+                "type": "integer",
+                "description": "Number of transcripts successfully retrieved"
+              },
+              "failed": {
+                "type": "integer",
+                "description": "Number of transcripts that failed"
+              },
+              "totalCost": {
+                "type": "number",
+                "description": "Total cost in USD for successful transcripts"
+              }
+            }
           }
         }
       }
