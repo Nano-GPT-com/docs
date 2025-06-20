@@ -878,6 +878,78 @@
         }
       }
     },
+    "/api/scrape-urls": {
+      "post": {
+        "description": "Extract clean, formatted content from web pages. Returns both raw HTML content and formatted markdown.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Web scraping parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeUrlsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Web scraping response with results for each URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeUrlsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Please provide an array of URLs to scrape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An error occurred while processing your request"
+          }
+        }
+      }
+    },
     "/api/tts": {
       "post": {
         "description": "Convert text into natural-sounding speech using various TTS models from different providers. Supports multiple languages, voices, and customization options including speed control, voice instructions, and audio format selection.",
@@ -2781,6 +2853,93 @@
               "totalCost": {
                 "type": "number",
                 "description": "Total cost in USD for successful transcripts"
+              }
+            }
+          }
+        }
+      },
+      "ScrapeUrlsRequest": {
+        "type": "object",
+        "required": ["urls"],
+        "properties": {
+          "urls": {
+            "type": "array",
+            "description": "Array of URLs to scrape (maximum 5 URLs per request)",
+            "items": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to scrape"
+            },
+            "minItems": 1,
+            "maxItems": 5,
+            "example": [
+              "https://example.com/article",
+              "https://blog.com/post"
+            ]
+          }
+        }
+      },
+      "ScrapeUrlsResponse": {
+        "type": "object",
+        "required": ["results", "summary"],
+        "properties": {
+          "results": {
+            "type": "array",
+            "description": "Array of scraping results for each URL",
+            "items": {
+              "type": "object",
+              "required": ["url", "success"],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "The URL that was scraped"
+                },
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether the scraping was successful"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Page title if successfully scraped"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Raw HTML content"
+                },
+                "markdown": {
+                  "type": "string",
+                  "description": "Formatted markdown version of the content"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Error message if scraping failed"
+                }
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "required": ["requested", "processed", "successful", "failed", "totalCost"],
+            "properties": {
+              "requested": {
+                "type": "number",
+                "description": "Number of URLs in the original request"
+              },
+              "processed": {
+                "type": "number",
+                "description": "Number of valid URLs that were processed"
+              },
+              "successful": {
+                "type": "number",
+                "description": "Number of URLs successfully scraped"
+              },
+              "failed": {
+                "type": "number",
+                "description": "Number of URLs that failed to scrape"
+              },
+              "totalCost": {
+                "type": "number",
+                "description": "Total cost in USD (only for successful scrapes)"
               }
             }
           }
