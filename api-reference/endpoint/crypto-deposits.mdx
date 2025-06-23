@@ -44,7 +44,7 @@ curl -H "x-api-key: YOUR_API_KEY"
 ### Amount Limits
 
 Each cryptocurrency has minimum and maximum deposit limits based on USD equivalent:
-- **Minimum**: $1 USD equivalent
+- **Minimum**: $0.10 USD equivalent
 - **Maximum**: $500 USD equivalent
 
 <RequestExample>
@@ -156,7 +156,7 @@ if (amount < limits.minimum) {
 {
   "minimum": 0.00002,
   "maximum": 0.01,
-  "fiatEquivalentMinimum": 1.0,
+  "fiatEquivalentMinimum": 0.10,
   "fiatEquivalentMaximum": 500.0
 }
 ```

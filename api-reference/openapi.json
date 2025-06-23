@@ -3082,7 +3082,7 @@
         "properties": {
           "amount": {
             "type": "number",
-            "description": "Amount of cryptocurrency to deposit. Must be between minimum and maximum limits based on USD equivalent ($1-$500).",
+            "description": "Amount of cryptocurrency to deposit. Must be between minimum and maximum limits based on USD equivalent ($0.10-$500).",
             "example": 0.001
           }
         }
@@ -3157,7 +3157,7 @@
           "fiatEquivalentMinimum": {
             "type": "number",
             "description": "Minimum deposit amount in USD equivalent",
-            "example": 1.0
+            "example": 0.10
           },
           "fiatEquivalentMaximum": {
             "type": "number",
