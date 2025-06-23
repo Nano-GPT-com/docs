@@ -950,6 +950,137 @@
         }
       }
     },
+    "/api/transaction/create/{ticker}": {
+      "post": {
+        "description": "Generate a cryptocurrency deposit address via BTCPayServer integration. When crypto is sent to the generated address, the user's account balance is automatically credited.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "description": "Cryptocurrency ticker symbol",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["btc", "ltc", "xmr", "doge", "dash", "bch", "ban"]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Deposit amount parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CryptoDepositRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Crypto deposit address generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CryptoDepositResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid amount or unsupported ticker",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error - Payment provider unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transaction/limits/{ticker}": {
+      "get": {
+        "description": "Get minimum and maximum deposit amounts for a cryptocurrency",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "description": "Cryptocurrency ticker symbol",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["btc", "ltc", "xmr", "doge", "dash", "bch", "ban"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment limits for the cryptocurrency",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CryptoLimitsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Unsupported ticker",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          }
+        }
+      }
+    },
     "/api/tts": {
       "post": {
         "description": "Convert text into natural-sounding speech using various TTS models from different providers. Supports multiple languages, voices, and customization options including speed control, voice instructions, and audio format selection.",
@@ -2942,6 +3073,96 @@
                 "description": "Total cost in USD (only for successful scrapes)"
               }
             }
+          }
+        }
+      },
+      "CryptoDepositRequest": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Amount of cryptocurrency to deposit. Must be between minimum and maximum limits based on USD equivalent ($1-$500).",
+            "example": 0.001
+          }
+        }
+      },
+      "CryptoDepositResponse": {
+        "type": "object",
+        "required": ["txId", "amount", "status", "address"],
+        "properties": {
+          "txId": {
+            "type": "string",
+            "description": "Unique transaction identifier for tracking",
+            "example": "6Uwh14rFrKG9XnKDYTWKc4"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Requested deposit amount",
+            "example": 0.001
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": ["New", "Pending", "Completed", "Expired", "Failed"],
+            "example": "New"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO timestamp of invoice creation",
+            "example": "2025-06-23T14:52:43.000Z"
+          },
+          "paidAmountCrypto": {
+            "type": "number",
+            "description": "Amount paid so far (0 for new invoices)",
+            "example": 0
+          },
+          "address": {
+            "type": "string",
+            "description": "Crypto deposit address to send payment to",
+            "example": "bc1q..."
+          },
+          "remainingTime": {
+            "type": "integer",
+            "description": "Seconds until invoice expires",
+            "example": 3600
+          },
+          "expiration": {
+            "type": "integer",
+            "description": "Unix timestamp of expiration",
+            "example": 1750693963
+          },
+          "paymentLink": {
+            "type": "string",
+            "description": "URI link for wallet apps",
+            "example": "bitcoin:bc1q...?amount=0.001"
+          }
+        }
+      },
+      "CryptoLimitsResponse": {
+        "type": "object",
+        "required": ["minimum", "maximum", "fiatEquivalentMinimum", "fiatEquivalentMaximum"],
+        "properties": {
+          "minimum": {
+            "type": "number",
+            "description": "Minimum deposit amount in cryptocurrency",
+            "example": 0.00002
+          },
+          "maximum": {
+            "type": "number",
+            "description": "Maximum deposit amount in cryptocurrency",
+            "example": 0.01
+          },
+          "fiatEquivalentMinimum": {
+            "type": "number",
+            "description": "Minimum deposit amount in USD equivalent",
+            "example": 1.0
+          },
+          "fiatEquivalentMaximum": {
+            "type": "number",
+            "description": "Maximum deposit amount in USD equivalent",
+            "example": 500.0
           }
         }
       }
