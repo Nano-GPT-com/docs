@@ -29,63 +29,43 @@ Here's a complete example using the Recraft model and our older API standard:
 
 ```python
 import requests
-import json
 import base64
-from PIL import Image
-import io
 
-BASE_URL = "https://nano-gpt.com/api"
 API_KEY = "YOUR_API_KEY"
+BASE_URL = "https://nano-gpt.com/api"
 
-headers = {
-    "x-api-key": API_KEY,
-    "Content-Type": "application/json"
-}
+headers = {"x-api-key": API_KEY}
 
-def generate_image(prompt, model="recraft-v3", width=1024, height=1024):
-    """
-    Generate an image using the Recraft model.
-    """
-    data = {
-        "prompt": prompt,
-        "model": model,
-        "width": width,
-        "height": height,
-        "negative_prompt": "blurry, bad quality, distorted, deformed",
-        "nImages": 1,
-        "num_steps": 30,
-        "resolution": "1024x1024",
-        "sampler_name": "DPM++ 2M Karras",
-        "scale": 7.5
+response = requests.post(
+    f"{BASE_URL}/generate-image",
+    headers=headers,
+    json={
+        "model": "recraft-v3",
+        "prompt": "A serene mountain landscape at sunset",
+        "width": 1024,
+        "height": 1024
     }
+)
 
-    response = requests.post(
-        f"{BASE_URL}/generate-image",
-        headers=headers,
-        json=data
-    )
+result = response.json()
+b64_data = result["data"][0]["b64_json"]
 
-    if response.status_code != 200:
-        raise Exception(f"Error: {response.status_code}")
+# Decode and save the image
+image_bytes = base64.b64decode(b64_data)
+with open("generated_image.png", "wb") as f:
+    f.write(image_bytes)
 
-    result = response.json()
-    
-    # Decode and save the image
-    image_data = base64.b64decode(result['image'])
-    image = Image.open(io.BytesIO(image_data))
-    image.save("generated_image.png")
-    
-    return result
+# Display cost information
+cost = result.get("cost", "N/A")
+payment_source = result.get("paymentSource", "N/A")
+remaining_balance = result.get("remainingBalance")
 
-# Example usage
-prompt = "A serene landscape with mountains and a lake at sunset, digital art style"
-try:
-    result = generate_image(prompt)
-    print("Image generated successfully!")
-    print("Cost:", result.get('cost', 'N/A'))
-    print("Image saved as 'generated_image.png'")
-except Exception as e:
-    print(f"Error: {str(e)}")
+print(f"Image saved as generated_image.png")
+print(f"Cost: {cost} {payment_source}")
+if remaining_balance is not None:
+    print(f"Remaining balance: {remaining_balance} {payment_source}")
+else:
+    print("Remaining balance: Not available")
 ```
 
 ## Parameters
