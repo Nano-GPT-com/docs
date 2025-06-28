@@ -16,6 +16,7 @@ The BTCPayServer integration allows API users to programmatically generate depos
 - **DASH** (Dash)
 - **BCH** (Bitcoin Cash) - via PromptCash integration
 - **BAN** (Banano) - via Nanswap integration
+- **KAS** (Kaspa)
 
 ## Authentication
 
@@ -34,7 +35,7 @@ curl -H "x-api-key: YOUR_API_KEY"
 </Card>
 
 <ParamField path="ticker" type="string" required>
-  Cryptocurrency ticker symbol. Supported values: `btc`, `ltc`, `xmr`, `doge`, `dash`, `bch`, `ban`
+  Cryptocurrency ticker symbol. Supported values: `btc`, `ltc`, `xmr`, `doge`, `dash`, `bch`, `ban`, `kas`
 </ParamField>
 
 <ParamField body="amount" type="number" required>
@@ -44,7 +45,13 @@ curl -H "x-api-key: YOUR_API_KEY"
 ### Amount Limits
 
 Each cryptocurrency has minimum and maximum deposit limits based on USD equivalent:
+
+**Standard Limits** (BTC, LTC, XMR, DOGE, DASH, BCH, BAN):
 - **Minimum**: $0.10 USD equivalent
+- **Maximum**: $500 USD equivalent
+
+**KAS Limits**:
+- **Minimum**: $10 USD equivalent
 - **Maximum**: $500 USD equivalent
 
 <RequestExample>
@@ -67,6 +74,21 @@ const response = await fetch('/api/transaction/create/btc', {
 
 const deposit = await response.json();
 console.log('Send BTC to:', deposit.address);
+```
+
+```javascript KAS Example
+// Note: KAS has higher minimum ($10)
+const kasResponse = await fetch('/api/transaction/create/kas', {
+  method: 'POST',
+  headers: {
+    'x-api-key': 'YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ amount: 1000 }) // Amount in KAS
+});
+
+const kasDeposit = await kasResponse.json();
+console.log('Send KAS to:', kasDeposit.address);
 ```
 </RequestExample>
 
@@ -122,6 +144,18 @@ console.log('Send BTC to:', deposit.address);
 
 <ResponseField name="paymentLink" type="string">
   URI link for wallet apps
+</ResponseField>
+
+<ResponseField name="QRUrl" type="string">
+  QR code URL for the payment address (if available)
+</ResponseField>
+
+<ResponseField name="amountCrypto" type="number">
+  Amount in cryptocurrency (if available)
+</ResponseField>
+
+<ResponseField name="amountFiat" type="number">
+  Equivalent USD value (if available)
 </ResponseField>
 
 <Card title="Check Payment Limits" icon="chart-line" color="#16a34a">
@@ -212,3 +246,10 @@ User sends crypto to the provided address
 Account balance automatically updated when payment confirms
 </Step>
 </Steps>
+
+<Note>
+**KAS (Kaspa) Special Considerations:**
+- Higher minimum deposit requirement ($10 USD vs $0.10 for other cryptos)
+- Deposits are automatically credited upon blockchain confirmation
+- 1-hour expiration time for payment invoices
+</Note>
