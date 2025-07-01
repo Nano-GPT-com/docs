@@ -11,6 +11,8 @@ The NanoGPT API offers access to all the state-of-the-art image models. This gui
 
 This endpoint follows the OpenAI specification for image generation and returns a list of base64-encoded images.
 
+### Basic Image Generation
+
 ```bash
 curl https://nano-gpt.com/v1/images/generations \
   -H "Authorization: Bearer $API_KEY" \
@@ -21,6 +23,42 @@ curl https://nano-gpt.com/v1/images/generations \
     "n": 1,
     "size": "1024x1024"
   }'
+```
+
+### Image-to-Image with OpenAI Endpoint
+
+The OpenAI-compatible endpoint also supports img2img generation using the `imageDataUrl` parameter:
+
+```python
+import requests
+import base64
+
+API_KEY = "YOUR_API_KEY"
+
+# Read and encode your input image
+with open("input_image.jpg", "rb") as image_file:
+    encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+    image_data_url = f"data:image/jpeg;base64,{encoded_image}"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(
+    "https://nano-gpt.com/v1/images/generations",
+    headers=headers,
+    json={
+        "model": "flux-kontext",
+        "prompt": "Transform this image into a watercolor painting",
+        "n": 1,
+        "size": "1024x1024",
+        "imageDataUrl": image_data_url
+    }
+)
+
+result = response.json()
+# The response includes base64-encoded images in result["data"]
 ```
 
 ## Image Generation
