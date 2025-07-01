@@ -83,22 +83,132 @@ The image generation API accepts the following parameters:
 - `sampler_name` (string): Sampling method (default: "DPM++ 2M Karras")
 - `scale` (float): Guidance scale (default: 7.5)
 
+## Image-to-Image (img2img) Generation
+
+You can use existing images as input for image generation with models that support img2img functionality, such as flux-kontext. This allows you to edit or transform existing images based on text prompts.
+
+### Using Image Input
+
+To use an image as input, include the `imageDataUrl` parameter with a base64-encoded image:
+
+```python
+import requests
+import base64
+
+API_KEY = "YOUR_API_KEY"
+BASE_URL = "https://nano-gpt.com/api"
+
+# Read and encode your input image
+with open("input_image.jpg", "rb") as image_file:
+    encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+
+headers = {"x-api-key": API_KEY}
+
+response = requests.post(
+    f"{BASE_URL}/generate-image",
+    headers=headers,
+    json={
+        "model": "flux-kontext",
+        "prompt": "Edit this image to add a rainbow in the sky",
+        "kontext_max_mode": True,
+        "imageDataUrl": f"data:image/jpeg;base64,{encoded_image}"
+    }
+)
+
+result = response.json()
+```
+
+### Image Input Parameters
+
+When using image input, the following additional parameters are available:
+
+- `imageDataUrl` (string): Base64-encoded image data URL (format: `data:image/[type];base64,[data]`)
+- `kontext_max_mode` (boolean): When using flux-kontext model, enables maximum context mode for better image understanding
+
+### Supported Image Formats
+
+The following image formats are supported for input:
+- JPEG/JPG (`data:image/jpeg;base64,`)
+- PNG (`data:image/png;base64,`)
+- WebP (`data:image/webp;base64,`)
+
+### img2img Example
+
+Here's a complete example of editing an existing image:
+
+```python
+import requests
+import base64
+from PIL import Image
+import io
+
+API_KEY = "YOUR_API_KEY"
+BASE_URL = "https://nano-gpt.com/api"
+
+def image_to_base64(image_path):
+    """Convert an image file to base64 data URL"""
+    with open(image_path, "rb") as image_file:
+        encoded = base64.b64encode(image_file.read()).decode('utf-8')
+        # Detect image format
+        if image_path.lower().endswith('.png'):
+            return f"data:image/png;base64,{encoded}"
+        elif image_path.lower().endswith('.webp'):
+            return f"data:image/webp;base64,{encoded}"
+        else:  # Default to JPEG
+            return f"data:image/jpeg;base64,{encoded}"
+
+headers = {"x-api-key": API_KEY}
+
+# Convert your input image
+image_data_url = image_to_base64("landscape.jpg")
+
+# Edit the image
+response = requests.post(
+    f"{BASE_URL}/generate-image",
+    headers=headers,
+    json={
+        "model": "flux-kontext",
+        "prompt": "Transform this landscape to a winter scene with snow",
+        "kontext_max_mode": True,
+        "imageDataUrl": image_data_url,
+        "width": 1024,
+        "height": 1024
+    }
+)
+
+if response.status_code == 200:
+    result = response.json()
+    output_b64 = result["data"][0]["b64_json"]
+    
+    # Save the edited image
+    output_bytes = base64.b64decode(output_b64)
+    with open("winter_landscape.png", "wb") as f:
+        f.write(output_bytes)
+    
+    print("Image edited and saved as winter_landscape.png")
+else:
+    print(f"Error: {response.status_code} - {response.text}")
+```
+
 ## Best Practices
 
 1. **Prompt Engineering**
    - Be specific and detailed in your prompts
    - Include style references when needed
    - Use the negative prompt to avoid unwanted elements
+   - For img2img, describe the changes you want relative to the input image
 
 2. **Image Quality**
    - Higher resolution settings produce better quality but take longer
    - More steps generally mean better quality but slower generation
    - Adjust the guidance scale based on how closely you want to follow the prompt
+   - For img2img, ensure your input image has good quality for best results
 
 3. **Cost Optimization**
    - Start with lower resolution for testing
    - Use fewer steps during development
    - Generate one image at a time unless multiple variations are needed
+   - Compress input images appropriately to reduce upload size
 
 ## Error Handling
 
