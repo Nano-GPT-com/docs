@@ -180,7 +180,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
         "Content-Type": "application/json"
     }
 
-    # Standard web search ($0.005 per request)
+    # Standard web search ($0.006 per request)
     data = {
         "model": "chatgpt-4o-latest:online",
         "messages": [
@@ -197,7 +197,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
 
     print("Response:", response.json()['choices'][0]['message']['content'])
 
-    # Deep web search for comprehensive research ($0.05 per request)
+    # Deep web search for comprehensive research ($0.06 per request)
     deep_data = {
         "model": "claude-3-5-sonnet-20241022:online/linkup-deep",
         "messages": [
@@ -218,6 +218,8 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
     - Standard search: 10 results quickly
     - Deep search: Iterative searching for comprehensive information
 
+    For more advanced web search capabilities including structured output, domain filtering, and date filtering, see the [Web Search API](/api-reference/endpoint/web-search).
+    
     Check out our [Chat Completion Guide](/api-reference/endpoint/chat-completion) for more examples.
   </Accordion>
 

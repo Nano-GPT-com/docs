@@ -950,6 +950,78 @@
         }
       }
     },
+    "/api/web": {
+      "post": {
+        "description": "Perform AI-powered web searches using Linkup with multiple output formats, date filtering, and domain filtering.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Web search parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Web search response with results based on output type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Query parameter is required and must be a string",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance. A minimum balance of $1.00 is required to use web search.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An error occurred while processing your request"
+          }
+        }
+      }
+    },
     "/api/transaction/create/{ticker}": {
       "post": {
         "description": "Generate a cryptocurrency deposit address via BTCPayServer integration. When crypto is sent to the generated address, the user's account balance is automatically credited.",
@@ -2371,8 +2443,56 @@
           },
           "imageDataUrl": {
             "type": "string",
-            "description": "Base64-encoded image data URL for img2img generation (format: data:image/[type];base64,[data])",
+            "description": "Base64-encoded image data URL for img2img generation. Single image input for models that support image-to-image transformation. Format: data:image/[type];base64,[data]. Note: Direct URL input is not supported - images must be converted to base64 data URLs before submission.",
             "example": "data:image/jpeg;base64,/9j/4AAQ..."
+          },
+          "imageDataUrls": {
+            "type": "array",
+            "description": "Array of base64-encoded image data URLs for models supporting multiple image inputs (e.g., flux-kontext, gpt-4o-image, gpt-image-1). Each URL must follow the format: data:image/[type];base64,[data]",
+            "items": {
+              "type": "string",
+              "format": "data-url"
+            },
+            "example": [
+              "data:image/jpeg;base64,/9j/4AAQ...",
+              "data:image/png;base64,iVBORw0KGgo..."
+            ]
+          },
+          "maskDataUrl": {
+            "type": "string",
+            "description": "Base64-encoded mask image data URL for inpainting models (e.g., flux-lora/inpainting). White areas indicate regions to edit. Format: data:image/[type];base64,[data]",
+            "example": "data:image/png;base64,iVBORw0KGgo..."
+          },
+          "strength": {
+            "type": "number",
+            "description": "Controls how much the output differs from the input image in img2img mode. Lower values produce outputs closer to the input.",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 0.8
+          },
+          "guidance_scale": {
+            "type": "number",
+            "description": "How closely the model follows the text prompt. Higher values result in images more closely aligned with the prompt.",
+            "minimum": 0.0,
+            "maximum": 20.0,
+            "default": 7.5
+          },
+          "num_inference_steps": {
+            "type": "integer",
+            "description": "Number of denoising steps. More steps generally produce higher quality but take longer.",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 30
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Random seed for reproducible generation. Use the same seed with the same parameters to get identical results.",
+            "example": 42
+          },
+          "kontext_max_mode": {
+            "type": "boolean",
+            "description": "Enable enhanced context mode for flux-kontext model. Provides better understanding of input images.",
+            "default": false
           }
         }
       },
@@ -3086,6 +3206,167 @@
               "totalCost": {
                 "type": "number",
                 "description": "Total cost in USD (only for successful scrapes)"
+              }
+            }
+          }
+        }
+      },
+      "WebSearchRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query to send to Linkup",
+            "example": "latest AI news"
+          },
+          "depth": {
+            "type": "string",
+            "description": "Search depth. Standard ($0.006) or deep ($0.06)",
+            "enum": ["standard", "deep"],
+            "default": "standard"
+          },
+          "outputType": {
+            "type": "string",
+            "description": "Output format for search results",
+            "enum": ["searchResults", "sourcedAnswer", "structured"],
+            "default": "searchResults"
+          },
+          "structuredOutputSchema": {
+            "type": "string",
+            "description": "JSON schema string defining the desired response format. Required when outputType is 'structured'",
+            "example": "{\"type\": \"object\", \"properties\": {\"items\": {\"type\": \"array\"}}}"
+          },
+          "includeImages": {
+            "type": "boolean",
+            "description": "Whether to include image results in the search",
+            "default": false
+          },
+          "fromDate": {
+            "type": "string",
+            "description": "Filter results from this date (YYYY-MM-DD format)",
+            "example": "2025-01-01"
+          },
+          "toDate": {
+            "type": "string",
+            "description": "Filter results until this date (YYYY-MM-DD format)",
+            "example": "2025-07-01"
+          },
+          "excludeDomains": {
+            "type": "array",
+            "description": "Array of domains to exclude from search results",
+            "items": {
+              "type": "string"
+            },
+            "example": ["example.com", "spam.com"]
+          },
+          "includeDomains": {
+            "type": "array",
+            "description": "Array of domains to search exclusively",
+            "items": {
+              "type": "string"
+            },
+            "example": ["trusted.com", "official.org"]
+          }
+        }
+      },
+      "WebSearchResponse": {
+        "type": "object",
+        "required": ["data", "metadata"],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "type": "array",
+                "description": "Array of search results when outputType is 'searchResults'",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["text", "image"],
+                      "description": "Type of search result"
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Title of the result"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "URL of the result"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Content snippet (for text results)"
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "Image URL (for image results)"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "description": "Sourced answer when outputType is 'sourcedAnswer'",
+                "properties": {
+                  "answer": {
+                    "type": "string",
+                    "description": "The comprehensive answer to the query"
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Source name"
+                        },
+                        "url": {
+                          "type": "string",
+                          "description": "Source URL"
+                        },
+                        "snippet": {
+                          "type": "string",
+                          "description": "Relevant snippet from the source"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "description": "Structured data matching the provided schema"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["query", "depth", "outputType", "timestamp", "cost"],
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "The search query that was executed"
+              },
+              "depth": {
+                "type": "string",
+                "description": "The search depth used",
+                "enum": ["standard", "deep"]
+              },
+              "outputType": {
+                "type": "string",
+                "description": "The output format used",
+                "enum": ["searchResults", "sourcedAnswer", "structured"]
+              },
+              "timestamp": {
+                "type": "string",
+                "description": "ISO 8601 timestamp of when the search was performed"
+              },
+              "cost": {
+                "type": "number",
+                "description": "The cost of the search in USD"
               }
             }
           }
