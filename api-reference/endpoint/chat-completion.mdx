@@ -119,6 +119,37 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 </CodeGroup>
 
+## Reasoning Parameter
+
+The API supports filtering out thinking content (e.g., Claude's `<think>` tags) from responses using the optional `reasoning` parameter:
+
+```json
+{
+  "reasoning": {
+    "exclude": true
+  }
+}
+```
+
+When `reasoning.exclude` is set to `true`, the API removes content between `<think>` and `</think>` tags before returning the response. This works for both streaming and non-streaming requests.
+
+### Example
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022",
+    "messages": [{"role": "user", "content": "What is 2+2?"}],
+    "reasoning": {"exclude": true}
+  }'
+```
+
+**Without reasoning.exclude**: `"<think>The user is asking for a simple addition. 2+2 equals 4.</think>\n\nThe answer is 4."`
+
+**With reasoning.exclude**: `"The answer is 4."`
+
 ## Performance Benchmarks
 
 LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
