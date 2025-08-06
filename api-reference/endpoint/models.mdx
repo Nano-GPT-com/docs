@@ -5,7 +5,9 @@ openapi: 'GET /v1/models'
 
 ## Overview
 
-The `/api/v1/models` endpoint provides a list of available models. It supports optional detailed information including pricing data. The endpoint maintains full backwards compatibility while adding powerful new features.
+The `/api/v1/models` endpoint provides a list of available text generation models. It supports optional detailed information including pricing data. The endpoint maintains full backwards compatibility while adding powerful new features.
+
+For embedding models, use the dedicated [/api/v1/embedding-models](/api-reference/endpoint/embedding-models) endpoint which provides comprehensive information about all available embedding models.
 
 ## Features
 
@@ -158,4 +160,9 @@ curl "https://nano-gpt.com/api/v1/models?detailed=true" \
 - Default response format unchanged
 - All existing fields preserved  
 - New fields are additive only
-- No breaking changes to existing integrations 
+- No breaking changes to existing integrations
+
+## Related Endpoints
+
+- [/api/v1/embedding-models](/api-reference/endpoint/embedding-models) - List all available embedding models with detailed information
+- [/api/v1/embeddings](/api-reference/endpoint/embeddings) - Create embeddings using the available models 

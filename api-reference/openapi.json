@@ -1283,6 +1283,96 @@
           }
         }
       }
+    },
+    "/v1/embeddings": {
+      "post": {
+        "description": "Create embeddings for text using OpenAI-compatible and alternative embedding models",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Parameters for creating embeddings",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbeddingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Embedding response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v1/embedding-models": {
+      "get": {
+        "description": "List all available embedding models with detailed information",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available embedding models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3459,6 +3549,198 @@
             "type": "number",
             "description": "Maximum deposit amount in USD equivalent",
             "example": 500.0
+          }
+        }
+      },
+      "EmbeddingRequest": {
+        "type": "object",
+        "required": ["input", "model"],
+        "properties": {
+          "input": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Single text string to embed"
+              },
+              {
+                "type": "array",
+                "description": "Array of text strings to embed (max 2048)",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 2048
+              }
+            ],
+            "description": "Text to embed - single string or array of up to 2048 strings"
+          },
+          "model": {
+            "type": "string",
+            "description": "ID of the embedding model to use",
+            "example": "text-embedding-3-small"
+          },
+          "encoding_format": {
+            "type": "string",
+            "description": "Format for embeddings",
+            "enum": ["float", "base64"],
+            "default": "float"
+          },
+          "dimensions": {
+            "type": "integer",
+            "description": "Reduce embedding dimensions (only for supported models)",
+            "example": 256
+          },
+          "user": {
+            "type": "string",
+            "description": "Optional identifier for tracking usage"
+          }
+        }
+      },
+      "EmbeddingResponse": {
+        "type": "object",
+        "required": ["object", "data", "model", "usage"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": "Always 'list' for embeddings",
+            "example": "list"
+          },
+          "data": {
+            "type": "array",
+            "description": "Array of embedding objects",
+            "items": {
+              "type": "object",
+              "required": ["object", "index", "embedding"],
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "description": "Always 'embedding'",
+                  "example": "embedding"
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "Index of this embedding in the batch",
+                  "example": 0
+                },
+                "embedding": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "description": "Embedding vector as array of floats",
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "type": "string",
+                      "description": "Base64-encoded embedding vector"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used for embeddings",
+            "example": "text-embedding-3-small"
+          },
+          "usage": {
+            "type": "object",
+            "required": ["prompt_tokens", "total_tokens"],
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the input",
+                "example": 8
+              },
+              "total_tokens": {
+                "type": "integer",
+                "description": "Total tokens processed",
+                "example": 8
+              }
+            }
+          }
+        }
+      },
+      "EmbeddingModelsResponse": {
+        "type": "object",
+        "required": ["object", "data"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": "Always 'list'",
+            "example": "list"
+          },
+          "data": {
+            "type": "array",
+            "description": "Array of embedding model objects",
+            "items": {
+              "type": "object",
+              "required": ["id", "object", "created", "owned_by"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique model identifier",
+                  "example": "text-embedding-3-small"
+                },
+                "object": {
+                  "type": "string",
+                  "description": "Always 'model'",
+                  "example": "model"
+                },
+                "created": {
+                  "type": "integer",
+                  "description": "Unix timestamp",
+                  "example": 1754480583
+                },
+                "owned_by": {
+                  "type": "string",
+                  "description": "Model provider",
+                  "example": "openai"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Human-readable model name",
+                  "example": "Text Embedding 3 Small"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Model description and use cases",
+                  "example": "Most cost-effective OpenAI embedding model with dimension reduction support"
+                },
+                "dimensions": {
+                  "type": "integer",
+                  "description": "Default embedding vector dimensions",
+                  "example": 1536
+                },
+                "supports_dimensions": {
+                  "type": "boolean",
+                  "description": "Whether model supports dimension reduction",
+                  "example": true
+                },
+                "max_tokens": {
+                  "type": "integer",
+                  "description": "Maximum input tokens supported",
+                  "example": 8191
+                },
+                "pricing": {
+                  "type": "object",
+                  "required": ["per_million_tokens", "currency"],
+                  "properties": {
+                    "per_million_tokens": {
+                      "type": "number",
+                      "description": "Cost per million tokens",
+                      "example": 0.02
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "Pricing currency",
+                      "example": "USD"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
