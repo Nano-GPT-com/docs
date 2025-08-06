@@ -24,6 +24,8 @@
           "api-reference/endpoint/models-old",
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/completion",
+          "api-reference/endpoint/embeddings",
+          "api-reference/endpoint/embedding-models",
           "api-reference/endpoint/image-generation",
           "api-reference/endpoint/image-generation-openai",
           "api-reference/endpoint/transcribe",
@@ -47,6 +49,7 @@
         "group": "API Reference",
         "pages": [
           "api-reference/text-generation",
+          "api-reference/embeddings",
           "api-reference/image-generation",
           "api-reference/video-generation",
           "api-reference/speech-to-text",
