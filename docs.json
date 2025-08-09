@@ -66,6 +66,7 @@
           "api-reference/miscellaneous/auto-recharge",
           "api-reference/miscellaneous/chrome-extension",
           "api-reference/miscellaneous/javascript",
+          "api-reference/miscellaneous/context-memory",
           "api-reference/miscellaneous/typescript"
         ]
       },
@@ -73,6 +74,8 @@
         "group": "Integrations",
         "pages": [
           "integrations/cline",
+          "integrations/roocode",
+          "integrations/kilocode",
           "integrations/cursor",
           "integrations/sillytavern",
           "integrations/openwebui",

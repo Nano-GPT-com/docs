@@ -119,6 +119,69 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 </CodeGroup>
 
+## Context Memory
+
+Enable unlimited-length conversations with lossless, hierarchical memory.
+
+- Append `:memory` to any model name
+- Or send header `memory: true`
+- Can be combined with web search: `:online:memory`
+
+<CodeGroup>
+
+```python Python
+import requests
+
+BASE_URL = "https://nano-gpt.com/api/v1"
+API_KEY = "YOUR_API_KEY"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+# Suffix-based
+payload = {
+    "model": "chatgpt-4o-latest:memory",
+    "messages": [{"role": "user", "content": "Keep our previous discussion in mind and continue."}]
+}
+requests.post(f"{BASE_URL}/chat/completions", headers=headers, json=payload)
+```
+
+```javascript JavaScript
+const BASE_URL = "https://nano-gpt.com/api/v1";
+const API_KEY = "YOUR_API_KEY";
+
+// Header-based
+await fetch(`${BASE_URL}/chat/completions`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${API_KEY}`,
+    'Content-Type': 'application/json',
+    'memory': 'true'
+  },
+  body: JSON.stringify({
+    model: 'chatgpt-4o-latest',
+    messages: [{ role: 'user', content: 'Continue with full history awareness.' }]
+  })
+});
+```
+
+```bash cURL
+# Combine with web search
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "chatgpt-4o-latest:online:memory",
+    "messages": [
+      {"role": "user", "content": "Research and continue our plan without losing context."}
+    ]
+  }'
+```
+
+</CodeGroup>
+
 ## Reasoning Parameter
 
 The API supports filtering out thinking content (e.g., Claude's `<think>` tags) from responses using the optional `reasoning` parameter:
