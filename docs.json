@@ -72,16 +72,17 @@
       },
       {
         "group": "Integrations",
-        "pages": [
-          "integrations/cline",
-          "integrations/roocode",
-          "integrations/kilocode",
-          "integrations/cursor",
-          "integrations/sillytavern",
-          "integrations/openwebui",
-          "integrations/typingmind",
-          "integrations/librechat"
-        ]
+                "pages": [
+           "integrations/cline",
+           "integrations/roocode",
+           "integrations/kilocode",
+           "integrations/cursor",
+           "integrations/sillytavern",
+           "integrations/openwebui",
+           "integrations/typingmind",
+           "integrations/librechat",
+           "integrations/openhands"
+         ]
       }
      
      
