@@ -126,6 +126,7 @@ Enable unlimited-length conversations with lossless, hierarchical memory.
 - Append `:memory` to any model name
 - Or send header `memory: true`
 - Can be combined with web search: `:online:memory`
+- Retention: default 30 days; configure via `:memory-<days>` (1..365) or header `memory_expiration_days: <days>`; header takes precedence
 
 <CodeGroup>
 
@@ -152,13 +153,14 @@ requests.post(f"{BASE_URL}/chat/completions", headers=headers, json=payload)
 const BASE_URL = "https://nano-gpt.com/api/v1";
 const API_KEY = "YOUR_API_KEY";
 
-// Header-based
+// Header-based (with optional retention override)
 await fetch(`${BASE_URL}/chat/completions`, {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${API_KEY}`,
     'Content-Type': 'application/json',
-    'memory': 'true'
+    'memory': 'true',
+    'memory_expiration_days': '45'
   },
   body: JSON.stringify({
     model: 'chatgpt-4o-latest',
@@ -168,14 +170,27 @@ await fetch(`${BASE_URL}/chat/completions`, {
 ```
 
 ```bash cURL
-# Combine with web search
+# Combine with web search (and set retention to 90 days via suffix)
 curl -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "chatgpt-4o-latest:online:memory",
+    "model": "chatgpt-4o-latest:online:memory-90",
     "messages": [
       {"role": "user", "content": "Research and continue our plan without losing context."}
+    ]
+  }'
+
+# Header-based retention override (header takes precedence)
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "memory: true" \
+  -H "memory_expiration_days: 45" \
+  -d '{
+    "model": "chatgpt-4o-latest",
+    "messages": [
+      {"role": "user", "content": "Use memory with 45-day retention."}
     ]
   }'
 ```

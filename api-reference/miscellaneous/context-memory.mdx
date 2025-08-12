@@ -115,6 +115,28 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 </CodeGroup>
 
+## Retention and Caching
+
+- **Default retention**: 30 days.
+- **Configure via model suffix**: `:memory-<days>` where `<days>` is 1..365
+  - Example: `gpt-4o:memory-90`
+- **Configure via header**: `memory_expiration_days: <days>` (1..365)
+  - Example:
+    ```bash
+    curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "memory: true" \
+      -H "memory_expiration_days: 45" \
+      -d '{
+        "model": "gpt-4o",
+        "messages": [{"role": "user", "content": "Hello"}]
+      }'
+    ```
+- **Precedence**: If both suffix and header are provided, the header value takes precedence for retention.
+- **Data lifecycle**: The compressed chat state is retained server‑side for the configured period (or until you delete the conversation). When you delete conversations locally, no memory data persists on Polychat’s systems.
+- **Caching**: There is currently no caching of compressed memory messages; compression runs per request. This simplifies correctness and privacy. Caching strategies may be introduced later.
+
 ## Technical Details
 
 Context Memory is implemented as a B‑tree with lossless compression over message histories. Upper nodes store summaries; leaves retain verbatim excerpts relevant to recent turns. Retrieval returns details contextualized by their summaries—unlike RAG which returns isolated chunks.
