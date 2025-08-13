@@ -1373,6 +1373,45 @@
           }
         }
       }
+    },
+    "/v1/memory": {
+      "post": {
+        "description": "Compress a conversation with Context Memory and return compressed messages and usage (no model inference)",
+        "security": [
+          { "bearerAuth": [] },
+          { "apiKeyAuth": [] }
+        ],
+        "requestBody": {
+          "description": "Parameters for memory compression",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MemoryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memory compression response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MemoryResponse" } }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing or invalid messages",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "401": { "description": "Unauthorized - Invalid or missing API key" },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3739,6 +3778,68 @@
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "MemoryRequest": {
+      "type": "object",
+      "required": ["messages"],
+      "properties": {
+        "messages": {
+          "type": "array",
+          "description": "OpenAI-style messages array to compress",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string", "enum": ["system", "user", "assistant", "tool", "function"] },
+              "content": { "oneOf": [ { "type": "string" }, { "type": "array" } ] }
+            },
+            "required": ["role", "content"]
+          }
+        },
+        "expiration_days": {
+          "type": "integer",
+          "description": "Retention in days (1..365). Defaults to 30 if not provided.",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 30
+        },
+        "model_context_limit": {
+          "type": "integer",
+          "description": "Target context size for compression (minimum enforced 10,000)",
+          "default": 128000
+        }
+      }
+    },
+    "MemoryResponse": {
+      "type": "object",
+      "required": ["messages", "usage"],
+      "properties": {
+        "messages": {
+          "type": "array",
+          "description": "Compressed memory message array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string" },
+              "content": { "type": "string" }
+            },
+            "required": ["role", "content"]
+          }
+        },
+        "usage": {
+          "type": "object",
+          "properties": {
+            "prompt_tokens": { "type": "integer" },
+            "completion_tokens": { "type": "integer" },
+            "total_tokens": { "type": "integer" },
+            "prompt_tokens_details": {
+              "type": "object",
+              "properties": {
+                "cached_tokens": { "type": "integer" }
               }
             }
           }

@@ -31,6 +31,7 @@
           "api-reference/endpoint/transcribe",
           "api-reference/endpoint/transcribe-status",
           "api-reference/endpoint/youtube-transcribe",
+          "api-reference/endpoint/memory",
           "api-reference/endpoint/scrape-urls",
           "api-reference/endpoint/web-search",
           "api-reference/endpoint/tts",
