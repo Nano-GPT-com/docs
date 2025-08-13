@@ -5,20 +5,16 @@ openapi: "POST /v1/memory"
 
 ## Overview
 
-The standalone Context Memory endpoint compresses an entire conversation into a single memory message using Polychat's Context Memory. This endpoint does not run a model. It returns the compressed memory message and usage so you can pipe it into your own chat completion request or store it.
+The standalone Context Memory endpoint compresses an entire conversation into a single memory message. This endpoint does not run a model. It returns the compressed memory message and usage so you can pipe it into your own chat completion request or store it.
 
 - No model inference is performed
 - Pass your `messages` array and optional settings
-- We return `{ messages, usage }` from Polychat and bill exactly their cost (no markup)
-
-See the feature overview in `api-reference/miscellaneous/context-memory`.
 
 ## Authentication
 
 - `Authorization: Bearer YOUR_API_KEY` or
 - `x-api-key: YOUR_API_KEY`
 
-Standard abuse protection and rate limits apply.
 
 ## Request
 
@@ -63,7 +59,7 @@ Standard abuse protection and rate limits apply.
 ```
 
 - `messages`: The single memory-compressed message array to use as your full context in a chat completion request
-- `usage`: Polychat token usage. When available, `prompt_tokens_details.cached_tokens` indicates discounted cached input tokens
+- `usage`: Token usage. When available, `prompt_tokens_details.cached_tokens` indicates discounted cached input tokens
 
 ### Error Examples
 ```json 400 Bad Request
@@ -81,11 +77,9 @@ Standard abuse protection and rate limits apply.
 
 ## Pricing & Billing
 
-- Exact pass-through of Polychat costs; no markup
 - Non-cached input tokens: $5.00 / 1M
 - Cached input tokens: $2.50 / 1M (when applicable)
 - Output tokens: $10.00 / 1M
-- Balance precheck performed using estimated input tokens at $5.00 / 1M
 
 Note: This endpoint only charges for memory compression. If you later call `/v1/chat/completions`, model costs are billed separately.
 
@@ -158,9 +152,4 @@ curl -X POST https://nano-gpt.com/api/v1/memory \
 
 </CodeGroup>
 
-## Usage with Chat Completions
-
-- Use this endpoint to compress long histories, then call `POST /v1/chat/completions` with the returned `messages`
-- Alternatively, enable memory directly in chat completions by appending `:memory` to the model or sending the `memory: true` header
-
-For the full feature overview, see `api-reference/miscellaneous/context-memory`. 
+ 
