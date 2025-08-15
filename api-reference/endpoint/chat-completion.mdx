@@ -197,6 +197,57 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 </CodeGroup>
 
+### Custom Context Size Override
+
+When Context Memory is enabled, you can override the model-derived context size used for the memory compression step with `model_context_limit`.
+
+- Parameter: `model_context_limit` (number or numeric string)
+- Default: Derived from the selected model’s context size
+- Minimum: Values below 10,000 are clamped internally
+- Scope: Only affects memory compression; does not change the target model’s own window
+
+Examples:
+
+```bash
+# Enable memory via header; use model default context size
+curl -s -X POST \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "memory: true" \
+  https://nano-gpt.com/api/v1/chat/completions \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role":"user","content":"Briefly say hello."}],
+    "stream": false
+  }'
+
+# Explicit numeric override
+curl -s -X POST \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "memory: true" \
+  https://nano-gpt.com/api/v1/chat/completions \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role":"user","content":"Briefly say hello."}],
+    "model_context_limit": 20000,
+    "stream": false
+  }'
+
+# String override (server coerces to number)
+curl -s -X POST \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "memory: true" \
+  https://nano-gpt.com/api/v1/chat/completions \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role":"user","content":"Briefly say hello."}],
+    "model_context_limit": "30000",
+    "stream": false
+  }'
+```
+
 ## Reasoning Parameter
 
 The API supports filtering out thinking content (e.g., Claude's `<think>` tags) from responses using the optional `reasoning` parameter:

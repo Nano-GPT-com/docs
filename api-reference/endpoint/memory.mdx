@@ -37,7 +37,7 @@ The standalone Context Memory endpoint compresses an entire conversation into a 
 
 - `messages` (required): OpenAI-style messages. `user`, `assistant`, `system`, `tool`, and `function` roles are accepted. Assistant `tool_calls` are ignored during compression.
 - `expiration_days` (optional): 1..365; default 30. If both header and body are provided, the header takes precedence.
-- `model_context_limit` (optional): Context target for compression. Default 128k; a minimum of 10k is enforced.
+- `model_context_limit` (optional): Context target for compression. Default 128k; values below 10k are clamped internally.
 
 ## Response
 
