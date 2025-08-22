@@ -279,6 +279,52 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 **With reasoning.exclude**: `"The answer is 4."`
 
+### Model suffix: `:reasoning-exclude`
+
+Enable reasoning exclusion without modifying the request body by appending `:reasoning-exclude` to the `model` string.
+
+- Behaves exactly like sending `{ "reasoning": { "exclude": true } }`
+- Only `:reasoning-exclude` is stripped before provider routing; all other suffixes remain active
+- Works for both streaming and non-streaming responses
+- Available on both Chat Completions and Text Completions
+
+```json
+{
+  "model": "claude-3-5-sonnet-20241022:reasoning-exclude",
+  "messages": [{ "role": "user", "content": "What is 2+2?" }]
+}
+```
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022:reasoning-exclude",
+    "messages": [{"role": "user", "content": "What is 2+2?"}],
+    "stream": false
+  }'
+```
+
+#### Combine with other suffixes
+
+You can compose `:reasoning-exclude` with existing suffixes; only `:reasoning-exclude` is removed prior to provider routing:
+
+- `:thinking` (and variants like `…-thinking:8192`)
+- `:online` and `:online/linkup-deep`
+- `:memory` and `:memory-<days>`
+
+Examples:
+
+- `claude-3-7-sonnet-thinking:8192:reasoning-exclude`
+- `gpt-4o:online:reasoning-exclude`
+- `claude-3-5-sonnet-20241022:memory-30:online/linkup-deep:reasoning-exclude`
+
+#### Notes and limitations
+
+- GPU-TEE models (`phala/*`) require byte-for-byte SSE passthrough for signature verification. For those models, streaming cannot be filtered; the suffix has no effect on the streaming bytes.
+- When assistant content is an array (e.g., vision/text parts), only text parts are filtered; images and tool/metadata content are untouched.
+
 ## Performance Benchmarks
 
 LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
