@@ -160,25 +160,25 @@ GET /api/generate-video/status?runId={runId}&modelSlug={model}
 ### Polling Example
 ```javascript
 async function pollVideoStatus(runId, model) {
-  const maxAttempts = 100;
-  const delayMs = 3000; // 3 seconds
-  
+  const maxAttempts = 120; // ~10 minutes total
+  const delayMs = 5000; // 5 seconds (max ~10 minutes)
+
   for (let i = 0; i < maxAttempts; i++) {
     const response = await fetch(
       `/api/generate-video/status?runId=${runId}&modelSlug=${model}`
     );
     const result = await response.json();
-    
+
     if (result.data.status === 'COMPLETED') {
       return result.data.output.video.url;
     } else if (result.data.status === 'FAILED') {
       throw new Error(result.data.error || 'Video generation failed');
     }
-    
+
     // Wait before next poll
-    await new Promise(resolve => setTimeout(resolve, delayMs));
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
-  
+
   throw new Error('Video generation timed out');
 }
 ```
@@ -235,40 +235,37 @@ async function pollVideoStatus(runId, model) {
 
 ### Example 1: Text-to-Video with cURL
 ```bash
-# 1. Submit video generation request
-curl -X POST https://nano-gpt.com/api/generate-video \
-  -H "Content-Type: application/json" \
+# 1) Submit
+RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
   -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
   -d '{
     "model": "veo2-video",
     "prompt": "A beautiful sunset over the ocean with waves",
-    "duration": "10s",
+    "duration": "5s",
     "aspect_ratio": "16:9"
-  }'
+  }' | jq -r '.runId')
 
-# Response:
-# {
-#   "runId": "fal-request-abc123",
-#   "status": "pending",
-#   "model": "veo2-video",
-#   "cost": 4.0,
-#   "paymentSource": "USD"
-# }
+echo "Run ID: $RUN_ID"
 
-# 2. Poll for status
-curl "https://nano-gpt.com/api/generate-video/status?runId=fal-request-abc123&modelSlug=veo2-video"
+# 2) Poll status (max ~10 minutes)
+for i in {1..120}; do
+  RESP=$(curl -s "https://nano-gpt.com/api/generate-video/status?runId=$RUN_ID&modelSlug=veo2-video" \
+    -H "x-api-key: YOUR_API_KEY")
+  STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
+  echo "Attempt $i: status=$STATUS"
+  if [ "$STATUS" = "COMPLETED" ]; then
+    echo "Completed response:"
+    echo "$RESP" | jq .
+    VIDEO_URL=$(echo "$RESP" | jq -r '.data.output.video.url')
+    echo "Video URL: $VIDEO_URL"
+    break
+  fi
+  sleep 5
+done
 
-# Final response:
-# {
-#   "data": {
-#     "status": "COMPLETED",
-#     "output": {
-#       "video": {
-#         "url": "https://storage.example.com/video.mp4"
-#       }
-#     }
-#   }
-# }
+# Download when ready
+# curl -L "$VIDEO_URL" -o output.mp4
 ```
 
 ### Example 2: Image-to-Video with JavaScript
