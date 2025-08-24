@@ -131,5 +131,16 @@
       "discord": "https://discord.gg/KaQt8gPG6V",
       "linkedin": "https://linkedin.com/company/nanogpt"
     }
+  },
+  "api": {
+    "openapi": "/api-reference/openapi.json",
+    "baseUrl": "https://nano-gpt.com/api",
+    "auth": {
+      "method": "key",
+      "name": "x-api-key"
+    },
+    "playground": {
+      "mode": "show"
+    }
   }
 }
