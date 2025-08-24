@@ -435,8 +435,6 @@
     },
     "/generate-video/status": {
       "get": {
-        "summary": "Retrieve video generation status",
-        "operationId": "getGenerateVideoStatus",
         "description": "Poll the status of a video generation request submitted via /generate-video. Returns normalized status and the final video URL on completion.",
         "security": [
           {
