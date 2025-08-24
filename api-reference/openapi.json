@@ -433,6 +433,68 @@
         }
       }
     },
+    "/generate-video/status": {
+      "get": {
+        "description": "Poll the status of a video generation request submitted via /generate-video. Returns normalized status and the final video URL on completion.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "query",
+            "description": "Run ID returned from the POST /generate-video response",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "modelSlug",
+            "in": "query",
+            "description": "Model identifier used in the generation request (e.g., 'veo2-video')",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current status for the requested video generation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateVideoStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/video/status": {
       "get": {
         "description": "Check the status of a video generation request",
@@ -2484,6 +2546,48 @@
                     "description": "URL to the generated video"
                   }
                 }
+              }
+            }
+          }
+        }
+      },
+      "GenerateVideoStatusResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Current status",
+                "enum": ["IN_QUEUE", "IN_PROGRESS", "COMPLETED", "FAILED", "CANCELLED"]
+              },
+              "request_id": {
+                "type": "string",
+                "description": "Provider request identifier"
+              },
+              "output": {
+                "type": "object",
+                "properties": {
+                  "video": {
+                    "type": "object",
+                    "properties": {
+                      "url": { "type": "string", "description": "Final video URL" }
+                    }
+                  }
+                }
+              },
+              "error": {
+                "type": "string",
+                "nullable": true
+              },
+              "isNSFWError": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "userFriendlyError": {
+                "type": "string",
+                "nullable": true
               }
             }
           }
