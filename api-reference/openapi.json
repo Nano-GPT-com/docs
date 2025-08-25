@@ -3181,7 +3181,7 @@
           "model": {
             "type": "string",
             "description": "The TTS model to use for generation",
-            "enum": ["Kokoro-82m", "Dia-TTS", "Elevenlabs-Turbo-V2.5", "tts-1", "tts-1-hd", "gpt-4o-mini-tts"],
+            "enum": ["Kokoro-82m", "Elevenlabs-Turbo-V2.5", "tts-1", "tts-1-hd", "gpt-4o-mini-tts"],
             "default": "Kokoro-82m"
           },
           "voice": {

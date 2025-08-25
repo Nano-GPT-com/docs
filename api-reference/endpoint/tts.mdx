@@ -10,7 +10,6 @@ Convert text into natural-sounding speech using various TTS models. Supports mul
 ## Supported Models
 
 - **Kokoro-82m**: 44 multilingual voices ($0.001/1k chars)
-- **Dia-TTS**: Multi-speaker conversations ($0.05/1k chars)
 - **Elevenlabs-Turbo-V2.5**: Premium quality with style controls ($0.06/1k chars)
 - **tts-1**: OpenAI standard quality ($0.015/1k chars)
 - **tts-1-hd**: OpenAI high definition ($0.030/1k chars)
@@ -168,41 +167,6 @@ for sample in samples:
 
 </CodeGroup>
 
-### Dia-TTS - Multi-Speaker Conversations
-
-Create dialogues with speaker tags:
-
-<CodeGroup>
-
-```python Python
-# Multi-speaker conversation
-dialogue = "[S1] Welcome to our podcast! [S2] Thanks for having me. [S1] Let's begin!"
-
-text_to_speech(
-    text=dialogue,
-    model="Dia-TTS",
-    speed=1.1
-)
-
-# Single speaker with specific voice
-text_to_speech(
-    text="[S1] This is a single speaker narration.",
-    model="Dia-TTS",
-    voice="S2"  # Use S2 voice for all text
-)
-```
-
-```bash cURL
-curl -X POST https://nano-gpt.com/api/tts \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "[S1] Hello there! [S2] Hi, how are you? [S1] I'\''m doing great!",
-    "model": "Dia-TTS"
-  }'
-```
-
-</CodeGroup>
 
 ### Elevenlabs-Turbo-V2.5 - Advanced Voice Controls
 
