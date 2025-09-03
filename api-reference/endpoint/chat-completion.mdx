@@ -325,6 +325,41 @@ Examples:
 - GPU-TEE models (`phala/*`) require byte-for-byte SSE passthrough for signature verification. For those models, streaming cannot be filtered; the suffix has no effect on the streaming bytes.
 - When assistant content is an array (e.g., vision/text parts), only text parts are filtered; images and tool/metadata content are untouched.
 
+## YouTube Transcripts
+
+Automatically fetch and prepend YouTube video transcripts when the latest user message contains YouTube links.
+
+### Defaults
+
+- Parameter: `youtube_transcripts` (boolean)
+- Default: `true` (backwards compatible)
+- Limit: Up to 3 YouTube URLs processed per request
+- Injection: Transcripts are added as a system message before your messages
+- Billing: $0.01 per transcript fetched
+
+### Disable automatic transcripts
+
+Set `youtube_transcripts` to `false` to skip detection and fetching (no transcript cost applies).
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Summarize this: https://youtu.be/dQw4w9WgXcQ"}
+    ],
+    "youtube_transcripts": false
+  }'
+```
+
+### Notes
+
+- Web scraping is separate. To scrape non‑YouTube URLs, set `scraping: true`. YouTube transcripts do not require `scraping: true`.
+- When disabled, YouTube links are ignored for transcript fetching and are not billed.
+- If your balance is insufficient when enabled, the request may be blocked with a 402.
+
 ## Performance Benchmarks
 
 LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
