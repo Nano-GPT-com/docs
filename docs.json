@@ -21,6 +21,7 @@
         "group": "Endpoint Examples",
         "pages": [
           "api-reference/endpoint/models",
+          "api-reference/endpoint/personalized-models",
           "api-reference/endpoint/models-old",
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/completion",
