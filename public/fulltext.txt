@@ -15,6 +15,11 @@ OpenAI-compatible endpoint for retrieving available models with optional detaile
 **Query Parameters:**
 - `detailed` (boolean, default: false): Returns detailed model information including pricing
 
+**Endpoint Variants:**
+- `GET /api/v1/models` (canonical): Returns all visible text models. If your account has a subscription and you have not enabled "Also show paid models", this list is automatically restricted to subscription-included models.
+- `GET /api/subscription/v1/models` (subscription-only): Always returns only models included in the NanoGPT subscription; ignores the "Also show paid models" preference. Supports `?detailed=true`.
+- `GET /api/paid/v1/models` (paid/extras): Returns only models not included in the subscription. Supports `?detailed=true`.
+
 **Example Basic Request:**
 ```
 GET https://nano-gpt.com/api/v1/models
@@ -39,6 +44,18 @@ Authorization: Bearer YOUR_API_KEY
 **Example Detailed Request:**
 ```
 GET https://nano-gpt.com/api/v1/models?detailed=true
+Authorization: Bearer YOUR_API_KEY
+```
+
+**Subscription-Only List:**
+```
+GET https://nano-gpt.com/api/subscription/v1/models?detailed=true
+Authorization: Bearer YOUR_API_KEY
+```
+
+**Paid-Only List:**
+```
+GET https://nano-gpt.com/api/paid/v1/models?detailed=true
 Authorization: Bearer YOUR_API_KEY
 ```
 

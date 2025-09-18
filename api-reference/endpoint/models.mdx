@@ -9,6 +9,28 @@ The `/api/v1/models` endpoint provides a list of available text generation model
 
 For embedding models, use the dedicated [/api/v1/embedding-models](/api-reference/endpoint/embedding-models) endpoint which provides comprehensive information about all available embedding models.
 
+## Compatibility
+
+Responses mirror OpenAI's Models API shape. All models endpoints return:
+
+```json
+{
+  "object": "list",
+  "data": [ { /* model */ }, ... ]
+}
+```
+
+Each model minimally includes:
+
+```json
+{
+  "id": "deepseek/deepseek-chat-v3-0324",
+  "object": "model",
+  "created": 1736966400,
+  "owned_by": "deepseek"
+}
+```
+
 ## Features
 
 - **Basic Mode**: Standard OpenAI-compatible model listing
@@ -18,7 +40,18 @@ For embedding models, use the dedicated [/api/v1/embedding-models](/api-referenc
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `detailed` | boolean | `false` | Returns detailed model information including pricing |
+| `detailed` | boolean | `false` | Returns detailed model information including pricing and capabilities |
+
+When `detailed=true`, additional human-friendly fields may be included per model:
+
+- `name` — display name
+- `description` — short model description
+- `context_length` — max input tokens (if known)
+- `capabilities.vision` — whether the model supports native image input
+- `pricing.prompt` and `pricing.completion` — at-cost per-million-token pricing in USD
+- `pricing.unit` — `per_million_tokens`
+- `icon_url` — small icon representing the provider
+- `cost_estimate` — internal rollup used in UI for cost hints
 
 ## Authentication
 
@@ -28,6 +61,11 @@ Authentication is optional but enables user-specific pricing in detailed mode:
 |--------|--------|----------|-------------|
 | `Authorization` | `Bearer {api_key}` | Optional | API key for user-specific pricing |
 | `x-api-key` | `{api_key}` | Optional | Alternative API key header |
+
+Notes:
+
+- Invalid or missing API keys still return a list of models. We simply omit user-specific pricing considerations in `detailed=true` mode.
+- With a valid key, the canonical `/api/v1/models` may apply your account’s subscription visibility preference (see Endpoint Variants).
 
 ## Response Formats
 
@@ -71,12 +109,15 @@ Enhanced format with model descriptions, context lengths, and pricing:
       "name": "GPT-4o Mini",
       "description": "OpenAI's affordable and intelligent small model for fast, lightweight tasks",
       "context_length": 128000,
+      "capabilities": { "vision": true },
       "pricing": {
         "prompt": 0.00015,
         "completion": 0.0006,
         "currency": "USD",
         "unit": "per_million_tokens"
-      }
+      },
+      "icon_url": "/icons/OpenAI.svg",
+      "cost_estimate": { "cheap": true }
     },
     {
       "id": "claude-3-5-sonnet-20241022",
@@ -86,12 +127,14 @@ Enhanced format with model descriptions, context lengths, and pricing:
       "name": "Claude 3.5 Sonnet",
       "description": "Anthropic's most intelligent model, combining top-tier performance with improved speed",
       "context_length": 200000,
+      "capabilities": { "vision": false },
       "pricing": {
         "prompt": 0.003,
         "completion": 0.015,
         "currency": "USD", 
         "unit": "per_million_tokens"
-      }
+      },
+      "icon_url": "/icons/Anthropic.svg"
     }
   ]
 }
@@ -115,7 +158,10 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `name` | string | Human-readable model name |
 | `description` | string | Detailed model description |
 | `context_length` | number | Maximum input tokens (null if not available) |
+| `capabilities` | object | Feature flags (e.g., `vision: boolean`) |
 | `pricing` | object | Pricing information object |
+| `icon_url` | string | Path/URL for a small provider icon |
+| `cost_estimate` | object | Internal hints (e.g., `{ cheap: true }`) |
 
 ### Pricing Object Structure
 
@@ -155,6 +201,76 @@ curl "https://nano-gpt.com/api/v1/models?detailed=true" \
   -H "x-api-key: your_api_key_here"
 ```
 
+## Endpoint Variants
+
+In addition to the canonical `/api/v1/models`, two filtered variants are available:
+
+### 1) GET /api/v1/models (canonical)
+
+- Returns all visible text models (excludes internal free/helper selector models except `auto-model*`).
+- If your account has an active subscription and you have not enabled “Also show paid models”, the list is automatically restricted to only subscription-included models.
+- If you enable “Also show paid models” in settings, it returns the full set again.
+
+Examples:
+
+```bash
+curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  https://nano-gpt.com/api/v1/models
+```
+
+```bash
+curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  "https://nano-gpt.com/api/v1/models?detailed=true"
+```
+
+### 2) GET /api/subscription/v1/models (subscription-only)
+
+- Always returns only models included in the NanoGPT subscription (equivalent to our `isTextEligible(modelId)` filter).
+- Ignores the user’s “Also show paid models” preference; it is always subscription-only.
+- Supports `?detailed=true` and API key–aware, at-cost pricing metadata.
+
+Examples:
+
+```bash
+curl https://nano-gpt.com/api/subscription/v1/models
+```
+
+```bash
+curl -H "x-api-key: $NANOGPT_API_KEY" \
+  "https://nano-gpt.com/api/subscription/v1/models?detailed=true"
+```
+
+### 3) GET /api/paid/v1/models (paid/extras)
+
+- Returns only models that are NOT part of the subscription (paid/premium/extras).
+- Supports `?detailed=true` and API key–aware, at-cost pricing metadata.
+
+Examples:
+
+```bash
+curl https://nano-gpt.com/api/paid/v1/models
+```
+
+```bash
+curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  "https://nano-gpt.com/api/paid/v1/models?detailed=true"
+```
+
+### Choosing the Right Endpoint
+
+- Use `/api/subscription/v1/models` for curated lists guaranteed to be subscription-included (e.g., sub-only integrations).
+- Use `/api/paid/v1/models` to focus on paid or premium models.
+- Use `/api/v1/models` for the canonical list and let the account’s “Also show paid models” preference decide visibility.
+
+## Errors and Limits
+
+- These endpoints typically return `200` with a list. If an invalid API key is provided, the list still returns and simply omits user-specific pricing considerations in `detailed=true` mode.
+- Standard CORS and rate limiting apply. In overload scenarios you may receive `429` with:
+
+```json
+{ "code": "rate_limited", "message": "Rate limit exceeded" }
+```
+
 ## Backwards Compatibility
 
 - Default response format unchanged
@@ -165,4 +281,11 @@ curl "https://nano-gpt.com/api/v1/models?detailed=true" \
 ## Related Endpoints
 
 - [/api/v1/embedding-models](/api-reference/endpoint/embedding-models) - List all available embedding models with detailed information
-- [/api/v1/embeddings](/api-reference/endpoint/embeddings) - Create embeddings using the available models 
+- [/api/v1/embeddings](/api-reference/endpoint/embeddings) - Create embeddings using the available models
+- `/api/subscription/v1/models` - Subscription-included text models
+- `/api/paid/v1/models` - Paid or premium text models
+
+## Notes
+
+- Scope: These endpoints list text-chat models. Image models used in the UI are covered by separate routes and/or the non-OpenAI UI endpoint `GET /api/models`.
+- Fields are subject to change as new capabilities or providers are added. We aim to remain OpenAI-API compatible for basic consumers (`id`/`object`/`created`/`owned_by`).
