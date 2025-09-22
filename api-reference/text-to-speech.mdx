@@ -97,6 +97,54 @@ except Exception as e:
     print(f"Error: {e}")
 ```
 
+## Async Status & Polling
+
+Some TTS models (e.g., Elevenlabs family) run asynchronously. If `POST /api/tts` returns HTTP 202 with `status: "pending"`, poll `GET /api/tts/status?runId=...&model=...` until you receive `status: "completed"` with an `audioUrl`.
+
+See endpoint details in `GET /api/tts/status`.
+
+<CodeGroup>
+
+```javascript JavaScript
+async function submitThenPollTTS({ text, model = 'Elevenlabs-Turbo-V2.5', voice = 'Rachel' }) {
+  const submit = await fetch('https://nano-gpt.com/api/tts', {
+    method: 'POST',
+    headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, model, voice })
+  });
+
+  if (submit.status !== 202) {
+    if (!submit.ok) throw new Error('TTS request failed');
+    const ct = submit.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return (await submit.json()).audioUrl;
+    const blob = await submit.blob();
+    return URL.createObjectURL(blob);
+  }
+
+  const ticket = await submit.json();
+  const maxAttempts = 60, delayMs = 3000;
+  for (let i = 0; i < maxAttempts; i++) {
+    const qs = new URLSearchParams({ runId: ticket.runId, model: ticket.model });
+    const res = await fetch(`https://nano-gpt.com/api/tts/status?${qs}`, {
+      headers: { 'x-api-key': 'YOUR_API_KEY' }
+    });
+    const data = await res.json();
+    if (data.status === 'completed' && data.audioUrl) return data.audioUrl;
+    if (data.status === 'error') throw new Error(data.error || 'TTS generation failed');
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+  throw new Error('Polling timeout');
+}
+```
+
+```bash cURL
+# Example status poll (after receiving a pending ticket)
+curl "https://nano-gpt.com/api/tts/status?runId=RUN_ID&model=Elevenlabs-Turbo-V2.5" \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+</CodeGroup>
+
 ## Model-Specific Examples
 
 ### Kokoro-82m - Multilingual Voices
@@ -680,4 +728,3 @@ else:
 | tts-1 | $0.015 | 4,096 | Multiple formats |
 | tts-1-hd | $0.030 | 4,096 | HD quality, voice instructions |
 | gpt-4o-mini-tts | $0.0006 | 4,096 | Ultra-low cost |
-

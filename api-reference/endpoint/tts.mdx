@@ -128,6 +128,143 @@ curl -X POST https://nano-gpt.com/api/tts \
 
 </CodeGroup>
 
+## Async Status and Result Retrieval
+
+Some TTS models run asynchronously. When queued, the API returns HTTP 202 with a ticket containing a `runId` and `model`. Use the TTS Status endpoint to poll until the job is complete. Synchronous models return audio immediately and do not require status polling.
+
+### Endpoints
+
+- Submit TTS: `POST /api/tts`
+- Check TTS Status (async only): `GET /api/tts/status?runId=...&model=...`
+
+### When you see status: "pending"
+
+If your initial `POST /api/tts` returns HTTP 202 with a body like:
+
+```json
+{
+  "status": "pending",
+  "runId": "98b0d593-fe8d-49b8-89c9-233022232297",
+  "model": "Elevenlabs-Turbo-V2.5",
+  "charged": true,
+  "cost": 0.0050388,
+  "paymentSource": "USD",
+  "isApiRequest": true
+}
+```
+
+…the request is queued. Poll the Status endpoint using the `runId` and `model`. If present, include `cost`, `paymentSource`, and `isApiRequest` from the ticket when polling to help with automatic refunds if the upstream provider later rejects content.
+
+### cURL — Submit, then Poll
+
+<CodeGroup>
+
+```bash cURL
+# 1) Submit TTS
+curl -X POST https://nano-gpt.com/api/tts \
+  -H 'x-api-key: YOUR_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "text": "Hello there!",
+    "model": "Elevenlabs-Turbo-V2.5",
+    "voice": "Rachel",
+    "speed": 1.0
+  }'
+
+# 2) If response is 202/pending, poll using returned values
+curl "https://nano-gpt.com/api/tts/status?runId=98b0d593-fe8d-49b8-89c9-233022232297&model=Elevenlabs-Turbo-V2.5&cost=0.0050388&paymentSource=USD&isApiRequest=true" \
+  -H 'x-api-key: YOUR_API_KEY'
+
+# 3) On completion, you'll receive an audioUrl
+# {
+#   "status": "completed",
+#   "audioUrl": "https://.../file.mp3",
+#   "contentType": "audio/mpeg",
+#   "model": "Elevenlabs-Turbo-V2.5"
+# }
+```
+
+```javascript JavaScript
+async function submitTTS({ text, model = 'Elevenlabs-Turbo-V2.5', voice = 'Rachel', speed = 1 }) {
+  const res = await fetch('https://nano-gpt.com/api/tts', {
+    method: 'POST',
+    headers: {
+      'x-api-key': 'YOUR_API_KEY',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ text, model, voice, speed })
+  });
+
+  if (res.status === 202) {
+    const ticket = await res.json();
+    return await pollTTSStatus(ticket);
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'TTS request failed');
+  }
+
+  // Synchronous: either JSON with URL or binary audio
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('application/json')) {
+    const json = await res.json();
+    return json.audioUrl;
+  }
+
+  const blob = await res.blob();
+  return URL.createObjectURL(blob); // play via <audio src={...}>
+}
+
+async function pollTTSStatus({ runId, model, cost, paymentSource, isApiRequest }) {
+  const maxAttempts = 60; // ~3 minutes at 3s interval
+  const intervalMs = 3000;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const qs = new URLSearchParams({ runId, model });
+    if (typeof cost === 'number') qs.set('cost', String(cost));
+    if (paymentSource) qs.set('paymentSource', String(paymentSource));
+    if (typeof isApiRequest === 'boolean') qs.set('isApiRequest', String(isApiRequest));
+
+    const res = await fetch(`https://nano-gpt.com/api/tts/status?${qs.toString()}`, {
+      headers: { 'x-api-key': 'YOUR_API_KEY' }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Polling failed (${res.status})`);
+    }
+
+    const data = await res.json();
+    if (data.status === 'completed' && data.audioUrl) return data.audioUrl;
+    if (data.status === 'error') throw new Error(data.error || 'TTS generation failed');
+
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+
+  throw new Error('Polling timeout');
+}
+```
+
+</CodeGroup>
+
+### Synchronous vs. Asynchronous Models
+
+- Synchronous models (examples: `tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`, `Kokoro-82m`) return immediately from `POST /api/tts` with either binary audio or JSON containing `{ audioUrl, contentType }` depending on the provider.
+- Asynchronous models (examples: `Elevenlabs-Turbo-V2.5`, `Elevenlabs-V3`, `Elevenlabs-Music-V1`) return HTTP 202 with a polling ticket. Use `GET /api/tts/status` until completed.
+
+### Best Practices
+
+- Poll every 2–3 seconds; stop after 2–3 minutes and show a timeout error.
+- Always include `runId` and `model`. If available, include `cost`, `paymentSource`, and `isApiRequest` from the ticket for better error handling and refund automation.
+- On `completed`, prefer using the `audioUrl` directly (streaming or download). Cache URLs client‑side if you plan to replay.
+- If you receive `CONTENT_POLICY_VIOLATION`, do not retry the same content; surface a clear message to the user.
+
+### FAQ
+
+- Why did I get 202/pending? The selected model runs asynchronously; your request was queued and billed after a successful queue submission.
+- Can I cancel a pending TTS? Not currently. Let it complete or time out client‑side.
+- Do all TTS models require polling? No. Only async models. Synchronous models return immediately.
+
 ## Model-Specific Examples
 
 ### Kokoro-82m - Multilingual Voices

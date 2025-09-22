@@ -36,6 +36,7 @@
           "api-reference/endpoint/scrape-urls",
           "api-reference/endpoint/web-search",
           "api-reference/endpoint/tts",
+          "api-reference/endpoint/tts-status",
           "api-reference/endpoint/tee-attestation",
           "api-reference/endpoint/tee-signature",
           "api-reference/endpoint/check-midjourney-status",
