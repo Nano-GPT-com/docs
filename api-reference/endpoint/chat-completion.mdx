@@ -119,6 +119,108 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 </CodeGroup>
 
+## Image Input
+
+Send images using the OpenAI‑compatible chat format. Provide image parts alongside text in the `messages` array.
+
+### Supported Forms
+
+- Remote URL: `{"type":"image_url","image_url":{"url":"https://..."}}`
+- Base64 data URL: `{"type":"image_url","image_url":{"url":"data:image/png;base64,...."}}`
+
+Notes:
+- Prefer HTTPS URLs; some upstreams reject non‑HTTPS. If in doubt, use base64 data URLs.
+- Accepted mime types: `image/png`, `image/jpeg`, `image/jpg`, `image/webp`.
+- Inline markdown images in plain text (e.g., `![alt](data:image/...;base64,...)`) are auto‑normalized into structured parts server‑side.
+
+### Message Shape
+
+```json
+{
+  "role": "user",
+  "content": [
+    { "type": "text", "text": "What is in this image?" },
+    { "type": "image_url", "image_url": { "url": "https://example.com/image.jpg" } }
+  ]
+}
+```
+
+### cURL — Image URL (non‑streaming)
+
+```bash
+curl -sS \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -X POST https://nano-gpt.com/api/v1/chat/completions \
+  --data '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "Describe this image in three words."},
+          {"type": "image_url", "image_url": {"url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg"}}
+        ]
+      }
+    ],
+    "stream": false
+  }'
+```
+
+### cURL — Base64 Data URL (non‑streaming)
+
+Embed your image as a data URL. Replace `...BASE64...` with your image bytes.
+
+```bash
+curl -sS \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type": "application/json" \
+  -X POST https://nano-gpt.com/api/v1/chat/completions \
+  --data '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "What is shown here?"},
+          {"type": "image_url", "image_url": {"url": "data:image/png;base64,...BASE64..."}}
+        ]
+      }
+    ],
+    "stream": false
+  }'
+```
+
+### cURL — Streaming SSE
+
+```bash
+curl -N \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream" \
+  -X POST https://nano-gpt.com/api/v1/chat/completions \
+  --data '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "Two words only."},
+          {"type": "image_url", "image_url": {"url": "https://example.com/image.jpg"}}
+        ]
+      }
+    ],
+    "stream": true
+  }'
+```
+
+The response streams `data: { ... }` lines until a final terminator and may include a usage object at the end.
+
+### Troubleshooting
+
+- 400 unsupported image: ensure the image is a valid PNG/JPEG/WebP, not a tiny 1×1 pixel, and either HTTPS URL or a base64 data URL.
+- 503 after fallbacks: try a different model, verify API key/session, and prefer base64 data URL for local or protected assets.
+
 ## Context Memory
 
 Enable unlimited-length conversations with lossless, hierarchical memory.
