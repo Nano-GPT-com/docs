@@ -44,6 +44,7 @@
           "api-reference/endpoint/video-status",
           "api-reference/endpoint/talk-to-gpt",
           "api-reference/endpoint/check-balance",
+          "api-reference/endpoint/subscription-usage",
           "api-reference/endpoint/receive-nano",
           "api-reference/endpoint/crypto-deposits"
         ]
