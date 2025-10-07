@@ -565,7 +565,7 @@
         }
       }
     },
-    "/api/video/status": {
+    "/video/status": {
       "get": {
         "description": "Unified video status endpoint that works with any provider. Check the status of a video generation request using only the request ID - the system automatically determines the provider and returns normalized status information.",
         "security": [
@@ -670,7 +670,7 @@
         }
       }
     },
-    "/api/v1/tee/attestation": {
+    "/v1/tee/attestation": {
       "servers": [
         { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
       ],
@@ -691,7 +691,7 @@
         }
       }
     },
-    "/api/v1/tee/signature/{requestId}": {
+    "/v1/tee/signature/{requestId}": {
       "servers": [
         { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
       ],
@@ -714,7 +714,7 @@
         }
       }
     },
-    "/api/transcribe": {
+    "/transcribe": {
       "post": {
         "description": "Transcribe audio files into text using state-of-the-art speech recognition models. Supports multiple languages, speaker diarization, and various audio formats. Returns synchronous results for Whisper/Wizper models and asynchronous job IDs for Elevenlabs-STT.",
         "security": [
@@ -805,7 +805,7 @@
         }
       }
     },
-    "/api/transcribe/status": {
+    "/transcribe/status": {
       "post": {
         "description": "Check the status of an asynchronous transcription job (Elevenlabs-STT). Poll this endpoint to get the transcription results when the job is completed.",
         "security": [
@@ -940,7 +940,7 @@
         }
       }
     },
-    "/api/scrape-urls": {
+    "/scrape-urls": {
       "post": {
         "description": "Extract clean, formatted content from web pages. Returns both raw HTML content and formatted markdown.",
         "security": [
@@ -1012,7 +1012,7 @@
         }
       }
     },
-    "/api/web": {
+    "/web": {
       "post": {
         "description": "Perform AI-powered web searches using Linkup with multiple output formats, date filtering, and domain filtering.",
         "security": [
@@ -1084,7 +1084,7 @@
         }
       }
     },
-    "/api/transaction/create/{ticker}": {
+    "/transaction/create/{ticker}": {
       "post": {
         "description": "Generate a cryptocurrency deposit address via BTCPayServer integration. When crypto is sent to the generated address, the user's account balance is automatically credited.",
         "security": [
@@ -1165,7 +1165,7 @@
         }
       }
     },
-    "/api/transaction/limits/{ticker}": {
+    "/transaction/limits/{ticker}": {
       "get": {
         "description": "Get minimum and maximum deposit amounts for a cryptocurrency",
         "security": [
@@ -1215,7 +1215,7 @@
         }
       }
     },
-    "/api/tts": {
+    "/tts": {
       "post": {
         "description": "Convert text into natural-sounding speech using various TTS models from different providers. Supports multiple languages, voices, and customization options including speed control, voice instructions, and audio format selection.",
         "security": [

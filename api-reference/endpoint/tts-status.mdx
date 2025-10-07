@@ -1,6 +1,6 @@
 ---
 title: 'TTS Status'
-openapi: 'GET /api/tts/status'
+openapi: 'GET /tts/status'
 ---
 
 ## Overview
@@ -162,4 +162,3 @@ done
 - For Elevenlabs‑family async models (e.g., `Elevenlabs-Turbo-V2.5`, `Elevenlabs-V3`) you will always poll this endpoint until it returns `completed`.
 - When the job completes, the response includes an `audioUrl` you can download or play in the browser.
 - If available, include `cost`, `paymentSource`, and `isApiRequest` from the original ticket while polling to improve refund handling.
-
