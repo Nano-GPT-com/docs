@@ -35,6 +35,7 @@
           "api-reference/endpoint/memory",
           "api-reference/endpoint/scrape-urls",
           "api-reference/endpoint/web-search",
+          "api-reference/endpoint/speech",
           "api-reference/endpoint/tts",
           "api-reference/endpoint/tts-status",
           "api-reference/endpoint/tee-attestation",

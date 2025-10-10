@@ -7,6 +7,8 @@ openapi: 'GET /tts/status'
 
 Poll the status of an asynchronous text-to-speech (TTS) job. Use the `runId` and `model` values returned by `POST /api/tts` when the initial response is `202` with `status: "pending"`.
 
+For low‑latency, synchronous TTS without polling, use `api-reference/endpoint/speech.mdx` (POST `/v1/speech`).
+
 ### Query parameters
 
 - `runId` (string, required): Job identifier from the submit response

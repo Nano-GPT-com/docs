@@ -23,6 +23,18 @@ All requests require authentication via API key:
 x-api-key: YOUR_API_KEY
 ```
 
+## Synchronous vs Asynchronous
+
+- Synchronous: `POST /v1/speech` returns audio bytes directly. Best for UI playback and short prompts. See `api-reference/endpoint/speech.mdx`.
+- Asynchronous: `POST /tts` returns a ticket; poll `GET /tts/status` for completion. Best for long audio, batch jobs, and webhook workflows.
+
+| Aspect        | v1/speech (sync)      | TTS job flow (async) |
+|---------------|-----------------------|----------------------|
+| Trigger       | Request/response      | Submit + poll/webhook|
+| Latency       | Low                   | Higher (queue + processing) |
+| Max input     | Shorter               | Larger payloads      |
+| Streaming     | Supported if enabled  | Not applicable       |
+
 ## Basic Text-to-Speech
 
 ### Simple TTS Request
