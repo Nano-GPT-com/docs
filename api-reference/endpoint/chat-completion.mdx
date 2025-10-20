@@ -350,21 +350,36 @@ curl -s -X POST \
   }'
 ```
 
-## Reasoning Parameter
+## Reasoning Streams
 
-The API supports filtering out thinking content (e.g., Claude's `<think>` tags) from responses using the optional `reasoning` parameter:
+The Chat Completions endpoint separates the model’s visible answer from its internal reasoning. By default, reasoning is included and delivered alongside normal content so that clients can decide whether to display it. Requests that use the `thinking` model suffix (for example `:thinking` or `-thinking:8192`) are normalized before dispatch, but the response contract remains the same.
 
-```json
-{
-  "reasoning": {
-    "exclude": true
-  }
+### Streaming payload format
+
+Server-Sent Event (SSE) streams emit the answer in `choices[0].delta.content` and the thought process in `choices[0].delta.reasoning` (plus optional `delta.reasoning_details`). Reasoning deltas are dispatched before or alongside regular content, letting you render both panes in real-time.
+
+```text
+data: {
+  "choices": [{
+    "delta": {
+      "reasoning": "Assessing possible tool options…"
+    }
+  }]
+}
+data: {
+  "choices": [{
+    "delta": {
+      "content": "Let me walk you through the solution."
+    }
+  }]
 }
 ```
 
-When `reasoning.exclude` is set to `true`, the API removes content between `<think>` and `</think>` tags before returning the response. This works for both streaming and non-streaming requests.
+When streaming completes, the formatter aggregates the collected values and repeats them in the final payload: `choices[0].message.content` contains the assistant reply and `choices[0].message.reasoning` (plus `reasoning_details` when available) contains the full chain-of-thought. Non-streaming requests reuse the same formatter, so the reasoning block is present without parsing `<think>` tags manually.
 
-### Example
+### Showing or hiding reasoning
+
+Send `reasoning: { "exclude": true }` to strip thinking text from both streaming deltas and the final message. The filter removes `<think>...</think>` spans before they reach the client.
 
 ```bash
 curl -X POST https://nano-gpt.com/api/v1/chat/completions \
@@ -383,12 +398,11 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 ### Model suffix: `:reasoning-exclude`
 
-Enable reasoning exclusion without modifying the request body by appending `:reasoning-exclude` to the `model` string.
+You can toggle the filter without altering your JSON body by appending `:reasoning-exclude` to the `model` name.
 
-- Behaves exactly like sending `{ "reasoning": { "exclude": true } }`
-- Only `:reasoning-exclude` is stripped before provider routing; all other suffixes remain active
-- Works for both streaming and non-streaming responses
-- Available on both Chat Completions and Text Completions
+- Equivalent to sending `{ "reasoning": { "exclude": true } }`
+- Only the `:reasoning-exclude` suffix is stripped before the request is routed; other suffixes remain active
+- Works for streaming and non-streaming responses on both Chat Completions and Text Completions
 
 ```json
 {
@@ -397,20 +411,9 @@ Enable reasoning exclusion without modifying the request body by appending `:rea
 }
 ```
 
-```bash
-curl -X POST https://nano-gpt.com/api/v1/chat/completions \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "claude-3-5-sonnet-20241022:reasoning-exclude",
-    "messages": [{"role": "user", "content": "What is 2+2?"}],
-    "stream": false
-  }'
-```
-
 #### Combine with other suffixes
 
-You can compose `:reasoning-exclude` with existing suffixes; only `:reasoning-exclude` is removed prior to provider routing:
+`:reasoning-exclude` composes safely with the other routing suffixes you already use:
 
 - `:thinking` (and variants like `…-thinking:8192`)
 - `:online` and `:online/linkup-deep`
@@ -422,6 +425,19 @@ Examples:
 - `gpt-4o:online:reasoning-exclude`
 - `claude-3-5-sonnet-20241022:memory-30:online/linkup-deep:reasoning-exclude`
 
+### Legacy delta field compatibility
+
+Older clients that expect the legacy `reasoning_content` field can opt in per request. Set `reasoning.delta_field` to `"reasoning_content"`, or use the top-level shorthands `reasoning_delta_field` / `reasoning_content_compat` if updating nested objects is difficult. When the toggle is active, every streaming and non-streaming response exposes `reasoning_content` instead of `reasoning`, and the modern key is omitted. The compatibility pass is skipped if `reasoning.exclude` is `true`, because no reasoning payload is emitted.
+
+```json
+{
+  "model": "openai/gpt-4o-mini",
+  "messages": [...],
+  "reasoning": {
+    "delta_field": "reasoning_content"
+  }
+}
+```
 #### Notes and limitations
 
 - GPU-TEE models (`phala/*`) require byte-for-byte SSE passthrough for signature verification. For those models, streaming cannot be filtered; the suffix has no effect on the streaming bytes.
