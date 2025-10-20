@@ -25,11 +25,15 @@ A quick guide to setting up LibreChat with NanoGPT's API.
         "gpt-4o-mini",
         ]
       fetch: true
+  addParams:
+    reasoning_content_compat: true
   titleConvo: true
   titleModel: 'gpt-4o-mini'
   modelDisplayLabel: 'NanoGPT'
   iconUrl: https://nano-gpt.com/logo.png
 ```
+
+LibreChat currently streams internal thinking from the legacy `reasoning_content` field. The `addParams` block above enables NanoGPT's compatibility shim so LibreChat can render thoughts without additional changes. If you would rather not send the compatibility flag, you can instead point LibreChat at `https://nano-gpt.com/api/v1legacy/` which keeps the legacy response shape by default.
 
 5. Set your API key in your environment variables:
    ```bash

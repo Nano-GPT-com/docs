@@ -5,7 +5,7 @@ openapi: 'POST /v1/chat/completions'
 
 ## Overview
 
-The Chat Completion endpoint provides OpenAI-compatible chat completions with support for web search capabilities through our LinkUp integration.
+The Chat Completion endpoint provides OpenAI-compatible chat completions.
 
 ## Web Search
 
@@ -427,7 +427,7 @@ Examples:
 
 ### Legacy delta field compatibility
 
-Older clients that expect the legacy `reasoning_content` field can opt in per request. Set `reasoning.delta_field` to `"reasoning_content"`, or use the top-level shorthands `reasoning_delta_field` / `reasoning_content_compat` if updating nested objects is difficult. When the toggle is active, every streaming and non-streaming response exposes `reasoning_content` instead of `reasoning`, and the modern key is omitted. The compatibility pass is skipped if `reasoning.exclude` is `true`, because no reasoning payload is emitted.
+Older clients that expect the legacy `reasoning_content` field can opt in per request. Set `reasoning.delta_field` to `"reasoning_content"`, or use the top-level shorthands `reasoning_delta_field` / `reasoning_content_compat` if updating nested objects is difficult. When the toggle is active, every streaming and non-streaming response exposes `reasoning_content` instead of `reasoning`, and the modern key is omitted. The compatibility pass is skipped if `reasoning.exclude` is `true`, because no reasoning payload is emitted. If you cannot change the request payload, target `https://nano-gpt.com/api/v1legacy/chat/completions` instead—the legacy endpoint keeps `reasoning_content` without extra flags.
 
 ```json
 {
