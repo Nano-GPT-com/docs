@@ -375,11 +375,11 @@ data: {
 }
 ```
 
-When streaming completes, the formatter aggregates the collected values and repeats them in the final payload: `choices[0].message.content` contains the assistant reply and `choices[0].message.reasoning` (plus `reasoning_details` when available) contains the full chain-of-thought. Non-streaming requests reuse the same formatter, so the reasoning block is present without parsing `<think>` tags manually.
+When streaming completes, the formatter aggregates the collected values and repeats them in the final payload: `choices[0].message.content` contains the assistant reply and `choices[0].message.reasoning` (plus `reasoning_details` when available) contains the full chain-of-thought. Non-streaming requests reuse the same formatter, so the reasoning block is present as a dedicated field.
 
 ### Showing or hiding reasoning
 
-Send `reasoning: { "exclude": true }` to strip thinking text from both streaming deltas and the final message. The filter removes `<think>...</think>` spans before they reach the client.
+Send `reasoning: { "exclude": true }` to strip the reasoning payload from both streaming deltas and the final message. With this flag set, `delta.reasoning` and `message.reasoning` are omitted entirely.
 
 ```bash
 curl -X POST https://nano-gpt.com/api/v1/chat/completions \
@@ -392,9 +392,30 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
   }'
 ```
 
-**Without reasoning.exclude**: `"<think>The user is asking for a simple addition. 2+2 equals 4.</think>\n\nThe answer is 4."`
+**Without reasoning.exclude**:
 
-**With reasoning.exclude**: `"The answer is 4."`
+```json
+{
+  "choices": [{
+    "message": {
+      "content": "The answer is 4.",
+      "reasoning": "The user is asking for a simple addition. 2+2 equals 4."
+    }
+  }]
+}
+```
+
+**With reasoning.exclude**:
+
+```json
+{
+  "choices": [{
+    "message": {
+      "content": "The answer is 4."
+    }
+  }]
+}
+```
 
 ### Model suffix: `:reasoning-exclude`
 
