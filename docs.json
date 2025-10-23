@@ -86,7 +86,8 @@
            "integrations/openwebui",
            "integrations/typingmind",
            "integrations/librechat",
-           "integrations/openhands"
+           "integrations/openhands",
+           "integrations/janitorai"
          ]
       }
      

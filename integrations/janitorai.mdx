@@ -1,0 +1,37 @@
+---
+title: JanitorAI
+description: Using NanoGPT with JanitorAI's custom API integration
+---
+
+# Using JanitorAI with NanoGPT
+
+A quick guide to connecting JanitorAI chats to NanoGPT's API.
+
+## Setup Instructions
+
+1. Get your API key from [nano-gpt.com/api](https://nano-gpt.com/api)
+2. In JanitorAI, open the **Settings → AI Providers** panel
+3. Select **Custom / OpenAI Compatible** as the provider
+4. Configure the connection with the following values:
+
+   ```text
+   Base URL: https://nano-gpt.com/api/v1/
+   Endpoint: chat/completions
+   API Key: <your NanoGPT key>
+   ```
+
+5. Pick the NanoGPT model you want to use (for example `gpt-4o`, `claude-3-5-sonnet-20241022`, `o1`, etc.)
+
+JanitorAI now routes your conversations through NanoGPT's standard OpenAI-compatible endpoint. All models listed on our [pricing page](https://nano-gpt.com/pricing) are available.
+
+## Showing Reasoning Traces
+
+JanitorAI can also display the internal reasoning returned by thinking-capable models. To enable this:
+
+1. Duplicate the configuration above.
+2. Replace the base URL with `https://nano-gpt.com/api/v1thinking/`.
+3. Keep `chat/completions` as the endpoint and continue to use your NanoGPT API key.
+
+Requests sent to `v1thinking/chat` include the model's reasoning trace in the response body, allowing JanitorAI to render thoughts alongside the final answer. The standard `v1/chat` endpoint omits this field if you prefer clean responses.
+
+You can maintain both connections in JanitorAI—use the regular `v1` endpoint when you only want the assistant's replies, and switch to the `v1thinking` endpoint whenever you need to inspect the chain-of-thought output.
