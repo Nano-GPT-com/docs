@@ -1,0 +1,30 @@
+---
+title: LiteLLM
+description: Connecting NanoGPT to LiteLLM's OpenAI-compatible router
+---
+
+# LiteLLM Integration
+
+Configure LiteLLM to proxy requests through NanoGPT while preserving the legacy `reasoning_content` field expected by its OpenAI-compatible connector.
+
+## Quick configuration
+
+Add NanoGPT to your `litellm.yaml` (or the equivalent configuration source):
+
+```yaml
+model_list:
+  - model_name: nano-gpt
+    litellm_params:
+      model: chatgpt-4o-latest
+      api_base: https://nano-gpt.com/api/v1legacy/
+      api_key: ${NANO_GPT_API_KEY}
+```
+
+Set your API key before launching LiteLLM:
+
+```bash
+export NANO_GPT_API_KEY='your-api-key-here'
+litellm --config litellm.yaml
+```
+
+LiteLLM's OpenAI adapter expects streaming deltas in `delta.reasoning_content`, so the `v1legacy` endpoint is the recommended base URL. If you upgrade your LiteLLM deployment to parse the modern `delta.reasoning` field, you can switch the base URL to `https://nano-gpt.com/api/v1/` instead.

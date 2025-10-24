@@ -354,6 +354,14 @@ curl -s -X POST \
 
 The Chat Completions endpoint separates the model’s visible answer from its internal reasoning. By default, reasoning is included and delivered alongside normal content so that clients can decide whether to display it. Requests that use the `thinking` model suffix (for example `:thinking` or `-thinking:8192`) are normalized before dispatch, but the response contract remains the same.
 
+### Endpoint variants
+
+Choose the base path that matches how your client consumes reasoning streams:
+
+- `https://nano-gpt.com/api/v1/chat/completions` — default endpoint that streams internal thoughts through `choices[0].delta.reasoning` (and repeats them in `message.reasoning` on completion). Recommended for apps like SillyTavern that understand the modern response shape.
+- `https://nano-gpt.com/api/v1legacy/chat/completions` — legacy contract that swaps the field name to `choices[0].delta.reasoning_content` / `message.reasoning_content` for older OpenAI-compatible clients. Use this for LiteLLM’s OpenAI adapter to avoid downstream parsing errors.
+- `https://nano-gpt.com/api/v1thinking/chat/completions` — reasoning-aware models write everything into the normal `choices[0].delta.content` stream so clients that ignore reasoning fields still see the full conversation transcript. This is the preferred base URL for JanitorAI.
+
 ### Streaming payload format
 
 Server-Sent Event (SSE) streams emit the answer in `choices[0].delta.content` and the thought process in `choices[0].delta.reasoning` (plus optional `delta.reasoning_details`). Reasoning deltas are dispatched before or alongside regular content, letting you render both panes in real-time.
@@ -448,7 +456,7 @@ Examples:
 
 ### Legacy delta field compatibility
 
-Older clients that expect the legacy `reasoning_content` field can opt in per request. Set `reasoning.delta_field` to `"reasoning_content"`, or use the top-level shorthands `reasoning_delta_field` / `reasoning_content_compat` if updating nested objects is difficult. When the toggle is active, every streaming and non-streaming response exposes `reasoning_content` instead of `reasoning`, and the modern key is omitted. The compatibility pass is skipped if `reasoning.exclude` is `true`, because no reasoning payload is emitted. If you cannot change the request payload, target `https://nano-gpt.com/api/v1legacy/chat/completions` instead—the legacy endpoint keeps `reasoning_content` without extra flags.
+Older clients that expect the legacy `reasoning_content` field can opt in per request. Set `reasoning.delta_field` to `"reasoning_content"`, or use the top-level shorthands `reasoning_delta_field` / `reasoning_content_compat` if updating nested objects is difficult. When the toggle is active, every streaming and non-streaming response exposes `reasoning_content` instead of `reasoning`, and the modern key is omitted. The compatibility pass is skipped if `reasoning.exclude` is `true`, because no reasoning payload is emitted. If you cannot change the request payload, target `https://nano-gpt.com/api/v1legacy/chat/completions` instead—the legacy endpoint keeps `reasoning_content` without extra flags. LiteLLM’s OpenAI adapter should point here to maintain compatibility. For clients that ignore reasoning-specific fields entirely, use `https://nano-gpt.com/api/v1thinking/chat/completions` so the full text appears in the standard content stream; this is the correct choice for JanitorAI.
 
 ```json
 {
