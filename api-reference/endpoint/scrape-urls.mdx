@@ -37,7 +37,8 @@ x-api-key: YOUR_API_KEY
     "https://example.com/article",
     "https://blog.com/post",
     "https://news.site.com/story"
-  ]
+  ],
+  "stealthMode": false
 }
 ```
 
@@ -46,6 +47,21 @@ x-api-key: YOUR_API_KEY
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | urls | string[] | Yes | Array of URLs to scrape. Maximum 5 URLs per request. |
+| stealthMode | boolean | No | Optional. Default `false`. When `true`, multiplies the upfront per-URL charge by 5 and routes requests through the stealth proxy. |
+
+#### Stealth scraping (optional)
+
+Set `stealthMode: true` to run requests through Firecrawl’s stealth proxy for tougher targets. Stealth scraping costs 5× the standard per-URL rate and still counts toward the configured URL cap. The web UI exposes the same toggle, so use this field to mirror that behavior from the API.
+
+```jsonc
+POST /api/scrape-urls
+{
+  "urls": ["https://example.com/restricted"],
+  "stealthMode": true
+}
+```
+
+The response `summary` includes `stealthModeUsed` so you can track when the surcharge applied.
 
 ### URL Requirements
 - Must be valid HTTP or HTTPS URLs
@@ -77,7 +93,8 @@ x-api-key: YOUR_API_KEY
     "processed": 3,
     "successful": 2,
     "failed": 1,
-    "totalCost": 0.002
+    "totalCost": 0.002,
+    "stealthModeUsed": false
   }
 }
 ```
@@ -100,6 +117,7 @@ Summary statistics for the request:
 - `successful` (number): Number of URLs successfully scraped
 - `failed` (number): Number of URLs that failed to scrape
 - `totalCost` (number): Total cost in USD (only for successful scrapes)
+- `stealthModeUsed` (boolean): Indicates whether stealth mode was enabled for any processed URLs
 
 ## Error Responses
 
