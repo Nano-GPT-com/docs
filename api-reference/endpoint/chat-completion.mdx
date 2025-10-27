@@ -479,14 +479,15 @@ Automatically fetch and prepend YouTube video transcripts when the latest user m
 ### Defaults
 
 - Parameter: `youtube_transcripts` (boolean)
-- Default: `true` (backwards compatible)
+- Default: `false` (opt-in)
+- Opt-in: set `youtube_transcripts` to `true` (string `"true"` is also accepted) to fetch transcripts
 - Limit: Up to 3 YouTube URLs processed per request
 - Injection: Transcripts are added as a system message before your messages
 - Billing: $0.01 per transcript fetched
 
-### Disable automatic transcripts
+### Enable automatic transcripts
 
-Set `youtube_transcripts` to `false` to skip detection and fetching (no transcript cost applies).
+By default, YouTube links are ignored. Set `youtube_transcripts` to `true` when you want the system to retrieve and bill for transcripts.
 
 ```bash
 curl -X POST https://nano-gpt.com/api/v1/chat/completions \
@@ -497,14 +498,14 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
     "messages": [
       {"role": "user", "content": "Summarize this: https://youtu.be/dQw4w9WgXcQ"}
     ],
-    "youtube_transcripts": false
+    "youtube_transcripts": true
   }'
 ```
 
 ### Notes
 
 - Web scraping is separate. To scrape non‑YouTube URLs, set `scraping: true`. YouTube transcripts do not require `scraping: true`.
-- When disabled, YouTube links are ignored for transcript fetching and are not billed.
+- When not requested, YouTube links are ignored for transcript fetching and are not billed.
 - If your balance is insufficient when enabled, the request may be blocked with a 402.
 
 ## Performance Benchmarks
