@@ -44,11 +44,26 @@ x-api-key: YOUR_API_KEY  # Optional, for API key auth
 ```
 
 #### Image-to-Video Request
+
+Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a public HTTPS link). The platform always uses the explicit field you send before falling back to any library attachments.
+
+##### Base64 input
 ```json
 {
   "model": "kling-v21-standard",
   "prompt": "Make the person in the image wave hello",
   "imageDataUrl": "data:image/jpeg;base64,/9j/4AAQ...",
+  "duration": "5",
+  "aspect_ratio": "16:9"
+}
+```
+
+##### Public URL input
+```json
+{
+  "model": "kling-v21-standard",
+  "prompt": "Make the person in the image wave hello",
+  "imageUrl": "https://assets.example.com/reference/wave-hello.jpg",
   "duration": "5",
   "aspect_ratio": "16:9"
 }
@@ -93,6 +108,8 @@ x-api-key: YOUR_API_KEY  # Optional, for API key auth
 ```
 
 #### Wan Image-to-Video
+
+> Accepts base64 via `imageDataUrl` or a public URL via `imageUrl`.
 ```json
 {
   "model": "wan-video-image-to-video",
@@ -108,6 +125,8 @@ x-api-key: YOUR_API_KEY  # Optional, for API key auth
 ```
 
 #### Seedance Models
+
+> Accepts base64 via `imageDataUrl` or a public URL via `imageUrl`. Ensure URLs are directly fetchable by the provider.
 ```json
 {
   "model": "seedance-video",
@@ -227,6 +246,8 @@ async function pollVideoStatus(runId, model) {
 
 ## Complete Examples
 
+The submit + poll flow works the same regardless of how you supply the image: image-conditioned models accept either `imageDataUrl` (base64) or a public `imageUrl`, and the platform prefers whichever field you send before checking library attachments.
+
 ### Example 1: Text-to-Video with cURL
 ```bash
 # 1) Submit
@@ -262,7 +283,39 @@ done
 # curl -L "$VIDEO_URL" -o output.mp4
 ```
 
-### Example 2: Image-to-Video with JavaScript
+### Example 2: Image-to-Video with cURL
+
+#### Base64 input
+```bash
+RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v21-pro",
+    "prompt": "Animate this scene with a slow dolly zoom",
+    "imageDataUrl": "data:image/jpeg;base64,/9j/4AAQ...",
+    "duration": "5",
+    "aspect_ratio": "16:9"
+  }' | jq -r '.runId')
+```
+
+#### Public URL input
+```bash
+RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v21-pro",
+    "prompt": "Animate this scene with a slow dolly zoom",
+    "imageUrl": "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=1024",
+    "duration": "5",
+    "aspect_ratio": "16:9"
+  }' | jq -r '.runId')
+```
+
+Use the same polling loop from Example 1 to monitor either request.
+
+### Example 3: Image-to-Video with JavaScript
 ```javascript
 // 1. Convert image to base64
 async function imageToBase64(imageFile) {
@@ -304,7 +357,88 @@ async function generateVideo(imageFile) {
 }
 ```
 
-### Example 3: Batch Processing
+#### Using a public image URL directly
+```javascript
+async function generateVideoFromUrl(imageUrl) {
+  const response = await fetch('/api/generate-video', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'YOUR_API_KEY'
+    },
+    body: JSON.stringify({
+      model: 'kling-v21-pro',
+      prompt: 'Add gentle camera movement to this scene',
+      imageUrl,
+      duration: '5',
+      aspect_ratio: '16:9'
+    })
+  });
+
+  const result = await response.json();
+  const videoUrl = await pollVideoStatus(result.runId, result.model);
+  return videoUrl;
+}
+```
+
+### Example 4: Image-to-Video with Python
+```python
+import base64
+import json
+import requests
+
+API_URL = "https://nano-gpt.com/api/generate-video"
+API_KEY = "YOUR_API_KEY"
+
+def submit_image_to_video(image_path: str) -> str:
+    with open(image_path, "rb") as image_file:
+        encoded = base64.b64encode(image_file.read()).decode("utf-8")
+
+    payload = {
+        "model": "kling-v21-pro",
+        "prompt": "Animate this scene with a slow dolly zoom",
+        "imageDataUrl": f"data:image/jpeg;base64,{encoded}",
+        "duration": "5",
+        "aspect_ratio": "16:9",
+    }
+    response = requests.post(
+        API_URL,
+        headers={
+            "x-api-key": API_KEY,
+            "Content-Type": "application/json",
+        },
+        data=json.dumps(payload),
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()["runId"]
+```
+
+```python
+def submit_image_url(image_url: str) -> str:
+    payload = {
+        "model": "kling-v21-pro",
+        "prompt": "Animate this scene with a slow dolly zoom",
+        "imageUrl": image_url,
+        "duration": "5",
+        "aspect_ratio": "16:9",
+    }
+    response = requests.post(
+        API_URL,
+        headers={
+            "x-api-key": API_KEY,
+            "Content-Type": "application/json",
+        },
+        data=json.dumps(payload),
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()["runId"]
+```
+
+Reuse the polling helper from the JavaScript example (or your own status loop) to watch these run IDs until completion.
+
+### Example 5: Batch Processing
 ```javascript
 async function generateMultipleVideos(prompts) {
   // Submit all requests

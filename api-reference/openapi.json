@@ -2387,7 +2387,13 @@
           },
           "imageDataUrl": {
             "type": "string",
-            "description": "Base64 data URL of input image for image-to-video models"
+            "description": "Base64 data URL of input image for image-to-video models. Aliases `image_data_url` and `image` are also accepted and normalized.",
+            "example": "data:image/jpeg;base64,/9j/4AAQ..."
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Public HTTPS URL of the input image (interchangeable with imageDataUrl). The service will prioritize whichever field you supply before falling back to library attachments.",
+            "example": "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=1024"
           },
           "imageAttachmentId": {
             "type": "string", 
