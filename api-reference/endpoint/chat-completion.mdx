@@ -210,16 +210,20 @@ curl -N \
         ]
       }
     ],
-    "stream": true
+    "stream": true,
+    "stream_options": { "include_usage": true }
   }'
 ```
 
-The response streams `data: { ... }` lines until a final terminator and may include a usage object at the end.
+The response streams `data: { ... }` lines until a final terminator. Usage metrics appear only when requested: set `stream_options.include_usage` to `true` for streaming responses, or send `"include_usage": true` on non-streaming calls.
+
+_Note: Prompt-caching helpers implicitly force `include_usage`, so cached requests still receive usage data without extra flags._
 
 ### Troubleshooting
 
 - 400 unsupported image: ensure the image is a valid PNG/JPEG/WebP, not a tiny 1×1 pixel, and either HTTPS URL or a base64 data URL.
 - 503 after fallbacks: try a different model, verify API key/session, and prefer base64 data URL for local or protected assets.
+- Missing usage events: confirm `include_usage` is `true` in the payload or that prompt caching is enabled.
 
 ## Context Memory
 
