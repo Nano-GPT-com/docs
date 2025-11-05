@@ -1,0 +1,312 @@
+Title: NanoGPT API LLM Guide
+Audience: coding assistants helping devs integrate NanoGPT
+Last updated: 2025-03-14
+
+GOAL
+Equip developers to call the NanoGPT API for chat, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
+
+STYLE FOR ANSWERS
+- Prefer TypeScript (Node 18+) with openai@^5.8.0 and baseURL set to https://nano-gpt.com/api.
+- Share Python or curl snippets when requested or when automation beyond Node is the better fit.
+- Keep examples runnable, scoped to one task, and load secrets from environment variables.
+- Reference GET /api/v1/models for model availability instead of guessing ids or capabilities.
+- Explain reasoning fields, streaming frames, and billing metadata whenever they affect integration.
+- If unsure, acknowledge it and point the developer to LINKS.
+
+REQUIRED PACKAGES AND VERSIONS
+- npm install openai@^5.8.0
+- yarn add openai@^5.8.0 (same SDK for Yarn projects)
+- pnpm add openai@^5.8.0 (monorepo-friendly install)
+- pip install --upgrade openai
+- Node 18+ or Deno/Bun with fetch and Web Streams support
+
+CORE CONCEPTS
+- API base https://nano-gpt.com/api hosts OpenAI-style chat/completions/embeddings plus /v1/audio/speech; Anthropic /v1/messages lives at https://nano-gpt.com/v1/messages.
+- Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
+- Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
+- Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, and combine suffixes as needed.
+- Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle sanitized x_nanogpt_pricing frames.
+- Prompt caching and memory: prompt_caching/cache_control toggles 5m or 1h cache TTLs, and memory compression replaces prior turns before dispatch.
+
+GLOSSARY
+- Linkup search: NanoGPT web search triggered by :online suffix; prepends fresh results and bills $0.006 (standard) or $0.06 (deep).
+- Polychat memory: hierarchical compression invoked by :memory suffix or memory header; stores 1-365 day summaries and replaces conversation history.
+- Prompt caching: reusable prompt segments activated by prompt_caching/cache_control or anthropic-beta headers with optional cutAfterMessageIndex.
+- Reasoning stream: delta.reasoning text emitted by reasoning-enabled models; reasoning_details provides structured metadata when available.
+- Pricing frame: sanitized billing payload returned as x_nanogpt_pricing { amount, currency, usage } during streaming or in the final JSON.
+- BYOK: bring-your-own-key mode activated with x-use-byok: true or byok.enabled: true to forward requests using stored provider credentials.
+
+HARD RULES AND GOTCHAS
+- Always set baseURL to https://nano-gpt.com/api (or https://nano-gpt.com for /v1/messages) and include Authorization or x-api-key on every call.
+- Do not hardcode model support; call GET /api/v1/models?detailed=true to confirm vision, context length, and subscription status.
+- Handle streaming as SSE: group chunks by id, concatenate delta.content, capture delta.reasoning separately, stop on [DONE], and watch for x_nanogpt_pricing frames.
+- Never rely on <think> tags; reasoning text lives in reasoning/reasoning_details and may be omitted when reasoning.exclude is true.
+- Memory replaces the entire history with a compressed summary; send the up-to-date messages each turn and avoid mixing original transcripts with memory output.
+- BYOK requests skip fallback providers; warn developers that misconfigured downstream keys return provider errors directly without NanoGPT failover.
+
+QUICKSTART MINIMAL
+Set up the OpenAI SDK once and call the chat completions endpoint with familiar parameters.
+
+```ts
+// quickstart.ts
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+  apiKey: process.env.NANOGPT_API_KEY!,
+  baseURL: 'https://nano-gpt.com/api',
+});
+
+async function run() {
+  const completion = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: 'You are the NanoGPT onboarding guide.' },
+      { role: 'user', content: 'Summarize the API authentication steps.' },
+    ],
+    reasoning: { enabled: true, effort: 'low' },
+  });
+
+  console.log(completion.choices[0]?.message.content);
+}
+
+run().catch((err) => {
+  console.error('NanoGPT error:', err.response?.data ?? err);
+});
+```
+
+STREAMING WITH REASONING
+Use stream: true to read delta.content and delta.reasoning while capturing sanitized pricing frames.
+
+```ts
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+  apiKey: process.env.NANOGPT_API_KEY!,
+  baseURL: 'https://nano-gpt.com/api',
+});
+
+async function streamSummary() {
+  const stream = await client.chat.completions.create({
+    model: 'gpt-4o',
+    stream: true,
+    messages: [
+      { role: 'system', content: 'Respond concisely and expose your reasoning.' },
+      { role: 'user', content: 'Describe the NanoGPT streaming contract.' },
+    ],
+    reasoning: { enabled: true, effort: 'medium' },
+  });
+
+  let output = '';
+  let reasoning = '';
+  for await (const chunk of stream) {
+    const delta = chunk.choices?.[0]?.delta;
+    if (delta?.reasoning) reasoning += delta.reasoning;
+    if (delta?.content) output += delta.content;
+    const pricing = (chunk as any).x_nanogpt_pricing;
+    if (pricing) console.info('pricing update', pricing);
+  }
+
+  console.log({ reasoning, output });
+}
+
+streamSummary().catch(console.error);
+```
+
+TOOLS AND STRUCTURED OUTPUT
+NanoGPT forwards OpenAI tool definitions and structured_outputs to the selected provider.
+
+```ts
+const result = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [
+    { role: 'system', content: 'You call tools to fetch weather data.' },
+    { role: 'user', content: 'What is the weather in Austin right now?' },
+  ],
+  tools: [
+    {
+      type: 'function',
+      function: {
+        name: 'getWeather',
+        description: 'Return current weather conditions.',
+        parameters: {
+          type: 'object',
+          properties: {
+            location: { type: 'string', description: 'City, Country' },
+          },
+          required: ['location'],
+        },
+      },
+    },
+  ],
+  tool_choice: 'auto',
+  parallel_tool_calls: false,
+});
+
+const call = result.choices[0]?.message.tool_calls?.[0];
+if (call) {
+  console.log('tool name', call.function.name);
+  console.log('args', call.function.arguments);
+}
+```
+
+MEMORY AND SEARCH
+Combine Polychat memory with Linkup search by opting into the suffix and optional headers.
+
+```ts
+await client.chat.completions.create(
+  {
+    model: 'gpt-4o:online:memory-30',
+    messages: [
+      { role: 'system', content: 'Surface recent release notes before answering.' },
+      { role: 'user', content: 'Summarize the last five NanoGPT releases for me.' },
+    ],
+  },
+  {
+    headers: {
+      memory: 'true',
+      memory_expiration_days: '30',
+    },
+  },
+);
+```
+
+VISION INPUT
+Send content arrays mixing text and image_url parts to vision-capable models.
+
+```ts
+const visionReply = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Describe this dashboard.' },
+        { type: 'image_url', image_url: { url: 'https://example.com/metrics.png', detail: 'high' } },
+      ],
+    },
+  ],
+});
+console.log(visionReply.choices[0]?.message.content);
+```
+
+PROMPT CACHING
+Enable prompt reuse with prompt_caching or cache_control, and set Anthropic beta headers when required.
+
+```ts
+await client.chat.completions.create(
+  {
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: 'Always respond with JSON.' },
+      { role: 'user', content: 'Cache this conversation scaffold for 5 minutes.' },
+    ],
+    prompt_caching: {
+      enabled: true,
+      ttl: '5m',
+      cut_after_message_index: 0,
+    },
+  },
+  {
+    headers: {
+      'anthropic-beta': 'prompt-caching-2024-07-31',
+    },
+  },
+);
+```
+
+EMBEDDINGS
+Use the same SDK to create embeddings with NanoGPT-provided models.
+
+```ts
+const embeddings = await client.embeddings.create({
+  model: 'text-embedding-3-large',
+  input: [
+    'NanoGPT provides unified access to many providers.',
+    'Check pricing before going to production.',
+  ],
+});
+
+console.log(embeddings.data.map((row) => row.embedding.length));
+```
+
+AUDIO SPEECH
+POST /v1/audio/speech mirrors OpenAI’s text-to-speech API.
+
+```ts
+import { writeFile } from 'node:fs/promises';
+
+const speech = await client.audio.speech.create({
+  model: 'gpt-4o-mini-tts',
+  voice: 'alloy',
+  input: 'Welcome to the NanoGPT API.',
+  response_format: 'mp3',
+});
+
+await writeFile('welcome.mp3', Buffer.from(await speech.arrayBuffer()));
+```
+
+BYOK (BRING YOUR OWN KEY)
+Store provider keys once, then enable per request to route through your credentials.
+
+```bash
+curl -X POST https://nano-gpt.com/api/user/provider-keys \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"provider":"openai","key":"sk-live-..."}'
+```
+
+```ts
+await client.chat.completions.create(
+  {
+    model: 'gpt-4o',
+    messages: [
+      { role: 'user', content: 'Draft a status update.' },
+    ],
+    byok: { enabled: true, provider: 'openai', disableFallbacks: true },
+  },
+  {
+    headers: { 'x-use-byok': 'true' },
+  },
+);
+```
+
+ANTHROPIC-COMPATIBLE /v1/messages
+Point the Anthropic SDK at https://nano-gpt.com to reuse this adapter (streaming is unavailable for GPU-TEE models).
+
+```ts
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.NANOGPT_API_KEY!,
+  baseURL: 'https://nano-gpt.com',
+});
+
+const response = await anthropic.messages.create({
+  model: 'claude-3-5-sonnet-20241022',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Summarize the NanoGPT pricing metadata contract.' }],
+  thinking: { type: 'enabled', budget_tokens: 2048 },
+});
+
+console.log(response.content);
+```
+
+PRICING AND BILLING
+- Expect usage.prompt_tokens/completion_tokens on JSON responses and per-chunk pricing metadata via x_nanogpt_pricing.
+- Pricing frames include sanitized errors when provider billing fails; surface the message without exposing vendor codes.
+- Conversation-level transactions are billed in USD with optional auto-conversion to Nano when applicable.
+- Use 429 handling with exponential backoff; subscription-free buckets allow roughly 60 RPM, while premium models may enforce tighter limits.
+
+ERROR HANDLING AND OBSERVABILITY
+- Error responses follow OpenAI envelopes: { error: { message, type, code, param } } with x-request-id headers for support.
+- Authentication failures increment an abuse counter; repeated failures yield 429 with rate_limit_exceeded.
+- Streaming parsers must guard against unexpected JSON-only frames (pricing) and handle [DONE] closure explicitly.
+- Log request ids alongside model and payment_source for easier reconciliation with the NanoGPT dashboard.
+
+LINKS
+- https://nano-gpt.com/api
+- docs/reasoning.md
+- docs/v1/models.md
+- memory.md
+- BYOK.md
+- docs/streaming-id-contract.md
