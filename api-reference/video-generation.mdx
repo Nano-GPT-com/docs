@@ -47,6 +47,8 @@ x-api-key: YOUR_API_KEY  # Optional, for API key auth
 
 Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a public HTTPS link). The platform always uses the explicit field you send before falling back to any library attachments.
 
+> Uploads sent via the API must be 4 MB or smaller. For larger assets, host them externally and provide an `imageUrl`.
+
 ##### Base64 input
 ```json
 {

@@ -29,6 +29,8 @@ curl https://nano-gpt.com/v1/images/generations \
 
 The OpenAI-compatible endpoint also supports img2img generation using the `imageDataUrl` parameter. Here are the different ways to provide input images:
 
+> Uploads sent via the API must be 4 MB or smaller. Larger files should be hosted externally and referenced with `imageUrl`.
+
 #### Method 1: Upload from Local File
 
 ```python
