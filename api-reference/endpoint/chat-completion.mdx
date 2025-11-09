@@ -3,6 +3,79 @@ title: 'Chat Completion'
 openapi: 'POST /v1/chat/completions'
 ---
 
+### Tool calling
+
+The `/api/v1/chat/completions` endpoint supports OpenAI-compatible function calling. You can describe callable functions in the `tools` array, control when the model may invoke them, and continue the conversation by echoing `tool` role messages that reference the assistant's chosen call.
+
+#### Request parameters
+
+- `tools` (optional array): Each entry must be `{ "type": "function", "function": { "name": string, "description"?: string, "parameters"?: JSON-Schema object } }`. Only `function` tools are accepted. The serialized `tools` payload is limited to 200 KB (overrides via `TOOL_SPEC_MAX_BYTES`); violating the shape or size yields a 400 with `tool_spec_too_large`, `invalid_tool_spec`, or `invalid_tool_spec_parse`.
+- `tool_choice` (optional string or object): Defaults to `auto`. Set `"none"` to guarantee no tool calls (the server also drops the `tools` payload upstream), `"required"` to force the next response to be a tool call, or `{ "type": "function", "function": { "name": "your_function" } }` to pin the exact function.
+- `parallel_tool_calls` (optional boolean): When `true` the flag is forwarded to providers that support issuing multiple tool calls in a single turn. Models that ignore the flag fall back to sequential calls.
+- `messages[].tool_calls` (assistant role): Persist the tool call metadata returned by the model so future turns can see which functions were invoked. Each item uses the OpenAI shape `{ id, type: "function", function: { name, arguments } }`.
+- `messages[]` with `role: "tool"`: Respond to the model by sending `{ "role": "tool", "tool_call_id": "<assistant tool_calls id>", "content": "<JSON or text payload>" }`. The server drops any tool response that references an unknown `tool_call_id`, so keep the IDs in sync.
+- Validation behavior: If you send `tool_choice: "none"` with a `tools` array the request is accepted but the tools are omitted before hitting the model; invalid schemas or oversize payloads return the error codes above.
+
+#### Example request
+
+```http
+POST /api/v1/chat/completions
+{
+  "model": "gpt-4o-mini",
+  "messages": [
+    { "role": "user", "content": "What's the temperature in San Francisco right now?" }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "lookup_weather",
+        "description": "Fetch the current weather for a city.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": { "type": "string" },
+            "unit": { "type": "string", "enum": ["c", "f"] }
+          },
+          "required": ["city"]
+        }
+      }
+    }
+  ],
+  "tool_choice": "auto",
+  "parallel_tool_calls": true
+}
+```
+
+#### Example assistant/tool turn
+
+```json
+{
+  "role": "assistant",
+  "content": null,
+  "tool_calls": [
+    {
+      "id": "call_abc123",
+      "type": "function",
+      "function": {
+        "name": "lookup_weather",
+        "arguments": "{\"city\":\"San Francisco\",\"unit\":\"f\"}"
+      }
+    }
+  ]
+}
+```
+
+```json
+{
+  "role": "tool",
+  "tool_call_id": "call_abc123",
+  "content": "{\"city\":\"San Francisco\",\"temperatureF\":58,\"conditions\":\"foggy\"}"
+}
+```
+
+Streaming responses emit delta events that mirror OpenAI's `tool_calls` schema, so consumers can reuse their existing parsing logic without changes.
+
 ## Overview
 
 The Chat Completion endpoint provides OpenAI-compatible chat completions.
