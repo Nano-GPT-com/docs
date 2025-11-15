@@ -292,6 +292,66 @@ The response streams `data: { ... }` lines until a final terminator. Usage metri
 
 _Note: Prompt-caching helpers implicitly force `include_usage`, so cached requests still receive usage data without extra flags._
 
+### Prompt Caching (Claude Models)
+
+Claude caching works exactly like Anthropic's `/v1/messages`: you must place `cache_control` objects on the content blocks you want the model to reuse, or instruct NanoGPT to do it for you via the `prompt_caching` helper.
+
+```python
+headers = {
+  "Authorization": "Bearer YOUR_API_KEY",
+  "Content-Type": "application/json",
+  "anthropic-beta": "prompt-caching-2024-07-31"
+}
+
+payload = {
+  "model": "claude-3-5-sonnet-20241022",
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "type": "text",
+          "text": "Reference handbook + rules of engagement.",
+          "cache_control": {"type": "ephemeral", "ttl": "5m"}
+        }
+      ]
+    },
+    {"role": "user", "content": "Live request goes here"}
+  ]
+}
+
+requests.post("https://nano-gpt.com/api/v1/chat/completions", headers=headers, json=payload)
+```
+
+- Each `cache_control` marker caches the full prefix up to that block. Place them on every static chunk (system messages, tool definitions, large contexts) you plan to reuse.
+- Anthropic currently supports TTLs of `5m` (1.25× one-time billing) and `1h` (2× one-time). Replays show the discounted tokens inside `usage.prompt_tokens_details.cached_tokens`.
+- The `anthropic-beta: prompt-caching-2024-07-31` header is mandatory on requests that include caching metadata.
+
+For a simpler experience, send the helper fields and NanoGPT will stamp the first _N_ messages for you before reaching Anthropic:
+
+```ts
+await client.chat.completions.create(
+  {
+    model: 'claude-3-5-sonnet-20241022',
+    messages: [
+      { role: 'system', content: 'Static rubric lives here.' },
+      { role: 'user', content: 'Additional reusable context.' },
+      { role: 'user', content: 'This turn is not cached.' },
+    ],
+    prompt_caching: {
+      enabled: true,
+      ttl: '1h',
+      cut_after_message_index: 1,
+    },
+  },
+  {
+    headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' },
+  },
+);
+```
+
+`cut_after_message_index` is zero-based and NanoGPT does not guess—everything at or before that index is cached, everything after is not. Switch back to explicit `cache_control` blocks if you need multiple cache breakpoints or mixed TTLs in the same payload.
+
 ### Troubleshooting
 
 - 400 unsupported image: ensure the image is a valid PNG/JPEG/WebP, not a tiny 1×1 pixel, and either HTTPS URL or a base64 data URL.

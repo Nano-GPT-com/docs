@@ -1513,8 +1513,18 @@
                   "enum": ["system", "user", "assistant"]
                 },
                 "content": {
-                  "type": "string",
-                  "description": "The content of the message"
+                  "description": "Message content as a simple string or an array of multimodal parts",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MessageContentPart"
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -1549,19 +1559,96 @@
             "description": "Penalty for presence of tokens (-2 to 2)",
             "default": 0
           },
-          "cache_control": {
+          "prompt_caching": {
             "type": "object",
-            "description": "Cache control settings for Claude models only",
+            "description": "Helper to tag the leading messages for Claude prompt caching. NanoGPT injects cache_control blocks on each message up to the specified index before forwarding to Anthropic.",
             "properties": {
               "enabled": {
                 "type": "boolean",
-                "description": "Whether to enable caching",
+                "description": "Whether to enable prompt caching on this request",
                 "default": false
               },
               "ttl": {
                 "type": "string",
-                "description": "Cache time-to-live ('5m', '1h')",
+                "description": "Cache time-to-live ('5m' or '1h')",
+                "enum": ["5m", "1h"],
                 "example": "5m"
+              },
+              "cut_after_message_index": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Zero-based index of the last message that should be cached. All messages up to and including this index receive the same cache_control block."
+              }
+            }
+          }
+        }
+      },
+      "MessageContentPart": {
+        "type": "object",
+        "required": ["type"],
+        "additionalProperties": true,
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Content block type",
+            "enum": ["text", "image_url", "input_text", "input_audio", "input_video", "tool_use", "tool_result"]
+          },
+          "text": {
+            "type": "string",
+            "description": "Text content when type is 'text'"
+          },
+          "image_url": {
+            "type": "object",
+            "description": "Image reference for multimodal prompts",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "HTTPS URL or base64 data URL for the image"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Requested image resolution detail",
+                "enum": ["low", "high", "auto"]
+              }
+            }
+          },
+          "input_audio": {
+            "type": "object",
+            "description": "Inline audio input payload",
+            "properties": {
+              "data": {
+                "type": "string",
+                "description": "Base64 encoded audio bytes"
+              },
+              "format": {
+                "type": "string",
+                "description": "Audio format (e.g. wav, mp3)"
+              }
+            }
+          },
+          "input_video": {
+            "type": "object",
+            "description": "Inline video reference",
+            "properties": {
+              "video_url": {
+                "type": "string",
+                "description": "HTTPS URL or data URL for the video"
+              }
+            }
+          },
+          "cache_control": {
+            "type": "object",
+            "description": "Claude-only prompt caching control applied to this block. When present, NanoGPT forwards it unchanged to Anthropic.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["ephemeral"],
+                "description": "Cache type. Claude currently exposes the 'ephemeral' tier for 5m/1h TTLs."
+              },
+              "ttl": {
+                "type": "string",
+                "enum": ["5m", "1h"],
+                "description": "Optional TTL override for this block."
               }
             }
           }
