@@ -80,6 +80,89 @@ Streaming responses emit delta events that mirror OpenAI's `tool_calls` schema, 
 
 The Chat Completion endpoint provides OpenAI-compatible chat completions.
 
+## Sampling & Decoding Controls
+
+The `/api/v1/chat/completions` endpoint accepts a full set of sampling and decoding knobs. All fields are optional; omit any you want to leave at provider defaults.
+
+### Temperature & Nucleus
+
+| Parameter | Range/Default | Description |
+| --- | --- | --- |
+| `temperature` | 0–2 (default 0.7) | Classic randomness control; higher values explore more. |
+| `top_p` | 0–1 (default 1) | Nucleus sampling that trims to the smallest set above `top_p` cumulative probability. |
+| `top_k` | 1+ | Sample only from the top-k tokens each step. |
+| `top_a` | provider default | Blends temperature and nucleus behavior; set only if a model calls for it. |
+| `min_p` | 0–1 | Require each candidate token to exceed a probability floor. |
+| `tfs` | 0–1 | Tail free sampling; 1 disables. |
+| `eta_cutoff` / `epsilon_cutoff` | provider default | Drop tokens once they fall below the tail thresholds. |
+| `typical_p` | 0–1 | Entropy-based nucleus sampling; keeps tokens whose surprise matches expected entropy. |
+| `mirostat_mode` | 0/1/2 | Enable Mirostat sampling; set tau/eta when active. |
+| `mirostat_tau` / `mirostat_eta` | provider default | Target entropy and learning rate for Mirostat. |
+
+### Length & Stopping
+
+| Parameter | Range/Default | Description |
+| --- | --- | --- |
+| `max_tokens` | 1+ (default 4000) | Upper bound on generated tokens. |
+| `min_tokens` | 0+ (default 0) | Minimum completion length when provider supports it. |
+| `stop` | string or string[] | Stop sequences passed upstream. |
+| `stop_token_ids` | int[] | Stop generation on specific token IDs (limited provider support). |
+| `include_stop_str_in_output` | boolean (default false) | Keep the stop sequence in the final text where supported. |
+| `ignore_eos` | boolean (default false) | Continue even if the model predicts EOS internally. |
+
+### Penalties & Repetition Guards
+
+| Parameter | Range/Default | Description |
+| --- | --- | --- |
+| `frequency_penalty` | -2 – 2 (default 0) | Penalize tokens proportional to prior frequency. |
+| `presence_penalty` | -2 – 2 (default 0) | Penalize tokens based on whether they appeared at all. |
+| `repetition_penalty` | -2 – 2 | Provider-agnostic repetition modifier; >1 discourages repeats. |
+| `no_repeat_ngram_size` | 0+ | Forbid repeating n-grams of the given size (limited support). |
+| `custom_token_bans` | int[] | Fully block listed token IDs. |
+
+### Logit Shaping & Determinism
+
+| Parameter | Range/Default | Description |
+| --- | --- | --- |
+| `logit_bias` | object | Map token IDs to additive logits (OpenAI-compatible). |
+| `logprobs` | boolean or int | Return token-level logprobs where supported. |
+| `prompt_logprobs` | boolean | Request logprobs on the prompt when available. |
+| `seed` | integer | Make completions repeatable where the provider allows it. |
+
+### Usage notes
+
+- Parameters can be combined (e.g., `temperature` + `top_p` + `top_k`), but overly narrow settings may lead to early stops.
+- Invalid ranges yield a 400 before reaching the provider.
+- Provider defaults apply to any omitted field.
+
+### Example request
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Write a creative story about space exploration"}
+    ],
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "top_k": 40,
+    "tfs": 0.8,
+    "typical_p": 0.95,
+    "mirostat_mode": 2,
+    "mirostat_tau": 5,
+    "mirostat_eta": 0.1,
+    "max_tokens": 500,
+    "frequency_penalty": 0.3,
+    "presence_penalty": 0.1,
+    "repetition_penalty": 1.1,
+    "stop": ["###"],
+    "seed": 42
+  }'
+```
+
 ## Web Search
 
 All models can access real-time web information by appending special suffixes to the model name:
