@@ -25,6 +25,27 @@ curl https://nano-gpt.com/v1/images/generations \
   }'
 ```
 
+### Return Hosted URLs (response_format: "url")
+
+By default, responses include base64 strings. Ask for hosted URLs instead:
+
+```bash
+curl https://nano-gpt.com/v1/images/generations \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "hidream",
+    "prompt": "A sunset over a mountain range",
+    "n": 1,
+    "size": "1024x1024",
+    "response_format": "url"
+  }'
+```
+
+- Output: `data` will contain `{ url: "https://..." }` entries instead of `b64_json`.
+- Inputs: `imageDataUrl` accepts data URLs; https image URLs are fetched and normalized to data URLs server-side for img2img/edit flows.
+- Retention: generated image URLs are temporary; files are kept for 24 hours, then permanently deleted. Download and store elsewhere if you need longer retention.
+
 ### Image-to-Image with OpenAI Endpoint
 
 The OpenAI-compatible endpoint also supports img2img generation using the `imageDataUrl` parameter. Here are the different ways to provide input images:
