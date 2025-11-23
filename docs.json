@@ -87,7 +87,8 @@
            "integrations/typingmind",
            "integrations/librechat",
            "integrations/openhands",
-           "integrations/janitorai"
+           "integrations/janitorai",
+           "integrations/droid"
          ]
       }
      
