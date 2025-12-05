@@ -645,6 +645,69 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 }
 ```
 
+### Reasoning Effort
+
+Control how much computational effort the model puts into reasoning before generating a response. Higher values result in more thorough reasoning but slower responses and higher costs. Only applicable to reasoning-capable models.
+
+#### Parameter: `reasoning_effort`
+
+| Value | Description |
+| --- | --- |
+| `none` | Disables reasoning entirely |
+| `minimal` | Allocates ~10% of max_tokens for reasoning |
+| `low` | Allocates ~20% of max_tokens for reasoning |
+| `medium` | Allocates ~50% of max_tokens for reasoning (default when reasoning is enabled) |
+| `high` | Allocates ~80% of max_tokens for reasoning |
+
+#### Usage
+
+The `reasoning_effort` parameter can be passed at the top level:
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "o3-mini",
+    "messages": [
+      {"role": "user", "content": "Explain quantum entanglement step by step"}
+    ],
+    "reasoning_effort": "high",
+    "max_tokens": 4096
+  }'
+```
+
+Alternatively, pass it as part of the `reasoning` object:
+
+```json
+{
+  "model": "o3-mini",
+  "messages": [{"role": "user", "content": "Solve this complex math problem..."}],
+  "reasoning": {
+    "effort": "high"
+  }
+}
+```
+
+Both formats are equivalent.
+
+#### Combining effort with exclude
+
+You can control both reasoning depth and visibility:
+
+```json
+{
+  "model": "deepseek-reasoner",
+  "messages": [{"role": "user", "content": "..."}],
+  "reasoning": {
+    "effort": "high",
+    "exclude": false
+  }
+}
+```
+
+Sending `reasoning_effort` to models that don't support reasoning will have no effect (the parameter is ignored).
+
 ### Model suffix: `:reasoning-exclude`
 
 You can toggle the filter without altering your JSON body by appending `:reasoning-exclude` to the `model` name.
