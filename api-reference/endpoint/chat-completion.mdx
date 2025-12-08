@@ -379,6 +379,17 @@ _Note: Prompt-caching helpers implicitly force `include_usage`, so cached reques
 
 Claude caching works exactly like Anthropic's `/v1/messages`: you must place `cache_control` objects on the content blocks you want the model to reuse, or instruct NanoGPT to do it for you via the `prompt_caching` helper.
 
+> **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
+
+The `prompt_caching` / `promptCaching` helper accepts these options:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `enabled` | boolean | — | Enable prompt caching |
+| `ttl` | string | `"5m"` | Cache time-to-live: `"5m"` or `"1h"` |
+| `cut_after_message_index` | integer | — | Zero-based index; cache all messages up to and including this index |
+| `stickyProvider` | boolean | `false` | **New:** When `true`, disable automatic failover to preserve cache consistency. Returns 503 error instead of switching services. |
+
 ```python
 headers = {
   "Authorization": "Bearer YOUR_API_KEY",
@@ -434,6 +445,51 @@ await client.chat.completions.create(
 ```
 
 `cut_after_message_index` is zero-based and NanoGPT does not guess—everything at or before that index is cached, everything after is not. Switch back to explicit `cache_control` blocks if you need multiple cache breakpoints or mixed TTLs in the same payload.
+
+### Cache Consistency with `stickyProvider`
+
+NanoGPT automatically fails over to backup services when the primary service is temporarily unavailable. While this ensures high availability, it can break your prompt cache because **each backend service maintains its own separate cache**.
+
+If cache consistency is more important than availability for your use case, you can enable the `stickyProvider` option:
+
+```json
+{
+  "model": "claude-sonnet-4-5-20250929",
+  "messages": [...],
+  "prompt_caching": {
+    "enabled": true,
+    "ttl": "5m",
+    "stickyProvider": true
+  }
+}
+```
+
+**Behavior:**
+- **`stickyProvider: false` (default)** — If the primary service fails, NanoGPT automatically retries with a backup service. Your request succeeds, but the cache may be lost (you'll pay full price for that request and need to rebuild the cache).
+- **`stickyProvider: true`** — If the primary service fails, NanoGPT returns a 503 error instead of failing over. Your cache remains intact for when the service recovers.
+
+**When to use `stickyProvider: true`:**
+- You have very large cached contexts where cache misses are expensive
+- You prefer to retry failed requests yourself rather than pay for cache rebuilds
+- Cost predictability is more important than request success rate
+
+**When to use `stickyProvider: false` (default):**
+- You prefer requests to always succeed when possible
+- Occasional cache misses are acceptable
+- You're using shorter contexts where cache rebuilds are inexpensive
+
+**Error response when stickyProvider blocks a failover:**
+
+```json
+{
+  "error": {
+    "message": "Service is temporarily unavailable. Fallback disabled to preserve prompt cache consistency. Switching services would invalidate your cached tokens. Remove stickyProvider option or retry later.",
+    "status": 503,
+    "type": "service_unavailable",
+    "code": "fallback_blocked_for_cache_consistency"
+  }
+}
+```
 
 ### Troubleshooting
 
