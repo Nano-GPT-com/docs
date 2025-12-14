@@ -39,7 +39,8 @@ Note on response_format: "url"
 The returned data[i].url is a time-limited, signed download URL (presigned URL) to the generated image.
 It will expire after a short period (currently ~1 hour). If you need long-term access, download the image and store it yourself.
 
-- Output: `data` will contain `{ url: "https://..." }` entries instead of `b64_json`.
+- Output: `data` will usually contain `{ url: "https://..." }` entries instead of `b64_json` (each `data[i]` is one or the other, never both).
+- Fallback: if URL generation (upload/presign) fails, the API may return `b64_json` even when you requested `response_format: "url"`.
 - Inputs: `imageDataUrl` accepts data URLs; https image URLs are fetched and normalized to data URLs server-side for img2img/edit flows.
 - Retention: the returned `data[i].url` is a signed, expiring URL (~1 hour). Generated files are kept for 24 hours, then permanently deleted. Download and store elsewhere if you need longer retention.
 

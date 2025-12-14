@@ -652,7 +652,7 @@
         },
         "responses": {
           "200": {
-            "description": "Image generation response",
+            "description": "Image generation response. Each data[i] contains either { url } or { b64_json }. When requesting response_format: \"url\", the API may fall back to returning { b64_json } if URL generation (upload/presign) fails.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/OpenAIImageGenerationsResponse" },
@@ -3046,8 +3046,9 @@
           },
           "response_format": {
             "type": "string",
-            "description": "The format in which the generated images are returned. Use \"b64_json\" (default) to receive base64-encoded image bytes in data[i].b64_json, or \"url\" to receive a time-limited, signed download URL in data[i].url (expires after a short period, currently ~1 hour).",
-            "enum": ["url", "b64_json"]
+            "description": "The format in which the generated images are returned. Use \"b64_json\" (default) to receive base64-encoded image bytes in data[i].b64_json, or \"url\" to receive a time-limited, signed download URL in data[i].url (expires after a short period, currently ~1 hour). Note: When requesting \"url\", the API may still return \"b64_json\" if URL generation (upload/presign) fails, as a fallback.",
+            "enum": ["url", "b64_json"],
+            "default": "b64_json"
           },
           "user": {
             "type": "string",
@@ -3117,7 +3118,7 @@
           },
           "data": {
             "type": "array",
-            "description": "List of generated images. Each entry contains either a hosted URL (response_format: \"url\") or base64-encoded bytes (response_format: \"b64_json\").",
+            "description": "List of generated images. Each entry contains either a hosted URL (data[i].url) or base64-encoded bytes (data[i].b64_json), never both.",
             "items": {
               "oneOf": [
                 {
@@ -3129,14 +3130,18 @@
                       "format": "uri",
                       "description": "Time-limited, signed download URL (presigned URL) to the generated image. It will expire after a short period (currently ~1 hour). If you need long-term access, download the image and store it yourself."
                     }
-                  }
+                  },
+                  "additionalProperties": false,
+                  "example": { "url": "https://...signed-url..." }
                 },
                 {
                   "type": "object",
                   "required": ["b64_json"],
                   "properties": {
                     "b64_json": { "type": "string", "description": "Base64 encoded image data" }
-                  }
+                  },
+                  "additionalProperties": false,
+                  "example": { "b64_json": "<base64-encoded-image-bytes>" }
                 }
               ]
             }

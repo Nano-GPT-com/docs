@@ -2,3 +2,7 @@
 title: 'Image Generation (OpenAI-Compatible)'
 openapi: 'POST /v1/images/generations'
 --- 
+
+Each `data[i]` contains either `b64_json` (default) or `url` (when `response_format: "url"`), never both.
+
+When requesting `response_format: "url"`, the API may still return `b64_json` if URL generation (upload/presign) fails, as a fallback.
