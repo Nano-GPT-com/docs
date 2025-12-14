@@ -9,7 +9,7 @@ The NanoGPT API offers access to all the state-of-the-art image models. This gui
 
 ## OpenAI-Compatible Endpoint (v1/images/generations)
 
-This endpoint follows the OpenAI specification for image generation and returns a list of base64-encoded images.
+This endpoint follows the OpenAI specification for image generation and returns a list of base64-encoded images by default (or hosted URLs when `response_format: "url"`).
 
 ### Basic Image Generation
 
@@ -29,22 +29,52 @@ curl https://nano-gpt.com/v1/images/generations \
 
 By default, responses include base64 strings. Ask for hosted URLs instead:
 
-```bash
-curl https://nano-gpt.com/v1/images/generations \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "hidream",
-    "prompt": "A sunset over a mountain range",
-    "n": 1,
-    "size": "1024x1024",
-    "response_format": "url"
-  }'
+```json
+{
+  "response_format": "url"
+}
 ```
+
+Note on response_format: "url"
+The returned data[i].url is a time-limited, signed download URL (presigned URL) to the generated image.
+It will expire after a short period (currently ~1 hour). If you need long-term access, download the image and store it yourself.
 
 - Output: `data` will contain `{ url: "https://..." }` entries instead of `b64_json`.
 - Inputs: `imageDataUrl` accepts data URLs; https image URLs are fetched and normalized to data URLs server-side for img2img/edit flows.
-- Retention: generated image URLs are temporary; files are kept for 24 hours, then permanently deleted. Download and store elsewhere if you need longer retention.
+- Retention: the returned `data[i].url` is a signed, expiring URL (~1 hour). Generated files are kept for 24 hours, then permanently deleted. Download and store elsewhere if you need longer retention.
+
+Example response (response_format: "url")
+
+```json
+{
+  "created": 123,
+  "data": [
+    { "url": "https://...signed-url..." }
+  ],
+  "cost": 123,
+  "paymentSource": "<string>",
+  "remainingBalance": 123
+}
+```
+
+Example response (response_format: "b64_json")
+
+```json
+{
+  "created": 123,
+  "data": [
+    { "b64_json": "<base64-encoded-image-bytes>" }
+  ],
+  "cost": 123,
+  "paymentSource": "<string>",
+  "remainingBalance": 123
+}
+```
+
+### Downloading the image
+
+If you requested response_format: "url", download the image by performing a normal HTTP GET to data[i].url.
+Because the URL is signed and expiring, you should download it soon after generation.
 
 ### Image-to-Image with OpenAI Endpoint
 

@@ -655,7 +655,33 @@
             "description": "Image generation response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/OpenAIImageGenerationsResponse" }
+                "schema": { "$ref": "#/components/schemas/OpenAIImageGenerationsResponse" },
+                "examples": {
+                  "url": {
+                    "summary": "Example response (response_format: \"url\")",
+                    "value": {
+                      "created": 123,
+                      "data": [
+                        { "url": "https://...signed-url..." }
+                      ],
+                      "cost": 123,
+                      "paymentSource": "<string>",
+                      "remainingBalance": 123
+                    }
+                  },
+                  "b64_json": {
+                    "summary": "Example response (response_format: \"b64_json\")",
+                    "value": {
+                      "created": 123,
+                      "data": [
+                        { "b64_json": "<base64-encoded-image-bytes>" }
+                      ],
+                      "cost": 123,
+                      "paymentSource": "<string>",
+                      "remainingBalance": 123
+                    }
+                  }
+                }
               }
             }
           },
@@ -3020,7 +3046,7 @@
           },
           "response_format": {
             "type": "string",
-            "description": "The format in which the generated images are returned",
+            "description": "The format in which the generated images are returned. Use \"b64_json\" (default) to receive base64-encoded image bytes in data[i].b64_json, or \"url\" to receive a time-limited, signed download URL in data[i].url (expires after a short period, currently ~1 hour).",
             "enum": ["url", "b64_json"]
           },
           "user": {
@@ -3091,13 +3117,28 @@
           },
           "data": {
             "type": "array",
-            "description": "List of generated images",
+            "description": "List of generated images. Each entry contains either a hosted URL (response_format: \"url\") or base64-encoded bytes (response_format: \"b64_json\").",
             "items": {
-              "type": "object",
-              "properties": {
-                "url": { "type": "string", "description": "URL to the generated image" },
-                "b64_json": { "type": "string", "description": "Base64 encoded image data" }
-              }
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": ["url"],
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Time-limited, signed download URL (presigned URL) to the generated image. It will expire after a short period (currently ~1 hour). If you need long-term access, download the image and store it yourself."
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": ["b64_json"],
+                  "properties": {
+                    "b64_json": { "type": "string", "description": "Base64 encoded image data" }
+                  }
+                }
+              ]
             }
           },
           "cost": {
