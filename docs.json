@@ -8,6 +8,7 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.ico",
+  "openapi": "/api-reference/openapi.json",
   "navigation": {
     "groups": [
       {
@@ -27,7 +28,6 @@
           "api-reference/endpoint/completion",
           "api-reference/endpoint/embeddings",
           "api-reference/endpoint/embedding-models",
-          "api-reference/endpoint/image-generation",
           "api-reference/endpoint/image-generation-openai",
           "api-reference/endpoint/transcribe",
           "api-reference/endpoint/transcribe-status",

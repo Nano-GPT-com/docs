@@ -1,11 +1,11 @@
 ---
 title: "Image Generation"
-description: "Complete guide to image generation APIs"
+description: "Guide to the OpenAI-compatible image generation endpoint"
 ---
 
 ## Overview
 
-The NanoGPT API offers access to all the state-of-the-art image models. This guide covers how to use our image generation endpoint.
+The NanoGPT API provides image generation through the OpenAI-compatible endpoint. This guide covers text-to-image and image-to-image flows, response formats, and best practices.
 
 ## OpenAI-Compatible Endpoint (v1/images/generations)
 
@@ -41,7 +41,7 @@ It will expire after a short period (currently ~1 hour). If you need long-term a
 
 - Output: `data` will usually contain `{ url: "https://..." }` entries instead of `b64_json` (each `data[i]` is one or the other, never both).
 - Fallback: if URL generation (upload/presign) fails, the API may return `b64_json` even when you requested `response_format: "url"`.
-- Inputs: `imageDataUrl` accepts data URLs; https image URLs are fetched and normalized to data URLs server-side for img2img/edit flows.
+- Inputs: `imageDataUrl` accepts data URLs; download and convert remote images before sending.
 - Retention: the returned `data[i].url` is a signed, expiring URL (~1 hour). Generated files are kept for 24 hours, then permanently deleted. Download and store elsewhere if you need longer retention.
 
 Example response (response_format: "url")
@@ -81,7 +81,7 @@ Because the URL is signed and expiring, you should download it soon after genera
 
 The OpenAI-compatible endpoint also supports img2img generation using the `imageDataUrl` parameter. Here are the different ways to provide input images:
 
-> Uploads sent via the API must be 4 MB or smaller. Larger files should be hosted externally and referenced with `imageUrl`.
+> Uploads sent via the API must be 4 MB or smaller. Compress or resize larger files before converting to a data URL.
 
 #### Method 1: Upload from Local File
 
@@ -254,173 +254,6 @@ When using image-to-image models, you can include these additional parameters:
   "seed": 42,                   // For reproducible results
   "kontext_max_mode": true      // Enhanced context (flux-kontext only)
 }
-```
-
-## Image Generation
-
-Here's a complete example using the Recraft model and our older API standard:
-
-```python
-import requests
-import base64
-
-API_KEY = "YOUR_API_KEY"
-BASE_URL = "https://nano-gpt.com/api"
-
-headers = {"x-api-key": API_KEY}
-
-response = requests.post(
-    f"{BASE_URL}/generate-image",
-    headers=headers,
-    json={
-        "model": "recraft-v3",
-        "prompt": "A serene mountain landscape at sunset",
-        "width": 1024,
-        "height": 1024
-    }
-)
-
-result = response.json()
-b64_data = result["data"][0]["b64_json"]
-
-# Decode and save the image
-image_bytes = base64.b64decode(b64_data)
-with open("generated_image.png", "wb") as f:
-    f.write(image_bytes)
-
-# Display cost information
-cost = result.get("cost", "N/A")
-payment_source = result.get("paymentSource", "N/A")
-remaining_balance = result.get("remainingBalance")
-
-print(f"Image saved as generated_image.png")
-print(f"Cost: {cost} {payment_source}")
-if remaining_balance is not None:
-    print(f"Remaining balance: {remaining_balance} {payment_source}")
-else:
-    print("Remaining balance: Not available")
-```
-
-## Parameters
-
-The image generation API accepts the following parameters:
-
-- `prompt` (string): The text description of the image you want to generate
-- `model` (string): The model to use for generation
-- `width` (integer): Width of the generated image (default: 1024)
-- `height` (integer): Height of the generated image (default: 1024)
-- `negative_prompt` (string): Things to avoid in the generated image
-- `nImages` (integer): Number of images to generate (default: 1)
-- `num_steps` (integer): Number of denoising steps (default: 30)
-- `resolution` (string): Output resolution (default: "1024x1024")
-- `sampler_name` (string): Sampling method (default: "DPM++ 2M Karras")
-- `scale` (float): Guidance scale (default: 7.5)
-
-## Image-to-Image (img2img) Generation
-
-You can use existing images as input for image generation with models that support img2img functionality, such as flux-kontext. This allows you to edit or transform existing images based on text prompts.
-
-### Using Image Input
-
-To use an image as input, include the `imageDataUrl` parameter with a base64-encoded image:
-
-```python
-import requests
-import base64
-
-API_KEY = "YOUR_API_KEY"
-BASE_URL = "https://nano-gpt.com/api"
-
-# Read and encode your input image
-with open("input_image.jpg", "rb") as image_file:
-    encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-
-headers = {"x-api-key": API_KEY}
-
-response = requests.post(
-    f"{BASE_URL}/generate-image",
-    headers=headers,
-    json={
-        "model": "flux-kontext",
-        "prompt": "Edit this image to add a rainbow in the sky",
-        "kontext_max_mode": True,
-        "imageDataUrl": f"data:image/jpeg;base64,{encoded_image}"
-    }
-)
-
-result = response.json()
-```
-
-### Image Input Parameters
-
-When using image input, the following additional parameters are available:
-
-- `imageDataUrl` (string): Base64-encoded image data URL (format: `data:image/[type];base64,[data]`)
-- `kontext_max_mode` (boolean): When using flux-kontext model, enables maximum context mode for better image understanding
-
-### Supported Image Formats
-
-The following image formats are supported for input:
-- JPEG/JPG (`data:image/jpeg;base64,`)
-- PNG (`data:image/png;base64,`)
-- WebP (`data:image/webp;base64,`)
-
-### img2img Example
-
-Here's a complete example of editing an existing image:
-
-```python
-import requests
-import base64
-from PIL import Image
-import io
-
-API_KEY = "YOUR_API_KEY"
-BASE_URL = "https://nano-gpt.com/api"
-
-def image_to_base64(image_path):
-    """Convert an image file to base64 data URL"""
-    with open(image_path, "rb") as image_file:
-        encoded = base64.b64encode(image_file.read()).decode('utf-8')
-        # Detect image format
-        if image_path.lower().endswith('.png'):
-            return f"data:image/png;base64,{encoded}"
-        elif image_path.lower().endswith('.webp'):
-            return f"data:image/webp;base64,{encoded}"
-        else:  # Default to JPEG
-            return f"data:image/jpeg;base64,{encoded}"
-
-headers = {"x-api-key": API_KEY}
-
-# Convert your input image
-image_data_url = image_to_base64("landscape.jpg")
-
-# Edit the image
-response = requests.post(
-    f"{BASE_URL}/generate-image",
-    headers=headers,
-    json={
-        "model": "flux-kontext",
-        "prompt": "Transform this landscape to a winter scene with snow",
-        "kontext_max_mode": True,
-        "imageDataUrl": image_data_url,
-        "width": 1024,
-        "height": 1024
-    }
-)
-
-if response.status_code == 200:
-    result = response.json()
-    output_b64 = result["data"][0]["b64_json"]
-    
-    # Save the edited image
-    output_bytes = base64.b64decode(output_b64)
-    with open("winter_landscape.png", "wb") as f:
-        f.write(output_bytes)
-    
-    print("Image edited and saved as winter_landscape.png")
-else:
-    print(f"Error: {response.status_code} - {response.text}")
 ```
 
 ## Best Practices

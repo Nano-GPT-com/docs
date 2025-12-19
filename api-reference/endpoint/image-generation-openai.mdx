@@ -2,7 +2,100 @@
 title: 'Image Generation (OpenAI-Compatible)'
 openapi: 'POST /v1/images/generations'
 --- 
+## Overview
 
-Each `data[i]` contains either `b64_json` (default) or `url` (when `response_format: "url"`), never both.
+Generate images from text prompts or base64 image inputs using the OpenAI-compatible endpoint. Responses include base64 bytes (`b64_json`) by default or signed URLs (`url`) when `response_format: "url"`.
 
-When requesting `response_format: "url"`, the API may still return `b64_json` if URL generation (upload/presign) fails, as a fallback.
+## Endpoint
+
+- Method/Path: `POST https://nano-gpt.com/v1/images/generations`
+- Auth: `Authorization: Bearer <API_KEY>`
+- Required header: `Content-Type: application/json`
+
+## Request Body (JSON)
+
+Core fields:
+- `prompt` (string, required): Text prompt to generate an image from.
+- `model` (string, optional): Model ID (default `hidream`).
+- `n` (integer, optional): Number of images to generate (default `1`).
+- `size` (string, optional): `256x256`, `512x512`, or `1024x1024`.
+- `response_format` (string, optional): `b64_json` (default) or `url`.
+- `user` (string, optional): End-user identifier.
+
+Image inputs (img2img/inpainting):
+- `imageDataUrl` (string, optional): Base64 data URL for a single input image.
+- `imageDataUrls` (array, optional): Multiple base64 data URLs for supported models.
+- `maskDataUrl` (string, optional): Base64 mask data URL for inpainting.
+
+Image-to-image controls (model-specific):
+- `strength`, `guidance_scale`, `num_inference_steps`, `seed`, `kontext_max_mode`.
+
+## Response
+
+- Each `data[i]` contains either `b64_json` (default) or `url` (when `response_format: "url"`), never both.
+- When requesting `response_format: "url"`, the API may still return `b64_json` if URL generation (upload/presign) fails, as a fallback.
+- Signed URLs expire after a short period (currently ~1 hour). Download promptly for long-term storage.
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL (basic)
+curl https://nano-gpt.com/v1/images/generations \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "hidream",
+    "prompt": "A sunset over a mountain range",
+    "n": 1,
+    "size": "1024x1024"
+  }'
+```
+
+```bash cURL (response_format: "url")
+curl https://nano-gpt.com/v1/images/generations \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "hidream",
+    "prompt": "A neon city skyline at night",
+    "n": 1,
+    "size": "1024x1024",
+    "response_format": "url"
+  }'
+```
+
+```python Python (img2img)
+import base64
+import requests
+
+API_KEY = "YOUR_API_KEY"
+
+with open("input.jpg", "rb") as f:
+    encoded = base64.b64encode(f.read()).decode("utf-8")
+    image_data_url = f"data:image/jpeg;base64,{encoded}"
+
+response = requests.post(
+    "https://nano-gpt.com/v1/images/generations",
+    headers={
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "flux-kontext",
+        "prompt": "Transform this image into a watercolor painting",
+        "n": 1,
+        "size": "1024x1024",
+        "imageDataUrl": image_data_url,
+    },
+)
+
+result = response.json()
+```
+
+</CodeGroup>
+
+## Notes & Limits
+
+- Input images must be provided as base64 data URLs; download and convert remote images before sending.
+- Uploads should be 4 MB or smaller after encoding. Compress or resize large assets before sending.

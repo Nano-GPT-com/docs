@@ -99,67 +99,42 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
       }'
     ```
 
-    Here's an example using our image generation endpoint with the Recraft model:
+    Here's an example using the OpenAI-compatible endpoint in Python:
 
     ```python
-    import requests
-    import json
     import base64
-    from PIL import Image
-    import io
+    import requests
 
-    BASE_URL = "https://nano-gpt.com/api"
     API_KEY = "YOUR_API_KEY"
 
-    headers = {
-        "x-api-key": API_KEY,
-        "Content-Type": "application/json"
-    }
-
-    def generate_image(prompt, model="recraft-v3", width=1024, height=1024):
-        """
-        Generate an image using the Recraft model.
-        """
-        data = {
-            "prompt": prompt,
-            "model": model,
-            "width": width,
-            "height": height,
-            "negative_prompt": "blurry, bad quality, distorted, deformed",
-            "nImages": 1,
-            "num_steps": 30,
-            "resolution": "1024x1024",
-            "sampler_name": "DPM++ 2M Karras",
-            "scale": 7.5
-        }
-
+    def generate_image(prompt, model="hidream", size="1024x1024"):
         response = requests.post(
-            f"{BASE_URL}/generate-image",
-            headers=headers,
-            json=data
+            "https://nano-gpt.com/v1/images/generations",
+            headers={
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": model,
+                "prompt": prompt,
+                "n": 1,
+                "size": size,
+                "response_format": "b64_json"
+            }
         )
-
-        if response.status_code != 200:
-            raise Exception(f"Error: {response.status_code}")
-
-        result = response.json()
-        
-        # Decode and save the image
-        image_data = base64.b64decode(result['image'])
-        image = Image.open(io.BytesIO(image_data))
-        image.save("generated_image.png")
-        
-        return result
+        response.raise_for_status()
+        return response.json()
 
     # Example usage
     prompt = "A serene landscape with mountains and a lake at sunset, digital art style"
-    try:
-        result = generate_image(prompt)
-        print("Image generated successfully!")
-        print("Cost:", result.get('cost', 'N/A'))
-        print("Image saved as 'generated_image.png'")
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    result = generate_image(prompt)
+
+    image_bytes = base64.b64decode(result["data"][0]["b64_json"])
+    with open("generated_image.png", "wb") as f:
+        f.write(image_bytes)
+
+    print("Image generated successfully!")
+    print("Image saved as 'generated_image.png'")
     ```
 
     For more detailed examples and other image generation options, check out our [Image Generation Guide](/api-reference/image-generation).
