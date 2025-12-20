@@ -9,7 +9,13 @@ The NanoGPT API provides advanced video generation capabilities using state-of-t
 
 ## API Authentication
 
-### 1. API Key Authentication
+Supported authentication methods:
+
+1. **API Key header**: `x-api-key: <your-api-key>`
+2. **Bearer token**: `Authorization: Bearer <your-api-key>`
+3. **Cookie session**: for web clients (automatic)
+
+### Header Examples
 ```bash
 # Using x-api-key header
 curl -H "x-api-key: YOUR_API_KEY"
@@ -70,6 +76,40 @@ Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a 
   "aspect_ratio": "16:9"
 }
 ```
+
+## Additional Request Parameters
+
+These parameters are available across models. Only send the fields your chosen model supports.
+
+### Core Parameters
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `conversationUUID` | string | Link a generation to a conversation |
+| `resolution` | string | Output resolution (`480p`, `720p`, `1080p`) |
+| `imageAttachmentId` | string | Reference to a library-stored image |
+| `videoAttachmentId` | string | Reference to a library-stored video |
+| `referenceImages` | array | Multiple reference images for reference-to-video mode |
+| `referenceVideos` | array | Multiple reference videos |
+
+### Audio Parameters (lipsync/avatar models)
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `audioDataUrl` | string | Base64-encoded audio |
+| `audioDuration` | number | Duration of provided audio in seconds |
+| `voiceId` | string | Voice selection for lipsync models |
+
+### Model-Specific Parameters
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `pro` / `pro_mode` | boolean | Enable pro/higher-quality mode |
+| `generateAudio` | boolean | Generate audio with video (Veo 3) |
+| `mode` | string | `text-to-video`, `image-to-video`, `reference-to-video`, `video-edit` |
+| `orientation` | string | Portrait or landscape (Sora 2) |
+| `size` | string | Output dimensions (Pixverse, Wan models) |
+| `animation` | boolean | Enable animation (Longstories) |
+| `language` | string | Output language (Longstories) |
+| `characters` | array | Character definitions (Longstories) |
+| `style` | string | Style preset |
 
 ### Model-Specific Parameters
 
@@ -141,6 +181,93 @@ Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a 
 }
 ```
 
+## Supported Models
+
+### Text-to-Video Models
+| Model | Duration | Notes |
+| --- | --- | --- |
+| `veo2-video` | 5-8s | Also supports image-to-video |
+| `veo3-video` | 5-8s | Audio generation supported |
+| `veo3-1-video` | Variable | T2V and I2V modes |
+| `veo3-fast-video` | Variable | Fast generation |
+| `sora-2` | Variable | Pro mode, multiple resolutions |
+| `kling-video` | 5-10s | Basic text-to-video |
+| `kling-video-v2` | 5-10s | Enhanced quality |
+| `kling-video-o1` | 5-10s | Multi-mode support |
+| `kling-video-o1-standard` | 5-10s | Standard variant |
+| `kling-v25-turbo-pro` | 5-10s | Turbo pro |
+| `kling-v25-turbo-std` | 5-10s | Turbo standard |
+| `kling-v26-pro` | 5-10s | Latest pro |
+| `minimax-video` | 6s | Fixed duration |
+| `minimax-hailuo-02` | Variable | Per-second pricing |
+| `minimax-hailuo-02-pro` | Variable | Premium variant |
+| `minimax-hailuo-23-standard` | Variable | Hailuo 2.3 |
+| `minimax-hailuo-23-pro` | Variable | Hailuo 2.3 pro |
+| `hunyuan-video` | 5s | Pro mode available |
+| `hunyuan-video-15` | Variable | Resolution-based |
+| `wan-video-22` | 5s | 14B full model |
+| `wan-video-22-5b` | 5s | 5B lite model |
+| `wan-video-22-turbo` | 5s | Simplified |
+| `wan-wavespeed-25` | Variable | Wan 2.5 |
+| `wan-wavespeed-26` | Variable | Wan 2.6 |
+| `wan-wavespeed-22-plus` | Variable | Plus variant |
+| `seedance-video` | Variable | Resolution-duration pricing |
+| `seedance-lite-video` | Variable | Lite version |
+| `pixverse-v45` | Variable | V4.5 |
+| `pixverse-v5` | Variable | V5 |
+| `pixverse-v55` | Variable | V5.5 with effects |
+| `pixverse-v55-effects` | Variable | Effects variant |
+| `lightricks-ltx-2-fast` | Variable | Fast generation |
+| `lightricks-ltx-2-pro` | Variable | Pro quality |
+| `vidu-video` | Variable | Vidu Q1 |
+| `runwayml-gen4-aleph` | Variable | Runway Gen4 |
+| `veed-fabric-1.0` | Variable | Veed fabric |
+| `midjourney-video` | Variable | Returns 4 videos |
+
+### Image-to-Video Only Models
+| Model | Notes |
+| --- | --- |
+| `kling-v21-standard` | Standard quality |
+| `kling-v21-pro` | Pro quality |
+| `kling-v21-master` | Master quality, requires prompt |
+| `hunyuan-video-image-to-video` | Image input required |
+| `wan-video-image-to-video` | Image input required |
+
+### Avatar/Lipsync Models
+| Model | Input | Notes |
+| --- | --- | --- |
+| `kling-v2-avatar-standard` | Audio + Image | Standard avatar |
+| `kling-v2-avatar-pro` | Audio + Image | Pro avatar |
+| `kling-lipsync-t2v` | Text | Text-to-video lipsync |
+| `kling-lipsync-a2v` | Audio | Audio-to-video lipsync |
+| `latentsync` | Audio + Video | Audio-video sync |
+| `bytedance-avatar-omni-human-1.5` | Audio + Image | Bytedance avatar |
+| `bytedance-waver-1.0` | Audio + Image | Waver model |
+
+### Utility Models
+| Model | Purpose |
+| --- | --- |
+| `video-upscaler` | Upscale video resolution |
+| `bytedance-seedance-upscaler` | Alternative upscaler |
+| `seedvr2-video-upscaler` | SeedVR upscaler |
+| `wan-wavespeed-video-edit` | Video editing |
+| `wan-wavespeed-22-animate` | Video animation |
+| `wan-wavespeed-s2v` | Speech-to-video |
+| `magicapi-video-face-swap` | Face swap |
+
+### Extension Models
+| Model | Purpose |
+| --- | --- |
+| `wan-wavespeed-25-extend` | Extend Wan videos |
+| `wan-wavespeed-22-spicy-extend` | Spicy extension |
+| `veo3-1-extend` | Extend VEO videos |
+
+### Longstories Models (Scripted Video)
+| Model | Notes |
+| --- | --- |
+| `longstories-movie` | Movie generation with voice narration |
+| `longstories-pixel-art` | Pixel art style |
+
 ## Response Format
 
 ### Initial Response (202 Accepted)
@@ -149,9 +276,10 @@ Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a 
   "runId": "fal-request-abc123xyz",
   "status": "pending",
   "model": "veo2-video",
-  "cost": 2.5,
-  "paymentSource": "USD",
-  "remainingBalance": 47.5
+  "cost": 0.35,
+  "paymentSource": "XNO",
+  "remainingBalance": 12.5,
+  "prechargeLabel": "string"
 }
 ```
 
@@ -159,9 +287,23 @@ Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a 
 - `runId`: Unique identifier for polling status
 - `status`: Always "pending" for initial response
 - `model`: The model used for generation
-- `cost`: Cost in USD or XNO
+- `cost`: Estimated/pre-charged cost
 - `paymentSource`: "USD" or "XNO"
 - `remainingBalance`: Account balance after deduction
+- `prechargeLabel`: Provider label for the precharge
+
+## Cost Information
+
+Both the initial generation response and the status response include `cost`:
+- Initial response: estimated/pre-charged cost
+- Status response: final cost (when `status` is `COMPLETED`)
+
+Pricing structures vary by model:
+- **Fixed**: flat rate per generation
+- **Per-Second**: rate x duration
+- **Resolution-Based**: rates per resolution tier
+- **Duration-Based**: step pricing (5s vs 10s)
+- **Mode-Based**: different rates for T2V vs I2V
 
 ## Polling for Status
 
@@ -169,8 +311,9 @@ After receiving a `runId`, poll the status endpoint until completion.
 
 ### Status Endpoint
 ```
-GET /api/generate-video/status?runId={runId}&modelSlug={model}
+GET /api/generate-video/status?runId={runId}&model={model}
 ```
+`model` is optional but recommended for faster lookups.
 
 ### Polling Example
 ```javascript
@@ -180,7 +323,7 @@ async function pollVideoStatus(runId, model) {
 
   for (let i = 0; i < maxAttempts; i++) {
     const response = await fetch(
-      `/api/generate-video/status?runId=${runId}&modelSlug=${model}`
+      `/api/generate-video/status?runId=${runId}&model=${model}`
     );
     const result = await response.json();
 
@@ -221,7 +364,8 @@ async function pollVideoStatus(runId, model) {
       "video": {
         "url": "https://storage.example.com/video.mp4"
       }
-    }
+    },
+    "cost": 0.35
   }
 }
 ```
@@ -244,7 +388,38 @@ async function pollVideoStatus(runId, model) {
 - `IN_PROGRESS`: Video is being generated
 - `COMPLETED`: Video ready for download
 - `FAILED`: Generation failed
-- `CANCELLED`: Request was cancelled
+- `CANCELED`: Request was canceled
+
+## Additional Endpoints
+
+### GET `/api/generate-video/recover`
+Recover recent video generation runs for a user.
+
+**Query Parameters**
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `model` | string | No | Filter by model |
+| `limit` | number | No | Max results (default 10, max 50) |
+| `conversationUUID` | string | No | Filter by conversation |
+
+**Rate Limit**: 20 requests/minute
+
+### POST `/api/generate-video/extend`
+Extend the duration of an existing video.
+
+**Rate Limit**: 20 requests/minute
+
+**Supported Models**: `wan-wavespeed-25-extend`, `wan-wavespeed-22-spicy-extend`, `veo3-1-extend`
+
+### GET `/api/generate-video/content`
+Proxy content retrieval for Sora 2 videos.
+
+**Query Parameters**
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `runId` | string | Yes | The run ID |
+| `model` | string | Yes | Must be `sora-2` |
+| `variant` | string | No | `video`, `thumbnail`, or `spritesheet` |
 
 ## Complete Examples
 
@@ -253,21 +428,20 @@ The submit + poll flow works the same regardless of how you supply the image: im
 ### Example 1: Text-to-Video with cURL
 ```bash
 # 1) Submit
-RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
+RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "veo2-video",
-    "prompt": "A beautiful sunset over the ocean with waves",
-    "duration": "5s",
-    "aspect_ratio": "16:9"
+    "model": "kling-video-v2",
+    "prompt": "A cat playing piano in a jazz club",
+    "duration": "5"
   }' | jq -r '.runId')
 
 echo "Run ID: $RUN_ID"
 
 # 2) Poll status (max ~10 minutes)
 for i in {1..120}; do
-  RESP=$(curl -s "https://nano-gpt.com/api/generate-video/status?runId=$RUN_ID&modelSlug=veo2-video" \
+  RESP=$(curl -s "https://api.nano-gpt.com/api/generate-video/status?runId=$RUN_ID&model=kling-video-v2" \
     -H "x-api-key: YOUR_API_KEY")
   STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
   echo "Attempt $i: status=$STATUS"
@@ -289,12 +463,12 @@ done
 
 #### Base64 input
 ```bash
-RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
+RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "kling-v21-pro",
-    "prompt": "Animate this scene with a slow dolly zoom",
+    "prompt": "The subject walks toward the camera",
     "imageDataUrl": "data:image/jpeg;base64,/9j/4AAQ...",
     "duration": "5",
     "aspect_ratio": "16:9"
@@ -303,12 +477,12 @@ RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
 
 #### Public URL input
 ```bash
-RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
+RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "kling-v21-pro",
-    "prompt": "Animate this scene with a slow dolly zoom",
+    "prompt": "The subject walks toward the camera",
     "imageUrl": "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=1024",
     "duration": "5",
     "aspect_ratio": "16:9"
@@ -389,7 +563,7 @@ import base64
 import json
 import requests
 
-API_URL = "https://nano-gpt.com/api/generate-video"
+API_URL = "https://api.nano-gpt.com/api/generate-video"
 API_KEY = "YOUR_API_KEY"
 
 def submit_image_to_video(image_path: str) -> str:
@@ -476,50 +650,18 @@ async function generateMultipleVideos(prompts) {
 
 ## Error Handling
 
-### Common Error Responses
-
-#### Insufficient Balance
-```json
-{
-  "error": "Insufficient balance",
-  "status": 402
-}
-```
-
-#### Invalid Session
-```json
-{
-  "error": "Invalid session",
-  "status": 401
-}
-```
-
-#### Rate Limit Exceeded
-```json
-{
-  "error": "Rate limit exceeded. Please wait before generating another video.",
-  "status": 429
-}
-```
-
-#### Content Policy Violation
+### Error Response Format
 ```json
 {
   "error": {
-    "message": "Your prompt was blocked due to safety concerns. Please modify your prompt.",
-    "type": "CONTENT_POLICY_VIOLATION"
+    "message": "User-friendly error message",
+    "type": "ERROR_TYPE"
   },
-  "status": 400
+  "refundMessage": "Refund notification if applicable"
 }
 ```
 
-#### Model-Specific Errors
-```json
-{
-  "error": "Kling 2.1 Standard requires an input image. Please select an image to generate a video.",
-  "status": 400
-}
-```
+**Error Types**: `CONTENT_POLICY_VIOLATION`, `PRO_REQUIRED`, `INSUFFICIENT_BALANCE`, `RATE_LIMITED`
 
 ### Error Handling Best Practices
 
@@ -540,10 +682,10 @@ async function generateVideoWithErrorHandling(params) {
       const error = await response.json();
       
       // Handle specific error types
-      if (response.status === 429) {
+      if (response.status === 429 || error.error?.type === 'RATE_LIMITED') {
         console.error('Rate limited, retry after delay');
         // Implement exponential backoff
-      } else if (response.status === 402) {
+      } else if (response.status === 402 || error.error?.type === 'INSUFFICIENT_BALANCE') {
         console.error('Insufficient balance');
         // Prompt user to add credits
       } else if (error.error?.type === 'CONTENT_POLICY_VIOLATION') {
@@ -569,11 +711,32 @@ async function generateVideoWithErrorHandling(params) {
 
 ## Rate Limits
 
-- **Default**: 50 requests per minute per IP address
-- **API Key**: Same as default
-- **Internal Auth**: No rate limit
+| Endpoint | Limit |
+| --- | --- |
+| POST `/api/generate-video` | 50 requests/minute per IP |
+| GET `/api/generate-video/status` | No explicit limit (cached) |
+| POST `/api/generate-video/extend` | 20 requests/minute per IP |
+| GET `/api/generate-video/recover` | 20 requests/minute per IP |
 
-Rate limits apply to the submission endpoint (`/api/generate-video`). Status polling endpoints have no rate limits.
+## Additional Notes
+
+### Pro Mode
+- `sora-2`: Pro mode required for 1792x1024 resolution
+- `hunyuan-video`: Pro mode available
+- Various Kling models: Pro variants
+
+### Audio Generation
+- `veo3-video`: Set `generateAudio: true` to include audio
+
+### Reference-to-Video
+Supported by `kling-video-o1`, `kling-video-o1-standard`, `wan-wavespeed-26`.
+Use `referenceImages` with image URLs or data URLs.
+
+### Automatic Refunds
+Refunds are automatically issued when:
+- Provider returns a failure
+- Content policy violation (before processing)
+- Submission fails before acknowledgement
 
 ## Best Practices
 

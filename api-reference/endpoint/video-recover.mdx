@@ -1,0 +1,32 @@
+---
+title: 'Video Recover'
+openapi: 'GET /generate-video/recover'
+---
+
+## Overview
+
+Recover recent video generation runs for a user.
+
+### Endpoint
+```
+GET /api/generate-video/recover
+```
+
+### Query parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `model` | string | No | Filter by model |
+| `limit` | number | No | Max results (default 10, max 50) |
+| `conversationUUID` | string | No | Filter by conversation |
+
+### Rate limit
+
+20 requests/minute per IP
+
+## Usage
+
+```bash
+curl -s "https://api.nano-gpt.com/api/generate-video/recover?limit=10" \
+  -H "x-api-key: YOUR_API_KEY" | jq .
+```

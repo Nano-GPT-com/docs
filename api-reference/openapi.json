@@ -399,24 +399,24 @@
           }
         ],
         "parameters": [
-          {
-            "name": "runId",
-            "in": "query",
-            "description": "Run ID returned from the POST /generate-video response",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "modelSlug",
-            "in": "query",
-            "description": "Model identifier used in the generation request (e.g., 'veo2-video')",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
+      {
+        "name": "runId",
+        "in": "query",
+        "description": "Run ID returned from the POST /generate-video response",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "model",
+        "in": "query",
+        "description": "Model identifier used in the generation request (e.g., 'veo2-video')",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
         ],
         "responses": {
           "200": {
@@ -441,6 +441,214 @@
           },
           "404": {
             "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate-video/recover": {
+      "get": {
+        "description": "Recover recent video generation runs for a user.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "model",
+            "in": "query",
+            "description": "Optional model filter",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max results (default 10, max 50)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "conversationUUID",
+            "in": "query",
+            "description": "Filter by conversation",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recovered runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "500": {
+            "description": "Server Error - Failed to recover runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate-video/extend": {
+      "post": {
+        "description": "Extend the duration of an existing video using supported extend models.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Extension request payload (same shape as /generate-video for the chosen model).",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Video extension request submitted successfully (asynchronous processing)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoGenerationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or safety filter triggered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "500": {
+            "description": "Server Error - Video extension failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate-video/content": {
+      "get": {
+        "description": "Proxy content retrieval for Sora 2 videos.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "query",
+            "description": "Run ID returned from the POST /generate-video response",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "description": "Must be sora-2",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variant",
+            "in": "query",
+            "description": "video, thumbnail, or spritesheet",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "500": {
+            "description": "Server Error - Failed to retrieve content",
             "content": {
               "application/json": {
                 "schema": {
@@ -2852,6 +3060,10 @@
           "remainingBalance": {
             "type": "number",
             "description": "Remaining balance after the generation"
+          },
+          "prechargeLabel": {
+            "type": "string",
+            "description": "Provider label for the precharge"
           }
         }
       },
@@ -2896,7 +3108,7 @@
               "status": {
                 "type": "string",
                 "description": "Current status",
-                "enum": ["IN_QUEUE", "IN_PROGRESS", "COMPLETED", "FAILED", "CANCELLED"]
+                "enum": ["IN_QUEUE", "IN_PROGRESS", "COMPLETED", "FAILED", "CANCELED"]
               },
               "request_id": {
                 "type": "string",
@@ -2912,6 +3124,10 @@
                     }
                   }
                 }
+              },
+              "cost": {
+                "type": "number",
+                "description": "Final cost for the video generation"
               },
               "error": {
                 "type": "string",

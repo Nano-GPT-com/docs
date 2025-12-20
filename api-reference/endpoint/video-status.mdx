@@ -5,12 +5,12 @@ openapi: 'GET /generate-video/status'
 
 ## Overview
 
-Poll the status of an asynchronous video generation run. Use the `runId` you received from `POST /generate-video` along with the `modelSlug` you used to start the job. When the run completes, the response includes `data.output.video.url`.
+Poll the status of an asynchronous video generation run. Use the `runId` you received from `POST /generate-video`. The `model` query parameter is optional but recommended for faster lookups. When the run completes, the response includes `data.output.video.url`.
 
 ### Query parameters
 
 - `runId` (string, required): The run identifier returned by the submit call
-- `modelSlug` (string, required): The model used for the run (e.g., `veo2-video`)
+- `model` (string, optional): The model used for the run (e.g., `veo2-video`)
 
 ## Usage
 
@@ -20,22 +20,25 @@ Poll the status of an asynchronous video generation run. Use the `runId` you rec
 import requests
 import time
 
-BASE = "https://nano-gpt.com/api"
+BASE = "https://api.nano-gpt.com/api"
 
-def get_video_status(run_id: str, model_slug: str, api_key: str) -> dict:
+def get_video_status(run_id: str, api_key: str, model: str | None = None) -> dict:
+    params = {"runId": run_id}
+    if model:
+        params["model"] = model
     resp = requests.get(
         f"{BASE}/generate-video/status",
         headers={"x-api-key": api_key},
-        params={"runId": run_id, "modelSlug": model_slug},
+        params=params,
         timeout=30,
     )
     resp.raise_for_status()
     return resp.json()
 
 
-def wait_for_video(run_id: str, model_slug: str, api_key: str, max_attempts: int = 120, delay_s: int = 5) -> str:
+def wait_for_video(run_id: str, api_key: str, model: str | None = None, max_attempts: int = 120, delay_s: int = 5) -> str:
     for i in range(max_attempts):
-        data = get_video_status(run_id, model_slug, api_key)
+        data = get_video_status(run_id, api_key, model)
         status = data.get("data", {}).get("status")
         if status == "COMPLETED":
             return data["data"]["output"]["video"]["url"]
@@ -46,19 +49,22 @@ def wait_for_video(run_id: str, model_slug: str, api_key: str, max_attempts: int
 ```
 
 ```javascript JavaScript
-const BASE = 'https://nano-gpt.com/api';
+const BASE = 'https://api.nano-gpt.com/api';
 
-async function getVideoStatus(runId, modelSlug, apiKey) {
-  const res = await fetch(`${BASE}/generate-video/status?runId=${runId}&modelSlug=${modelSlug}`, {
+async function getVideoStatus(runId, apiKey, model) {
+  const url = new URL(`${BASE}/generate-video/status`);
+  url.searchParams.set('runId', runId);
+  if (model) url.searchParams.set('model', model);
+  const res = await fetch(url, {
     headers: { 'x-api-key': apiKey }
   });
   if (!res.ok) throw new Error(`Status check failed: ${res.status}`);
   return res.json();
 }
 
-export async function waitForVideo(runId, modelSlug, apiKey, maxAttempts = 120, delayMs = 5000) {
+export async function waitForVideo(runId, apiKey, model, maxAttempts = 120, delayMs = 5000) {
   for (let i = 0; i < maxAttempts; i++) {
-    const payload = await getVideoStatus(runId, modelSlug, apiKey);
+    const payload = await getVideoStatus(runId, apiKey, model);
     const status = payload?.data?.status;
     if (status === 'COMPLETED') return payload.data.output.video.url;
     if (status === 'FAILED') throw new Error(payload?.data?.error || 'Video generation failed');
@@ -70,12 +76,12 @@ export async function waitForVideo(runId, modelSlug, apiKey, maxAttempts = 120, 
 
 ```bash cURL
 # Single status check
-curl -s "https://nano-gpt.com/api/generate-video/status?runId=RUN_ID&modelSlug=veo2-video" \
+curl -s "https://api.nano-gpt.com/api/generate-video/status?runId=RUN_ID&model=veo2-video" \
   -H "x-api-key: YOUR_API_KEY" | jq .
 
 # Poll until complete (~10 minutes max)
 for i in {1..120}; do
-  RESP=$(curl -s "https://nano-gpt.com/api/generate-video/status?runId=RUN_ID&modelSlug=veo2-video" -H "x-api-key: YOUR_API_KEY")
+  RESP=$(curl -s "https://api.nano-gpt.com/api/generate-video/status?runId=RUN_ID&model=veo2-video" -H "x-api-key: YOUR_API_KEY")
   STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
   echo "Attempt $i: status=$STATUS"
   if [ "$STATUS" = "COMPLETED" ]; then
@@ -96,7 +102,7 @@ done
 - `IN_PROGRESS`: Generation in progress
 - `COMPLETED`: Video ready
 - `FAILED`: Generation failed
-- `CANCELLED`: Request cancelled
+- `CANCELED`: Request canceled
 
 ## Response examples
 
@@ -122,7 +128,8 @@ done
       "video": {
         "url": "https://storage.example.com/video.mp4"
       }
-    }
+    },
+    "cost": 0.35
   }
 }
 ```
@@ -145,3 +152,4 @@ done
 
 - Polling this endpoint is free; submission endpoints are rate limited.
 - The final video URL is returned in `data.output.video.url` when status is `COMPLETED`.
+- `cost` is returned once the generation is complete.

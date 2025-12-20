@@ -1,0 +1,29 @@
+---
+title: 'Video Extend'
+openapi: 'POST /generate-video/extend'
+---
+
+## Overview
+
+Extend the duration of an existing video.
+
+### Endpoint
+```
+POST /api/generate-video/extend
+```
+
+### Rate limit
+
+20 requests/minute per IP
+
+### Supported models
+
+- `wan-wavespeed-25-extend`
+- `wan-wavespeed-22-spicy-extend`
+- `veo3-1-extend`
+
+### Request notes
+
+- Send the same authentication headers as `/api/generate-video`.
+- Include the source video using `video` or `videoUrl` (same media inputs as `/api/generate-video`).
+- The response format matches the standard generation response (`runId`, `status`, `model`, `cost`).

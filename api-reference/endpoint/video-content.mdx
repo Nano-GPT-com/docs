@@ -1,0 +1,28 @@
+---
+title: 'Video Content'
+openapi: 'GET /generate-video/content'
+---
+
+## Overview
+
+Proxy content retrieval for Sora 2 videos.
+
+### Endpoint
+```
+GET /api/generate-video/content
+```
+
+### Query parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `runId` | string | Yes | The run ID |
+| `model` | string | Yes | Must be `sora-2` |
+| `variant` | string | No | `video`, `thumbnail`, or `spritesheet` |
+
+## Usage
+
+```bash
+curl -s "https://api.nano-gpt.com/api/generate-video/content?runId=RUN_ID&model=sora-2&variant=video" \
+  -H "x-api-key: YOUR_API_KEY" | jq .
+```

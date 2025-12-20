@@ -20,16 +20,21 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | field | type | required | details |
 | --- | --- | --- | --- |
 | `model` | string | yes | See [Model Directory](#model-directory) for the complete list. Use `longstories-movie` / `longstories-pixel-art`; `promptchan-video` has been removed. |
+| `conversationUUID` | string | no | Attach the request to a conversation thread. |
 | `prompt` | string | conditional | Required for text-to-video and edit models unless a structured script is supplied. |
 | `negative_prompt` | string | no | Suppresses specific content. Respected by Veo, Wan, Runway, Pixverse, and other models noted below. |
 | `script` | string | conditional | LongStories models accept full scripts instead of relying on `prompt`. |
 | `storyConfig` | object | conditional | LongStories structured payload (e.g. scenes, narration, voice). |
+| `animation` | boolean | no | Enables animation for LongStories outputs. |
+| `language` | string | no | Output language for LongStories. |
+| `characters` | array | no | Character definitions for LongStories. |
 | `duration` | string | conditional | Seconds as a string (`"5"`, `"8"`, `"60"`). Limits vary per model; see individual entries. |
 | `seconds` | string | conditional | Sora-specific duration selector (`"4"`, `"8"`, `"12"`). |
 | `aspect_ratio` | string | conditional | Provider-specific ratios such as `16:9`, `9:16`, `1:1`, `3:4`, `4:3`, `21:9`, `auto`. |
 | `orientation` | string | conditional | `landscape` or `portrait` for Sora and Wan text/image flows. |
 | `resolution` | string | conditional | Resolution tokens (`480p`, `580p`, `720p`, `1080p`, `1792x1024`, `2k`, `4k`). |
 | `size` | string | conditional | Provider preset for `vidu-video`, `pixverse-*`, `wan-wavespeed-22-plus`, `wan-wavespeed-25`, and upscalers. |
+| `mode` | string | no | Operation mode: `text-to-video`, `image-to-video`, `reference-to-video`, `video-edit`. |
 | `generateAudio` | boolean | no | Adds AI audio on Veo 3 and Lightricks models. Defaults to `false`. |
 | `enhancePrompt` | boolean | no | Optional Veo 3 prompt optimizer. Defaults to `false`. |
 | `pro_mode` / `pro` | boolean | no | High-quality toggle for Sora and Hunyuan families. Defaults to `false`. |
@@ -37,6 +42,7 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | `enable_safety_checker` | boolean | no | Wan 2.2 Turbo safety switch. Defaults to provider configuration. |
 | `camera_fix` / `camera_fixed` / `cameraFixed` | boolean | no | Locks the virtual camera for Seedance and Wan variants. |
 | `seed` | number or string | no | Deterministic seed when supported (Veo, Wan, Pixverse). |
+| `voiceId` | string | conditional | Alternate voice selector for lipsync models. |
 | `voice_id` | string | conditional | Required by `kling-lipsync-t2v`. |
 | `voice_language` | string | conditional | `en` or `zh` for `kling-lipsync-t2v`. |
 | `voice_speed` | number | conditional | Range `0.8-2.0` for `kling-lipsync-t2v`. |
@@ -49,13 +55,18 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | --- | --- | --- | --- |
 | `imageDataUrl` | string | conditional | Base64-encoded data URL. Recommended for private assets or files larger than 4 MB. |
 | `imageUrl` | string | conditional | HTTPS link to a source image. |
+| `imageAttachmentId` | string | conditional | Reference to a library-stored image. |
 | `image` | string | conditional | Some Wavespeed/ByteDance providers expect this property instead of `imageUrl`. |
 | `reference_image` | string | conditional | Optional still image guiding `runwayml-gen4-aleph`. |
+| `referenceImages` | array | conditional | Multiple reference images for reference-to-video flows. |
+| `referenceVideos` | array | conditional | Multiple reference videos. |
 | `audioDataUrl` | string | conditional | Base64 data URL for audio-driven models. |
+| `audioDuration` | number | conditional | Duration of provided audio in seconds. |
 | `audioUrl` | string | conditional | HTTPS audio input. |
 | `audio` | string | conditional | Alternate audio field accepted by ByteDance and Kling lipsync providers. |
 | `video` | string | conditional | HTTPS link or data URL to the source video (edit, extend, upscaler, or lipsync jobs). |
 | `videoUrl` | string | conditional | Alias accepted by select providers. |
+| `videoAttachmentId` | string | conditional | Reference to a library-stored video. |
 | `swapImage` | string | conditional | Required by `magicapi-video-face-swap`. |
 | `targetVideo` | string | conditional | Required by `magicapi-video-face-swap`. |
 | `targetFaceIndex` | number | no | Optional face index for MagicAPI swaps. |
@@ -174,7 +185,7 @@ These models are also available outside Wavespeed; their field requirements mirr
 ## Async Processing & Status Polling
 
 - The submission response includes `{ runId, model, status: "pending" }`.
-- Poll `/video-status` with the returned `runId` until the job reaches `status: "succeeded"` or `status: "failed"`.
+- Poll `/api/generate-video/status?runId=<runId>&model=<model>` until the job reaches `status: "COMPLETED"` or `status: "FAILED"`.
 - Many providers emit intermediate states (`queued`, `processing`, `generating`, `delivering`). Persist them if you need audit trails.
 - Failed jobs include an `error` object mirroring the upstream provider response. Surface the message and adjust prompts or inputs before retrying.
 - Duration and resolution determine credit usage; reconcile charges against `lib/credits/videoPricingConfig.ts`.
