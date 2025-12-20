@@ -4242,64 +4242,64 @@
             }
           }
         }
-      }
-    },
-    "MemoryRequest": {
-      "type": "object",
-      "required": ["messages"],
-      "properties": {
-        "messages": {
-          "type": "array",
-          "description": "OpenAI-style messages array to compress",
-          "items": {
-            "type": "object",
-            "properties": {
-              "role": { "type": "string", "enum": ["system", "user", "assistant", "tool", "function"] },
-              "content": { "oneOf": [ { "type": "string" }, { "type": "array" } ] }
-            },
-            "required": ["role", "content"]
-          }
-        },
-        "expiration_days": {
-          "type": "integer",
-          "description": "Retention in days (1..365). Defaults to 30 if not provided.",
-          "minimum": 1,
-          "maximum": 365,
-          "default": 30
-        },
-        "model_context_limit": {
-          "type": "integer",
-          "description": "Target context size for compression (minimum enforced 10,000)",
-          "default": 128000
-        }
-      }
-    },
-    "MemoryResponse": {
-      "type": "object",
-      "required": ["messages", "usage"],
-      "properties": {
-        "messages": {
-          "type": "array",
-          "description": "Compressed memory message array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "role": { "type": "string" },
-              "content": { "type": "string" }
-            },
-            "required": ["role", "content"]
-          }
-        },
-        "usage": {
-          "type": "object",
-          "properties": {
-            "prompt_tokens": { "type": "integer" },
-            "completion_tokens": { "type": "integer" },
-            "total_tokens": { "type": "integer" },
-            "prompt_tokens_details": {
+      },
+      "MemoryRequest": {
+        "type": "object",
+        "required": ["messages"],
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "OpenAI-style messages array to compress",
+            "items": {
               "type": "object",
               "properties": {
-                "cached_tokens": { "type": "integer" }
+                "role": { "type": "string", "enum": ["system", "user", "assistant", "tool", "function"] },
+                "content": { "oneOf": [ { "type": "string" }, { "type": "array" } ] }
+              },
+              "required": ["role", "content"]
+            }
+          },
+          "expiration_days": {
+            "type": "integer",
+            "description": "Retention in days (1..365). Defaults to 30 if not provided.",
+            "minimum": 1,
+            "maximum": 365,
+            "default": 30
+          },
+          "model_context_limit": {
+            "type": "integer",
+            "description": "Target context size for compression (minimum enforced 10,000)",
+            "default": 128000
+          }
+        }
+      },
+      "MemoryResponse": {
+        "type": "object",
+        "required": ["messages", "usage"],
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "Compressed memory message array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": { "type": "string" },
+                "content": { "type": "string" }
+              },
+              "required": ["role", "content"]
+            }
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "prompt_tokens": { "type": "integer" },
+              "completion_tokens": { "type": "integer" },
+              "total_tokens": { "type": "integer" },
+              "prompt_tokens_details": {
+                "type": "object",
+                "properties": {
+                  "cached_tokens": { "type": "integer" }
+                }
               }
             }
           }
