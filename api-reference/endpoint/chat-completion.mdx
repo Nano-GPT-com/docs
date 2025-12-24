@@ -165,15 +165,41 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 ## Web Search
 
-All models can access real-time web information by appending special suffixes to the model name:
+Enable web search in two ways: model suffixes or a `linkup` object in the request body. If `linkup.enabled` is `true`, it takes precedence over any model suffix.
 
-- **`:online`** - Standard web search ($0.006 per request)
-  - Returns 10 search results
-  - Perfect for straightforward questions
-  
-- **`:online/linkup-deep`** - Deep web search ($0.06 per request)
-  - Iteratively searches for comprehensive information
-  - Ideal when initial results aren't sufficient
+### Option A: model suffixes
+
+Append one of these to your `model` value:
+
+- `:online` (default web search, standard depth)
+- `:online/linkup` (Linkup, standard)
+- `:online/linkup-deep` (Linkup, deep)
+- `:online/tavily` (Tavily, standard)
+- `:online/tavily-deep` (Tavily, deep)
+- `:online/exa-fast` (Exa, fast)
+- `:online/exa-auto` (Exa, auto)
+- `:online/exa-neural` (Exa, neural)
+- `:online/exa-deep` (Exa, deep)
+- `:online/kagi` (Kagi, standard, search)
+- `:online/kagi-web` (Kagi, standard, web)
+- `:online/kagi-news` (Kagi, standard, news)
+- `:online/kagi-search` (Kagi, deep, search)
+
+`:online` without an explicit provider uses the default web search backend.
+
+### Option B: request body configuration
+
+Send a `linkup` object in the request body. This works with or without a model suffix and controls web search across all providers.
+
+`linkup` fields:
+
+- `enabled` (boolean, required to activate web search)
+- `provider` (string): `linkup` | `tavily` | `exa` | `kagi`
+- `depth` (string):
+  - Linkup/Tavily/Kagi: `standard` or `deep`
+  - Exa: `fast`, `auto`, `neural`, `deep` (use `standard` if you want `auto`)
+- `search_context_size` or `searchContextSize` (string): `low` | `medium` | `high` (default: `medium`)
+- `kagiSource` or `kagi_source` (string, Kagi only): `web` | `news` | `search`
 
 ### Examples
 
@@ -191,7 +217,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Standard web search
+# Suffix-based standard web search
 data = {
     "model": "chatgpt-4o-latest:online",
     "messages": [
@@ -205,12 +231,18 @@ response = requests.post(
     json=data
 )
 
-# Deep web search
-data_deep = {
-    "model": "chatgpt-4o-latest:online/linkup-deep",
+# Request-body configuration (Exa neural)
+data_linkup = {
+    "model": "chatgpt-4o-latest",
     "messages": [
         {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
-    ]
+    ],
+    "linkup": {
+        "enabled": True,
+        "provider": "exa",
+        "depth": "neural",
+        "search_context_size": "medium"
+    }
 }
 ```
 
@@ -218,7 +250,7 @@ data_deep = {
 const BASE_URL = "https://nano-gpt.com/api/v1";
 const API_KEY = "YOUR_API_KEY";
 
-// Standard web search
+// Suffix-based standard web search
 const response = await fetch(`${BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -233,24 +265,30 @@ const response = await fetch(`${BASE_URL}/chat/completions`, {
     })
 });
 
-// Deep web search
-const deepResponse = await fetch(`${BASE_URL}/chat/completions`, {
+// Request-body configuration (Exa neural)
+const linkupResponse = await fetch(`${BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
         'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-        model: 'chatgpt-4o-latest:online/linkup-deep',
+        model: 'chatgpt-4o-latest',
         messages: [
             { role: 'user', content: 'Provide a comprehensive analysis of recent AI breakthroughs' }
-        ]
+        ],
+        linkup: {
+            enabled: true,
+            provider: 'exa',
+            depth: 'neural',
+            searchContextSize: 'medium'
+        }
     })
 });
 ```
 
 ```bash cURL
-# Standard web search
+# Suffix-based standard web search
 curl -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -261,15 +299,21 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
     ]
   }'
 
-# Deep web search
+# Request-body configuration (Exa neural)
 curl -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "chatgpt-4o-latest:online/linkup-deep",
+    "model": "chatgpt-4o-latest",
     "messages": [
       {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
-    ]
+    ],
+    "linkup": {
+      "enabled": true,
+      "provider": "exa",
+      "depth": "neural",
+      "search_context_size": "medium"
+    }
   }'
 ```
 
@@ -865,4 +909,4 @@ LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
 - Web search increases input token count, which affects total cost
 - Models gain access to real-time information published less than a minute ago
 - Internet connectivity can provide up to 10x improvement in factuality
-- All models support web search - simply append the suffix to any model name 
+- All models support web search - append a suffix or send a `linkup` object
