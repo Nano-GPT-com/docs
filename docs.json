@@ -91,6 +91,7 @@
            "integrations/typingmind",
            "integrations/librechat",
            "integrations/openhands",
+           "integrations/opencode",
            "integrations/janitorai",
            "integrations/droid"
          ]

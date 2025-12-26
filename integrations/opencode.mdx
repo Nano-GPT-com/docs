@@ -1,0 +1,34 @@
+---
+title: 'OpenCode'
+description: 'Using NanoGPT with OpenCode'
+---
+
+# Using OpenCode with NanoGPT
+
+A quick guide to set up NanoGPT inside OpenCode (CLI, VS Code extension, or desktop app).
+
+## Setup Instructions
+
+1. Generate an API key at [nano-gpt.com/api](https://nano-gpt.com/api).
+2. Add `NANOGPT_API_KEY` to your `.env` or shell environment.
+3. Create or update `opencode.json` with a NanoGPT provider block:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "NanoGPT": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NanoGPT",
+      "options": {
+        "apiKey": "{env:NANOGPT_API_KEY}",
+        "baseURL": "https://nano-gpt.com/api/v1"
+      }
+    }
+  }
+}
+```
+
+4. Restart OpenCode and run `/connect` so NanoGPT shows up in the provider list.
+
+Model names are listed on our [pricing page](https://nano-gpt.com/pricing). Once connected, pick any model from the `NanoGPT/<model>` list.
