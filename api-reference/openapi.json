@@ -336,7 +336,7 @@
     },
     "/generate-video": {
       "post": {
-        "description": "Generate videos using various AI models including text-to-video and image-to-video capabilities across multiple providers (FAL, PromptChan, LongStories). Model capabilities: **LongStories** (longstories, longstories-kids): AI-powered short-form video creation with script generation, voice narration, and automated editing. **FAL Models**: kling-video (Kling 1.5 Pro text-to-video), kling-video-v2 (Kling 2.0 text/image-to-video), veo2-video (Veo2 text/image-to-video), minimax-video (MiniMax T2V-01), hunyuan-video (Hunyuan text-to-video), hunyuan-video-image-to-video (Hunyuan image-to-video), wan-video-image-to-video (Wan image-to-video), kling-v21-standard/pro/master (Kling V2.1 variants). **PromptChan**: promptchan-video (adult content generation). All requests return immediately with status 'pending' - use the unified status endpoint to poll for completion.",
+        "description": "Generate videos using supported text-to-video, image-to-video, and video-to-video models. The response includes a runId and pending status; poll the status endpoint for completion. See the docs for the current model list and required inputs.",
         "security": [
           {
             "apiKeyAuth": []
@@ -531,18 +531,18 @@
     },
     "/generate-video/extend": {
       "post": {
-        "description": "Extend the duration of an existing video using supported extend models.",
+        "description": "Extend a Midjourney video using a task-based flow (taskId + index).",
         "security": [
           {
             "apiKeyAuth": []
           }
         ],
         "requestBody": {
-          "description": "Extension request payload (same shape as /generate-video for the chosen model).",
+          "description": "Midjourney extension request payload (taskId from the original run + index).",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VideoGenerationRequest"
+                "$ref": "#/components/schemas/VideoExtendRequest"
               }
             }
           },
@@ -2590,23 +2590,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The video model to use for generation",
-            "enum": [
-              "longstories",
-              "longstories-kids", 
-              "kling-video",
-              "kling-video-v2",
-              "veo2-video",
-              "minimax-video",
-              "hunyuan-video",
-              "hunyuan-video-image-to-video",
-              "wan-video-image-to-video",
-              "kling-v21-standard",
-              "kling-v21-pro", 
-              "kling-v21-master",
-              "promptchan-video"
-            ],
-            "default": "longstories"
+            "description": "The video model to use for generation. See the docs for the current model list and required inputs."
           },
           "prompt": {
             "type": "string",
@@ -2937,6 +2921,22 @@
             "type": "string", 
             "description": "Library attachment ID for input image"
           },
+          "videoUrl": {
+            "type": "string",
+            "description": "Public HTTPS URL of the input video (extend/edit/upscale). Preferred field name for source videos."
+          },
+          "videoDataUrl": {
+            "type": "string",
+            "description": "Base64 data URL of the input video."
+          },
+          "video": {
+            "type": "string",
+            "description": "Alternate video field accepted by select providers."
+          },
+          "videoAttachmentId": {
+            "type": "string",
+            "description": "Library attachment ID for input video."
+          },
           "prompt_optimizer": {
             "type": "boolean",
             "description": "Whether to optimize the prompt (MiniMax model)",
@@ -3025,6 +3025,26 @@
             "enum": ["Portrait", "Landscape", "Square"],
             "default": "Portrait"
           }
+        }
+      },
+      "VideoExtendRequest": {
+        "type": "object",
+        "required": ["taskId", "index"],
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "Run ID from the original Midjourney video request."
+          },
+          "index": {
+            "type": "integer",
+            "description": "Zero-based index of the Midjourney video to extend (0-3).",
+            "minimum": 0,
+            "maximum": 3
+          }
+        },
+        "example": {
+          "taskId": "fal-request-abc123xyz",
+          "index": 0
         }
       },
       "VideoGenerationResponse": {

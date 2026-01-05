@@ -5,7 +5,7 @@ openapi: 'POST /generate-video/extend'
 
 ## Overview
 
-Extend the duration of an existing video.
+This endpoint is the task-based extension flow for Midjourney videos. For all other extend models, use `POST /api/generate-video` with a source video.
 
 ### Endpoint
 ```
@@ -16,14 +16,64 @@ POST /api/generate-video/extend
 
 20 requests/minute per IP
 
-### Supported models
+### Supported models (task-based)
 
-- `wan-wavespeed-25-extend`
-- `wan-wavespeed-22-spicy-extend`
-- `veo3-1-extend`
+- `midjourney-video` (extend a Midjourney video created via `POST /api/generate-video`)
+
+### Required fields (Midjourney extend)
+
+- `taskId` (the `runId` from the original Midjourney video request)
+- `index` (0-3)
+
+`index` maps to the 4 videos returned by the original Midjourney request.
 
 ### Request notes
 
 - Send the same authentication headers as `/api/generate-video`.
-- Include the source video using `video` or `videoUrl` (same media inputs as `/api/generate-video`).
+- This endpoint does not accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
 - The response format matches the standard generation response (`runId`, `status`, `model`, `cost`).
+
+## Source video extend (use `/api/generate-video`)
+
+Use `POST /api/generate-video` with an extend model and a source video input.
+
+**Extend model examples**:
+
+- `wan-wavespeed-22-spicy-extend`
+- `wan-wavespeed-25-extend`
+- `veo3-1-extend`
+- `veo3-1-fast-extend`
+- `bytedance-seedance-v1.5-pro-extend`
+
+**Required fields**:
+
+- `prompt`
+- `videoUrl` (or `videoDataUrl` / `videoAttachmentId`)
+
+**Notes**:
+
+- `video` is only accepted by specific models (for example, `wan-wavespeed-25-extend`).
+- `wan-wavespeed-22-spicy-extend` accepts `videoUrl`, `videoDataUrl`, or `videoAttachmentId` only.
+- Max source video length: 120 seconds.
+
+### Example: Midjourney extend (task-based)
+
+```json
+{
+  "taskId": "<runId from /api/generate-video>",
+  "index": 0
+}
+```
+
+### Example: Source video extend (`/api/generate-video`)
+
+```json
+{
+  "model": "wan-wavespeed-22-spicy-extend",
+  "prompt": "Extend the clip with smooth motion and warm light",
+  "videoUrl": "https://example.com/source.mp4",
+  "resolution": "480p",
+  "duration": 5,
+  "seed": -1
+}
+```

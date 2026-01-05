@@ -87,9 +87,14 @@ These parameters are available across models. Only send the fields your chosen m
 | `conversationUUID` | string | Link a generation to a conversation |
 | `resolution` | string | Output resolution (`480p`, `720p`, `1080p`) |
 | `imageAttachmentId` | string | Reference to a library-stored image |
+| `videoUrl` | string | Public HTTPS link to a source video (extend/edit/upscale) |
+| `videoDataUrl` | string | Base64-encoded data URL for a source video (max 4 MB) |
 | `videoAttachmentId` | string | Reference to a library-stored video |
+| `video` | string | Alternate video field accepted by select models (for example, `wan-wavespeed-25-extend`) |
 | `referenceImages` | array | Multiple reference images for reference-to-video mode |
 | `referenceVideos` | array | Multiple reference videos |
+
+> Prefer `videoUrl` (camelCase) for source videos. Only send `video` if the model explicitly requires it.
 
 ### Audio Parameters (lipsync/avatar models)
 | Parameter | Type | Description |
@@ -256,11 +261,17 @@ These parameters are available across models. Only send the fields your chosen m
 | `magicapi-video-face-swap` | Face swap |
 
 ### Extension Models
+
+Extend models run through `POST /api/generate-video` with `prompt` plus a source video input (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`). The task-based `/api/generate-video/extend` endpoint is only for Midjourney extensions.
+Max source video length: 120 seconds.
+
 | Model | Purpose |
 | --- | --- |
 | `wan-wavespeed-25-extend` | Extend Wan videos |
 | `wan-wavespeed-22-spicy-extend` | Spicy extension |
 | `veo3-1-extend` | Extend VEO videos |
+| `veo3-1-fast-extend` | Fast VEO extension |
+| `bytedance-seedance-v1.5-pro-extend` | Extend Seedance videos |
 
 ### Longstories Models (Scripted Video)
 | Model | Notes |
@@ -405,11 +416,15 @@ Recover recent video generation runs for a user.
 **Rate Limit**: 20 requests/minute
 
 ### POST `/api/generate-video/extend`
-Extend the duration of an existing video.
+Extend a Midjourney video using a task-based flow.
 
 **Rate Limit**: 20 requests/minute
 
-**Supported Models**: `wan-wavespeed-25-extend`, `wan-wavespeed-22-spicy-extend`, `veo3-1-extend`
+**Required Fields**: `taskId` (from the original Midjourney `runId`), `index` (0-3)
+
+**Notes**:
+- This endpoint does **not** accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
+- Use `POST /api/generate-video` with an extend model for source-video extension.
 
 ### GET `/api/generate-video/content`
 Proxy content retrieval for Sora 2 videos.

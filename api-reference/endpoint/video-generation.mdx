@@ -11,6 +11,11 @@ openapi: 'POST /generate-video'
 
 Provider errors include descriptive JSON payloads. Surface the `error.message` (and HTTP status) to help users correct content-policy or validation issues.
 
+## Extend Workflows
+
+- **Midjourney extend (task-based)**: use `POST /api/generate-video/extend` with `taskId` and `index` (0-3). This flow does not accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
+- **Source video extend (extend models)**: use `POST /api/generate-video` with an extend model plus `prompt` and a source video (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`). `video` is only accepted by select models (for example, `wan-wavespeed-25-extend`). Max source video length: 120 seconds.
+
 ## Request Schema
 
 Only include the fields required by your chosen `model`. Unknown keys are ignored, but some providers fail when extra media fields are present.
@@ -64,14 +69,16 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | `audioDuration` | number | conditional | Duration of provided audio in seconds. |
 | `audioUrl` | string | conditional | HTTPS audio input. |
 | `audio` | string | conditional | Alternate audio field accepted by ByteDance and Kling lipsync providers. |
-| `video` | string | conditional | HTTPS link or data URL to the source video (edit, extend, upscaler, or lipsync jobs). |
-| `videoUrl` | string | conditional | Alias accepted by select providers. |
+| `videoUrl` | string | conditional | HTTPS link to a source video (edit, extend, upscaler, or lipsync jobs). |
+| `videoDataUrl` | string | conditional | Base64 data URL for a source video. |
+| `video` | string | conditional | Alternate video field accepted by select providers (for example, `wan-wavespeed-25-extend`). |
 | `videoAttachmentId` | string | conditional | Reference to a library-stored video. |
 | `swapImage` | string | conditional | Required by `magicapi-video-face-swap`. |
 | `targetVideo` | string | conditional | Required by `magicapi-video-face-swap`. |
 | `targetFaceIndex` | number | no | Optional face index for MagicAPI swaps. |
 
 > Provide only the media fields that your target model expects. Extra media inputs often trigger provider validation errors.
+> Prefer `videoUrl` (camelCase) for source videos; only send `video` when the model explicitly requires it.
 
 ### Advanced Controls
 
@@ -118,16 +125,19 @@ Model strings are grouped by upstream provider. Each row lists the required medi
 | --- | --- | --- | --- |
 | `sora-2` | text-to-video, image-to-video | `pro_mode` (boolean), `resolution` (`720p`, `1792x1024`), `orientation` (`landscape`, `portrait`), `seconds` (`4`, `8`, `12`), optional `imageDataUrl`/`imageUrl` | `lib/modelProviders/sora2Video.ts` |
 | `veo3-1-video` | text-to-video, image-to-video | `duration` (`4`, `6`, `8`), `resolution` (`720p`, `1080p`), `aspect_ratio` (`16:9`, `9:16`), `generateAudio` (default `false`), optional `negative_prompt`, `seed` | `lib/modelProviders/wavespeedVeo31.ts` |
+| `veo3-1-extend` | video extend | Requires `prompt` + source `videoUrl` / `videoDataUrl` / `videoAttachmentId`; supports `resolution` (`720p`, `1080p`), `duration` (`5`, `8`), optional `seed` | `lib/modelProviders/wavespeedVeo31.ts` |
+| `veo3-1-fast-extend` | video extend | Requires `prompt` + source `videoUrl` / `videoDataUrl` / `videoAttachmentId`; fast path with similar controls | `lib/modelProviders/wavespeedVeo31.ts` |
 | `wan-wavespeed-s2v` | image + audio → video | Requires `image` + `audio` (URL or data URI), optional `prompt`, `resolution` (`480p`, `720p`) | `lib/modelProviders/wavespeedWanS2V.ts` |
 | `veed-fabric-1.0` | image + audio → talking head | Requires `imageDataUrl`/`imageUrl` + `audioDataUrl`/`audioUrl`, `resolution` (`480p`, `720p`) | `lib/modelProviders/wavespeedVeedFabric.ts`, `app/api/generate-video/route.ts` |
 | `bytedance-avatar-omni-human-1.5` | image + audio → avatar | Requires `image` + `audio`, duration derived from audio, optional `prompt` | `lib/modelProviders/videoModels.ts:1115` |
 | `kling-lipsync-t2v` | focal video + script | Requires `video` URL, `prompt`/`text`, `voice_id`, `voice_language` (`en`, `zh`), `voice_speed` (`0.8-2.0`) | `lib/modelProviders/wavespeedKlingLipsync.ts`, `lib/modelProviders/videoModels.ts:881` |
 | `kling-lipsync-a2v` | focal video + audio | Requires `video` + `audio` URLs, 2-10 s clip length | `lib/modelProviders/wavespeedKlingLipsync.ts`, `lib/modelProviders/videoModels.ts:938` |
 | `wan-wavespeed-video-edit` | video edit | Requires source `video`, text prompt, `resolution` (`480p`, `720p`) | `lib/modelProviders/videoModels.ts:1075` |
-| `wan-wavespeed-22-spicy-extend` | video extend | Requires source `video`, `resolution` (`480p`, `720p`), `duration` (`5`, `8`) | `lib/modelProviders/videoModels.ts:1094` |
+| `wan-wavespeed-22-spicy-extend` | video extend | Requires `prompt` + source `videoUrl` / `videoDataUrl` / `videoAttachmentId`; supports `resolution` (`480p`, `720p`), `duration` (`5`, `8`) | `lib/modelProviders/videoModels.ts:1094` |
 | `wan-wavespeed-22-plus` | text/image generative | `resolution` (`480p`, `720p`, `1080p`), `orientation` (text-only), fixed 5 s clips, optional `enable_prompt_expansion` | `lib/modelProviders/videoModels.ts:1024`, `lib/modelProviders/wavespeedWan22Plus.ts` |
 | `wan-wavespeed-22-animate` | reference image + driver video | Requires `image` + driver `video`, `resolution` (`480p`, `720p`), `mode` (`animate`, `replace`) | `lib/modelProviders/videoModels.ts:1602` |
 | `wan-wavespeed-25` | text/image generative | `resolution` (`480p`, `720p`, `1080p` via `resolution` or `size`), `duration` (`5`, `10`), optional `enable_prompt_expansion` | `lib/modelProviders/videoModels.ts:1205` |
+| `wan-wavespeed-25-extend` | video extend | Requires `prompt` + source `video` or `videoUrl` / `videoDataUrl` / `videoAttachmentId`; supports `resolution` (`480p`, `720p`), `duration` (`5`, `8`) | `lib/modelProviders/videoModels.ts` |
 | `lightricks-ltx-2-fast` | text/image, optional audio | `duration` (`6-20` s), `generateAudio` toggle | `lib/modelProviders/videoModels.ts:1638` |
 | `lightricks-ltx-2-pro` | text/image, optional audio | `duration` (`6`, `8`, `10` s), `generateAudio` toggle | `lib/modelProviders/videoModels.ts:1664` |
 | `runwayml-gen4-aleph` | video-to-video (+ optional reference image) | Requires `video`, optional `reference_image`, `aspect_ratio` (`16:9`, `4:3`, `1:1`, `3:4`, `9:16`, `auto`) | `lib/modelProviders/wavespeedRunwayGen4Aleph.ts` |
@@ -135,6 +145,7 @@ Model strings are grouped by upstream provider. Each row lists the required medi
 | `bytedance-seedance-upscaler` | video-to-video | Requires `video`, `target_resolution` (`1080p`, `2k`, `4k`) | `lib/modelProviders/videoModels.ts:1197` |
 | `bytedance-waver-1.0` | image-to-video | Requires `image`, fixed 5 s duration | `lib/modelProviders/videoModels.ts:1231` |
 | `bytedance-seedance-v1-pro-fast` | text/image | `resolution` (`480p`, `720p`, `1080p`), `duration` (`2-12` s), `aspect_ratio` (`16:9`, `9:16`, `1:1`, `3:4`, `4:3`, `21:9`), `camera_fixed` | `lib/modelProviders/videoModels.ts:1260` |
+| `bytedance-seedance-v1.5-pro-extend` | video extend | Requires `prompt` + source `videoUrl` / `videoDataUrl` / `videoAttachmentId`; supports `resolution`, `duration`, `seed` | `lib/modelProviders/videoModels.ts` |
 | `kling-v25-turbo-pro` | text/image | `duration` (`5`, `10`), `aspect_ratio` (`16:9`, `9:16`, `1:1`) | `lib/modelProviders/videoModels.ts:1344` |
 | `kling-v25-turbo-std` | image-to-video | Requires `image`, `duration` (`5`, `10`); Kling guidance handled within the Runware provider | `lib/modelProviders/videoModels.ts:1391`, `lib/modelProviders/runwareVideo.ts` |
 | `minimax-hailuo-23-standard` | text/image | `duration` (`6`, `10`), optional `enable_prompt_expansion` | `lib/modelProviders/wavespeedMinimaxHailuo23Standard.ts` |
@@ -174,6 +185,7 @@ These models are also available outside Wavespeed; their field requirements mirr
 | `bytedance-avatar-omni-human-1.5` | image + audio → avatar | Requires `image` + `audio`, duration derived from audio length, optional `prompt` | `lib/modelProviders/videoModels.ts:1115` |
 | `bytedance-waver-1.0` | image-to-video | Fixed 5 s duration, NSFW content may be filtered | `lib/modelProviders/videoModels.ts:1231` |
 | `bytedance-seedance-v1-pro-fast` | text/image | `resolution` (`480p`, `720p`, `1080p`), `duration` (`2-12` s), `aspect_ratio` (`16:9`, `9:16`, `1:1`, `3:4`, `4:3`, `21:9`), `camera_fixed` | `lib/modelProviders/videoModels.ts:1260` |
+| `bytedance-seedance-v1.5-pro-extend` | video extend | Requires `prompt` + source `videoUrl` / `videoDataUrl` / `videoAttachmentId`; supports `resolution`, `duration`, `seed` | `lib/modelProviders/videoModels.ts` |
 
 ### Other Providers
 
