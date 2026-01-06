@@ -9,7 +9,7 @@ Synthesize speech with a single, low‑latency request. The `POST /v1/speech` en
 
 ## Endpoint
 
-- Method/Path: `POST https://api.nano-gpt.com/v1/speech`
+- Method/Path: `POST https://nano-gpt.com/api/v1/speech`
 - Auth: `Authorization: Bearer <API_KEY>`
 - Required header: `Content-Type: application/json`
 - Optional header: `Accept` to prefer a MIME type (for example `audio/mpeg`, `audio/wav`, `audio/ogg`). If omitted, the response `Content-Type` follows the requested `format` in the body.
@@ -55,7 +55,7 @@ curl -X POST \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -H "Accept: audio/mpeg" \
-  https://api.nano-gpt.com/v1/speech \
+  https://nano-gpt.com/api/v1/speech \
   -d '{
     "model": "nano-tts-1",
     "input": "Hello from NanoGPT!",
@@ -68,7 +68,7 @@ curl -X POST \
 ```ts Node (fetch)
 import fs from "node:fs";
 
-const res = await fetch("https://api.nano-gpt.com/v1/speech", {
+const res = await fetch("https://nano-gpt.com/api/v1/speech", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
@@ -93,7 +93,7 @@ import requests
 import os
 
 resp = requests.post(
-    "https://api.nano-gpt.com/v1/speech",
+    "https://nano-gpt.com/api/v1/speech",
     headers={
         "Authorization": f"Bearer {os.environ.get('NANOGPT_API_KEY')} ",
         "Content-Type": "application/json",
@@ -172,7 +172,7 @@ Already using the async `POST /tts` + `GET /tts/status` flow?
 If chunked audio streaming is enabled for your account, you can request streaming with compatible formats (for example Opus/MP3) and consume the response as a stream. Example Node pattern:
 
 ```ts
-const res = await fetch("https://api.nano-gpt.com/v1/speech", { /* headers/body as above */ });
+const res = await fetch("https://nano-gpt.com/api/v1/speech", { /* headers/body as above */ });
 if (!res.ok) throw new Error(await res.text());
 const file = await fs.open("speech.mp3", "w");
 for await (const chunk of res.body) {

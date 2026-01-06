@@ -443,7 +443,7 @@ The submit + poll flow works the same regardless of how you supply the image: im
 ### Example 1: Text-to-Video with cURL
 ```bash
 # 1) Submit
-RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
+RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -456,7 +456,7 @@ echo "Run ID: $RUN_ID"
 
 # 2) Poll status (max ~10 minutes)
 for i in {1..120}; do
-  RESP=$(curl -s "https://api.nano-gpt.com/api/generate-video/status?runId=$RUN_ID&model=kling-video-v2" \
+  RESP=$(curl -s "https://nano-gpt.com/api/generate-video/status?runId=$RUN_ID&model=kling-video-v2" \
     -H "x-api-key: YOUR_API_KEY")
   STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
   echo "Attempt $i: status=$STATUS"
@@ -478,7 +478,7 @@ done
 
 #### Base64 input
 ```bash
-RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
+RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -492,7 +492,7 @@ RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
 
 #### Public URL input
 ```bash
-RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
+RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -578,7 +578,7 @@ import base64
 import json
 import requests
 
-API_URL = "https://api.nano-gpt.com/api/generate-video"
+API_URL = "https://nano-gpt.com/api/generate-video"
 API_KEY = "YOUR_API_KEY"
 
 def submit_image_to_video(image_path: str) -> str:

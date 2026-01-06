@@ -20,7 +20,7 @@ Poll the status of an asynchronous video generation run. Use the `runId` you rec
 import requests
 import time
 
-BASE = "https://api.nano-gpt.com/api"
+BASE = "https://nano-gpt.com/api"
 
 def get_video_status(run_id: str, api_key: str, model: str | None = None) -> dict:
     params = {"runId": run_id}
@@ -49,7 +49,7 @@ def wait_for_video(run_id: str, api_key: str, model: str | None = None, max_atte
 ```
 
 ```javascript JavaScript
-const BASE = 'https://api.nano-gpt.com/api';
+const BASE = 'https://nano-gpt.com/api';
 
 async function getVideoStatus(runId, apiKey, model) {
   const url = new URL(`${BASE}/generate-video/status`);
@@ -76,12 +76,12 @@ export async function waitForVideo(runId, apiKey, model, maxAttempts = 120, dela
 
 ```bash cURL
 # Single status check
-curl -s "https://api.nano-gpt.com/api/generate-video/status?runId=RUN_ID&model=veo2-video" \
+curl -s "https://nano-gpt.com/api/generate-video/status?runId=RUN_ID&model=veo2-video" \
   -H "x-api-key: YOUR_API_KEY" | jq .
 
 # Poll until complete (~10 minutes max)
 for i in {1..120}; do
-  RESP=$(curl -s "https://api.nano-gpt.com/api/generate-video/status?runId=RUN_ID&model=veo2-video" -H "x-api-key: YOUR_API_KEY")
+  RESP=$(curl -s "https://nano-gpt.com/api/generate-video/status?runId=RUN_ID&model=veo2-video" -H "x-api-key: YOUR_API_KEY")
   STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
   echo "Attempt $i: status=$STATUS"
   if [ "$STATUS" = "COMPLETED" ]; then
