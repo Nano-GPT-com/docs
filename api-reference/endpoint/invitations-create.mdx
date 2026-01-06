@@ -1,0 +1,115 @@
+---
+title: "Create Invitation"
+openapi: "POST /invitations/create"
+---
+
+## Overview
+
+Create an invitation or referral link with an optional credit amount. Invitation links can include a fixed credit amount, while referral links always have a zero amount.
+
+## Authentication
+
+This endpoint supports two authentication methods:
+
+- Session-based authentication (browser session cookie)
+- API key authentication via request headers
+
+### API Key Headers
+- `x-api-key: YOUR_API_KEY` or
+- `Authorization: Bearer YOUR_API_KEY`
+
+## Request
+
+### Headers
+- `Content-Type: application/json`
+- `x-api-key: YOUR_API_KEY` (required for API key auth)
+
+### Body
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `type` | string | No | Either `"invitation"` or `"referralLink"`. Defaults to `"invitation"`. |
+| `amount` | number | No | Credit amount to include with the invitation. Must be non-negative. Ignored for referral links (always 0). |
+| `currency` | string | No | Currency for the amount. Required if `amount > 0`. Use `"USD"` for US dollars. |
+| `recipientName` | string | No | Name of the invitation recipient. |
+| `issuerName` | string | No | Name of the person sending the invitation. |
+| `issuerNote` | string | No | Personal note to include with the invitation. |
+
+## Response
+
+### Success (200 OK)
+```json
+{
+  "insertId": "12345",
+  "redeemCode": "ABC123XY",
+  "url": "https://example.com/invite/ABC123XY",
+  "type": "invitation",
+  "amount": 10,
+  "currency": "USD"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `insertId` | string | Database ID of the created invitation. |
+| `redeemCode` | string | Unique code the recipient uses to redeem the invitation. |
+| `url` | string | Full URL to share with the recipient. |
+| `type` | string | The invitation type (`"invitation"` or `"referralLink"`). |
+| `amount` | number | Credit amount attached to this invitation. |
+| `currency` | string \| null | Currency of the amount, or `null` if amount is 0 (recipient chooses currency). |
+
+## Errors
+
+| Status | Body | Description |
+| --- | --- | --- |
+| 400 | `"Invalid request body"` | Request body is not valid JSON. |
+| 400 | `"InvalidAmount"` | The provided amount is negative. |
+| 400 | `"InsufficientBalance"` | Your account balance is insufficient for the specified amount. |
+| 401 | `"Invalid session"` | Session is missing required data. |
+| 401 | `"Unable to get session"` | Authentication failed. |
+| 500 | `"Failed to create invitation"` | Server error during invitation creation. |
+
+## Notes
+
+- When `amount` is 0 or not provided, the `currency` in the response is `null`, allowing the recipient to choose their preferred currency upon redemption.
+- Referral links always have an amount of 0, regardless of what value is passed.
+- The `redeemCode` uses a URL-safe alphabet that avoids ambiguous characters (no 0, O, 1, l).
+- Ensure your account has sufficient balance before creating invitations with credit amounts.
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/invitations/create \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "amount": 10,
+    "currency": "USD",
+    "recipientName": "Jane Doe",
+    "issuerName": "John Smith",
+    "issuerNote": "Welcome to the platform!"
+  }'
+```
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/invitations/create \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "type": "referralLink",
+    "issuerName": "John Smith"
+  }'
+```
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/invitations/create \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "recipientName": "Jane Doe"
+  }'
+```
+
+</CodeGroup>

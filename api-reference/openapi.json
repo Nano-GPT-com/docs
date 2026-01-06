@@ -313,6 +313,71 @@
         }
       }
     },
+    "/invitations/create": {
+      "post": {
+        "description": "Create an invitation or referral link with an optional credit amount.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Invitation creation parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid request body, invalid amount, or insufficient balance",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or unable to get session",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Failed to create invitation",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/user/provider-preferences": {
       "get": {
         "description": "Fetch saved provider preferences for the current user session",
@@ -4867,6 +4932,69 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/ProviderPreferenceRule"
             }
+          }
+        }
+      },
+      "InvitationCreateRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Either \"invitation\" or \"referralLink\". Defaults to \"invitation\".",
+            "enum": ["invitation", "referralLink"]
+          },
+          "amount": {
+            "type": "number",
+            "description": "Credit amount to include with the invitation. Must be non-negative. Ignored for referral links (always 0).",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency for the amount. Required if amount > 0."
+          },
+          "recipientName": {
+            "type": "string",
+            "description": "Name of the invitation recipient."
+          },
+          "issuerName": {
+            "type": "string",
+            "description": "Name of the person sending the invitation."
+          },
+          "issuerNote": {
+            "type": "string",
+            "description": "Personal note to include with the invitation."
+          }
+        }
+      },
+      "InvitationCreateResponse": {
+        "type": "object",
+        "required": ["insertId", "redeemCode", "url", "type", "amount", "currency"],
+        "properties": {
+          "insertId": {
+            "type": "string",
+            "description": "Database ID of the created invitation."
+          },
+          "redeemCode": {
+            "type": "string",
+            "description": "Unique code the recipient uses to redeem the invitation."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Full URL to share with the recipient."
+          },
+          "type": {
+            "type": "string",
+            "description": "The invitation type.",
+            "enum": ["invitation", "referralLink"]
+          },
+          "amount": {
+            "type": "number",
+            "description": "Credit amount attached to this invitation."
+          },
+          "currency": {
+            "type": ["string", "null"],
+            "description": "Currency of the amount, or null if amount is 0."
           }
         }
       }
