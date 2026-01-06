@@ -1,0 +1,139 @@
+---
+title: 'Provider Selection'
+description: 'Choose the upstream provider for supported open-source models'
+---
+
+# Provider Selection
+
+Provider selection lets pay-as-you-go users choose the upstream provider for supported open-source models. It is optional; if you do nothing, the platform picks the provider. Subscription requests ignore provider preferences.
+
+## When Provider Selection Applies
+
+- Provider selection only applies when a model reports `supportsProviderSelection: true`.
+- Use `GET /api/models/:canonicalId/providers` to discover eligible models and provider IDs.
+- If a model does not support provider selection, the request ignores provider preferences.
+
+## Discover Providers and Pricing
+
+Use this endpoint to list available providers and the pricing you will pay when selecting one.
+
+```
+GET /api/models/:canonicalId/providers
+```
+
+Example response (placeholders):
+
+```json
+{
+  "canonicalId": "model-id",
+  "displayName": "Model Name",
+  "supportsProviderSelection": true,
+  "defaultPrice": { "inputPer1kTokens": 0.0004, "outputPer1kTokens": 0.00175 },
+  "providers": [
+    {
+      "provider": "provider-id",
+      "pricing": { "inputPer1kTokens": 0.00042, "outputPer1kTokens": 0.0018375 },
+      "available": true
+    }
+  ]
+}
+```
+
+Notes:
+
+- `defaultPrice` is used when you do not select a provider.
+- `providers[].pricing` is what you pay when you do select a provider (includes the markup).
+- If a model is unsupported, the response includes `supportsProviderSelection: false`.
+
+## Per-Request Provider Override
+
+For a single request, send the provider ID in the `X-Provider` header.
+
+```http
+POST /api/v1/chat/completions
+X-Provider: provider-id
+
+{
+  "model": "model-id",
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+Notes:
+
+- `X-Provider` is case-insensitive (`x-provider` also works).
+- The provider ID must be one of the values returned by the providers endpoint.
+
+## Persistent Provider Preferences
+
+These endpoints let a user save provider preferences in their session metadata.
+
+```
+GET /api/user/provider-preferences
+PATCH /api/user/provider-preferences
+DELETE /api/user/provider-preferences
+```
+
+Example `GET` response (placeholders):
+
+```json
+{
+  "preferredProviders": ["provider-a", "provider-b"],
+  "excludedProviders": ["provider-c"],
+  "enableFallback": true,
+  "modelOverrides": {
+    "model-id": {
+      "preferredProviders": ["provider-b"],
+      "enableFallback": false
+    }
+  },
+  "availableProviders": ["provider-a", "provider-b", "provider-c"]
+}
+```
+
+Example `PATCH` payload:
+
+```json
+{
+  "preferredProviders": ["provider-a", "provider-b"],
+  "excludedProviders": ["provider-c"],
+  "enableFallback": false,
+  "modelOverrides": {
+    "model-id": {
+      "preferredProviders": ["provider-b"],
+      "enableFallback": true
+    }
+  }
+}
+```
+
+Field details:
+
+- `preferredProviders`: ordered list of allowed providers; the system tries each in order.
+- `excludedProviders`: providers that should never be used.
+- `enableFallback`: when `true` (default), fall back to the platform default if no preferred provider is available.
+- `modelOverrides`: optional per-model overrides for the fields above.
+- `availableProviders`: full set of provider IDs available to your account for the model.
+
+## Resolution Order
+
+When multiple selections exist, the system resolves providers in this order:
+
+1. `X-Provider` header override
+2. Per-model `preferredProviders`
+3. Global `preferredProviders`
+4. Platform default (only if `enableFallback` is true)
+
+## Billing and Markup
+
+- If you select a provider (via header or preferences), billing uses the provider-specific price plus a 5% markup.
+- If you do not select a provider, billing uses the model's default price.
+
+## Error Behavior
+
+- If `enableFallback` is `false` and no preferred provider is available, `/api/v1/chat/completions` returns `400` with `error.code: "no_fallback_available"`.
+- `PATCH /api/user/provider-preferences` validates provider IDs and returns:
+  - `422 INVALID_INPUT` for malformed payloads.
+  - `400 INVALID_EXCLUSIONS` if exclusions would leave a model with no usable provider.

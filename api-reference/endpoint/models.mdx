@@ -36,6 +36,10 @@ Each model minimally includes:
 - **Basic Mode**: Standard OpenAI-compatible model listing
 - **Detailed Mode**: Enhanced information with pricing and model descriptions  
 
+## Provider Selection Discovery
+
+Provider selection support and provider IDs are discovered via `GET /api/models/:canonicalId/providers`. See [Provider Selection](/api-reference/miscellaneous/provider-selection) for details.
+
 ## Query Parameters
 
 | Parameter | Type | Default | Description |
@@ -282,6 +286,7 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 
 - [/api/v1/embedding-models](/api-reference/endpoint/embedding-models) - List all available embedding models with detailed information
 - [/api/v1/embeddings](/api-reference/endpoint/embeddings) - Create embeddings using the available models
+- [Provider Selection](/api-reference/miscellaneous/provider-selection) - Discover model providers and set provider preferences
 - `/api/subscription/v1/models` - Subscription-included text models
 - `/api/paid/v1/models` - Paid or premium text models
 

@@ -71,6 +71,7 @@
         "pages": [
           "api-reference/miscellaneous/rate-limits",
           "api-reference/miscellaneous/pricing",
+          "api-reference/miscellaneous/provider-selection",
           "api-reference/miscellaneous/for-providers",
           "api-reference/miscellaneous/auto-recharge",
           "api-reference/miscellaneous/chrome-extension",

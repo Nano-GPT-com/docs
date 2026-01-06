@@ -7,6 +7,10 @@ openapi: 'POST /v1/chat/completions'
   If you are on a NanoGPT subscription and want to keep requests limited to subscription-included models (or you have no prepaid balance), use the subscription base URL: `https://nano-gpt.com/api/subscription/v1/chat/completions` (swap `/api/v1` for `/api/subscription/v1`).
 </Note>
 
+<Note>
+  Provider selection is available for pay-as-you-go requests on supported open-source models. Set the `X-Provider` header or save preferences to choose a provider. See [Provider Selection](/api-reference/miscellaneous/provider-selection).
+</Note>
+
 ### Tool calling
 
 The `/api/v1/chat/completions` endpoint supports OpenAI-compatible function calling. You can describe callable functions in the `tools` array, control when the model may invoke them, and continue the conversation by echoing `tool` role messages that reference the assistant's chosen call.

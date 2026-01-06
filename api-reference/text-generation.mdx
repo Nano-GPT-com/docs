@@ -9,6 +9,10 @@ The NanoGPT API offers multiple ways to generate text, including OpenAI-compatib
 
 If you are using a TEE-backed model (e.g., prefixed with `TEE/`), you can also verify the enclave attestation and signatures for your chat completions. See the [TEE Model Verification guide](/api-reference/tee-verification) for more details.
 
+## Provider Selection
+
+Pay-as-you-go requests can select an upstream provider for supported open-source models using the `X-Provider` header or saved preferences. Subscription endpoints ignore provider selection. See [Provider Selection](/api-reference/miscellaneous/provider-selection).
+
 ## OpenAI Compatible Endpoints
 
 ### Chat Completions (v1/chat/completions)

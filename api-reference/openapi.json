@@ -23,6 +23,17 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "X-Provider",
+            "in": "header",
+            "description": "Optional provider override for pay-as-you-go requests on supported open-source models (case-insensitive). Subscription requests ignore this header.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "description": "Parameters for chat completion",
           "content": {
@@ -224,6 +235,52 @@
         }
       }
     },
+    "/models/{canonicalId}/providers": {
+      "get": {
+        "description": "List available providers and pricing for a model that supports provider selection",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "canonicalId",
+            "in": "path",
+            "description": "Canonical model ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider availability and pricing for the model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelProvidersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid model ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/check-balance": {
       "post": {
         "description": "Check the account balance",
@@ -242,6 +299,121 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/provider-preferences": {
+      "get": {
+        "description": "Fetch saved provider preferences for the current user session",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider preference settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Update provider preferences for the current user session",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Provider preference updates",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderPreferencesUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated provider preference settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid exclusions or no usable providers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Clear saved provider preferences for the current user session",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Provider preferences cleared"
           },
           "400": {
             "description": "Unexpected error",
@@ -4537,6 +4709,163 @@
                   "cached_tokens": { "type": "integer" }
                 }
               }
+            }
+          }
+        }
+      },
+      "ProviderPricing": {
+        "type": "object",
+        "required": ["inputPer1kTokens", "outputPer1kTokens"],
+        "properties": {
+          "inputPer1kTokens": {
+            "type": "number",
+            "description": "Price per 1K input tokens in USD",
+            "example": 0.0004
+          },
+          "outputPer1kTokens": {
+            "type": "number",
+            "description": "Price per 1K output tokens in USD",
+            "example": 0.00175
+          }
+        }
+      },
+      "ModelProviderEntry": {
+        "type": "object",
+        "required": ["provider", "pricing", "available"],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Provider identifier",
+            "example": "provider-id"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/ProviderPricing"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Whether the provider is currently available",
+            "example": true
+          }
+        }
+      },
+      "ModelProvidersResponse": {
+        "type": "object",
+        "properties": {
+          "canonicalId": {
+            "type": "string",
+            "description": "Canonical model identifier",
+            "example": "model-id"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable model name",
+            "example": "Model Name"
+          },
+          "supportsProviderSelection": {
+            "type": "boolean",
+            "description": "Whether the model supports provider selection",
+            "example": true
+          },
+          "defaultPrice": {
+            "$ref": "#/components/schemas/ProviderPricing"
+          },
+          "providers": {
+            "type": "array",
+            "description": "Available providers for the model",
+            "items": {
+              "$ref": "#/components/schemas/ModelProviderEntry"
+            }
+          }
+        }
+      },
+      "ProviderPreferenceRule": {
+        "type": "object",
+        "properties": {
+          "preferredProviders": {
+            "type": "array",
+            "description": "Ordered list of preferred providers",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludedProviders": {
+            "type": "array",
+            "description": "Providers that should never be used",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enableFallback": {
+            "type": "boolean",
+            "description": "Whether to fall back to the platform default if no preferred provider is available",
+            "default": true
+          }
+        }
+      },
+      "ProviderPreferencesResponse": {
+        "type": "object",
+        "properties": {
+          "preferredProviders": {
+            "type": "array",
+            "description": "Ordered list of preferred providers",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludedProviders": {
+            "type": "array",
+            "description": "Providers that should never be used",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enableFallback": {
+            "type": "boolean",
+            "description": "Whether to fall back to the platform default if no preferred provider is available",
+            "default": true
+          },
+          "modelOverrides": {
+            "type": "object",
+            "description": "Per-model overrides for provider selection preferences",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ProviderPreferenceRule"
+            }
+          },
+          "availableProviders": {
+            "type": "array",
+            "description": "Provider IDs available to the current user for the model",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ProviderPreferencesUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "preferredProviders": {
+            "type": "array",
+            "description": "Ordered list of preferred providers",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludedProviders": {
+            "type": "array",
+            "description": "Providers that should never be used",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enableFallback": {
+            "type": "boolean",
+            "description": "Whether to fall back to the platform default if no preferred provider is available"
+          },
+          "modelOverrides": {
+            "type": "object",
+            "description": "Per-model overrides for provider selection preferences",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ProviderPreferenceRule"
             }
           }
         }
