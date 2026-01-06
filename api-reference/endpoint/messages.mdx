@@ -1,0 +1,643 @@
+---
+title: 'Messages'
+openapi: 'POST /v1/messages'
+---
+
+## Overview
+
+The `/v1/messages` endpoint provides full Anthropic API compatibility. Clients using the Anthropic SDK can use NanoGPT by simply changing the base URL -- no code changes required.
+
+This endpoint supports:
+
+- Text generation (streaming and non-streaming)
+- Multi-turn conversations
+- Tool use (function calling)
+- Vision (images) and document/PDF processing
+- Extended thinking (reasoning models)
+- Prompt caching
+
+## Endpoint
+
+```
+POST https://nano-gpt.com/api/v1/messages
+```
+
+## Authentication
+
+Use either header:
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Request Format
+
+### Required Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `model` | string | Model identifier (e.g., `claude-3-5-sonnet-20241022`) |
+| `max_tokens` | number | Maximum tokens to generate (must be a finite number) |
+| `messages` | array | Array of conversation messages |
+
+### Optional Fields
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `system` | string or array | -- | System prompt (string or array of text blocks) |
+| `stream` | boolean | `false` | Enable streaming responses |
+| `temperature` | number | -- | Sampling temperature |
+| `top_p` | number | -- | Nucleus sampling parameter |
+| `top_k` | number | -- | Top-k sampling parameter |
+| `stop_sequences` | string[] | -- | Custom stop sequences |
+| `tools` | array | -- | Tool definitions for function calling |
+| `tool_choice` | string or object | -- | Control tool selection behavior |
+| `disable_parallel_tool_use` | boolean | -- | Disable parallel tool calls |
+| `thinking` | object | -- | Enable extended thinking for supported models |
+| `metadata` | object | -- | Request metadata (`user` or `user_id`) |
+
+### Message Format
+
+Messages must have a `role` (`user` or `assistant`) and `content`:
+
+```json
+{
+  "role": "user",
+  "content": "Hello!"
+}
+```
+
+Or with structured content blocks:
+
+```json
+{
+  "role": "user",
+  "content": [
+    { "type": "text", "text": "What's in this image?" },
+    {
+      "type": "image",
+      "source": {
+        "type": "base64",
+        "media_type": "image/jpeg",
+        "data": "<base64-encoded-image>"
+      }
+    }
+  ]
+}
+```
+
+### Content Block Types
+
+#### Text Block
+
+```json
+{ "type": "text", "text": "Your message here" }
+```
+
+#### Image Block (for vision-capable models)
+
+```json
+{
+  "type": "image",
+  "source": {
+    "type": "base64",
+    "media_type": "image/jpeg",
+    "data": "<base64-data>"
+  }
+}
+```
+
+Or with URL:
+
+```json
+{
+  "type": "image",
+  "source": {
+    "type": "url",
+    "url": "https://example.com/image.jpg"
+  }
+}
+```
+
+Supported media types: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
+
+#### Document Block (for PDF-capable models)
+
+```json
+{
+  "type": "document",
+  "source": {
+    "type": "base64",
+    "media_type": "application/pdf",
+    "data": "<base64-data>"
+  }
+}
+```
+
+#### Tool Use Block (in assistant messages)
+
+```json
+{
+  "type": "tool_use",
+  "id": "tool_abc123",
+  "name": "get_weather",
+  "input": { "city": "Paris" }
+}
+```
+
+#### Tool Result Block (in user messages)
+
+```json
+{
+  "type": "tool_result",
+  "tool_use_id": "tool_abc123",
+  "content": "The weather in Paris is sunny, 22 C"
+}
+```
+
+### Tool Definitions
+
+```json
+{
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Get current weather for a city",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "description": "City name" }
+        },
+        "required": ["city"]
+      }
+    }
+  ]
+}
+```
+
+### Tool Choice Options
+
+| Value | Description |
+| --- | --- |
+| `"auto"` | Model may use tools if appropriate |
+| `"none"` | Disable tool use for this request |
+| `"any"` | Model must use at least one tool |
+| `"required"` | Model must use at least one tool |
+| `{"type": "tool", "name": "tool_name"}` | Force use of a specific tool |
+
+### Extended Thinking
+
+For models that support extended thinking (reasoning):
+
+```json
+{
+  "thinking": {
+    "type": "enabled",
+    "budget_tokens": 8192
+  }
+}
+```
+
+Requirements:
+
+- `budget_tokens` must be >= 1024
+- `budget_tokens` must be < `max_tokens`
+- Model must support thinking (e.g., models with `-thinking` suffix)
+
+## Response Format
+
+### Non-Streaming Response
+
+```json
+{
+  "id": "msg_abc123",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-3-5-sonnet-20241022",
+  "content": [
+    { "type": "text", "text": "Hello! How can I help you today?" }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 10,
+    "output_tokens": 12,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "service_tier": "standard"
+  }
+}
+```
+
+### Stop Reasons
+
+| Stop Reason | Description |
+| --- | --- |
+| `end_turn` | Natural end of response |
+| `max_tokens` | Hit token limit |
+| `stop_sequence` | Hit a custom stop sequence |
+| `tool_use` | Model wants to use a tool |
+| `content_filter` | Content was filtered |
+
+### Streaming Response (SSE)
+
+When `stream: true`, the response is Server-Sent Events with named event types:
+
+#### Event: message_start
+
+```text
+event: message_start
+data: {"type": "message_start", "message": {"id": "msg_abc", "type": "message", "role": "assistant", "model": "claude-3-5-sonnet-20241022", "content": [], "stop_reason": null, "usage": {"input_tokens": 10, "output_tokens": 0}}}
+```
+
+#### Event: content_block_start
+
+```text
+event: content_block_start
+data: {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}
+```
+
+#### Event: content_block_delta
+
+```text
+event: content_block_delta
+data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
+```
+
+#### Event: content_block_stop
+
+```text
+event: content_block_stop
+data: {"type": "content_block_stop", "index": 0}
+```
+
+#### Event: message_delta
+
+```text
+event: message_delta
+data: {"type": "message_delta", "delta": {"stop_reason": "end_turn"}, "usage": {"output_tokens": 12}}
+```
+
+#### Event: message_stop
+
+```text
+event: message_stop
+data: {"type": "message_stop"}
+```
+
+### Streaming Tool Use
+
+When the model uses tools during streaming:
+
+```text
+event: content_block_start
+data: {"type": "content_block_start", "index": 0, "content_block": {"type": "tool_use", "id": "tool_abc", "name": "get_weather", "input": {}}}
+
+event: content_block_delta
+data: {"type": "content_block_delta", "index": 0, "delta": {"type": "input_json_delta", "partial_json": "{\"city\":"}}
+
+event: content_block_delta
+data: {"type": "content_block_delta", "index": 0, "delta": {"type": "input_json_delta", "partial_json": " \"Paris\"}"}}
+
+event: content_block_stop
+data: {"type": "content_block_stop", "index": 0}
+```
+
+## Supported Models
+
+### Claude Models (Full Support)
+
+| Model | Streaming | Tools | Vision | Thinking |
+| --- | --- | --- | --- | --- |
+| claude-sonnet-4-5-20250929 | Yes | Yes | Yes | Yes* |
+| claude-3-5-sonnet-20241022 | Yes | Yes | Yes | -- |
+| claude-3-5-haiku-20241022 | Yes | Yes | Yes | -- |
+
+*Use the model with `-thinking` suffix for extended reasoning.
+
+### Other Models (Via Compatibility Layer)
+
+The v1/messages endpoint also works with non-Anthropic models:
+
+| Model | Streaming | Tools | Vision |
+| --- | --- | --- | --- |
+| gpt-4o | Yes | Yes | Yes |
+| gpt-4o-mini | Yes | Yes | Yes |
+| gemini-2.0-flash | Yes | Yes | Yes |
+| llama-3.3-70b | Yes | Yes | -- |
+| deepseek-chat | Yes | Yes | -- |
+
+See the [Models documentation](https://docs.nano-gpt.com/docs/endpoint-examples/models) for the full list.
+
+## Prompt Caching
+
+Enable prompt caching to reduce costs on repeated prompts.
+
+### Enable via Header
+
+```
+anthropic-beta: prompt-caching-2024-07-31
+```
+
+### TTL Options
+
+- Default: 5-minute cache TTL
+- Extended: Add `extended-cache-ttl` to request 1-hour TTL
+
+### Cache Control in Content
+
+Add `cache_control` to content blocks:
+
+```json
+{
+  "type": "text",
+  "text": "This is a long system prompt...",
+  "cache_control": { "type": "ephemeral" }
+}
+```
+
+### Cache Usage in Response
+
+```json
+{
+  "usage": {
+    "input_tokens": 100,
+    "output_tokens": 50,
+    "cache_creation_input_tokens": 80,
+    "cache_read_input_tokens": 0
+  }
+}
+```
+
+## Error Handling
+
+### Error Response Format
+
+```json
+{
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "max_tokens is required",
+    "param": "max_tokens"
+  }
+}
+```
+
+### Error Types
+
+| HTTP Status | Error Type | Description |
+| --- | --- | --- |
+| 400 | `invalid_request_error` | Invalid request (missing fields, bad format) |
+| 401 | `authentication_error` | Invalid or missing API key |
+| 403 | `permission_error` | Insufficient permissions |
+| 404 | `not_found_error` | Unknown model |
+| 429 | `rate_limit_error` | Rate limit exceeded |
+| 500+ | `api_error` | Server error |
+
+All error responses include an `X-Request-ID` header for support requests.
+
+## Headers
+
+### Request Headers
+
+| Header | Required | Description |
+| --- | --- | --- |
+| `Authorization` | Yes* | Bearer token authentication |
+| `x-api-key` | Yes* | Alternative API key header |
+| `Content-Type` | Yes | Must be `application/json` |
+| `anthropic-beta` | No | Enable beta features (e.g., prompt caching) |
+| `anthropic-version` | No | API version (accepted but not required) |
+
+*One of `Authorization` or `x-api-key` is required.
+
+### BYOK Headers
+
+For Bring Your Own Key:
+
+| Header | Description |
+| --- | --- |
+| `x-use-byok` | Set to `true` to use your own API key |
+| `x-byok-provider` | Provider name for your key |
+
+## Examples
+
+### Basic Request (cURL)
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 256,
+    "messages": [
+      { "role": "user", "content": "Hello!" }
+    ]
+  }'
+```
+
+### Streaming Request (cURL)
+
+```bash
+curl -N -X POST https://nano-gpt.com/api/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022",
+    "stream": true,
+    "max_tokens": 256,
+    "messages": [{ "role": "user", "content": "Hello!" }]
+  }'
+```
+
+### With Tools (cURL)
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 1024,
+    "tools": [
+      {
+        "name": "get_weather",
+        "description": "Get current weather",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": { "type": "string" }
+          },
+          "required": ["city"]
+        }
+      }
+    ],
+    "messages": [
+      { "role": "user", "content": "What is the weather in Tokyo?" }
+    ]
+  }'
+```
+
+### Anthropic SDK (Node.js)
+
+```typescript
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.NANOGPT_API_KEY,
+  baseURL: "https://nano-gpt.com/api"
+});
+
+const message = await anthropic.messages.create({
+  model: "claude-3-5-sonnet-20241022",
+  max_tokens: 256,
+  messages: [
+    { role: "user", content: "Hello!" }
+  ]
+});
+
+console.log(message.content[0].text);
+```
+
+### Anthropic SDK with Streaming (Node.js)
+
+```typescript
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.NANOGPT_API_KEY,
+  baseURL: "https://nano-gpt.com/api"
+});
+
+const stream = await anthropic.messages.stream({
+  model: "claude-3-5-sonnet-20241022",
+  max_tokens: 256,
+  messages: [
+    { role: "user", content: "Tell me a story" }
+  ]
+});
+
+for await (const event of stream) {
+  if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+    process.stdout.write(event.delta.text);
+  }
+}
+```
+
+### Anthropic SDK with Prompt Caching (Node.js)
+
+```typescript
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.NANOGPT_API_KEY,
+  baseURL: "https://nano-gpt.com/api"
+});
+
+const message = await anthropic.messages.create({
+  model: "claude-3-5-sonnet-20241022",
+  max_tokens: 256,
+  system: [
+    {
+      type: "text",
+      text: "You are a helpful assistant with expertise in...",
+      cache_control: { type: "ephemeral" }
+    }
+  ],
+  messages: [
+    { role: "user", content: "Hello!" }
+  ]
+}, {
+  headers: {
+    "anthropic-beta": "prompt-caching-2024-07-31"
+  }
+});
+```
+
+### Vision Example (Node.js)
+
+```typescript
+import Anthropic from "@anthropic-ai/sdk";
+import fs from "fs";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.NANOGPT_API_KEY,
+  baseURL: "https://nano-gpt.com/api"
+});
+
+const imageData = fs.readFileSync("image.jpg").toString("base64");
+
+const message = await anthropic.messages.create({
+  model: "claude-3-5-sonnet-20241022",
+  max_tokens: 1024,
+  messages: [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "What's in this image?" },
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: "image/jpeg",
+            data: imageData
+          }
+        }
+      ]
+    }
+  ]
+});
+```
+
+### Python SDK
+
+```python
+import anthropic
+
+client = anthropic.Anthropic(
+    api_key="YOUR_NANOGPT_API_KEY",
+    base_url="https://nano-gpt.com/api"
+)
+
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=256,
+    messages=[
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+
+print(message.content[0].text)
+```
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Request timeout | 800 seconds |
+| Tool argument size | ~100 KB per tool call |
+| Image types | JPEG, PNG, GIF, WebP |
+
+## Migration from Anthropic
+
+To migrate from Anthropic's API to NanoGPT:
+
+1. Change the base URL:
+   - From: `https://api.anthropic.com`
+   - To: `https://nano-gpt.com/api`
+
+   The full endpoint will be: `https://nano-gpt.com/api/v1/messages`
+
+2. Use your NanoGPT API key instead of your Anthropic key
+
+3. No other code changes required -- the API is fully compatible
+
+## Notes
+
+- The `anthropic-version` header is accepted but not required
+- Token usage numbers use NanoGPT's token accounting (may differ slightly from Anthropic's exact counts)
+- All Anthropic SDK features are supported, including streaming, tools, and caching
