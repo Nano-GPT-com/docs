@@ -25,6 +25,7 @@
           "api-reference/endpoint/personalized-models",
           "api-reference/endpoint/models-old",
           "api-reference/endpoint/chat-completion",
+          "api-reference/endpoint/responses",
           "api-reference/endpoint/completion",
           "api-reference/endpoint/embeddings",
           "api-reference/endpoint/embedding-models",

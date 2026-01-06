@@ -81,6 +81,36 @@ except Exception as e:
     print(f"Error: {str(e)}")
 ```
 
+### Responses (v1/responses)
+
+Use the OpenAI Responses-compatible endpoint for stateful threading (`previous_response_id`), background processing, and Responses-style streaming events. See the dedicated docs at [/api-reference/endpoint/responses](/api-reference/endpoint/responses).
+
+```python
+import requests
+
+BASE_URL = "https://nano-gpt.com/api/v1"
+API_KEY = "YOUR_API_KEY"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json",
+}
+
+data = {
+    "model": "gpt-4o",
+    "input": "Summarize the Responses API in one sentence."
+}
+
+response = requests.post(
+    f"{BASE_URL}/responses",
+    headers=headers,
+    json=data
+)
+
+response.raise_for_status()
+print(response.json())
+```
+
 ### Text Completions (v1/completions)
 
 This endpoint mimics OpenAI's legacy text completions API:

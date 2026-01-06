@@ -1,0 +1,754 @@
+---
+title: 'Responses'
+openapi: 'POST /v1/responses'
+---
+
+## Overview
+
+The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creating AI model responses. It supports:
+
+- Stateless and stateful (conversation threading) chat completions
+- Streaming responses via Server-Sent Events (SSE)
+- Background (async) processing for long-running requests
+- Response storage and retrieval
+- Function/tool calling support
+- Multimodal inputs (images, files) for supported models
+
+## Authentication
+
+All requests require authentication via API key:
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+Or alternatively:
+
+```
+x-api-key: YOUR_API_KEY
+```
+
+## Endpoints
+
+- `POST /v1/responses` - Create a new response from the model
+- `GET /v1/responses` - Returns endpoint information
+- `GET /v1/responses/{id}` - Retrieve a stored response by ID
+- `DELETE /v1/responses/{id}` - Delete a stored response (soft delete)
+
+## Create Response
+
+### Request
+
+```http
+POST /v1/responses
+Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY
+```
+
+### Request Body
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `model` | string | Yes | The model to use (e.g., `gpt-4o`, `claude-sonnet-4-20250514`) |
+| `input` | string or array | Yes | The input prompt or array of input items |
+| `instructions` | string | No | System instructions for the model |
+| `max_output_tokens` | integer | No | Maximum tokens in the response (minimum: 16) |
+| `temperature` | number | No | Sampling temperature (0-2). Not supported by reasoning models (o1, o3, etc.) |
+| `top_p` | number | No | Nucleus sampling parameter. Not supported by reasoning models |
+| `tools` | array | No | Array of function tools available to the model |
+| `tool_choice` | string or object | No | Tool use: `auto`, `none`, `required`, or `{ type: "function", name: "..." }` |
+| `parallel_tool_calls` | boolean | No | Allow multiple tool calls in parallel |
+| `stream` | boolean | No | Enable streaming responses (default: false) |
+| `store` | boolean | No | Store response for later retrieval (default: true) |
+| `previous_response_id` | string | No | Link to previous response for conversation threading |
+| `reasoning` | object | No | Reasoning configuration for o1/o3 models |
+| `text` | object | No | Text/format configuration |
+| `metadata` | object | No | Custom metadata (max 16 keys, 64 char keys, 512 char values) |
+| `truncation` | string | No | Truncation strategy: `auto` or `disabled` |
+| `user` | string | No | Unique user identifier |
+| `seed` | integer | No | Random seed for reproducibility |
+| `background` | boolean | No | Enable background/async processing |
+| `service_tier` | string | No | Service tier: `auto`, `default`, or `flex` |
+
+### Input Types
+
+The `input` parameter accepts either a simple string or an array of input items.
+
+#### Simple String Input
+
+```json
+{
+  "model": "gpt-4o",
+  "input": "What is the capital of France?"
+}
+```
+
+#### Array Input
+
+```json
+{
+  "model": "gpt-4o",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": "What is the capital of France?"
+    }
+  ]
+}
+```
+
+### Input Item Types
+
+| Type | Description |
+| --- | --- |
+| `message` | A message with role and content |
+| `function_call` | A tool/function call made by the model |
+| `function_call_output` | The result of a tool/function call |
+
+#### Message Item
+
+```json
+{
+  "type": "message",
+  "role": "user",
+  "content": "Hello, how are you?"
+}
+```
+
+Supported roles: `user`, `assistant`, `system`, `developer`
+
+Content can be a string or an array of content parts:
+
+```json
+{
+  "type": "message",
+  "role": "user",
+  "content": [
+    { "type": "input_text", "text": "What's in this image?" },
+    { "type": "input_image", "image_url": "https://example.com/image.jpg" }
+  ]
+}
+```
+
+### Content Part Types
+
+| Type | Description |
+| --- | --- |
+| `input_text` | Text input |
+| `input_image` | Image input (via URL or file_id) |
+| `input_file` | File input |
+| `output_text` | Text output (for assistant messages) |
+| `refusal` | Model refusal |
+
+#### Image Input
+
+```json
+{
+  "type": "input_image",
+  "image_url": "https://example.com/image.jpg",
+  "detail": "auto"
+}
+```
+
+The `detail` parameter can be: `auto`, `low`, or `high`.
+
+#### Function Call Item
+
+```json
+{
+  "type": "function_call",
+  "id": "fc_123",
+  "call_id": "call_abc123",
+  "name": "get_weather",
+  "arguments": "{\"location\": \"Paris\"}"
+}
+```
+
+#### Function Call Output Item
+
+```json
+{
+  "type": "function_call_output",
+  "call_id": "call_abc123",
+  "output": "{\"temperature\": 22, \"condition\": \"sunny\"}"
+}
+```
+
+## Tools (Function Calling)
+
+Define functions that the model can call:
+
+```json
+{
+  "model": "gpt-4o",
+  "input": "What's the weather in Paris?",
+  "tools": [
+    {
+      "type": "function",
+      "name": "get_weather",
+      "description": "Get current weather for a location",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "City name"
+          }
+        },
+        "required": ["location"]
+      },
+      "strict": false
+    }
+  ],
+  "tool_choice": "auto"
+}
+```
+
+Note: Only `function` type tools are currently supported. Built-in tools (`web_search_preview`, `file_search`, `code_interpreter`, `mcp`, `image_generation`) are not yet available.
+
+## Reasoning Configuration
+
+For reasoning models (o1, o3, etc.):
+
+```json
+{
+  "model": "o3-mini",
+  "input": "Solve this complex problem...",
+  "reasoning": {
+    "effort": "high",
+    "summary": "auto"
+  }
+}
+```
+
+| Parameter | Values | Description |
+| --- | --- | --- |
+| `effort` | `low`, `medium`, `high` | How much effort the model puts into reasoning |
+| `summary` | `none`, `auto`, `detailed`, `concise` | Reasoning summary format |
+
+## Text/Format Configuration
+
+Control response format:
+
+```json
+{
+  "model": "gpt-4o",
+  "input": "List 3 colors",
+  "text": {
+    "format": { "type": "json_object" }
+  }
+}
+```
+
+### Format Types
+
+- `{ "type": "text" }` - Plain text (default)
+- `{ "type": "json_object" }` - JSON object output
+- `{ "type": "json_schema", "json_schema": { ... } }` - Structured JSON with schema
+
+### JSON Schema Format
+
+```json
+{
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "color_list",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "strict": true
+      }
+    }
+  }
+}
+```
+
+## Response Format
+
+### Successful Response
+
+```json
+{
+  "id": "resp_abc123",
+  "object": "response",
+  "created_at": 1699000000,
+  "model": "gpt-4o",
+  "status": "completed",
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_xyz789",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "The capital of France is Paris."
+        }
+      ]
+    }
+  ],
+  "output_text": "The capital of France is Paris.",
+  "usage": {
+    "input_tokens": 15,
+    "output_tokens": 10,
+    "total_tokens": 25
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Unique response identifier (format: `resp_*`) |
+| `object` | string | Always `"response"` |
+| `created_at` | integer | Unix timestamp of creation |
+| `model` | string | Model used for the response |
+| `status` | string | Response status |
+| `output` | array | Array of output items |
+| `output_text` | string | Convenience field with concatenated text output |
+| `usage` | object | Token usage statistics |
+| `error` | object | Error details (if status is `failed`) |
+| `incomplete_details` | object | Details if status is `incomplete` |
+| `metadata` | object | Custom metadata (if provided) |
+| `service_tier` | string | Service tier used |
+
+### Response Status Values
+
+| Status | Description |
+| --- | --- |
+| `queued` | Background request is queued |
+| `in_progress` | Request is being processed |
+| `completed` | Request completed successfully |
+| `incomplete` | Response was truncated |
+| `failed` | Request failed with error |
+| `cancelled` | Request was cancelled |
+
+### Output Item Types
+
+#### Message Output
+
+```json
+{
+  "type": "message",
+  "id": "msg_123",
+  "role": "assistant",
+  "status": "completed",
+  "content": [
+    {
+      "type": "output_text",
+      "text": "Response text here"
+    }
+  ]
+}
+```
+
+#### Function Call Output
+
+```json
+{
+  "type": "function_call",
+  "id": "fc_123",
+  "call_id": "call_abc",
+  "name": "get_weather",
+  "arguments": "{\"location\": \"Paris\"}",
+  "status": "completed"
+}
+```
+
+#### Reasoning Output (o1/o3 models)
+
+```json
+{
+  "type": "reasoning",
+  "id": "reasoning_123",
+  "content": [],
+  "summary": [
+    {
+      "type": "summary_text",
+      "text": "I analyzed the problem by..."
+    }
+  ]
+}
+```
+
+## Streaming
+
+Enable streaming to receive incremental response updates:
+
+```json
+{
+  "model": "gpt-4o",
+  "input": "Write a short story",
+  "stream": true
+}
+```
+
+### Streaming Response
+
+The response is delivered as Server-Sent Events (SSE):
+
+```
+data: {"type":"response.created","response":{...},"sequence_number":0}
+
+data: {"type":"response.in_progress","response":{...},"sequence_number":1}
+
+data: {"type":"response.output_item.added","output_index":0,"item":{...},"sequence_number":2}
+
+data: {"type":"response.output_text.delta","output_index":0,"content_index":0,"delta":"The ","sequence_number":3}
+
+data: {"type":"response.output_text.delta","output_index":0,"content_index":0,"delta":"capital ","sequence_number":4}
+
+data: {"type":"response.output_text.done","output_index":0,"content_index":0,"text":"The capital of France is Paris.","sequence_number":10}
+
+data: {"type":"response.completed","response":{...},"sequence_number":11}
+
+data: [DONE]
+```
+
+### Streaming Event Types
+
+| Event | Description |
+| --- | --- |
+| `response.created` | Response object created |
+| `response.in_progress` | Processing started |
+| `response.output_item.added` | New output item started |
+| `response.output_item.done` | Output item completed |
+| `response.content_part.added` | Content part started |
+| `response.content_part.done` | Content part completed |
+| `response.output_text.delta` | Incremental text chunk |
+| `response.output_text.done` | Text content completed |
+| `response.function_call_arguments.delta` | Incremental function arguments |
+| `response.function_call_arguments.done` | Function call completed |
+| `response.completed` | Response completed successfully |
+| `response.incomplete` | Response truncated |
+| `response.failed` | Response failed |
+
+## Conversation Threading
+
+Chain responses together for multi-turn conversations.
+
+### First Request
+
+```json
+{
+  "model": "gpt-4o",
+  "input": "My name is Alice."
+}
+```
+
+Response includes `id`: `"resp_abc123"`
+
+### Follow-up Request
+
+```json
+{
+  "model": "gpt-4o",
+  "input": "What is my name?",
+  "previous_response_id": "resp_abc123"
+}
+```
+
+The model has access to the conversation history and responds: "Your name is Alice."
+
+Note: `previous_response_id` requires authentication and `store: true` (default) on previous responses.
+
+## Background Mode
+
+For long-running requests, use background mode to receive an immediate response and poll for results.
+
+### Initiate Background Request
+
+```json
+{
+  "model": "gpt-4o",
+  "input": "Write a detailed analysis...",
+  "background": true
+}
+```
+
+### Immediate Response (202 Accepted)
+
+```json
+{
+  "id": "resp_abc123",
+  "object": "response",
+  "created_at": 1699000000,
+  "model": "gpt-4o",
+  "status": "queued",
+  "output": []
+}
+```
+
+### Poll for Completion
+
+```http
+GET /v1/responses/resp_abc123
+Authorization: Bearer YOUR_API_KEY
+```
+
+Keep polling until `status` is `completed`, `failed`, or `incomplete`.
+
+Constraints:
+
+- Cannot be combined with `stream: true`
+- Requires authentication
+- Maximum processing time: approximately 800 seconds
+
+## Retrieve Response
+
+```http
+GET /v1/responses/{id}
+Authorization: Bearer YOUR_API_KEY
+```
+
+### Response
+
+Returns the full response object (same format as POST response).
+
+### Errors
+
+- `404` - Response not found or belongs to different account
+- `401` - Authentication required/invalid
+
+## Delete Response
+
+```http
+DELETE /v1/responses/{id}
+Authorization: Bearer YOUR_API_KEY
+```
+
+### Response
+
+```json
+{
+  "id": "resp_abc123",
+  "object": "response.deleted",
+  "deleted": true
+}
+```
+
+## Error Handling
+
+### Error Response Format
+
+```json
+{
+  "error": {
+    "type": "invalid_request_error",
+    "message": "model is required",
+    "param": "model",
+    "code": "missing_required_parameter"
+  }
+}
+```
+
+### Error Types
+
+| Type | HTTP Status | Description |
+| --- | --- | --- |
+| `invalid_request_error` | 400 | Invalid request parameters |
+| `authentication_error` | 401 | Missing or invalid API key |
+| `permission_denied_error` | 403 | Insufficient permissions |
+| `not_found_error` | 404 | Resource not found |
+| `rate_limit_error` | 429 | Rate limit exceeded |
+| `api_error` | 500 | Internal server error |
+| `server_error` | 503 | Service unavailable |
+
+### Common Error Codes
+
+| Code | Description |
+| --- | --- |
+| `missing_required_parameter` | Required parameter not provided |
+| `model_not_found` | Specified model does not exist |
+| `response_not_found` | Response ID not found |
+| `invalid_response_id` | Invalid response ID format |
+| `authentication_required` | No API key provided |
+| `invalid_api_key` | API key is invalid or inactive |
+
+## Complete Examples
+
+### Simple Text Completion
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "Explain quantum computing in one sentence."
+  }'
+```
+
+### Multi-turn Conversation
+
+```bash
+# First turn
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "I want to learn Python programming."
+  }'
+
+# Second turn (using response ID from first request)
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "Where should I start?",
+    "previous_response_id": "resp_abc123"
+  }'
+```
+
+### Streaming Response
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "Write a haiku about programming",
+    "stream": true
+  }'
+```
+
+### Function Calling
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "What is the weather in Tokyo?",
+    "tools": [
+      {
+        "type": "function",
+        "name": "get_weather",
+        "description": "Get current weather for a location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": { "type": "string" }
+          },
+          "required": ["location"]
+        }
+      }
+    ]
+  }'
+```
+
+### Submitting Tool Results
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": [
+      {
+        "type": "message",
+        "role": "user",
+        "content": "What is the weather in Tokyo?"
+      },
+      {
+        "type": "function_call",
+        "id": "fc_1",
+        "call_id": "call_123",
+        "name": "get_weather",
+        "arguments": "{\"location\": \"Tokyo\"}"
+      },
+      {
+        "type": "function_call_output",
+        "call_id": "call_123",
+        "output": "{\"temperature\": 18, \"condition\": \"cloudy\"}"
+      }
+    ]
+  }'
+```
+
+### Image Input (Vision)
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": [
+      {
+        "type": "message",
+        "role": "user",
+        "content": [
+          { "type": "input_text", "text": "What is in this image?" },
+          { "type": "input_image", "image_url": "https://example.com/photo.jpg", "detail": "auto" }
+        ]
+      }
+    ]
+  }'
+```
+
+### JSON Output
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "List the planets in our solar system",
+    "text": {
+      "format": { "type": "json_object" }
+    }
+  }'
+```
+
+### Background Processing
+
+```bash
+# Start background request
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "Generate a comprehensive report...",
+    "background": true
+  }'
+
+# Poll for results
+curl https://nano-gpt.com/api/v1/responses/resp_abc123 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+## Limitations
+
+1. Built-in tools not supported: `web_search_preview`, `file_search`, `code_interpreter`, `mcp`, and `image_generation` tool types are not yet available. Use `function` type tools instead.
+2. Deep research models: Models like `o3-deep-research` and `o4-mini-deep-research` are not supported.
+3. GPU-TEE streaming: Streaming is not supported for GPU-TEE models. Use `/v1/chat/completions` for these models.
+4. Background mode: Maximum duration is approximately 800 seconds.
+5. Metadata limits: Maximum 16 keys, 64 character key names, 512 character values.
+
+## Response Headers
+
+All responses include:
+
+| Header | Description |
+| --- | --- |
+| `X-Request-ID` | Unique request/response identifier |
+| `Content-Type` | `application/json` or `text/event-stream` |

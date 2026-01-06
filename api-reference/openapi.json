@@ -1902,6 +1902,104 @@
           }
         }
       }
+    },
+    "/v1/responses": {
+      "post": {
+        "description": "Create a response with the OpenAI-compatible Responses API",
+        "security": [
+          { "bearerAuth": [] },
+          { "apiKeyAuth": [] }
+        ],
+        "requestBody": {
+          "description": "Parameters for the response request",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResponsesCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response created",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ResponsesResponse" } }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "401": { "description": "Unauthorized - Invalid or missing API key" },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      },
+      "get": {
+        "description": "Returns endpoint information for the Responses API",
+        "security": [
+          { "bearerAuth": [] },
+          { "apiKeyAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Endpoint information",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ResponsesInfoResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/responses/{id}": {
+      "get": {
+        "description": "Retrieve a stored response by ID",
+        "security": [
+          { "bearerAuth": [] },
+          { "apiKeyAuth": [] }
+        ],
+        "parameters": [
+          { "name": "id", "in": "path", "description": "Response ID", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stored response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ResponsesResponse" } }
+            }
+          },
+          "401": { "description": "Unauthorized - Invalid or missing API key" },
+          "404": {
+            "description": "Not Found - Response does not exist",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a stored response (soft delete)",
+        "security": [
+          { "bearerAuth": [] },
+          { "apiKeyAuth": [] }
+        ],
+        "parameters": [
+          { "name": "id", "in": "path", "description": "Response ID", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response deleted",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ResponsesDeleteResponse" } }
+            }
+          },
+          "401": { "description": "Unauthorized - Invalid or missing API key" },
+          "404": {
+            "description": "Not Found - Response does not exist",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4933,6 +5031,153 @@
               "$ref": "#/components/schemas/ProviderPreferenceRule"
             }
           }
+        }
+      },
+      "ResponsesCreateRequest": {
+        "type": "object",
+        "required": ["model", "input"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Model ID to use for the response"
+          },
+          "input": {
+            "description": "Prompt string or array of input items",
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "object", "additionalProperties": true }
+              }
+            ]
+          },
+          "instructions": {
+            "type": "string",
+            "description": "System instructions for the model"
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "minimum": 16,
+            "description": "Maximum tokens in the response"
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "description": "Sampling temperature (not supported by reasoning models)"
+          },
+          "top_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Nucleus sampling parameter"
+          },
+          "tools": {
+            "type": "array",
+            "description": "Function tools available to the model",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "tool_choice": {
+            "description": "How the model should use tools",
+            "oneOf": [
+              { "type": "string" },
+              { "type": "object", "additionalProperties": true }
+            ]
+          },
+          "parallel_tool_calls": {
+            "type": "boolean",
+            "description": "Allow multiple tool calls in parallel"
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "Enable streaming responses",
+            "default": false
+          },
+          "store": {
+            "type": "boolean",
+            "description": "Store response for later retrieval",
+            "default": true
+          },
+          "previous_response_id": {
+            "type": "string",
+            "description": "Link to previous response for conversation threading"
+          },
+          "reasoning": {
+            "type": "object",
+            "description": "Reasoning configuration for o1/o3 models",
+            "additionalProperties": true
+          },
+          "text": {
+            "type": "object",
+            "description": "Text/format configuration",
+            "additionalProperties": true
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Custom metadata",
+            "additionalProperties": true
+          },
+          "truncation": {
+            "type": "string",
+            "enum": ["auto", "disabled"],
+            "description": "Truncation strategy"
+          },
+          "user": {
+            "type": "string",
+            "description": "Unique user identifier"
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Random seed for reproducibility"
+          },
+          "background": {
+            "type": "boolean",
+            "description": "Enable background/async processing"
+          },
+          "service_tier": {
+            "type": "string",
+            "enum": ["auto", "default", "flex"],
+            "description": "Service tier"
+          }
+        }
+      },
+      "ResponsesInfoResponse": {
+        "type": "object",
+        "description": "Endpoint information for the Responses API",
+        "additionalProperties": true
+      },
+      "ResponsesResponse": {
+        "type": "object",
+        "description": "Response object returned by the Responses API",
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "object": { "type": "string" },
+          "created_at": { "type": "integer" },
+          "model": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "in_progress", "completed", "incomplete", "failed", "cancelled"]
+          },
+          "output": {
+            "type": "array",
+            "items": { "type": "object", "additionalProperties": true }
+          },
+          "output_text": { "type": "string" },
+          "usage": { "type": "object", "additionalProperties": true },
+          "error": { "type": "object", "additionalProperties": true },
+          "incomplete_details": { "type": "object", "additionalProperties": true },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "service_tier": { "type": "string" }
+        }
+      },
+      "ResponsesDeleteResponse": {
+        "type": "object",
+        "required": ["id", "object", "deleted"],
+        "properties": {
+          "id": { "type": "string" },
+          "object": { "type": "string", "example": "response.deleted" },
+          "deleted": { "type": "boolean" }
         }
       },
       "InvitationCreateRequest": {
