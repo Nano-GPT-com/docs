@@ -17,7 +17,7 @@
           "introduction",
           "quickstart"
         ]
-      }, 
+      },
       {
         "group": "Endpoint Examples",
         "pages": [
@@ -80,28 +80,27 @@
           "api-reference/miscellaneous/chrome-extension",
           "api-reference/miscellaneous/javascript",
           "api-reference/miscellaneous/context-memory",
-          "api-reference/miscellaneous/typescript"
+          "api-reference/miscellaneous/typescript",
+          "api-reference/miscellaneous/mcp-server"
         ]
       },
       {
         "group": "Integrations",
-                "pages": [
-           "integrations/cline",
-           "integrations/roocode",
-           "integrations/kilocode",
-           "integrations/cursor",
-           "integrations/sillytavern",
-           "integrations/openwebui",
-           "integrations/typingmind",
-           "integrations/librechat",
-           "integrations/openhands",
-           "integrations/opencode",
-           "integrations/janitorai",
-           "integrations/droid"
-         ]
+        "pages": [
+          "integrations/cline",
+          "integrations/roocode",
+          "integrations/kilocode",
+          "integrations/cursor",
+          "integrations/sillytavern",
+          "integrations/openwebui",
+          "integrations/typingmind",
+          "integrations/librechat",
+          "integrations/openhands",
+          "integrations/opencode",
+          "integrations/janitorai",
+          "integrations/droid"
+        ]
       }
-     
-     
     ],
     "global": {
       "anchors": [
