@@ -1,0 +1,78 @@
+---
+title: 'Model Context Protocol (MCP)'
+description: 'Integrate NanoGPT into your AI workflows via MCP'
+---
+
+# NanoGPT MCP Server
+
+The NanoGPT MCP Server allows you to integrate NanoGPT's powerful AI capabilities directly into your favorite AI tools and editors that support the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
+
+With this server, you can give your AI agents access to web search, image generation, URL scraping, and NanoGPT's full library of LLMs.
+
+## Installation
+
+You can run the NanoGPT MCP server directly using `npx`. No manual installation is required if you have Node.js installed.
+
+```bash
+npx @nanogpt/mcp
+```
+
+### IDE Integration
+
+To use NanoGPT MCP with tools like **Claude Desktop**, **Cline**, or **Cursor**, add the following to your configuration file:
+
+```json
+{
+  "mcpServers": {
+    "nanogpt": {
+      "command": "npx",
+      "args": ["-y", "@nanogpt/mcp"],
+      "env": {
+        "NANOGPT_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+## Configuration
+
+The server is configured via environment variables.
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `NANOGPT_API_KEY` | **Required**. Your NanoGPT API key. | - |
+| `NANOGPT_BASE_URL` | The base URL for the NanoGPT API. | `https://nano-gpt.com` |
+| `NANOGPT_AUTH_MODE` | Authentication mode (`bearer`, `x-api-key`, or `both`). | `bearer` |
+| `NANOGPT_LOG_LEVEL` | Logging verbosity (`debug`, `info`, `warn`, `error`). | `info` |
+| `NANOGPT_TIMEOUT_MS` | Request timeout in milliseconds. | `120000` |
+| `NANOGPT_MAX_RETRIES` | Number of times to retry failed requests. | `0` |
+| `NANOGPT_DEFAULT_MODEL`| Default model to use for chat tools. | - |
+
+## Available Tools
+
+The MCP server exposes several tools that your AI agent can use:
+
+- **`chat`**: Send messages to any model supported by NanoGPT.
+- **`image-generation`**: Generate images using models like Flux, DALL-E 3, etc.
+- **`web-search`**: Search the web and get back clean, LLM-friendly results.
+- **`scrape-urls`**: Extract content from one or more websites.
+- **`youtube-transcribe`**: Get transcripts from YouTube videos.
+- **`balance`**: Check your current NanoGPT account balance.
+- **`list-models`**: List available text, image, audio, or video models.
+- **`vision`**: Analyze images using vision-capable models.
+
+## Resources
+
+Resources allow agents to "read" data stored by the server. NanoGPT MCP provides:
+
+- **`nanogpt://raw/{id}`**: Access the raw JSON response from a previous API call.
+- **`nanogpt://image/{id}`**: Access an image generated during the session.
+
+## Getting Started
+
+1. Get your API key from the [NanoGPT API dashboard](https://nano-gpt.com/api).
+2. Configure your MCP client (like Claude Desktop) with the server settings.
+3. Start chatting with your agent and ask it to "Search the web for..." or "Generate an image of...".
+
+For more details on specific models and pricing, visit the [Pricing Page](/api-reference/miscellaneous/pricing).
