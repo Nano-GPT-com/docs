@@ -84,6 +84,53 @@ POST /api/v1/chat/completions
 
 Streaming responses emit delta events that mirror OpenAI's `tool_calls` schema, so consumers can reuse their existing parsing logic without changes.
 
+### Structured Output
+
+NanoGPT supports OpenAI-compatible structured outputs using the `response_format` parameter. This ensures the model's response matches a specific JSON schema.
+
+#### Request parameters
+
+- `response_format` (optional object): Set to `{ "type": "json_schema", "json_schema": { "name": string, "strict": boolean, "schema": object } }` to enforce a JSON schema. `strict: true` is recommended for guaranteed adherence.
+
+#### Example request
+
+```json
+{
+  "model": "chatgpt-4o-latest",
+  "messages": [
+    { "role": "system", "content": "Extract user information." },
+    { "role": "user", "content": "Alice is 25 and Bob is 30." }
+  ],
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": {
+      "name": "user_info",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "age": { "type": "number" }
+              },
+              "required": ["name", "age"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["users"],
+        "additionalProperties": false
+      }
+    }
+  }
+}
+```
+
+
 ## Overview
 
 The Chat Completion endpoint provides OpenAI-compatible chat completions.
