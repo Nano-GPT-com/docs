@@ -280,6 +280,16 @@ curl -X POST https://nano-gpt.com/api/web \
     "outputType": "sourcedAnswer",
     "includeDomains": ["microsoft.com", "reuters.com", "bloomberg.com"]
   }'
+
+# Structured output
+curl -X POST https://nano-gpt.com/api/web \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "query": "top tech companies by revenue",
+    "outputType": "structured",
+    "structuredOutputSchema": "{\"type\":\"object\",\"properties\":{\"companies\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"revenue\":{\"type\":\"string\"}}}}}}"
+  }'
 ```
 
 </CodeGroup>
