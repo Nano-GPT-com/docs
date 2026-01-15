@@ -16,27 +16,17 @@ The NanoGPT CLI device login flow works like the GitHub CLI or Claude Code login
 3. User approves the CLI access.
 4. Your CLI receives an API key (`sk-nano-...`).
 
-```
-┌─────────┐                    ┌─────────────┐                    ┌─────────┐
-│   CLI   │                    │   NanoGPT   │                    │  User   │
-└────┬────┘                    └──────┬──────┘                    └────┬────┘
-     │                                │                                │
-     │  POST /api/cli-login/start     │                                │
-     │──────────────────────────────►│                                │
-     │                                │                                │
-     │  device_code, user_code,       │                                │
-     │  verification_uri_complete     │                                │
-     │◄──────────────────────────────│                                │
-     │                                │                                │
-     │  Display URL to user           │                                │
-     │────────────────────────────────────────────────────────────────►│
-     │                                │                                │
-     │                                │  Opens URL, signs in, approves │
-     │                                │◄───────────────────────────────│
-     │                                │                                │
-     │  key: "sk-nano-..."            │                                │
-     │◄──────────────────────────────│                                │
-     │                                │                                │
+```mermaid
+sequenceDiagram
+    participant CLI
+    participant NanoGPT
+    participant User
+
+    CLI->>NanoGPT: POST /api/cli-login/start
+    NanoGPT-->>CLI: device_code, user_code, verification_uri_complete
+    CLI->>User: Display verification URL
+    User->>NanoGPT: Opens URL, signs in, approves
+    NanoGPT-->>CLI: key "sk-nano-..."
 ```
 
 ## Step 1: Start the login flow
