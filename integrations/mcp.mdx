@@ -1,0 +1,301 @@
+---
+title: 'MCP'
+description: 'Use NanoGPT via MCP-compatible clients'
+---
+
+# NanoGPT MCP Integration
+
+The NanoGPT MCP (Model Context Protocol) server allows you to use NanoGPT's AI capabilities directly from MCP-compatible clients like Claude Code, Cursor, and other AI coding assistants.
+
+## Features
+
+The NanoGPT MCP server provides the following tools:
+
+| Tool | Description |
+|------|-------------|
+| `nanogpt_chat` | Send chat messages to any AI model available on NanoGPT |
+| `nanogpt_get_balance` | Check your account balance (USD and Nano) |
+| `nanogpt_image_generate` | Generate images using DALL-E, Flux, Midjourney, and more |
+| `nanogpt_web_search` | Search the web for current information |
+| `nanogpt_scrape_urls` | Extract content from web pages |
+| `nanogpt_youtube_transcribe` | Get transcripts from YouTube videos |
+| `nanogpt_list_text_models` | List available text/chat models |
+| `nanogpt_list_image_models` | List available image generation models |
+| `nanogpt_list_audio_models` | List available audio models (TTS/STT) |
+| `nanogpt_list_video_models` | List available video generation models |
+
+## Prerequisites
+
+- A NanoGPT account with an API key ([get one here](https://nano-gpt.com/api))
+- Node.js 22.x or later
+- An MCP-compatible client (Claude Code, Cursor, etc.)
+
+## Installation
+
+### Option 1: Using npx (Recommended)
+
+The easiest way to use the NanoGPT MCP server is via npx. Add it to your MCP client with:
+
+```bash
+# For Claude Code
+claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
+  --env NANOGPT_API_KEY=YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual NanoGPT API key.
+
+### Option 2: Global Installation
+
+```bash
+npm install -g @anthropic-ai/nanogpt-mcp
+```
+
+Then add to your MCP client:
+
+```bash
+claude mcp add nanogpt "nanogpt-mcp" --scope user \
+  --env NANOGPT_API_KEY=YOUR_API_KEY
+```
+
+## Configuration
+
+### Required Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `NANOGPT_API_KEY` | Your NanoGPT API key (required) |
+
+### Optional Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NANOGPT_TIMEOUT_MS` | `600000` (10 min) | Request timeout in milliseconds |
+| `NANOGPT_DEFAULT_MODEL` | `claude-sonnet-4-5-20250929` | Default model for chat requests |
+| `NANOGPT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
+
+## Usage Examples
+
+Once configured, you can use NanoGPT tools directly from your MCP client. Here are some examples:
+
+### Check Your Balance
+
+Ask your AI assistant:
+> "Check my NanoGPT balance"
+
+The assistant will call `nanogpt_get_balance` and show your USD and Nano balances.
+
+### Chat with AI Models
+
+> "Use NanoGPT to ask Claude Sonnet about the best practices for REST API design"
+
+### Generate Images
+
+> "Use NanoGPT to generate an image of a futuristic city at sunset"
+
+### Search the Web
+
+> "Use NanoGPT web search to find the latest news about AI"
+
+### Get YouTube Transcripts
+
+> "Use NanoGPT to get the transcript of this YouTube video: https://www.youtube.com/watch?v=..."
+
+### Scrape Web Pages
+
+> "Use NanoGPT to scrape the content from https://example.com"
+
+## Tool Reference
+
+### nanogpt_chat
+
+Send a chat completion request to an AI model.
+
+**Parameters:**
+- `messages` (required): Array of message objects with `role` ("system", "user", "assistant") and `content`
+- `model` (optional): Model ID (defaults to Claude Sonnet 4.5)
+- `temperature` (optional): Sampling temperature (0-2)
+- `max_tokens` (optional): Maximum tokens in response
+
+**Example:**
+```json
+{
+  "messages": [
+    {"role": "user", "content": "Explain quantum computing in simple terms"}
+  ],
+  "model": "gpt-4o"
+}
+```
+
+### nanogpt_get_balance
+
+Check your current account balance.
+
+**Parameters:** None
+
+**Returns:**
+- `usd_balance`: Balance in USD
+- `nano_balance`: Balance in Nano (XNO)
+- `nanoDepositAddress`: Your Nano deposit address
+
+### nanogpt_image_generate
+
+Generate images from text prompts.
+
+**Parameters:**
+- `prompt` (required): Text description of the image to generate
+- `model` (optional): Image model to use (e.g., "dall-e-3", "flux-pro")
+- `n` (optional): Number of images to generate (1-10)
+- `size` (optional): Image size (e.g., "1024x1024")
+- `quality` (optional): Image quality setting
+
+**Example:**
+```json
+{
+  "prompt": "A serene mountain landscape at dawn",
+  "model": "flux-pro",
+  "size": "1024x1024"
+}
+```
+
+### nanogpt_web_search
+
+Search the web for current information.
+
+**Parameters:**
+- `query` (required): Search query
+- `depth` (optional): "standard" or "deep"
+- `outputType` (optional): "searchResults", "sourcedAnswer", or "structured"
+- `includeImages` (optional): Include image results
+- `fromDate` / `toDate` (optional): Date range filter (YYYY-MM-DD)
+
+**Example:**
+```json
+{
+  "query": "latest developments in fusion energy",
+  "depth": "deep",
+  "outputType": "sourcedAnswer"
+}
+```
+
+### nanogpt_scrape_urls
+
+Scrape content from web pages.
+
+**Parameters:**
+- `urls` (required): Array of URLs to scrape (max 5 per request)
+- `mode` (optional): "scrape-page" or "conversation"
+- `stealthMode` (optional): Use stealth mode for scraping
+
+**Example:**
+```json
+{
+  "urls": ["https://example.com/article1", "https://example.com/article2"]
+}
+```
+
+### nanogpt_youtube_transcribe
+
+Get transcripts from YouTube videos.
+
+**Parameters:**
+- `urls` (required): Array of YouTube URLs (max 10 per request)
+
+**Example:**
+```json
+{
+  "urls": ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
+}
+```
+
+### nanogpt_list_text_models
+
+List available text/chat models.
+
+**Parameters:**
+- `detailed` (optional): Include pricing information (default: false)
+
+### nanogpt_list_image_models
+
+List available image generation models.
+
+**Parameters:**
+- `detailed` (optional): Include pricing information (default: true)
+
+### nanogpt_list_audio_models
+
+List available audio models.
+
+**Parameters:**
+- `detailed` (optional): Include pricing information (default: true)
+- `type` (optional): Filter by type: "tts", "stt", or "all"
+
+### nanogpt_list_video_models
+
+List available video generation models.
+
+**Parameters:**
+- `detailed` (optional): Include pricing information (default: true)
+
+## Error Handling
+
+The MCP server provides clear error messages for common issues:
+
+| Error | Meaning | Solution |
+|-------|---------|----------|
+| Invalid API key | Authentication failed | Check your `NANOGPT_API_KEY` |
+| Insufficient balance | Account balance too low | Top up your account at [nano-gpt.com](https://nano-gpt.com) |
+| Rate limited | Too many requests | Wait and try again |
+| Timeout | Request took too long | Try a simpler request or increase `NANOGPT_TIMEOUT_MS` |
+
+## Billing
+
+- All paid tools deduct from your NanoGPT balance
+- Use `nanogpt_get_balance` to check your balance before expensive operations
+- Model listing tools are free to use
+- Failed requests (timeouts, errors) are not charged
+
+## Troubleshooting
+
+### "Missing required env var: NANOGPT_API_KEY"
+
+Make sure you've set your API key when adding the MCP server:
+
+```bash
+claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
+  --env NANOGPT_API_KEY=your_actual_key_here
+```
+
+### "Invalid API key" errors
+
+1. Verify your API key at [nano-gpt.com/settings/api-keys](https://nano-gpt.com/settings/api-keys)
+2. Make sure you're using the full API key value
+3. Check for extra spaces or newlines in the key
+
+### Requests timing out
+
+For long-running operations like web search, you can increase the timeout:
+
+```bash
+claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
+  --env NANOGPT_API_KEY=your_key \
+  --env NANOGPT_TIMEOUT_MS=900000
+```
+
+### MCP server not connecting
+
+1. Ensure Node.js 22+ is installed: `node --version`
+2. Try removing and re-adding the MCP server
+3. Check your MCP client's logs for detailed error messages
+
+## Support
+
+- **Documentation:** [nano-gpt.com/docs](https://nano-gpt.com/docs)
+- **Discord:** Join our community for help and updates
+- **API Keys:** [nano-gpt.com/settings/api-keys](https://nano-gpt.com/settings/api-keys)
+
+## Privacy & Security
+
+- Your API key is stored locally and only sent to NanoGPT servers
+- The MCP server runs locally on your machine
+- No data is logged or stored by the MCP server
+- Chat messages and other content are processed according to NanoGPT's [privacy policy](https://nano-gpt.com/privacy)

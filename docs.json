@@ -87,10 +87,12 @@
       {
         "group": "Integrations",
         "pages": [
+          "integrations/cli-login",
           "integrations/cline",
           "integrations/roocode",
           "integrations/kilocode",
           "integrations/cursor",
+          "integrations/mcp",
           "integrations/sillytavern",
           "integrations/openwebui",
           "integrations/typingmind",
