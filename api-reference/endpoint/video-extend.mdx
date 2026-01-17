@@ -22,7 +22,7 @@ POST /api/generate-video/extend
 
 ### Required fields (Midjourney extend)
 
-- `taskId` (the `runId` from the original Midjourney video request)
+- `runId` (preferred) or `taskId` (legacy alias): the job ID from the original Midjourney video request
 - `index` (0-3)
 
 `index` maps to the 4 videos returned by the original Midjourney request.
@@ -30,8 +30,9 @@ POST /api/generate-video/extend
 ### Request notes
 
 - Send the same authentication headers as `/api/generate-video`.
+- Session ownership is enforced; requests for jobs you do not own return `403`.
 - This endpoint does not accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
-- The response format matches the standard generation response (`runId`, `status`, `model`, `cost`).
+- The response format matches the standard generation response (`runId`, `id`, `status`, `model`, `cost`).
 
 ## Source video extend (use `/api/generate-video`)
 
@@ -60,8 +61,23 @@ Use `POST /api/generate-video` with an extend model and a source video input.
 
 ```json
 {
-  "taskId": "<runId from /api/generate-video>",
+  "runId": "vid_m1abc123def456",
   "index": 0
+}
+```
+
+### Example response
+
+```json
+{
+  "success": true,
+  "runId": "vid_m1abc123def456",
+  "id": "vid_m1abc123def456",
+  "taskId": "vid_m1abc123def456",
+  "status": "pending",
+  "model": "midjourney-video",
+  "message": "Extending video 1 by 5 seconds...",
+  "eta": 60
 }
 ```
 

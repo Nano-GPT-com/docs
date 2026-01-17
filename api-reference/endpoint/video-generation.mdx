@@ -7,13 +7,13 @@ openapi: 'POST /generate-video'
 
 ## Overview
 
-`POST /generate-video` submits an asynchronous job to create, extend, or edit a video with one of NanoGPT's provider integrations. The endpoint responds immediately with `runId`, `model`, and `status: "pending"`. Poll the Video Status endpoint with that `runId` until you receive final assets. Duration-based billing is assessed after completion; align any pricing tables with `lib/credits/videoPricingConfig.ts`.
+`POST /generate-video` submits an asynchronous job to create, extend, or edit a video with one of NanoGPT's provider integrations. The endpoint responds immediately with `runId`, `id`, `model`, and `status: "pending"`. `runId` and `id` are the same NanoGPT job identifier (format `vid_...`). Poll the unified Video Status endpoint with that job ID until you receive final assets. Duration-based billing is assessed after completion; align any pricing tables with `lib/credits/videoPricingConfig.ts`.
 
 Provider errors include descriptive JSON payloads. Surface the `error.message` (and HTTP status) to help users correct content-policy or validation issues.
 
 ## Extend Workflows
 
-- **Midjourney extend (task-based)**: use `POST /api/generate-video/extend` with `taskId` and `index` (0-3). This flow does not accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
+- **Midjourney extend (task-based)**: use `POST /api/generate-video/extend` with `runId` (preferred) or `taskId` (legacy alias) plus `index` (0-3). This flow does not accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
 - **Source video extend (extend models)**: use `POST /api/generate-video` with an extend model plus `prompt` and a source video (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`). `video` is only accepted by select models (for example, `wan-wavespeed-25-extend`). Max source video length: 120 seconds.
 
 ## Request Schema
@@ -196,11 +196,26 @@ These models are also available outside Wavespeed; their field requirements mirr
 
 ## Async Processing & Status Polling
 
-- The submission response includes `{ runId, model, status: "pending" }`.
-- Poll `/api/generate-video/status?runId=<runId>&model=<model>` until the job reaches `status: "COMPLETED"` or `status: "FAILED"`.
+- The submission response includes `{ runId, id, model, status: "pending" }` where `id` and `runId` are identical.
+- Poll `/api/video/status?requestId=<runId>` (or `runId`) until the job reaches `status: "COMPLETED"` or `status: "FAILED"`. The legacy `/api/generate-video/status` endpoint is deprecated.
 - Many providers emit intermediate states (`queued`, `processing`, `generating`, `delivering`). Persist them if you need audit trails.
 - Failed jobs include an `error` object mirroring the upstream provider response. Surface the message and adjust prompts or inputs before retrying.
 - Duration and resolution determine credit usage; reconcile charges against `lib/credits/videoPricingConfig.ts`.
+
+### Response example
+
+```json
+{
+  "runId": "vid_m1abc123def456",
+  "id": "vid_m1abc123def456",
+  "status": "pending",
+  "model": "veo2-video",
+  "cost": 0.35,
+  "paymentSource": "XNO",
+  "remainingBalance": 12.5,
+  "prechargeLabel": "string"
+}
+```
 
 ## Content & Safety Notes
 

@@ -30,3 +30,23 @@ GET /api/generate-video/recover
 curl -s "https://nano-gpt.com/api/generate-video/recover?limit=10" \
   -H "x-api-key: YOUR_API_KEY" | jq .
 ```
+
+## Response
+
+```json
+{
+  "data": [
+    {
+      "runId": "vid_m1abc123def456",
+      "id": "vid_m1abc123def456",
+      "model": "sora-2",
+      "status": "completed",
+      "createdAt": "2025-01-17T12:34:56.000Z",
+      "conversationUUID": "b7c75a5e-1e2a-4d4f-9e5b-6c6e2e2f9a17"
+    }
+  ]
+}
+```
+
+Notes:
+- New runs return NanoGPT job IDs (`vid_...`); legacy runs may return provider request IDs.

@@ -1,16 +1,18 @@
 ---
-title: 'Video Status'
+title: 'Video Status (Legacy)'
 openapi: 'GET /generate-video/status'
 --- 
 
 ## Overview
 
-Poll the status of an asynchronous video generation run. Use the `runId` you received from `POST /generate-video`. The `model` query parameter is optional but recommended for faster lookups. When the run completes, the response includes `data.output.video.url`.
+Poll the status of an asynchronous video generation run. Use the `runId` you received from `POST /generate-video` and include the `model` used for the request. When the run completes, the response includes `data.output.video.url`.
+
+> Deprecated: Use `/api/video/status` for all new integrations. This endpoint is kept for backwards compatibility and requires the `model` query parameter. See [Video Status (Unified)](/api-reference/endpoint/video-status-unified).
 
 ### Query parameters
 
 - `runId` (string, required): The run identifier returned by the submit call
-- `model` (string, optional): The model used for the run (e.g., `veo2-video`)
+- `model` (string, required): The model used for the run (e.g., `veo2-video`)
 
 ## Usage
 
@@ -22,10 +24,8 @@ import time
 
 BASE = "https://nano-gpt.com/api"
 
-def get_video_status(run_id: str, api_key: str, model: str | None = None) -> dict:
-    params = {"runId": run_id}
-    if model:
-        params["model"] = model
+def get_video_status(run_id: str, api_key: str, model: str) -> dict:
+    params = {"runId": run_id, "model": model}
     resp = requests.get(
         f"{BASE}/generate-video/status",
         headers={"x-api-key": api_key},
@@ -36,7 +36,7 @@ def get_video_status(run_id: str, api_key: str, model: str | None = None) -> dic
     return resp.json()
 
 
-def wait_for_video(run_id: str, api_key: str, model: str | None = None, max_attempts: int = 120, delay_s: int = 5) -> str:
+def wait_for_video(run_id: str, api_key: str, model: str, max_attempts: int = 120, delay_s: int = 5) -> str:
     for i in range(max_attempts):
         data = get_video_status(run_id, api_key, model)
         status = data.get("data", {}).get("status")
@@ -54,7 +54,7 @@ const BASE = 'https://nano-gpt.com/api';
 async function getVideoStatus(runId, apiKey, model) {
   const url = new URL(`${BASE}/generate-video/status`);
   url.searchParams.set('runId', runId);
-  if (model) url.searchParams.set('model', model);
+  url.searchParams.set('model', model);
   const res = await fetch(url, {
     headers: { 'x-api-key': apiKey }
   });
@@ -112,7 +112,7 @@ done
 {
   "data": {
     "status": "IN_PROGRESS",
-    "request_id": "fal-request-abc123xyz"
+    "request_id": "vid_m1abc123def456"
   }
 }
 ```
@@ -123,7 +123,7 @@ done
 {
   "data": {
     "status": "COMPLETED",
-    "request_id": "fal-request-abc123xyz",
+    "request_id": "vid_m1abc123def456",
     "output": {
       "video": {
         "url": "https://storage.example.com/video.mp4"
@@ -140,7 +140,7 @@ done
 {
   "data": {
     "status": "FAILED",
-    "request_id": "fal-request-abc123xyz",
+    "request_id": "vid_m1abc123def456",
     "error": "Content policy violation",
     "isNSFWError": true,
     "userFriendlyError": "Content flagged as inappropriate. Please modify your prompt and try again."
@@ -153,3 +153,4 @@ done
 - Polling this endpoint is free; submission endpoints are rate limited.
 - The final video URL is returned in `data.output.video.url` when status is `COMPLETED`.
 - `cost` is returned once the generation is complete.
+- `request_id` may be a NanoGPT job ID (`vid_...`) or a legacy provider request ID.

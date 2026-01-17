@@ -1,0 +1,161 @@
+---
+title: 'Video Status (Unified)'
+openapi: 'GET /video/status'
+---
+
+## Overview
+
+Check the status of an asynchronous video generation job using a single, provider-agnostic endpoint. This endpoint accepts NanoGPT job IDs (`vid_...`) and legacy provider request IDs. No `model` parameter is required. Session ownership is enforced (returns `403` when the job is not yours).
+
+### Query parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `requestId` | string | Yes* | The job ID (`vid_...`) or a legacy provider request ID |
+| `runId` | string | Yes* | Alias for `requestId` |
+
+*Send either `requestId` or `runId`.
+
+### Authentication
+
+Provide `x-api-key` or a valid session cookie.
+
+## Usage
+
+<CodeGroup>
+
+```python Python
+import requests
+import time
+
+BASE = "https://nano-gpt.com/api"
+
+def get_video_status(request_id: str, api_key: str) -> dict:
+    resp = requests.get(
+        f"{BASE}/video/status",
+        headers={"x-api-key": api_key},
+        params={"requestId": request_id},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+def wait_for_video(request_id: str, api_key: str, max_attempts: int = 120, delay_s: int = 5) -> str:
+    for _ in range(max_attempts):
+        payload = get_video_status(request_id, api_key)
+        status = payload.get("data", {}).get("status")
+        if status == "COMPLETED":
+            return payload["data"]["output"]["video"]["url"]
+        if status == "FAILED":
+            raise RuntimeError(payload.get("data", {}).get("error", "Video generation failed"))
+        time.sleep(delay_s)
+    raise TimeoutError("Video generation timed out")
+```
+
+```javascript JavaScript
+const BASE = 'https://nano-gpt.com/api';
+
+async function getVideoStatus(requestId, apiKey) {
+  const url = new URL(`${BASE}/video/status`);
+  url.searchParams.set('requestId', requestId);
+  const res = await fetch(url, {
+    headers: { 'x-api-key': apiKey }
+  });
+  if (!res.ok) throw new Error(`Status check failed: ${res.status}`);
+  return res.json();
+}
+
+export async function waitForVideo(requestId, apiKey, maxAttempts = 120, delayMs = 5000) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const payload = await getVideoStatus(requestId, apiKey);
+    const status = payload?.data?.status;
+    if (status === 'COMPLETED') return payload.data.output.video.url;
+    if (status === 'FAILED') throw new Error(payload?.data?.error || 'Video generation failed');
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  throw new Error('Video generation timed out');
+}
+```
+
+```bash cURL
+# Single status check
+curl -s "https://nano-gpt.com/api/video/status?requestId=vid_m1abc123def456" \
+  -H "x-api-key: YOUR_API_KEY" | jq .
+
+# Poll until complete (~10 minutes max)
+for i in {1..120}; do
+  RESP=$(curl -s "https://nano-gpt.com/api/video/status?requestId=vid_m1abc123def456" -H "x-api-key: YOUR_API_KEY")
+  STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
+  echo "Attempt $i: status=$STATUS"
+  if [ "$STATUS" = "COMPLETED" ]; then
+    echo "$RESP" | jq .
+    VIDEO_URL=$(echo "$RESP" | jq -r '.data.output.video.url')
+    echo "Video URL: $VIDEO_URL"
+    break
+  fi
+  sleep 5
+done
+```
+
+</CodeGroup>
+
+## Status values
+
+- `IN_QUEUE`: Request queued
+- `IN_PROGRESS`: Generation in progress
+- `COMPLETED`: Video ready
+- `FAILED`: Generation failed
+- `CANCELED`: Request canceled
+
+## Response examples
+
+### In progress
+
+```json
+{
+  "requestId": "vid_m1abc123def456",
+  "model": "sora-2",
+  "data": {
+    "status": "IN_PROGRESS",
+    "requestId": "vid_m1abc123def456"
+  }
+}
+```
+
+### Completed
+
+```json
+{
+  "requestId": "vid_m1abc123def456",
+  "model": "sora-2",
+  "data": {
+    "status": "COMPLETED",
+    "requestId": "vid_m1abc123def456",
+    "output": {
+      "video": {
+        "url": "https://storage.example.com/video.mp4"
+      }
+    },
+    "cost": 0.35
+  }
+}
+```
+
+### Failed
+
+```json
+{
+  "requestId": "vid_m1abc123def456",
+  "model": "sora-2",
+  "data": {
+    "status": "FAILED",
+    "requestId": "vid_m1abc123def456",
+    "error": "Content policy violation",
+    "isNSFWError": true,
+    "userFriendlyError": "Content flagged as inappropriate. Please modify your prompt and try again."
+  }
+}
+```
+
+Notes:
+- Terminal results are cached in `video_jobs` for faster subsequent status checks.

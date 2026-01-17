@@ -284,7 +284,8 @@ Max source video length: 120 seconds.
 ### Initial Response (202 Accepted)
 ```json
 {
-  "runId": "fal-request-abc123xyz",
+  "runId": "vid_m1abc123def456",
+  "id": "vid_m1abc123def456",
   "status": "pending",
   "model": "veo2-video",
   "cost": 0.35,
@@ -295,7 +296,8 @@ Max source video length: 120 seconds.
 ```
 
 ### Response Fields
-- `runId`: Unique identifier for polling status
+- `runId`: NanoGPT job ID used for polling (format `vid_...`)
+- `id`: Alias for `runId` (same value)
 - `status`: Always "pending" for initial response
 - `model`: The model used for generation
 - `cost`: Estimated/pre-charged cost
@@ -322,19 +324,19 @@ After receiving a `runId`, poll the status endpoint until completion.
 
 ### Status Endpoint
 ```
-GET /api/generate-video/status?runId={runId}&model={model}
+GET /api/video/status?requestId={runId}
 ```
-`model` is optional but recommended for faster lookups.
+You can send `requestId` or `runId`; no model parameter is required.
 
 ### Polling Example
 ```javascript
-async function pollVideoStatus(runId, model) {
+async function pollVideoStatus(runId) {
   const maxAttempts = 120; // ~10 minutes total
   const delayMs = 5000; // 5 seconds (max ~10 minutes)
 
   for (let i = 0; i < maxAttempts; i++) {
     const response = await fetch(
-      `/api/generate-video/status?runId=${runId}&model=${model}`
+      `/api/video/status?requestId=${runId}`
     );
     const result = await response.json();
 
@@ -357,9 +359,11 @@ async function pollVideoStatus(runId, model) {
 #### In Progress
 ```json
 {
+  "requestId": "vid_m1abc123def456",
+  "model": "veo2-video",
   "data": {
     "status": "IN_PROGRESS",
-    "request_id": "fal-request-abc123xyz",
+    "requestId": "vid_m1abc123def456",
     "details": "Video is being generated"
   }
 }
@@ -368,9 +372,11 @@ async function pollVideoStatus(runId, model) {
 #### Completed
 ```json
 {
+  "requestId": "vid_m1abc123def456",
+  "model": "veo2-video",
   "data": {
     "status": "COMPLETED",
-    "request_id": "fal-request-abc123xyz",
+    "requestId": "vid_m1abc123def456",
     "output": {
       "video": {
         "url": "https://storage.example.com/video.mp4"
@@ -384,9 +390,11 @@ async function pollVideoStatus(runId, model) {
 #### Failed
 ```json
 {
+  "requestId": "vid_m1abc123def456",
+  "model": "veo2-video",
   "data": {
     "status": "FAILED",
-    "request_id": "fal-request-abc123xyz",
+    "requestId": "vid_m1abc123def456",
     "error": "Content policy violation",
     "isNSFWError": true,
     "userFriendlyError": "Content flagged as inappropriate. Please modify your prompt and try again."
@@ -420,10 +428,11 @@ Extend a Midjourney video using a task-based flow.
 
 **Rate Limit**: 20 requests/minute
 
-**Required Fields**: `taskId` (from the original Midjourney `runId`), `index` (0-3)
+**Required Fields**: `runId` (preferred) or `taskId` (legacy alias), `index` (0-3)
 
 **Notes**:
 - This endpoint does **not** accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
+- Session ownership is enforced; requests for jobs you do not own return `403`.
 - Use `POST /api/generate-video` with an extend model for source-video extension.
 
 ### GET `/api/generate-video/content`
@@ -456,7 +465,7 @@ echo "Run ID: $RUN_ID"
 
 # 2) Poll status (max ~10 minutes)
 for i in {1..120}; do
-  RESP=$(curl -s "https://nano-gpt.com/api/generate-video/status?runId=$RUN_ID&model=kling-video-v2" \
+  RESP=$(curl -s "https://nano-gpt.com/api/video/status?requestId=$RUN_ID" \
     -H "x-api-key: YOUR_API_KEY")
   STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
   echo "Attempt $i: status=$STATUS"
@@ -541,7 +550,7 @@ async function generateVideo(imageFile) {
   console.log('Video generation started:', result.runId);
   
   // 3. Poll for completion
-  const videoUrl = await pollVideoStatus(result.runId, result.model);
+  const videoUrl = await pollVideoStatus(result.runId);
   console.log('Video ready:', videoUrl);
   
   return videoUrl;
@@ -567,7 +576,7 @@ async function generateVideoFromUrl(imageUrl) {
   });
 
   const result = await response.json();
-  const videoUrl = await pollVideoStatus(result.runId, result.model);
+  const videoUrl = await pollVideoStatus(result.runId);
   return videoUrl;
 }
 ```
@@ -655,7 +664,7 @@ async function generateMultipleVideos(prompts) {
   // Poll all statuses concurrently
   const videos = await Promise.all(
     requests.map(({ runId, model }) => 
-      pollVideoStatus(runId, model)
+      pollVideoStatus(runId)
     )
   );
   
@@ -714,7 +723,7 @@ async function generateVideoWithErrorHandling(params) {
     const result = await response.json();
     
     // Poll for status with timeout
-    const videoUrl = await pollVideoStatus(result.runId, result.model);
+    const videoUrl = await pollVideoStatus(result.runId);
     return videoUrl;
     
   } catch (error) {
@@ -729,7 +738,8 @@ async function generateVideoWithErrorHandling(params) {
 | Endpoint | Limit |
 | --- | --- |
 | POST `/api/generate-video` | 50 requests/minute per IP |
-| GET `/api/generate-video/status` | No explicit limit (cached) |
+| GET `/api/video/status` | No explicit limit (cached) |
+| GET `/api/generate-video/status` | Deprecated (legacy compatibility) |
 | POST `/api/generate-video/extend` | 20 requests/minute per IP |
 | GET `/api/generate-video/recover` | 20 requests/minute per IP |
 
