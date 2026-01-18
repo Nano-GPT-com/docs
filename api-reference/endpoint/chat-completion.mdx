@@ -173,7 +173,9 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 ## Web Search
 
-Enable web search in two ways: model suffixes or a `linkup` object in the request body. If `linkup.enabled` is `true`, it takes precedence over any model suffix.
+Enable web search in two ways: model suffixes or a `webSearch` object in the request body. The legacy `linkup` object is still supported as an alias. If `webSearch.enabled` (or `linkup.enabled`) is `true`, it takes precedence over any model suffix.
+
+OpenAI native web search: GPT-5 (all versions) and the o1/o3/o4 series use OpenAI's built-in web search automatically. No suffix is required; you can still set `webSearch.search_context_size` and `webSearch.user_location`. To force a different provider, specify a provider or suffix.
 
 ### Option A: model suffixes
 
@@ -192,22 +194,122 @@ Append one of these to your `model` value:
 - `:online/kagi-web` (Kagi, standard, web)
 - `:online/kagi-news` (Kagi, standard, news)
 - `:online/kagi-search` (Kagi, deep, search)
+- `:online/perplexity` (Perplexity, standard)
+- `:online/perplexity-deep` (Perplexity, deep)
+- `:online/valyu` (Valyu, standard, all sources)
+- `:online/valyu-deep` (Valyu, deep, all sources)
+- `:online/valyu-web` (Valyu, standard, web only)
+- `:online/valyu-web-deep` (Valyu, deep, web only)
 
-`:online` without an explicit provider uses the default web search backend.
+`:online` without an explicit provider uses the default web search backend (Linkup).
 
-### Option B: request body configuration
+### Option B: request body configuration (recommended)
 
-Send a `linkup` object in the request body. This works with or without a model suffix and controls web search across all providers.
+Send a `webSearch` object in the request body. The legacy `linkup` object is accepted as an alias. This works with or without a model suffix and controls web search across all providers.
 
-`linkup` fields:
+`webSearch` fields:
 
 - `enabled` (boolean, required to activate web search)
-- `provider` (string): `linkup` | `tavily` | `exa` | `kagi`
+- `provider` (string): `linkup` | `tavily` | `exa` | `kagi` | `perplexity` | `valyu`
 - `depth` (string):
-  - Linkup/Tavily/Kagi: `standard` or `deep`
+  - Linkup/Tavily/Perplexity/Valyu: `standard` or `deep`
   - Exa: `fast`, `auto`, `neural`, `deep` (use `standard` if you want `auto`)
-- `search_context_size` or `searchContextSize` (string): `low` | `medium` | `high` (default: `medium`)
+  - Kagi: `standard` or `deep` (`search` source only)
+- `search_context_size` or `searchContextSize` (string, OpenAI native): `low` | `medium` | `high` (default: `medium`)
+- `user_location` or `userLocation` (object, OpenAI native): `{ type: "approximate", country, city, region }`
+- `searchType` (string, Valyu only): `all` | `web`
 - `kagiSource` or `kagi_source` (string, Kagi only): `web` | `news` | `search`
+
+#### Provider-specific options (set inside `webSearch`)
+
+##### Perplexity
+
+```json
+{
+  "maxResults": 1-20,
+  "maxTokensPerPage": number,
+  "maxTokens": 1-1000000,
+  "country": "string",
+  "searchDomainFilter": ["domain1.com", "domain2.com"],
+  "searchLanguageFilter": ["en", "de"]
+}
+```
+
+Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entries (ISO 639-1).
+
+##### Valyu
+
+```json
+{
+  "searchType": "all" | "web",
+  "fastMode": boolean,
+  "maxNumResults": 1-50,
+  "maxPrice": number,
+  "relevanceThreshold": 0-1,
+  "responseLength": "short" | "medium" | "large" | "max" | number,
+  "countryCode": "US",
+  "includedSources": ["source1.com"],
+  "excludedSources": ["source2.com"],
+  "urlOnly": boolean,
+  "category": "string"
+}
+```
+
+`countryCode` uses a 2-letter ISO country code.
+
+##### Tavily
+
+```json
+{
+  "maxResults": 0-20,
+  "includeAnswer": boolean | "basic" | "advanced",
+  "includeRawContent": boolean | "markdown" | "text",
+  "includeImages": boolean,
+  "includeImageDescriptions": boolean,
+  "includeFavicon": boolean,
+  "topic": "general" | "news" | "finance",
+  "timeRange": "day" | "week" | "month" | "year",
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "chunksPerSource": 1-3,
+  "country": "string"
+}
+```
+
+##### Exa
+
+```json
+{
+  "numResults": 1-100,
+  "category": "company" | "research paper" | "news" | "pdf" | "github" | "tweet" | "personal site" | "people" | "financial report",
+  "userLocation": "US",
+  "additionalQueries": ["query2"],
+  "startCrawlDate": "ISO 8601",
+  "endCrawlDate": "ISO 8601",
+  "startPublishedDate": "ISO 8601",
+  "endPublishedDate": "ISO 8601",
+  "includeText": ["pattern"],
+  "excludeText": ["pattern"],
+  "livecrawl": "never" | "fallback" | "always" | "preferred",
+  "livecrawlTimeout": number,
+  "subpages": number,
+  "subpageTarget": "string" | ["strings"]
+}
+```
+
+##### OpenAI native (GPT-5 and o1/o3/o4 series)
+
+```json
+{
+  "search_context_size": "low" | "medium" | "high",
+  "user_location": {
+    "type": "approximate",
+    "country": "US",
+    "city": "San Francisco",
+    "region": "California"
+  }
+}
+```
 
 ### Examples
 
@@ -240,16 +342,16 @@ response = requests.post(
 )
 
 # Request-body configuration (Exa neural)
-data_linkup = {
+data_search = {
     "model": "chatgpt-4o-latest",
     "messages": [
         {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
     ],
-    "linkup": {
+    "webSearch": {
         "enabled": True,
         "provider": "exa",
         "depth": "neural",
-        "search_context_size": "medium"
+        "numResults": 10
     }
 }
 ```
@@ -274,7 +376,7 @@ const response = await fetch(`${BASE_URL}/chat/completions`, {
 });
 
 // Request-body configuration (Exa neural)
-const linkupResponse = await fetch(`${BASE_URL}/chat/completions`, {
+const searchResponse = await fetch(`${BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
         'Authorization': `Bearer ${API_KEY}`,
@@ -285,11 +387,11 @@ const linkupResponse = await fetch(`${BASE_URL}/chat/completions`, {
         messages: [
             { role: 'user', content: 'Provide a comprehensive analysis of recent AI breakthroughs' }
         ],
-        linkup: {
+        webSearch: {
             enabled: true,
             provider: 'exa',
             depth: 'neural',
-            searchContextSize: 'medium'
+            numResults: 10
         }
     })
 });
@@ -316,16 +418,33 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
     "messages": [
       {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
     ],
-    "linkup": {
+    "webSearch": {
       "enabled": true,
       "provider": "exa",
       "depth": "neural",
-      "search_context_size": "medium"
+      "numResults": 10
     }
   }'
 ```
 
 </CodeGroup>
+
+### Pricing by provider
+
+| Provider | Standard | Deep | Notes |
+| --- | --- | --- | --- |
+| Linkup | $0.006 | $0.06 | Default provider |
+| Tavily | $0.008 | $0.016 | Good value, free tier available |
+| Exa | $0.005 base | + $0.001/page | For contents retrieval |
+| Kagi Web/News | $0.002 | N/A | Cheapest for enrichment |
+| Kagi Search | $0.025 | N/A | Full search mode |
+| Perplexity | $0.005 | N/A | Flat rate |
+| Valyu | ~$0.0015/result | Variable | Dynamic pricing |
+| OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
+
+### Bring your own key (BYOK)
+
+BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup always uses NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
 
 ## Image Input
 
@@ -917,4 +1036,4 @@ LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
 - Web search increases input token count, which affects total cost
 - Models gain access to real-time information published less than a minute ago
 - Internet connectivity can provide up to 10x improvement in factuality
-- All models support web search - append a suffix or send a `linkup` object
+- All models support web search - append a suffix or send a `webSearch` object (`linkup` is supported as an alias)

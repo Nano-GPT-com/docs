@@ -1,12 +1,12 @@
 ---
 title: "Web Search"
 api: "POST https://nano-gpt.com/api/web"
-description: "Perform AI-powered web searches using Linkup with multiple output formats"
+description: "Perform AI-powered web searches across multiple providers with flexible output formats"
 ---
 
 ## Overview
 
-The Web Search API allows you to perform AI-powered web searches using Linkup, returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and two search depth options.
+The Web Search API allows you to perform AI-powered web searches across supported providers (Linkup, Tavily, Exa, Kagi, Perplexity, Valyu), returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and provider-specific depth modes. If `provider` is omitted, Linkup is used by default.
 
 ## Authentication
 
@@ -23,13 +23,18 @@ Alternatively, you can use Bearer token authentication:
 ## Request Body
 
 <ParamField body="query" type="string" required>
-  The search query to send to Linkup
+  The search query to send to the provider
+</ParamField>
+
+<ParamField body="provider" type="string" default="linkup">
+  Search provider. Options: "linkup", "tavily", "exa", "kagi", "perplexity", "valyu"
 </ParamField>
 
 <ParamField body="depth" type="string" default="standard">
-  Search depth. Options: "standard" or "deep"
-  - **standard**: $0.006 per search
-  - **deep**: $0.06 per search
+  Search depth. Options vary by provider:
+  - Linkup/Tavily/Perplexity/Valyu: "standard" or "deep"
+  - Exa: "fast", "auto", "neural", "deep"
+  - Kagi: "standard" or "deep" ("search" source only for deep)
 </ParamField>
 
 <ParamField body="outputType" type="string" default="searchResults">
@@ -42,6 +47,10 @@ Alternatively, you can use Bearer token authentication:
 
 <ParamField body="includeImages" type="boolean" default={false}>
   Whether to include image results in the search
+</ParamField>
+
+<ParamField body="kagiSource" type="string">
+  Kagi only. Source to query: "web", "news", or "search" (also accepts "kagi_source")
 </ParamField>
 
 <ParamField body="fromDate" type="string">
@@ -60,6 +69,93 @@ Alternatively, you can use Bearer token authentication:
   Array of domains to search exclusively
 </ParamField>
 
+## Provider-specific options
+
+Provider-specific fields are accepted at the top level of the request body and only apply to the selected provider.
+
+### Perplexity options
+
+```json
+{
+  "maxResults": 1-20,
+  "maxTokensPerPage": number,
+  "maxTokens": 1-1000000,
+  "country": "string",
+  "searchDomainFilter": ["domain1.com", "domain2.com"],
+  "searchLanguageFilter": ["en", "de"]
+}
+```
+
+Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entries (ISO 639-1).
+
+### Valyu options
+
+```json
+{
+  "searchType": "all" | "web",
+  "fastMode": boolean,
+  "maxNumResults": 1-50,
+  "maxPrice": number,
+  "relevanceThreshold": 0-1,
+  "responseLength": "short" | "medium" | "large" | "max" | number,
+  "countryCode": "US",
+  "includedSources": ["source1.com"],
+  "excludedSources": ["source2.com"],
+  "urlOnly": boolean,
+  "category": "string"
+}
+```
+
+`countryCode` uses a 2-letter ISO country code.
+
+### Tavily options
+
+```json
+{
+  "maxResults": 0-20,
+  "includeAnswer": boolean | "basic" | "advanced",
+  "includeRawContent": boolean | "markdown" | "text",
+  "includeImages": boolean,
+  "includeImageDescriptions": boolean,
+  "includeFavicon": boolean,
+  "topic": "general" | "news" | "finance",
+  "timeRange": "day" | "week" | "month" | "year",
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "chunksPerSource": 1-3,
+  "country": "string"
+}
+```
+
+### Exa options
+
+```json
+{
+  "numResults": 1-100,
+  "category": "company" | "research paper" | "news" | "pdf" | "github" | "tweet" | "personal site" | "people" | "financial report",
+  "userLocation": "US",
+  "additionalQueries": ["query2"],
+  "startCrawlDate": "ISO 8601",
+  "endCrawlDate": "ISO 8601",
+  "startPublishedDate": "ISO 8601",
+  "endPublishedDate": "ISO 8601",
+  "includeText": ["pattern"],
+  "excludeText": ["pattern"],
+  "livecrawl": "never" | "fallback" | "always" | "preferred",
+  "livecrawlTimeout": number,
+  "subpages": number,
+  "subpageTarget": "string" | ["strings"]
+}
+```
+
+### Kagi options
+
+```json
+{
+  "kagiSource": "web" | "news" | "search"
+}
+```
+
 ## Response
 
 <ResponseField name="data" type="object|array">
@@ -71,8 +167,11 @@ Alternatively, you can use Bearer token authentication:
     <ResponseField name="query" type="string">
       The search query that was executed
     </ResponseField>
+    <ResponseField name="provider" type="string">
+      The provider used for the search
+    </ResponseField>
     <ResponseField name="depth" type="string">
-      The search depth used ("standard" or "deep")
+      The search depth used (provider-specific)
     </ResponseField>
     <ResponseField name="outputType" type="string">
       The output format used
@@ -99,17 +198,20 @@ Returns an array of search results with text and image entries:
       "type": "text",
       "title": "Article Title",
       "url": "https://example.com/article",
-      "content": "Article content snippet..."
+      "snippet": "Article snippet...",
+      "publishedAt": "2025-07-01"
     },
     {
       "type": "image",
       "title": "Image Title",
       "url": "https://example.com/image.jpg",
-      "imageUrl": "https://example.com/image.jpg"
+      "imageUrl": "https://example.com/image.jpg",
+      "publishedAt": "2025-07-01"
     }
   ],
   "metadata": {
     "query": "your search query",
+    "provider": "linkup",
     "depth": "standard",
     "outputType": "searchResults",
     "timestamp": "2025-07-08T09:00:00.000Z",
@@ -136,6 +238,7 @@ Returns a comprehensive answer with source citations:
   },
   "metadata": {
     "query": "your search query",
+    "provider": "linkup",
     "depth": "standard",
     "outputType": "sourcedAnswer",
     "timestamp": "2025-07-08T09:00:00.000Z",
@@ -155,6 +258,7 @@ Returns data matching your provided JSON schema:
   },
   "metadata": {
     "query": "your search query",
+    "provider": "linkup",
     "depth": "standard",
     "outputType": "structured",
     "timestamp": "2025-07-08T09:00:00.000Z",
@@ -185,7 +289,8 @@ headers = {
 
 # Basic search
 basic_search = {
-    "query": "artificial intelligence trends 2025"
+    "query": "artificial intelligence trends 2025",
+    "provider": "linkup"
 }
 
 response = requests.post(url, headers=headers, json=basic_search)
@@ -196,7 +301,7 @@ if results["metadata"]["outputType"] == "searchResults":
     for result in results["data"]:
         print(f"Title: {result['title']}")
         print(f"URL: {result['url']}")
-        print(f"Content: {result.get('content', 'N/A')[:200]}...")
+        print(f"Snippet: {result.get('snippet', 'N/A')[:200]}...")
         print("-" * 50)
     print(f"Search cost: ${results['metadata']['cost']}")
 ```
@@ -214,6 +319,7 @@ const url = 'https://nano-gpt.com/api/web';
 async function searchWithStructuredOutput() {
   const searchData = {
     query: 'top tech companies by revenue',
+    provider: 'linkup',
     outputType: 'structured',
     structuredOutputSchema: JSON.stringify({
       type: 'object',
@@ -257,7 +363,8 @@ curl -X POST https://nano-gpt.com/api/web \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "query": "latest AI news"
+    "query": "latest AI news",
+    "provider": "linkup"
   }'
 
 # Deep search with date filtering
@@ -266,6 +373,7 @@ curl -X POST https://nano-gpt.com/api/web \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "query": "climate change research",
+    "provider": "tavily",
     "depth": "deep",
     "fromDate": "2025-01-01",
     "toDate": "2025-07-01"
@@ -277,6 +385,7 @@ curl -X POST https://nano-gpt.com/api/web \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "query": "Microsoft quarterly earnings",
+    "provider": "exa",
     "outputType": "sourcedAnswer",
     "includeDomains": ["microsoft.com", "reuters.com", "bloomberg.com"]
   }'
@@ -415,11 +524,11 @@ filtered_results = search_specific_domains(
 
 ## Rate Limiting
 
-The API is rate-limited to 10 requests per minute per IP address. If you exceed this limit, you'll receive a 429 status code.
+The API is rate-limited to 60 requests per minute per IP address for `/api/web`. Internal or authenticated requests may have different limits. If you exceed this limit, you'll receive a 429 status code.
 
 ## Best Practices
 
-1. **Use Standard Search for General Queries**: Standard search is 10x cheaper and sufficient for most use cases.
+1. **Use Standard Search for General Queries**: Standard search is usually cheaper and sufficient for most use cases.
 
 2. **Use Deep Search for Research**: Deep search provides more comprehensive results and is ideal for research tasks or when you need extensive information.
 
@@ -443,7 +552,23 @@ The API is rate-limited to 10 requests per minute per IP address. If you exceed 
 
 ## Pricing
 
-- **Standard Search**: $0.006 per search
-- **Deep Search**: $0.06 per search
+| Provider | Standard | Deep | Notes |
+| --- | --- | --- | --- |
+| Linkup | $0.006 | $0.06 | Default provider |
+| Tavily | $0.008 | $0.016 | Good value, free tier available |
+| Exa | $0.005 base | + $0.001/page | For contents retrieval |
+| Kagi Web/News | $0.002 | N/A | Cheapest for enrichment |
+| Kagi Search | $0.025 | N/A | Full search mode |
+| Perplexity | $0.005 | N/A | Flat rate |
+| Valyu | ~$0.0015/result | Variable | Dynamic pricing |
+| OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
 
-A minimum balance of $1.00 is required to use the web search API.
+A minimum balance of $1.00 is required to use the web search API. OpenAI native applies to GPT-5/o-series chat completions only and is not used by `/api/web`.
+
+## Bring your own key (BYOK)
+
+BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup always uses NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
+
+## X-402 payment protocol (optional)
+
+Web search supports anonymous payment via the X-402 protocol. Accepted payment rails include Nano mainnet and Base USDC, using `X-PAYMENT` header schemes.
