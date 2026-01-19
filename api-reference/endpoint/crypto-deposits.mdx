@@ -1,22 +1,32 @@
 ---
 title: 'Crypto Deposits'
-description: 'Generate cryptocurrency deposit addresses via BTCPayServer integration'
+description: 'Generate cryptocurrency deposit addresses programmatically'
 ---
 
 ## Overview
 
-The BTCPayServer integration allows API users to programmatically generate deposit addresses for multiple cryptocurrencies. When a user sends crypto to the generated address, their NanoGPT account balance is automatically credited with the equivalent value.
+The crypto deposits feature enables users to programmatically generate deposit addresses for multiple cryptocurrencies. Accounts are automatically credited when payments confirm on the blockchain.
 
 ## Supported Cryptocurrencies
 
-- **BTC** (Bitcoin) 
-- **LTC** (Litecoin) 
-- **XMR** (Monero)
-- **DOGE** (Dogecoin)
-- **DASH** (Dash)
-- **BCH** (Bitcoin Cash) - via PromptCash integration
-- **BAN** (Banano) - via Nanswap integration
-- **KAS** (Kaspa)
+| Ticker | Name | Min USD | Max USD |
+|--------|------|---------|---------|
+| `BTC` | Bitcoin | $1.00 | $2,000 |
+| `BTC-LN` | Bitcoin Lightning | $0.10 | $2,000 |
+| `LTC` | Litecoin | $1.00 | $2,000 |
+| `LTC-MWEB` | Litecoin MWEB | $1.00 | $2,000 |
+| `XMR` | Monero | $1.00 | $2,000 |
+| `DOGE` | Dogecoin | $1.00 | $2,000 |
+| `DASH` | Dash | $1.00 | $2,000 |
+| `ZEC` | Zcash | $0.10 | $500 |
+| `BCH` | Bitcoin Cash | $1.00 | $2,000 |
+| `BAN` | Banano | $1.00 | $2,000 |
+| `KAS` | Kaspa | $1.00 | $500 |
+| `TON` | Toncoin | $1.00 | $500 |
+| `NEAR` | NEAR Protocol | $1.00 | $500 |
+| `EGLD` | MultiversX | $0.20 | $100 |
+| `ZANO` | Zano | $1.00 | $2,000 |
+| `FUSD` | Fantom USD | $1.00 | $2,000 |
 
 ## Authentication
 
@@ -35,38 +45,26 @@ curl -H "x-api-key: YOUR_API_KEY"
 </Card>
 
 <ParamField path="ticker" type="string" required>
-  Cryptocurrency ticker symbol. Supported values: `btc`, `ltc`, `xmr`, `doge`, `dash`, `bch`, `ban`, `kas`
+  Cryptocurrency ticker symbol. Supported values: `btc`, `btc-ln`, `ltc`, `ltc-mweb`, `xmr`, `doge`, `dash`, `zec`, `bch`, `ban`, `kas`, `ton`, `near`, `egld`, `zano`, `fusd`
 </ParamField>
 
 <ParamField body="amount" type="number" required>
   Amount of cryptocurrency to deposit. Must be between minimum and maximum limits.
 </ParamField>
 
-### Amount Limits
-
-Each cryptocurrency has minimum and maximum deposit limits based on USD equivalent:
-
-**Standard Limits** (BTC, LTC, XMR, DOGE, DASH, BCH, BAN):
-- **Minimum**: $0.10 USD equivalent
-- **Maximum**: $500 USD equivalent
-
-**KAS Limits**:
-- **Minimum**: $10 USD equivalent
-- **Maximum**: $500 USD equivalent
-
 <RequestExample>
 ```bash cURL
 curl -X POST https://nano-gpt.com/api/transaction/create/btc \
-  -H "x-api-key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"amount": 0.001}'
 ```
 
 ```javascript JavaScript
-const response = await fetch('/api/transaction/create/btc', {
+const response = await fetch('https://nano-gpt.com/api/transaction/create/btc', {
   method: 'POST',
   headers: {
-    'x-api-key': 'YOUR_API_KEY',
+    'Authorization': 'Bearer YOUR_API_KEY',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({ amount: 0.001 })
@@ -76,34 +74,32 @@ const deposit = await response.json();
 console.log('Send BTC to:', deposit.address);
 ```
 
-```javascript KAS Example
-// Note: KAS has higher minimum ($10)
-const kasResponse = await fetch('/api/transaction/create/kas', {
+```javascript BTC Lightning Example
+// BTC-LN has lower minimum ($0.10)
+const lnResponse = await fetch('https://nano-gpt.com/api/transaction/create/btc-ln', {
   method: 'POST',
   headers: {
-    'x-api-key': 'YOUR_API_KEY',
+    'Authorization': 'Bearer YOUR_API_KEY',
     'Content-Type': 'application/json'
   },
-  body: JSON.stringify({ amount: 1000 }) // Amount in KAS
+  body: JSON.stringify({ amount: 0.00001 })
 });
 
-const kasDeposit = await kasResponse.json();
-console.log('Send KAS to:', kasDeposit.address);
+const lnDeposit = await lnResponse.json();
+console.log('Lightning invoice:', lnDeposit.paymentLink);
 ```
 </RequestExample>
 
 <ResponseExample>
 ```json Success Response
 {
-  "txId": "6Uwh14rFrKG9XnKDYTWKc4",
+  "txId": "abc123",
+  "address": "bc1q...",
   "amount": 0.001,
   "status": "New",
-  "createdAt": "2025-06-23T14:52:43.000Z",
-  "paidAmountCrypto": 0,
-  "address": "bc1q...",
-  "remainingTime": 3600,
-  "expiration": 1750693963,
-  "paymentLink": "bitcoin:bc1q...?amount=0.001"
+  "paymentLink": "bitcoin:bc1q...?amount=0.001",
+  "createdAt": "2026-01-19T12:00:00.000Z",
+  "expiresAt": "2026-01-19T13:00:00.000Z"
 }
 ```
 </ResponseExample>
@@ -114,48 +110,28 @@ console.log('Send KAS to:', kasDeposit.address);
   Unique transaction identifier for tracking
 </ResponseField>
 
+<ResponseField name="address" type="string">
+  Deposit address for sending crypto
+</ResponseField>
+
 <ResponseField name="amount" type="number">
   Requested deposit amount
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Payment status ("New", "Pending", "Completed", etc.)
-</ResponseField>
-
-<ResponseField name="createdAt" type="string">
-  ISO timestamp of invoice creation
-</ResponseField>
-
-<ResponseField name="paidAmountCrypto" type="number">
-  Amount paid so far (0 for new invoices)
-</ResponseField>
-
-<ResponseField name="address" type="string">
-  Crypto deposit address to send payment to
-</ResponseField>
-
-<ResponseField name="remainingTime" type="number">
-  Seconds until invoice expires
-</ResponseField>
-
-<ResponseField name="expiration" type="number">
-  Unix timestamp of expiration
+  Payment status: `New`, `Pending`, `Processing`, or `Completed`
 </ResponseField>
 
 <ResponseField name="paymentLink" type="string">
-  URI link for wallet apps
+  URI for wallet apps (e.g., `bitcoin:address`)
 </ResponseField>
 
-<ResponseField name="QRUrl" type="string">
-  QR code URL for the payment address (if available)
+<ResponseField name="createdAt" type="string">
+  ISO timestamp of creation
 </ResponseField>
 
-<ResponseField name="amountCrypto" type="number">
-  Amount in cryptocurrency (if available)
-</ResponseField>
-
-<ResponseField name="amountFiat" type="number">
-  Equivalent USD value (if available)
+<ResponseField name="expiresAt" type="string">
+  ISO timestamp when address expires
 </ResponseField>
 
 <Card title="Check Payment Limits" icon="chart-line" color="#16a34a">
@@ -168,13 +144,13 @@ console.log('Send KAS to:', kasDeposit.address);
 
 <RequestExample>
 ```bash cURL
-curl -H "x-api-key: YOUR_API_KEY" \
-  https://nano-gpt.com/api/transaction/limits/btc
+curl https://nano-gpt.com/api/transaction/limits/kas \
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-```javascript JavaScript  
-const limitsResponse = await fetch('/api/transaction/limits/btc', {
-  headers: { 'x-api-key': 'YOUR_API_KEY' }
+```javascript JavaScript
+const limitsResponse = await fetch('https://nano-gpt.com/api/transaction/limits/btc', {
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
 });
 const limits = await limitsResponse.json();
 
@@ -188,10 +164,11 @@ if (amount < limits.minimum) {
 <ResponseExample>
 ```json Limits Response
 {
-  "minimum": 0.00002,
-  "maximum": 0.01,
-  "fiatEquivalentMinimum": 0.10,
-  "fiatEquivalentMaximum": 500.0
+  "minimum": 10.5,
+  "maximum": 5250,
+  "fiatEquivalentMinimum": 1,
+  "fiatEquivalentMaximum": 500,
+  "timestamp": 1705669200
 }
 ```
 </ResponseExample>
@@ -200,27 +177,26 @@ if (amount < limits.minimum) {
 
 ### HTTP Status Codes
 
-- **200**: Success
-- **400**: Bad Request (invalid amount, unsupported ticker)
-- **401**: Unauthorized (invalid or missing API key)
-- **429**: Rate Limited
-- **500**: Server Error (payment provider unavailable)
+| Code | Description |
+|------|-------------|
+| 200 | Success |
+| 400 | Invalid amount, unsupported ticker, or below/above limits |
+| 401 | Authentication failure |
+| 429 | Rate limited |
+| 500 | Provider unavailable or internal error |
 
-### Common Errors
+### Common Error Messages
 
 <AccordionGroup>
 <Accordion title="Amount Validation Errors">
 - `"No amount specified"` - Missing amount in request body
-- `"Minimum amount is X"` - Amount below minimum threshold
-- `"Maximum amount is X"` - Amount above maximum threshold
-</Accordion>
-
-<Accordion title="Authentication Errors">
-- `"Incorrect API key"` - Invalid authentication
+- `"Invalid amount. Must be a positive number."` - Amount validation failed
+- `"Minimum amount is X"` - Below minimum threshold
+- `"Maximum amount is X"` - Above maximum threshold
 </Accordion>
 
 <Accordion title="Provider Errors">
-- `"Unsupported ticker"` - Invalid cryptocurrency ticker
+- `"Unsupported ticker"` - Ticker not supported
 - `"This payment method is currently not available"` - Provider temporarily unavailable
 </Accordion>
 </AccordionGroup>
@@ -247,9 +223,3 @@ Account balance automatically updated when payment confirms
 </Step>
 </Steps>
 
-<Note>
-**KAS (Kaspa) Special Considerations:**
-- Higher minimum deposit requirement ($10 USD vs $0.10 for other cryptos)
-- Deposits are automatically credited upon blockchain confirmation
-- 1-hour expiration time for payment invoices
-</Note>

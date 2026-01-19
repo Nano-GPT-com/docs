@@ -4538,7 +4538,7 @@
         "properties": {
           "amount": {
             "type": "number",
-            "description": "Amount of cryptocurrency to deposit. Must be between minimum and maximum limits based on USD equivalent ($0.10-$500).",
+            "description": "Amount of cryptocurrency to deposit. Must be between minimum and maximum limits based on USD equivalent (default $1-$2,000, varies by currency).",
             "example": 0.001
           }
         }
@@ -4549,8 +4549,13 @@
         "properties": {
           "txId": {
             "type": "string",
-            "description": "Unique transaction identifier for tracking",
-            "example": "6Uwh14rFrKG9XnKDYTWKc4"
+            "description": "Unique transaction identifier",
+            "example": "abc123"
+          },
+          "address": {
+            "type": "string",
+            "description": "Deposit address for sending crypto",
+            "example": "bc1q..."
           },
           "amount": {
             "type": "number",
@@ -4560,65 +4565,56 @@
           "status": {
             "type": "string",
             "description": "Payment status",
-            "enum": ["New", "Pending", "Completed", "Expired", "Failed"],
+            "enum": ["New", "Pending", "Processing", "Completed"],
             "example": "New"
+          },
+          "paymentLink": {
+            "type": "string",
+            "description": "URI for wallet apps (e.g., bitcoin:address)",
+            "example": "bitcoin:bc1q...?amount=0.001"
           },
           "createdAt": {
             "type": "string",
             "format": "date-time",
-            "description": "ISO timestamp of invoice creation",
-            "example": "2025-06-23T14:52:43.000Z"
+            "description": "ISO timestamp of creation",
+            "example": "2026-01-19T12:00:00.000Z"
           },
-          "paidAmountCrypto": {
-            "type": "number",
-            "description": "Amount paid so far (0 for new invoices)",
-            "example": 0
-          },
-          "address": {
+          "expiresAt": {
             "type": "string",
-            "description": "Crypto deposit address to send payment to",
-            "example": "bc1q..."
-          },
-          "remainingTime": {
-            "type": "integer",
-            "description": "Seconds until invoice expires",
-            "example": 3600
-          },
-          "expiration": {
-            "type": "integer",
-            "description": "Unix timestamp of expiration",
-            "example": 1750693963
-          },
-          "paymentLink": {
-            "type": "string",
-            "description": "URI link for wallet apps",
-            "example": "bitcoin:bc1q...?amount=0.001"
+            "format": "date-time",
+            "description": "ISO timestamp when address expires",
+            "example": "2026-01-19T13:00:00.000Z"
           }
         }
       },
       "CryptoLimitsResponse": {
         "type": "object",
-        "required": ["minimum", "maximum", "fiatEquivalentMinimum", "fiatEquivalentMaximum"],
+        "required": ["minimum", "maximum", "fiatEquivalentMinimum", "fiatEquivalentMaximum", "timestamp"],
         "properties": {
           "minimum": {
             "type": "number",
             "description": "Minimum deposit amount in cryptocurrency",
-            "example": 0.00002
+            "example": 10.5
           },
           "maximum": {
             "type": "number",
             "description": "Maximum deposit amount in cryptocurrency",
-            "example": 0.01
+            "example": 5250
           },
           "fiatEquivalentMinimum": {
             "type": "number",
             "description": "Minimum deposit amount in USD equivalent",
-            "example": 0.10
+            "example": 1
           },
           "fiatEquivalentMaximum": {
             "type": "number",
             "description": "Maximum deposit amount in USD equivalent",
-            "example": 500.0
+            "example": 500
+          },
+          "timestamp": {
+            "type": "integer",
+            "description": "Unix timestamp of when limits were retrieved",
+            "example": 1705669200
           }
         }
       },
