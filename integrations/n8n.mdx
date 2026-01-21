@@ -1,0 +1,137 @@
+---
+title: 'n8n'
+description: 'Use n8n OpenAI nodes with NanoGPT to access 50+ models in your workflows'
+---
+
+## Overview
+
+n8n can use any OpenAI-compatible API. With NanoGPT, you get:
+
+- One API key for 50+ models (GPT-4o, Claude, Gemini, Grok, Llama, and more)
+- The ability to switch models without changing your workflow logic
+- Unified billing across providers
+
+## Prerequisites
+
+- An n8n instance (desktop app, self-hosted, or n8n Cloud)
+- A NanoGPT account and API key from [nano-gpt.com/settings/api-keys](https://nano-gpt.com/settings/api-keys)
+
+## Step 1: Get your NanoGPT API key
+
+1. Go to [nano-gpt.com/settings/api-keys](https://nano-gpt.com/settings/api-keys)
+2. Click "Create New API Key"
+3. Copy the key (format: `sk-nano-...`)
+4. Store it securely, you will not be able to view it again
+
+## Step 2: Create OpenAI credentials in n8n
+
+1. Open your n8n instance
+2. Go to **Credentials** in the left sidebar
+3. Click **+ Add Credential**
+4. Search for and select **OpenAI**
+5. Fill in the fields:
+
+| Field | Value |
+| --- | --- |
+| Credential Name | `NanoGPT` (or any name you prefer) |
+| API Key | `sk-nano-YOUR-API-KEY` |
+| Base URL | `https://nano-gpt.com/api/v1` |
+
+6. Click **Save**
+
+## Step 3: Use NanoGPT in a workflow
+
+1. Go to **Workflows** and click **+ New Workflow**
+2. Add an **OpenAI** node or **Chat OpenAI** node
+3. In the node settings:
+   - **Credential:** Select your NanoGPT credential
+   - **Model:** Enter the model name exactly (examples below)
+   - Configure your prompt or messages
+4. Click **Execute Node** to test
+
+## Available models
+
+Use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing). Enter the model name exactly as shown.
+
+| Model | Provider | Best for |
+| --- | --- | --- |
+| `gpt-4o` | OpenAI | General purpose, vision |
+| `gpt-4o-mini` | OpenAI | Fast, cost-effective |
+| `claude-sonnet-4-20250514` | Anthropic | Coding, analysis |
+| `claude-haiku-3-5-20241022` | Anthropic | Fast responses |
+| `gemini-2.5-pro` | Google | Long context, reasoning |
+| `gemini-2.5-flash` | Google | Fast, cost-effective |
+| `grok-3` | xAI | General purpose |
+| `llama-4-maverick` | Meta | Open source alternative |
+
+## Example workflows
+
+### Basic chat completion
+
+```
+[Manual Trigger] -> [OpenAI Chat] -> [Output]
+
+OpenAI Chat node:
+- Credential: NanoGPT
+- Model: gpt-4o
+- Messages: User message from input
+```
+
+### Document summarization
+
+```
+[Webhook] -> [HTTP Request (fetch doc)] -> [OpenAI Chat] -> [Respond to Webhook]
+
+OpenAI Chat node:
+- Model: gemini-2.5-flash
+- System: Summarize the following document concisely
+- User: {{ $json.documentContent }}
+```
+
+### Multi-model comparison
+
+```
+[Input] -> [OpenAI Chat (GPT-4o)] -\
+                                  -> [Merge] -> [Compare Results]
+[Input] -> [OpenAI Chat (Claude)] -/
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+| --- | --- |
+| `401 Unauthorized` | Verify the API key and that your account has credits |
+| `Invalid API Key` | Ensure there are no extra spaces when copying the key |
+| `Model not found` | Double-check the model name on the pricing page |
+| `Connection timeout` | Confirm the Base URL is `https://nano-gpt.com/api/v1` |
+| `Rate limited` | Add a delay between requests or upgrade your plan |
+
+## Advanced: HTTP Request node
+
+If you need full control over parameters, use the HTTP Request node:
+
+1. Add **HTTP Request**
+2. Set:
+   - **Method:** `POST`
+   - **URL:** `https://nano-gpt.com/api/v1/chat/completions`
+   - **Authentication:** Header Auth
+   - **Header Name:** `Authorization`
+   - **Header Value:** `Bearer sk-nano-YOUR-API-KEY`
+   - **Body Content Type:** JSON
+   - **Body:**
+
+```json
+{
+  "model": "gpt-4o",
+  "messages": [
+    { "role": "user", "content": "{{ $json.prompt }}" }
+  ]
+}
+```
+
+## Related links
+
+- [Get API key](https://nano-gpt.com/settings/api-keys)
+- [Model pricing](https://nano-gpt.com/pricing)
+- [n8n documentation](https://docs.n8n.io/)
+- [n8n OpenAI node docs](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.lmchatopenai/)

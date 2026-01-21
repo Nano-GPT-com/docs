@@ -1,0 +1,167 @@
+---
+title: 'Grok CLI'
+description: 'Use Grok CLI with NanoGPT and Grok + 50 other models'
+---
+
+# Grok CLI
+
+> Use Grok CLI with NanoGPT to access Grok models and 50+ other models through a single API key.
+
+<Tip>
+  [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees.
+</Tip>
+
+NanoGPT provides an OpenAI-compatible endpoint that works with the Grok CLI. This lets you:
+
+- Use Grok CLI with your NanoGPT credits
+- Access Grok models without a separate xAI account
+- Use any other NanoGPT model through the same CLI
+
+## Step 1: Install Grok CLI
+
+Prerequisites: [Node.js 18 or newer](https://nodejs.org/en/download/)
+
+```bash
+# Install Grok CLI
+npm install -g @vibe-kit/grok-cli
+
+# Verify installation
+grok --version
+```
+
+<Note>
+  **Note**: If you encounter permission issues during installation, try using `sudo` (macOS/Linux) or running the command prompt as an administrator (Windows) to re-execute the installation command.
+</Note>
+
+## Step 2: Configure NanoGPT
+
+<Steps>
+  <Step title="Get API Key">
+    * Go to [NanoGPT API](https://nano-gpt.com/api)
+    * Create an account or log in
+    * Copy your API key
+  </Step>
+
+  <Step title="Set Required Environment Variables">
+    Grok CLI reads these environment variables:
+
+    | Variable | Value | Description |
+    |----------|-------|-------------|
+    | `GROK_BASE_URL` | `https://nano-gpt.com/api/v1` | NanoGPT OpenAI-compatible endpoint |
+    | `GROK_API_KEY` | `sk-nano-YOUR-API-KEY` | Your NanoGPT API key |
+
+    <Tabs>
+      <Tab title="macOS & Linux">
+        ```bash
+        export GROK_BASE_URL="https://nano-gpt.com/api/v1"
+        export GROK_API_KEY="sk-nano-YOUR-API-KEY"
+        ```
+      </Tab>
+
+      <Tab title="Windows PowerShell">
+        ```powershell
+        $env:GROK_BASE_URL = "https://nano-gpt.com/api/v1"
+        $env:GROK_API_KEY = "sk-nano-YOUR-API-KEY"
+        ```
+      </Tab>
+
+      <Tab title="Windows Cmd">
+        ```cmd
+        set GROK_BASE_URL=https://nano-gpt.com/api/v1
+        set GROK_API_KEY=sk-nano-YOUR-API-KEY
+        ```
+      </Tab>
+    </Tabs>
+
+    Replace `sk-nano-YOUR-API-KEY` with your actual API key. Open a new terminal for changes to take effect if you set persistent variables.
+  </Step>
+
+  <Step title="Optional: Make It Persistent">
+    Add the variables to your shell profile (for example, `~/.zshrc` or `~/.bashrc`):
+
+    ```bash
+    echo 'export GROK_BASE_URL="https://nano-gpt.com/api/v1"' >> ~/.zshrc
+    echo 'export GROK_API_KEY="sk-nano-YOUR-API-KEY"' >> ~/.zshrc
+    source ~/.zshrc
+    ```
+  </Step>
+</Steps>
+
+## Step 3: Start Using Grok CLI
+
+Launch Grok CLI with a specific model:
+
+```bash
+grok --model grok-3
+```
+
+Since you are connected to NanoGPT, you can use any available model:
+
+```bash
+# Grok models
+grok --model grok-3
+grok --model grok-3-fast
+grok --model grok-3-mini
+
+# Other providers through NanoGPT
+grok --model gpt-4o
+grok --model claude-sonnet-4-20250514
+grok --model gemini-2.5-pro
+```
+
+Model names are listed on our [pricing page](https://nano-gpt.com/pricing).
+
+## Available Grok Models
+
+| Model | Description |
+|-------|-------------|
+| `grok-3` | xAI flagship model |
+| `grok-3-fast` | Faster, more cost-effective version |
+| `grok-3-mini` | Lightweight version |
+
+## Known Limitations
+
+Grok CLI has limited compatibility with thinking or reasoning models. When you use a thinking model, the full reasoning content may be shown in the output.
+
+If you want first-party CLI support for NanoGPT, consider [Claude Code](https://docs.nano-gpt.com/integrations/claude-code) or [Codex CLI](https://docs.nano-gpt.com/integrations/codex-cli).
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `401 Unauthorized` | Check your API key is correct and has credits |
+| `GROK_BASE_URL not set` | Ensure the environment variable is exported |
+| `Model not found` | Verify the model name at [nano-gpt.com/pricing](https://nano-gpt.com/pricing) |
+| `Command not found: grok` | Run `npm install -g @vibe-kit/grok-cli` again |
+| Thinking content flooding output | Use a non-thinking model variant |
+
+## FAQ
+
+### Is Grok CLI official xAI software?
+
+No. Grok CLI is a third-party package. NanoGPT works with it by providing an OpenAI-compatible endpoint.
+
+### Can I access Grok models from other clients?
+
+Yes. You can use Grok models from Claude Code, Cursor, or any OpenAI-compatible client by setting the base URL to NanoGPT.
+
+## API Details (Reference)
+
+| Setting | Value |
+|---------|-------|
+| Base URL | `https://nano-gpt.com/api/v1` |
+| Chat Completions Endpoint | `POST /chat/completions` |
+| Models Endpoint | `GET /models` |
+| Auth Header | `Authorization: Bearer sk-nano-...` |
+
+### Example cURL (verify connection)
+
+```bash
+curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
+  -H "Authorization: Bearer sk-nano-YOUR-API-KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-3-fast",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```

@@ -1,0 +1,107 @@
+---
+title: 'Gemini CLI'
+description: 'Use Gemini CLI with NanoGPT via the OpenRouter compatible fork'
+---
+
+# Gemini CLI
+
+> Use Gemini CLI with NanoGPT to access Gemini, GPT, Claude, and 400+ models through a single API key.
+
+<Tip>
+  [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees. Add credits and start immediately.
+</Tip>
+
+Gemini CLI is Google's official command-line interface for Gemini. The official CLI only targets Google endpoints, so use the community fork that adds OpenRouter and OpenAI-compatible support to point it at NanoGPT.
+
+## Step 1: Install the OpenRouter Fork
+
+Prerequisites: [Node.js 18 or newer](https://nodejs.org/en/download/)
+
+```bash
+git clone https://github.com/heartyguy/gemini-cli
+cd gemini-cli
+git checkout feature/openrouter-support
+npm install
+```
+
+<Note>
+  This fork is community maintained. If the branch name changes or is missing, check the repository README for the latest OpenRouter-compatible branch.
+</Note>
+
+## Step 2: Configure NanoGPT
+
+<Steps>
+  <Step title="Get API Key">
+    * Go to [NanoGPT API](https://nano-gpt.com/api)
+    * Create an account or log in
+    * Copy your API key (starts with `sk-nano-`)
+  </Step>
+
+  <Step title="Set Environment Variables">
+    Set the base URL and API key in the same shell where you will run the CLI:
+
+    <Tabs>
+      <Tab title="macOS/Linux">
+        ```bash
+        export OPENROUTER_BASE_URL="https://nano-gpt.com/api/v1"
+        export OPENROUTER_API_KEY="sk-nano-YOUR-API-KEY"
+        ```
+      </Tab>
+
+      <Tab title="Windows PowerShell">
+        ```powershell
+        $env:OPENROUTER_BASE_URL = "https://nano-gpt.com/api/v1"
+        $env:OPENROUTER_API_KEY = "sk-nano-YOUR-API-KEY"
+        ```
+      </Tab>
+    </Tabs>
+
+    For persistent configuration, add the exports to your shell profile:
+
+    ```bash
+    echo 'export OPENROUTER_BASE_URL="https://nano-gpt.com/api/v1"' >> ~/.zshrc
+    echo 'export OPENROUTER_API_KEY="sk-nano-YOUR-API-KEY"' >> ~/.zshrc
+    source ~/.zshrc
+    ```
+  </Step>
+</Steps>
+
+## Step 3: Start Gemini CLI
+
+From the `gemini-cli` folder, launch the CLI:
+
+```bash
+npm start
+```
+
+On first launch, the CLI may prompt you to select a theme or complete authentication required by the fork.
+
+## Models
+
+Once connected, you can use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing), including:
+
+- `gemini-2.5-pro`
+- `gemini-2.5-flash`
+- `gpt-4o`
+- `claude-sonnet-4-20250514`
+
+## Optional: Verify Your Connection
+
+```bash
+curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
+  -H "Authorization: Bearer sk-nano-YOUR-API-KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemini-2.5-flash",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `401 Unauthorized` | Check your API key and ensure your account has credits |
+| `Connection refused` | Verify `OPENROUTER_BASE_URL` is set to `https://nano-gpt.com/api/v1` |
+| `Model not found` | Confirm the model name at [nano-gpt.com/pricing](https://nano-gpt.com/pricing) |
+| CLI not recognizing variables | Restart your terminal or set the variables in the same session |
