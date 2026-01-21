@@ -149,7 +149,7 @@ curl "https://nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer sk-nano-..." \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gpt-4.1-mini",
+    "model": "openai/gpt-5.2",
     "messages": [{"role": "user", "content": "Hello from my CLI!"}],
     "stream": true
   }'
@@ -201,7 +201,7 @@ print(f"API Key: {api_key}")
 ## API key management
 
 - API keys created through this flow are named `CLI (<client_name>)` in the user's account.
-- Users can view and revoke keys at https://nano-gpt.com/settings (API Keys section).
+- Users can view and revoke keys at https://nano-gpt.com/api.
 - If the same `client_name` is used multiple times, the existing key is reused.
 - Keys do not expire unless manually revoked.
 

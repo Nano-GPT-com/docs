@@ -21,14 +21,15 @@ A quick guide to setting up LibreChat with NanoGPT's API.
   baseURL: 'https://nano-gpt.com/api/v1/'
   models:
       default: [
-        "chatgpt-4o-latest",
-        "gpt-4o-mini",
+        "openai/gpt-5.2",
+        "anthropic/claude-opus-4.5",
+        "google/gemini-3-flash-preview",
         ]
       fetch: true
   addParams:
     reasoning_content_compat: true
   titleConvo: true
-  titleModel: 'gpt-4o-mini'
+  titleModel: 'openai/gpt-5.2'
   modelDisplayLabel: 'NanoGPT'
   iconUrl: https://nano-gpt.com/logo.png
 ```
@@ -45,9 +46,9 @@ That's it! Restart LibreChat, and you'll have access to all NanoGPT models throu
 ## Available Models
 
 You can access all our models through this integration, including:
-- ChatGPT
-- Claude 3.7 Sonnet
-- Gemini 2.0 Pro
+- GPT-5.2
+- Claude Opus 4.5
+- Gemini 3 Flash Preview
 - Perplexity
 - And many more!
 

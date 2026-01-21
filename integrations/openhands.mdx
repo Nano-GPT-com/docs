@@ -13,8 +13,8 @@ A quick guide to setting up OpenHands with NanoGPT's API.
 2. In OpenHands, add a new LLM Endpoint and toggle "Advanced".
 3. Configure the fields as follows:
    - Custom Model: `openai/<MODEL_NAME_FROM_NANOGPT>`
-     - Example: `openai/claude-3-5-sonnet-20241022`
-     - If a model name contains a slash, include it: e.g. `openai/deepseek/deepseek-chat`
+     - Example: `openai/openai/gpt-5.2`
+     - If a model name contains a slash, include it: e.g. `openai/anthropic/claude-opus-4.5` or `openai/google/gemini-3-flash-preview`
    - Base URL: `https://nano-gpt.com/api/v1` (no trailing slash)
    - API Key: Your key from step 1
    - Search API Key (Tavily): Optional
@@ -25,4 +25,4 @@ A quick guide to setting up OpenHands with NanoGPT's API.
 - The Base URL must NOT end with a `/`. Use `https://nano-gpt.com/api/v1` exactly.
 - Prefix the model with `openai/` and use the exact model name as shown by the NanoGPT API or on our pricing page.
 
-You can now use OpenHands with any NanoGPT model. Popular choices include `o1`, `claude-3-5-sonnet-20241022`, `yi-lightning`, and `deepseek/deepseek-chat`. For a full list, check our [pricing page](https://nano-gpt.com/pricing). 
+You can now use OpenHands with any NanoGPT model. Popular choices include `openai/gpt-5.2`, `anthropic/claude-opus-4.5`, and `google/gemini-3-flash-preview`. For a full list, check our [pricing page](https://nano-gpt.com/pricing). 
