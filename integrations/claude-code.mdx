@@ -83,6 +83,14 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
           }
         }
         ```
+
+        The installer now supports browser-based login. When the script starts, choose:
+        1) Browser login (recommended) - it will open a verification URL, wait for approval, and then save your key in `~/.claude/settings.json`.
+        2) Paste API key - manual fallback if you prefer.
+
+        If a browser does not open automatically, copy the printed URL into your browser and approve the request.
+
+        For more details on the browser login flow, see [CLI login](https://docs.nano-gpt.com/integrations/cli-login).
       </Tab>
 
       <Tab title="Manual Configuration (All Platforms)">
