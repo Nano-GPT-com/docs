@@ -1,0 +1,214 @@
+---
+title: 'Claude Code'
+description: 'Use Claude Code with NanoGPT and Claude + 400 models'
+---
+
+# Claude Code
+
+> Use Claude Code with NanoGPT to access Claude and 400+ AI models through a single API key.
+
+<Tip>
+  [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees.
+</Tip>
+
+NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with Claude Code. This allows you to:
+
+- Use Claude Code with your NanoGPT credits
+- Access the real Claude models (Sonnet, Opus, Haiku)
+- Optionally route to 400+ other models (GPT-4o, Gemini, DeepSeek, and more)
+
+## Step 1: Install Claude Code
+
+<Tabs>
+  <Tab title="Recommended Installation Method">
+    Prerequisites: [Node.js 18 or newer](https://nodejs.org/en/download/)
+
+    ```bash
+    # Install Claude Code
+    npm install -g @anthropic-ai/claude-code
+
+    # Navigate to your project
+    cd your-awesome-project
+
+    # Start Claude Code
+    claude
+    ```
+  </Tab>
+
+  <Tab title="Cursor Guided Installation Method">
+    If you are not familiar with npm but have Cursor, enter the command below in Cursor and it will guide you through the installation of Claude Code.
+
+    ```
+    https://docs.anthropic.com/en/docs/claude-code/overview Help me install Claude Code
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  **Note**: If you encounter permission issues during installation, try using `sudo` (macOS/Linux) or running the command prompt as an administrator (Windows) to re-execute the installation command.
+</Note>
+
+## Step 2: Configure NanoGPT
+
+<Steps>
+  <Step title="Get API Key">
+    * Go to [NanoGPT API](https://nano-gpt.com/api)
+    * Create an account or log in
+    * Copy your API key
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Set up environment variables using one of the following methods:
+
+    <Tip>
+      **Note**: Some commands show no output when setting environment variables. This is normal as long as no errors appear.
+    </Tip>
+
+    <Tabs>
+      <Tab title="One-Click Setup (Mac/Linux)">
+        Run this command in your terminal:
+
+        ```bash
+        curl -O "https://nano-gpt.com/install/claude_code_nanogpt.sh" && bash ./claude_code_nanogpt.sh
+        ```
+
+        The script will prompt for your API key and automatically configure `~/.claude/settings.json`:
+
+        ```json
+        {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
+            "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1",
+            "API_TIMEOUT_MS": "600000"
+          }
+        }
+        ```
+      </Tab>
+
+      <Tab title="Manual Configuration (All Platforms)">
+        **macOS & Linux**: Edit `~/.claude/settings.json` (create the file if it doesn't exist):
+
+        ```json
+        {
+          "env": {
+            "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
+            "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1"
+          }
+        }
+        ```
+
+        **Windows Cmd**:
+
+        ```cmd
+        setx ANTHROPIC_AUTH_TOKEN your_nanogpt_api_key
+        setx ANTHROPIC_BASE_URL https://nano-gpt.com/api/v1
+        ```
+
+        **Windows PowerShell**:
+
+        ```powershell
+        [System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', 'your_nanogpt_api_key', 'User')
+        [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://nano-gpt.com/api/v1', 'User')
+        ```
+
+        Replace `your_nanogpt_api_key` with your actual API key. A new terminal window is required for changes to take effect.
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## Step 3: Start Using Claude Code
+
+Once configured, start Claude Code in your terminal:
+
+```bash
+cd your-project-directory
+claude
+```
+
+> If prompted with "Do you want to use this API key," select "Yes."
+
+Grant Claude Code permission to access files in your folder and you're ready to go.
+
+---
+
+## FAQ
+
+### What Models Does This Use?
+
+By default, Claude Code uses the real Claude models through NanoGPT:
+
+| Claude Code Model | NanoGPT Routes To |
+|-------------------|-------------------|
+| Opus | Claude Opus 4 |
+| Sonnet | Claude Sonnet 4 |
+| Haiku | Claude Haiku 3.5 |
+
+No model mapping is required. NanoGPT passes the model names directly to Anthropic.
+
+### Can I Use Other Models?
+
+Yes. NanoGPT supports 400+ models. You can configure Claude Code to use different models by adding model mappings to your `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
+    "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "openai/gpt-5.2",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "anthropic/claude-opus-4.5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemini-3-flash-preview"
+  }
+}
+```
+
+Recommended models:
+
+| Use Case | Recommended Model |
+|----------|-------------------|
+| Best overall | `openai/gpt-5.2`, `anthropic/claude-opus-4.5` |
+| Fast/cheap | `google/gemini-3-flash-preview` |
+
+View all available models at [nano-gpt.com/models](https://nano-gpt.com/models).
+
+### Configuration Not Working?
+
+If your configuration changes don't take effect:
+
+1. **Restart Claude Code**: Close all Claude Code windows, open a new terminal, and run `claude` again
+2. **Check JSON syntax**: Ensure your `settings.json` has valid JSON (no trailing commas, proper quotes)
+3. **Reset configuration**: Delete `~/.claude/settings.json` and reconfigure from scratch
+
+### How Do I Check My Configuration?
+
+Run `/status` inside Claude Code to see your current model configuration.
+
+### Recommended Claude Code Version
+
+We recommend using the latest version of Claude Code:
+
+```bash
+# Check current version
+claude --version
+
+# Upgrade to latest
+claude update
+```
+
+NanoGPT is compatible with Claude Code 1.0.0 and newer.
+
+### How Is This Different From Using Anthropic Directly?
+
+| Feature | Anthropic Direct | NanoGPT |
+|---------|------------------|---------|
+| Pricing | Monthly subscription or API credits | Pay-as-you-go, no minimums |
+| Models | Claude only | Claude + 400 other models |
+| Billing | Separate Anthropic account | Single NanoGPT account |
+| Rate limits | Anthropic limits | NanoGPT limits |
+
+### Need Help?
+
+- Check your balance at [nano-gpt.com/balance](https://nano-gpt.com/balance)
+- View API usage at [nano-gpt.com/usage](https://nano-gpt.com/usage)
+- Create or manage API keys at [nano-gpt.com/api](https://nano-gpt.com/api)
+- Contact support via the chat widget on [nano-gpt.com](https://nano-gpt.com)

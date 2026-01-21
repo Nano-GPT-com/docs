@@ -87,6 +87,7 @@
         "pages": [
           "integrations/cli-login",
           "integrations/cline",
+          "integrations/claude-code",
           "integrations/roocode",
           "integrations/kilocode",
           "integrations/cursor",
