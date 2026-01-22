@@ -1,34 +1,136 @@
 ---
 title: 'OpenCode'
-description: 'Using NanoGPT with OpenCode'
+description: 'OpenCode integration for NanoGPT'
 ---
 
-# Using OpenCode with NanoGPT
+# OpenCode Integration
 
-A quick guide to set up NanoGPT inside OpenCode (CLI, VS Code extension, or desktop app).
+Use NanoGPT with [OpenCode](https://opencode.ai), the open source AI coding agent for your terminal.
 
-## Setup Instructions
+## One-Click Setup (Mac/Linux)
 
-1. Generate an API key at [nano-gpt.com/api](https://nano-gpt.com/api).
-2. Add `NANOGPT_API_KEY` to your `.env` or shell environment.
-3. Create or update `opencode.json` with a NanoGPT provider block:
+Run this command in your terminal:
+
+```bash
+curl -fsSL "https://nano-gpt.com/install/opencode_nanogpt.sh" | bash
+```
+
+This will:
+1. Open your browser to authenticate with NanoGPT (or let you paste an API key)
+2. Configure OpenCode to use NanoGPT as your AI provider
+3. Set up popular models like Claude Sonnet 4, Claude Opus 4.5, GPT-5.2, and more
+
+## Manual Setup
+
+If you prefer to configure manually:
+
+### 1. Create the auth file
+
+Add your NanoGPT API key to `~/.local/share/opencode/auth.json`:
 
 ```json
 {
-  "$schema": "https://opencode.ai/config.json",
+  "nanogpt": "your-nanogpt-api-key"
+}
+```
+
+### 2. Create the config file
+
+Create `~/.config/opencode/.opencode.json`:
+
+```json
+{
+  "model": "nanogpt/claude-sonnet-4",
   "provider": {
-    "NanoGPT": {
+    "nanogpt": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "NanoGPT",
       "options": {
-        "apiKey": "{env:NANOGPT_API_KEY}",
         "baseURL": "https://nano-gpt.com/api/v1"
+      },
+      "models": {
+        "claude-sonnet-4": {
+          "name": "Claude Sonnet 4",
+          "limit": { "context": 200000, "output": 64000 }
+        },
+        "claude-opus-4-5": {
+          "name": "Claude Opus 4.5",
+          "limit": { "context": 200000, "output": 32000 }
+        },
+        "gpt-5.2": {
+          "name": "GPT-5.2",
+          "limit": { "context": 128000, "output": 32000 }
+        },
+        "gemini-2.5-pro": {
+          "name": "Gemini 2.5 Pro",
+          "limit": { "context": 1000000, "output": 65536 }
+        }
       }
     }
   }
 }
 ```
 
-4. Restart OpenCode and run `/connect` so NanoGPT shows up in the provider list.
+## Usage
 
-Model names are listed on our [pricing page](https://nano-gpt.com/pricing). Once connected, pick any model from the `NanoGPT/<model>` list.
+After setup, start OpenCode:
+
+```bash
+opencode
+```
+
+### Switching Models
+
+Use the `/model` command inside OpenCode to switch between models, or edit the `model` field in your `.opencode.json`:
+
+```json
+{
+  "model": "nanogpt/claude-opus-4-5"
+}
+```
+
+### Available Models
+
+The setup script preconfigures these models:
+
+| Model ID | Description |
+|----------|-------------|
+| `nanogpt/claude-sonnet-4` | Claude Sonnet 4 (default) |
+| `nanogpt/claude-opus-4-5` | Claude Opus 4.5 |
+| `nanogpt/gpt-5.2` | GPT-5.2 |
+| `nanogpt/gemini-2.5-pro` | Gemini 2.5 Pro |
+| `nanogpt/gemini-2.5-flash` | Gemini 2.5 Flash |
+| `nanogpt/deepseek-r1` | DeepSeek R1 |
+
+### Adding More Models
+
+Add any of NanoGPT's 250+ models to the `models` section in your config:
+
+```json
+"models": {
+  "glm-4.7": {
+    "name": "GLM 4.7",
+    "limit": { "context": 128000, "output": 8192 }
+  }
+}
+```
+
+See all available models at [nano-gpt.com/models/text](https://nano-gpt.com/models/text).
+
+## Requirements
+
+- [OpenCode](https://opencode.ai) installed (`curl -fsSL https://opencode.ai/install | bash`)
+- A NanoGPT account with API access
+
+## Troubleshooting
+
+**OpenCode not finding the config?**
+
+OpenCode searches for config in this order:
+1. `./.opencode.json` (current directory)
+2. `$XDG_CONFIG_HOME/opencode/.opencode.json`
+3. `$HOME/.opencode.json`
+
+**Authentication errors?**
+
+Check that your API key is correctly set in `~/.local/share/opencode/auth.json` and that the key name matches the provider ID (`nanogpt`).
