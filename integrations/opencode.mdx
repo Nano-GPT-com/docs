@@ -18,7 +18,7 @@ curl -fsSL "https://nano-gpt.com/install/opencode_nanogpt.sh" | bash
 This will:
 1. Open your browser to authenticate with NanoGPT (or let you paste an API key)
 2. Configure OpenCode to use NanoGPT as your AI provider
-3. Set up popular models like Claude Sonnet 4, Claude Opus 4.5, GPT-5.2, and more
+3. Set up popular models like Claude Sonnet 4.5, Claude 4.5 Opus, GPT 5.2, Gemini 3 Flash (Preview), Gemini 3 Pro, GLM 4.7
 
 ## Manual Setup
 
@@ -40,7 +40,7 @@ Create `~/.config/opencode/.opencode.json`:
 
 ```json
 {
-  "model": "nanogpt/claude-sonnet-4",
+  "model": "nanogpt/claude-sonnet-4-5-20250929",
   "provider": {
     "nanogpt": {
       "npm": "@ai-sdk/openai-compatible",
@@ -49,21 +49,29 @@ Create `~/.config/opencode/.opencode.json`:
         "baseURL": "https://nano-gpt.com/api/v1"
       },
       "models": {
-        "claude-sonnet-4": {
-          "name": "Claude Sonnet 4",
-          "limit": { "context": 200000, "output": 64000 }
-        },
-        "claude-opus-4-5": {
-          "name": "Claude Opus 4.5",
+        "claude-opus-4-5-20251101": {
+          "name": "Claude 4.5 Opus",
           "limit": { "context": 200000, "output": 32000 }
         },
-        "gpt-5.2": {
-          "name": "GPT-5.2",
-          "limit": { "context": 128000, "output": 32000 }
+        "claude-sonnet-4-5-20250929": {
+          "name": "Claude Sonnet 4.5",
+          "limit": { "context": 1000000, "output": 64000 }
         },
-        "gemini-2.5-pro": {
-          "name": "Gemini 2.5 Pro",
-          "limit": { "context": 1000000, "output": 65536 }
+        "openai/gpt-5.2": {
+          "name": "GPT 5.2",
+          "limit": { "context": 128000, "output": 128000 }
+        },
+        "google/gemini-3-flash-preview": {
+          "name": "Gemini 3 Flash (Preview)",
+          "limit": { "context": 1048756, "output": 65536 }
+        },
+        "gemini-3-pro-preview": {
+          "name": "Gemini 3 Pro",
+          "limit": { "context": 1048756, "output": 65536 }
+        },
+        "zai-org/glm-4.7": {
+          "name": "GLM 4.7",
+          "limit": { "context": 200000, "output": 65535 }
         }
       }
     }
@@ -85,7 +93,7 @@ Use the `/model` command inside OpenCode to switch between models, or edit the `
 
 ```json
 {
-  "model": "nanogpt/claude-opus-4-5"
+  "model": "nanogpt/claude-opus-4-5-20251101"
 }
 ```
 
@@ -95,12 +103,12 @@ The setup script preconfigures these models:
 
 | Model ID | Description |
 |----------|-------------|
-| `nanogpt/claude-sonnet-4` | Claude Sonnet 4 (default) |
-| `nanogpt/claude-opus-4-5` | Claude Opus 4.5 |
-| `nanogpt/gpt-5.2` | GPT-5.2 |
-| `nanogpt/gemini-2.5-pro` | Gemini 2.5 Pro |
-| `nanogpt/gemini-2.5-flash` | Gemini 2.5 Flash |
-| `nanogpt/deepseek-r1` | DeepSeek R1 |
+| `nanogpt/claude-sonnet-4-5-20250929` | Claude Sonnet 4.5 (default) |
+| `nanogpt/claude-opus-4-5-20251101` | Claude 4.5 Opus |
+| `nanogpt/openai/gpt-5.2` | GPT 5.2 |
+| `nanogpt/google/gemini-3-flash-preview` | Gemini 3 Flash (Preview) |
+| `nanogpt/gemini-3-pro-preview` | Gemini 3 Pro |
+| `nanogpt/zai-org/glm-4.7` | GLM 4.7 |
 
 ### Adding More Models
 
@@ -108,9 +116,9 @@ Add any of NanoGPT's 250+ models to the `models` section in your config:
 
 ```json
 "models": {
-  "glm-4.7": {
+  "zai-org/glm-4.7": {
     "name": "GLM 4.7",
-    "limit": { "context": 128000, "output": 8192 }
+    "limit": { "context": 200000, "output": 65535 }
   }
 }
 ```
