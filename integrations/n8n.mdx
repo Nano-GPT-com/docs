@@ -7,18 +7,18 @@ description: 'Use n8n OpenAI nodes with NanoGPT to access 50+ models in your wor
 
 n8n can use any OpenAI-compatible API. With NanoGPT, you get:
 
-- One API key for 50+ models (GPT-4o, Claude, Gemini, Grok, Llama, and more)
+- One API key for 50+ models (GPT-5.2, Claude Opus 4.5, Gemini 3 Flash Preview, and more)
 - The ability to switch models without changing your workflow logic
 - Unified billing across providers
 
 ## Prerequisites
 
 - An n8n instance (desktop app, self-hosted, or n8n Cloud)
-- A NanoGPT account and API key from [nano-gpt.com/settings/api-keys](https://nano-gpt.com/settings/api-keys)
+- A NanoGPT account and API key from [nano-gpt.com/api](https://nano-gpt.com/api)
 
 ## Step 1: Get your NanoGPT API key
 
-1. Go to [nano-gpt.com/settings/api-keys](https://nano-gpt.com/settings/api-keys)
+1. Go to [nano-gpt.com/api](https://nano-gpt.com/api)
 2. Click "Create New API Key"
 3. Copy the key (format: `sk-nano-...`)
 4. Store it securely, you will not be able to view it again
@@ -55,14 +55,12 @@ Use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing)
 
 | Model | Provider | Best for |
 | --- | --- | --- |
-| `gpt-4o` | OpenAI | General purpose, vision |
-| `gpt-4o-mini` | OpenAI | Fast, cost-effective |
-| `claude-sonnet-4-20250514` | Anthropic | Coding, analysis |
-| `claude-haiku-3-5-20241022` | Anthropic | Fast responses |
-| `gemini-2.5-pro` | Google | Long context, reasoning |
-| `gemini-2.5-flash` | Google | Fast, cost-effective |
-| `grok-3` | xAI | General purpose |
-| `llama-4-maverick` | Meta | Open source alternative |
+| `openai/gpt-5.2` | OpenAI | Best overall |
+| `anthropic/claude-opus-4.5` | Anthropic | Deep reasoning, writing |
+| `anthropic/claude-sonnet-4.5` | Anthropic | Coding, analysis |
+| `google/gemini-3-flash-preview` | Google | Fast, cost-effective |
+| `google/gemini-3-pro-preview` | Google | Long context, reasoning |
+| `zai-org/glm-4.7` | Zhipu | Open model alternative |
 
 ## Example workflows
 
@@ -73,7 +71,7 @@ Use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing)
 
 OpenAI Chat node:
 - Credential: NanoGPT
-- Model: gpt-4o
+- Model: openai/gpt-5.2
 - Messages: User message from input
 ```
 
@@ -83,7 +81,7 @@ OpenAI Chat node:
 [Webhook] -> [HTTP Request (fetch doc)] -> [OpenAI Chat] -> [Respond to Webhook]
 
 OpenAI Chat node:
-- Model: gemini-2.5-flash
+- Model: google/gemini-3-flash-preview
 - System: Summarize the following document concisely
 - User: {{ $json.documentContent }}
 ```
@@ -122,7 +120,7 @@ If you need full control over parameters, use the HTTP Request node:
 
 ```json
 {
-  "model": "gpt-4o",
+  "model": "openai/gpt-5.2",
   "messages": [
     { "role": "user", "content": "{{ $json.prompt }}" }
   ]
@@ -131,7 +129,7 @@ If you need full control over parameters, use the HTTP Request node:
 
 ## Related links
 
-- [Get API key](https://nano-gpt.com/settings/api-keys)
+- [Get API key](https://nano-gpt.com/api)
 - [Model pricing](https://nano-gpt.com/pricing)
 - [n8n documentation](https://docs.n8n.io/)
 - [n8n OpenAI node docs](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.lmchatopenai/)

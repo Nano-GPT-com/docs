@@ -58,7 +58,7 @@ const client = new OpenAI({
 
 async function run() {
   const completion = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'google/gemini-3-flash-preview',
     messages: [
       { role: 'system', content: 'You are the NanoGPT onboarding guide.' },
       { role: 'user', content: 'Summarize the API authentication steps.' },
@@ -87,7 +87,7 @@ const client = new OpenAI({
 
 async function streamSummary() {
   const stream = await client.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'openai/gpt-5.2',
     stream: true,
     messages: [
       { role: 'system', content: 'Respond concisely and expose your reasoning.' },
@@ -117,7 +117,7 @@ NanoGPT forwards OpenAI tool definitions and structured_outputs to the selected 
 
 ```ts
 const result = await client.chat.completions.create({
-  model: 'gpt-4o',
+  model: 'openai/gpt-5.2',
   messages: [
     { role: 'system', content: 'You call tools to fetch weather data.' },
     { role: 'user', content: 'What is the weather in Austin right now?' },
@@ -155,7 +155,7 @@ Combine Polychat memory with Linkup search by opting into the suffix and optiona
 ```ts
 await client.chat.completions.create(
   {
-    model: 'gpt-4o:online:memory-30',
+    model: 'openai/gpt-5.2:online:memory-30',
     messages: [
       { role: 'system', content: 'Surface recent release notes before answering.' },
       { role: 'user', content: 'Summarize the last five NanoGPT releases for me.' },
@@ -175,7 +175,7 @@ Send content arrays mixing text and image_url parts to vision-capable models.
 
 ```ts
 const visionReply = await client.chat.completions.create({
-  model: 'gpt-4o',
+  model: 'openai/gpt-5.2',
   messages: [
     {
       role: 'user',
@@ -195,7 +195,7 @@ Enable prompt reuse with prompt_caching or cache_control, and set Anthropic beta
 ```ts
 await client.chat.completions.create(
   {
-    model: 'gpt-4o',
+    model: 'openai/gpt-5.2',
     messages: [
       { role: 'system', content: 'Always respond with JSON.' },
       { role: 'user', content: 'Cache this conversation scaffold for 5 minutes.' },
@@ -258,7 +258,7 @@ curl -X POST https://nano-gpt.com/api/user/provider-keys \
 ```ts
 await client.chat.completions.create(
   {
-    model: 'gpt-4o',
+    model: 'openai/gpt-5.2',
     messages: [
       { role: 'user', content: 'Draft a status update.' },
     ],
@@ -282,7 +282,7 @@ const anthropic = new Anthropic({
 });
 
 const response = await anthropic.messages.create({
-  model: 'claude-3-5-sonnet-20241022',
+  model: 'claude-sonnet-4-5-20250929',
   max_tokens: 1024,
   messages: [{ role: 'user', content: 'Summarize the NanoGPT pricing metadata contract.' }],
   thinking: { type: 'enabled', budget_tokens: 2048 },

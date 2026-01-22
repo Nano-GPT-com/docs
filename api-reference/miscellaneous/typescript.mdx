@@ -38,7 +38,7 @@ const client = new NanoGPTClient({
 async function main() {
   try {
     const response = await client.chatCompletions.create({
-      model: 'chatgpt-4o-latest',
+      model: 'openai/gpt-5.2',
       messages: [
         { role: 'system', content: 'You are a helpful assistant.' },
         { role: 'user', content: 'Explain TypeScript interfaces.' }
@@ -67,7 +67,7 @@ main();
 
 ```typescript
 const completion = await client.chatCompletions.create({
-  model: 'chatgpt-4o-latest',
+  model: 'openai/gpt-5.2',
   messages: [
     { role: 'user', content: 'Hello, world!' }
   ],
@@ -80,7 +80,7 @@ const completion = await client.chatCompletions.create({
 
 ```typescript
 const completion = await client.completions.create({
-  model: 'chatgpt-4o-latest',
+  model: 'openai/gpt-5.2',
   prompt: 'Write a poem about TypeScript',
   max_tokens: 100
 });

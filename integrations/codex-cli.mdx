@@ -5,7 +5,7 @@ description: 'Using OpenAI Codex CLI with NanoGPT'
 
 # Codex CLI
 
-> Use OpenAI's Codex CLI with NanoGPT to access GPT-5.2, o1, Claude, and 400+ AI models through a single API key.
+> Use OpenAI's Codex CLI with NanoGPT to access GPT-5.2, Claude Opus 4.5, Gemini 3 Flash Preview, and 400+ AI models through a single API key.
 
 <Tip>
   [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees. Add credits and start coding immediately.
@@ -14,8 +14,8 @@ description: 'Using OpenAI Codex CLI with NanoGPT'
 NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Codex CLI. This allows you to:
 
 - Use Codex CLI with your NanoGPT credits
-- Access OpenAI models (GPT-5.2, o1, o3) without a separate OpenAI account
-- Route to 400+ other models including Claude, Gemini, DeepSeek, and more
+- Access OpenAI models (GPT-5.2 and more) without a separate OpenAI account
+- Route to 400+ other models including Claude Opus 4.5, Gemini 3 Flash Preview, and GLM 4.7
 
 ## Step 1: Install Codex CLI
 
@@ -157,11 +157,10 @@ NanoGPT supports 400+ models. Popular choices for Codex:
 | Best overall | `openai/gpt-5.2` | `model = "openai/gpt-5.2"` |
 | Best Claude | `anthropic/claude-opus-4.5` | `model = "anthropic/claude-opus-4.5"` |
 | Fast/cheap | `google/gemini-3-flash-preview` | `model = "google/gemini-3-flash-preview"` |
-| Complex reasoning | `o1` | `model = "o1"` |
-| Latest reasoning | `o3` | `model = "o3"` |
-| Cost-effective | `deepseek-chat` | `model = "deepseek-chat"` |
+| Long context | `google/gemini-3-pro-preview` | `model = "google/gemini-3-pro-preview"` |
+| Open model | `zai-org/glm-4.7` | `model = "zai-org/glm-4.7"` |
 
-View all available models at [nano-gpt.com/models](https://nano-gpt.com/models).
+View all available models at [nano-gpt.com/models/text](https://nano-gpt.com/models/text).
 
 ### How Do I Change Models?
 
@@ -172,7 +171,7 @@ model = "openai/gpt-5.2"
 
 **Option 2**: Use CLI flag:
 ```bash
-codex --model o1
+codex --model openai/gpt-5.2
 ```
 
 ### Configuration Not Working?

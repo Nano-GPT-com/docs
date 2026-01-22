@@ -32,7 +32,7 @@ headers = {
     "Accept": "text/event-stream"  # Required for SSE streaming
 }
 
-def stream_chat_completion(messages, model="chatgpt-4o-latest"):
+def stream_chat_completion(messages, model="openai/gpt-5.2"):
     """
     Send a streaming chat completion request using the OpenAI-compatible endpoint.
     """
@@ -97,7 +97,7 @@ headers = {
 }
 
 data = {
-    "model": "gpt-4o",
+    "model": "openai/gpt-5.2",
     "input": "Summarize the Responses API in one sentence."
 }
 
@@ -127,7 +127,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-def get_completion(prompt, model="chatgpt-4o-latest"):
+def get_completion(prompt, model="openai/gpt-5.2"):
     """
     Send a text completion request using the OpenAI-compatible endpoint.
     """
@@ -176,7 +176,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-def talk_to_gpt(prompt, model="chatgpt-4o-latest", messages=[]):
+def talk_to_gpt(prompt, model="openai/gpt-5.2", messages=[]):
     data = {
         "prompt": prompt,
         "model": model,
@@ -224,7 +224,7 @@ The `prompt_caching` / `promptCaching` helper accepts these options:
 #### Explicit `cache_control` markers
 
 ```python
-def chat_completion_with_claude_cache(messages, model="claude-3-5-sonnet-20241022"):
+def chat_completion_with_claude_cache(messages, model="anthropic/claude-opus-4.5"):
     """
     Attach cache_control directly to the static prompt blocks you want Claude to reuse.
     """
@@ -291,7 +291,7 @@ If you prefer not to duplicate `cache_control` entries manually, NanoGPT accepts
 
 ```python
 payload = {
-    "model": "claude-3-5-sonnet-20241022",
+    "model": "anthropic/claude-opus-4.5",
     "messages": [
         {"role": "system", "content": "Summaries must be under 100 words."},
         {"role": "user", "content": "Cache the playbook for an hour."},
@@ -324,7 +324,7 @@ If cache consistency is more important than availability for your use case, you 
 
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "anthropic/claude-sonnet-4.5",
   "messages": [...],
   "prompt_caching": {
     "enabled": true,
@@ -366,7 +366,7 @@ If cache consistency is more important than availability for your use case, you 
 Enable real-time web access for any model by appending special suffixes:
 
 ```python
-def chat_completion_with_web_search(messages, model="chatgpt-4o-latest", search_depth="standard"):
+def chat_completion_with_web_search(messages, model="openai/gpt-5.2", search_depth="standard"):
     """
     Send a chat completion request with web search enabled.
     
@@ -435,6 +435,6 @@ for content in chat_completion_with_web_search(research_messages, search_depth="
 - **`:online`** - Standard search with 10 results ($0.006 per request)
 - **`:online/linkup-deep`** - Deep iterative search ($0.06 per request)
 
-Web search dramatically improves factuality - GPT-4o-mini with web access shows a 10x improvement in accuracy, making it twice as accurate as models like o1 without web access.
+Web search dramatically improves factuality - Gemini 3 Flash Preview with web access shows a 10x improvement in accuracy, making it twice as accurate as non-web baselines.
 
 For more advanced web search capabilities including structured output, domain filtering, and date filtering, see the [Web Search API](/api-reference/endpoint/web-search).

@@ -33,7 +33,7 @@ headers = {
 # Standard web search
 data = {
     "prompt": "What are the latest AI breakthroughs this month?",
-    "model": "chatgpt-4o-latest:online",
+    "model": "openai/gpt-5.2:online",
     "messages": []
 }
 
@@ -46,7 +46,7 @@ response = requests.post(
 # Deep web search for comprehensive research
 data_deep = {
     "prompt": "Provide a detailed analysis of recent quantum computing advances",
-    "model": "chatgpt-4o-latest:online/linkup-deep",
+    "model": "openai/gpt-5.2:online/linkup-deep",
     "messages": []
 }
 
@@ -79,7 +79,7 @@ const response = await fetch(`${BASE_URL}/talk-to-gpt`, {
     },
     body: JSON.stringify({
         prompt: 'What are the latest AI breakthroughs this month?',
-        model: 'chatgpt-4o-latest:online',
+        model: 'openai/gpt-5.2:online',
         messages: []
     })
 });
@@ -93,7 +93,7 @@ const deepResponse = await fetch(`${BASE_URL}/talk-to-gpt`, {
     },
     body: JSON.stringify({
         prompt: 'Provide a detailed analysis of recent quantum computing advances',
-        model: 'chatgpt-4o-latest:online/linkup-deep',
+        model: 'openai/gpt-5.2:online/linkup-deep',
         messages: []
     })
 });
@@ -106,7 +106,7 @@ curl -X POST https://nano-gpt.com/api/talk-to-gpt \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "What are the latest AI breakthroughs this month?",
-    "model": "chatgpt-4o-latest:online",
+    "model": "openai/gpt-5.2:online",
     "messages": []
   }'
 
@@ -116,7 +116,7 @@ curl -X POST https://nano-gpt.com/api/talk-to-gpt \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "Provide a detailed analysis of recent quantum computing advances",
-    "model": "chatgpt-4o-latest:online/linkup-deep",
+    "model": "openai/gpt-5.2:online/linkup-deep",
     "messages": []
   }'
 ```

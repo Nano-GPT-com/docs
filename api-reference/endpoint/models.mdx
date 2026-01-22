@@ -24,10 +24,10 @@ Each model minimally includes:
 
 ```json
 {
-  "id": "deepseek/deepseek-chat-v3-0324",
+  "id": "openai/gpt-5.2",
   "object": "model",
   "created": 1736966400,
-  "owned_by": "deepseek"
+  "owned_by": "openai"
 }
 ```
 
@@ -82,13 +82,13 @@ Standard OpenAI-compatible format without pricing information:
   "object": "list",
   "data": [
     {
-      "id": "gpt-4o-mini",
+      "id": "openai/gpt-5.2",
       "object": "model",
       "created": 1704067200,
       "owned_by": "openai"
     },
     {
-      "id": "claude-3-5-sonnet-20241022",
+      "id": "anthropic/claude-opus-4.5",
       "object": "model", 
       "created": 1704067200,
       "owned_by": "anthropic"
@@ -106,30 +106,30 @@ Enhanced format with model descriptions, context lengths, and pricing:
   "object": "list",
   "data": [
     {
-      "id": "gpt-4o-mini",
+      "id": "openai/gpt-5.2",
       "object": "model",
       "created": 1704067200,
       "owned_by": "openai",
-      "name": "GPT-4o Mini",
-      "description": "OpenAI's affordable and intelligent small model for fast, lightweight tasks",
+      "name": "GPT-5.2",
+      "description": "OpenAI's flagship general-purpose model",
       "context_length": 128000,
       "capabilities": { "vision": true },
       "pricing": {
-        "prompt": 0.00015,
-        "completion": 0.0006,
+        "prompt": 0.003,
+        "completion": 0.012,
         "currency": "USD",
         "unit": "per_million_tokens"
       },
       "icon_url": "/icons/OpenAI.svg",
-      "cost_estimate": { "cheap": true }
+      "cost_estimate": { "cheap": false }
     },
     {
-      "id": "claude-3-5-sonnet-20241022",
+      "id": "anthropic/claude-opus-4.5",
       "object": "model",
       "created": 1704067200,
       "owned_by": "anthropic",
-      "name": "Claude 3.5 Sonnet",
-      "description": "Anthropic's most intelligent model, combining top-tier performance with improved speed",
+      "name": "Claude Opus 4.5",
+      "description": "Anthropic's top-tier model for deep reasoning and writing",
       "context_length": 200000,
       "capabilities": { "vision": false },
       "pricing": {

@@ -30,7 +30,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
         "Accept": "text/event-stream"  # Required for SSE streaming
     }
 
-    def stream_chat_completion(messages, model="chatgpt-4o-latest"):
+    def stream_chat_completion(messages, model="openai/gpt-5.2"):
         """
         Send a streaming chat completion request using the OpenAI-compatible endpoint.
         """
@@ -157,7 +157,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
 
     # Standard web search ($0.006 per request)
     data = {
-        "model": "chatgpt-4o-latest:online",
+        "model": "openai/gpt-5.2:online",
         "messages": [
             {"role": "user", "content": "What are the latest AI announcements this week?"}
         ],
@@ -174,7 +174,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
 
     # Deep web search for comprehensive research ($0.06 per request)
     deep_data = {
-        "model": "claude-3-5-sonnet-20241022:online/linkup-deep",
+        "model": "anthropic/claude-opus-4.5:online/linkup-deep",
         "messages": [
             {"role": "user", "content": "Provide a detailed analysis of recent breakthroughs in quantum computing"}
         ]
