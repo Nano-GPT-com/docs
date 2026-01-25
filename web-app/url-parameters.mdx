@@ -1,0 +1,118 @@
+---
+title: 'URL Parameters (Web App)'
+description: 'Currently supported URL parameters for the NanoGPT web app UI.'
+---
+
+This document lists the **currently supported** URL parameters for the NanoGPT web app UI. These are intended for browser shortcuts, OpenSearch integration, and sharing prefilled prompts.
+
+> Note: Only documented parameters are guaranteed to keep working. Undocumented parameters may change without notice.
+
+## Conversation URLs
+
+**Base URL**
+- `/conversation/new`
+
+**Aliases**
+- `/conversation` -> redirects to `/conversation/new`
+- `/ask` -> redirects to `/conversation/new`
+
+### Parameters
+
+- `ask` - Prefills the prompt **and auto-submits** it when the page loads.
+  - Use `encodeURIComponent()` for the value.
+  - This is the closest equivalent to a `?q=` style parameter.
+- `model` - Selects a model by model id.
+  - If the model is a known image/video/audio model, the mode is switched automatically.
+- `mode` - Sets the UI mode (only if `model` does not override it).
+  - Allowed values: `chat`, `image`, `video`, `audio`, `voice`.
+- `online` - Enables web search when set to `true`.
+  - Any other value is ignored.
+- `source` - Attribution/referral tag.
+  - `source=translate` also disables web search for that session.
+- `transcriptId` - Internal handoff key used by `/youtube` and `/scrape` to inject large prompts.
+  - Requires a pre-stored value in session storage or the shared content cache; not intended for manual use.
+
+### Examples
+
+```text
+/conversation/new?ask=Hello%20from%20the%20address%20bar
+```
+
+```text
+/conversation/new?model=<model-id>&ask=Summarize%20this%20page
+```
+
+```text
+/conversation/new?mode=image&model=<image-model-id>
+```
+
+```text
+/conversation/new?online=true&ask=What%27s%20new%20today%3F
+```
+
+```text
+/conversation/new?source=opensearch&ask=Define%20vector%20search
+```
+
+### Notes
+
+- `model` takes precedence over `mode` (a model selection can switch the mode).
+- There is **no** separate `q` parameter today - use `ask` instead.
+- Web search provider and depth are **not** configurable via URL; they follow your Settings.
+
+## Media URLs
+
+**Base URL**
+- `/media`
+
+**Mode shortcuts**
+- `/media/image` -> redirects to `/media?mode=image`
+- `/media/video` -> redirects to `/media?mode=video`
+- `/media/audio` -> redirects to `/media?mode=audio`
+
+### Parameters
+
+- `mode` - Selects the media mode.
+  - Allowed values: `image`, `video`, `audio`.
+- `model` - Selects a media model by id.
+  - If the model matches a known image/video/audio model, `mode` is switched automatically.
+  - When `audioMode=stt`, `model` may also be a speech-to-text model id.
+- `audioMode` - Selects audio sub-mode (only in `mode=audio`).
+  - Allowed values: `tts`, `stt`.
+- `prompt` - Prefills the prompt and is **consumed** on load (removed from the URL).
+
+### Examples
+
+```text
+/media?mode=image&model=<image-model-id>
+```
+
+```text
+/media?mode=video&model=<video-model-id>&prompt=Make%20this%20cinematic
+```
+
+```text
+/media?mode=audio&audioMode=stt&model=<stt-model-id>
+```
+
+### Notes
+
+- `model` takes precedence over `mode` (a model selection can switch the mode).
+- If a model id is unknown or incompatible with the selected mode, it is ignored.
+- For speech-to-text, include both `audioMode=stt` and a compatible `model` id.
+
+## OpenSearch Integration
+
+An OpenSearch descriptor is available at:
+
+```text
+/opensearch.xml
+```
+
+If you are wiring this into a custom browser keyword/search engine, use the conversation URL with `ask`:
+
+```text
+/conversation/new?source=opensearch&ask={searchTerms}
+```
+
+(Replace `{searchTerms}` with the URL-encoded user query.)

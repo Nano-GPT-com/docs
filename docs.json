@@ -19,6 +19,12 @@
         ]
       },
       {
+        "group": "Web App",
+        "pages": [
+          "web-app/url-parameters"
+        ]
+      },
+      {
         "group": "Endpoint Examples",
         "pages": [
           "api-reference/endpoint/models",
