@@ -23,6 +23,7 @@ The NanoGPT MCP server provides the following tools:
 | `nanogpt_list_image_models` | List available image generation models |
 | `nanogpt_list_audio_models` | List available audio models (TTS/STT) |
 | `nanogpt_list_video_models` | List available video generation models |
+| `nanogpt_vision` | Analyze images with vision-capable models |
 
 ## Prerequisites
 
@@ -72,6 +73,9 @@ claude mcp add nanogpt "nanogpt-mcp" --scope user \
 | `NANOGPT_TIMEOUT_MS` | `600000` (10 min) | Request timeout in milliseconds |
 | `NANOGPT_DEFAULT_MODEL` | `claude-sonnet-4-5-20250929` | Default model for chat requests |
 | `NANOGPT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
+| `NANOGPT_BASE_URL` | `https://nano-gpt.com` | Base URL for the NanoGPT API |
+| `NANOGPT_AUTH_MODE` | `bearer` | Auth mode: `bearer`, `x-api-key`, or `both` |
+| `NANOGPT_MAX_RETRIES` | `0` | Number of retry attempts |
 
 ## Usage Examples
 
@@ -91,6 +95,10 @@ The assistant will call `nanogpt_get_balance` and show your USD and Nano balance
 ### Generate Images
 
 > "Use NanoGPT to generate an image of a futuristic city at sunset"
+
+### Analyze Images
+
+> "Use NanoGPT vision to analyze this product photo"
 
 ### Search the Web
 
@@ -177,6 +185,38 @@ Search the web for current information.
 }
 ```
 
+### nanogpt_vision
+
+Analyze images using vision-capable models.
+
+**Parameters:**
+- `messages` (required): Array of message objects with text and image content blocks
+- `model` (optional): Vision-capable model ID
+- `temperature` (optional): Sampling temperature (0-2)
+- `max_tokens` (optional): Maximum tokens in response
+
+**Example:**
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        { "type": "text", "text": "What issues do you see in this image?" },
+        {
+          "type": "image",
+          "source": {
+            "type": "url",
+            "url": "https://example.com/photo.jpg"
+          }
+        }
+      ]
+    }
+  ],
+  "model": "openai/gpt-5.2"
+}
+```
+
 ### nanogpt_scrape_urls
 
 Scrape content from web pages.
@@ -235,6 +275,13 @@ List available video generation models.
 
 **Parameters:**
 - `detailed` (optional): Include pricing information (default: true)
+
+## Resources
+
+Resources allow agents to access data saved during a session:
+
+- **`nanogpt://raw/{id}`**: Raw JSON response from a previous API call
+- **`nanogpt://image/{id}`**: Generated images stored during the session
 
 ## Error Handling
 

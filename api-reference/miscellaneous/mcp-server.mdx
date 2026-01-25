@@ -17,6 +17,17 @@ You can run the NanoGPT MCP server directly using `npx`. No manual installation 
 npx @nanogpt/mcp
 ```
 
+### Claude Code
+
+To add NanoGPT MCP to Claude Code via the CLI:
+
+```bash
+claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
+  --env NANOGPT_API_KEY=YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual NanoGPT API key.
+
 ### IDE Integration
 
 To use NanoGPT MCP with tools like **Claude Desktop**, **Cline**, or **Cursor**, add the following to your configuration file:
@@ -62,12 +73,84 @@ The MCP server exposes several tools that your AI agent can use:
 - **`list-models`**: List available text, image, audio, or video models.
 - **`vision`**: Analyze images using vision-capable models.
 
+## Tool Parameters
+
+### `chat`
+
+- `messages` (required): Array of message objects (`role` + `content`)
+- `model` (optional): Model ID to use for the request
+- `temperature` (optional): Sampling temperature
+- `max_tokens` (optional): Maximum tokens in the response
+
+### `image-generation`
+
+- `prompt` (required): Text description of the image to generate
+- `model` (optional): Image model ID
+- `n` (optional): Number of images to generate (1–10)
+- `size` (optional): Dimensions (e.g., `1024x1024`)
+- `quality` (optional): Quality setting (model-dependent)
+
+### `web-search`
+
+- `query` (required): Search query string
+- `depth` (optional): `standard` or `deep`
+- `fromDate` / `toDate` (optional): Date range filter (`YYYY-MM-DD`)
+
+### `youtube-transcribe`
+
+- `urls` (required): Array of YouTube URLs (up to 10 per request)
+
 ## Resources
 
 Resources allow agents to "read" data stored by the server. NanoGPT MCP provides:
 
 - **`nanogpt://raw/{id}`**: Access the raw JSON response from a previous API call.
 - **`nanogpt://image/{id}`**: Access an image generated during the session.
+
+## Cost & Billing
+
+- Paid tools deduct from your NanoGPT account balance.
+- Model listing operations are complimentary.
+- Failed requests (timeouts, errors) are not charged.
+
+## Troubleshooting
+
+### API key validation
+
+- Ensure `NANOGPT_API_KEY` is set in your MCP client configuration.
+- Verify the key in your NanoGPT API dashboard and remove any extra spaces.
+
+### Timeouts for long operations
+
+Increase the timeout for web search or large jobs with `NANOGPT_TIMEOUT_MS`:
+
+```json
+{
+  "mcpServers": {
+    "nanogpt": {
+      "command": "npx",
+      "args": ["-y", "@nanogpt/mcp"],
+      "env": {
+        "NANOGPT_API_KEY": "your_api_key_here",
+        "NANOGPT_TIMEOUT_MS": "900000"
+      }
+    }
+  }
+}
+```
+
+### Node.js version compatibility
+
+The MCP server requires Node.js 22+:
+
+```bash
+node --version
+```
+
+### MCP client connection checks
+
+- Re-add the server configuration if your client can’t connect.
+- Review your MCP client logs for connection errors.
 
 ## Getting Started
 
