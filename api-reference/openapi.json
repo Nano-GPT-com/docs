@@ -571,6 +571,68 @@
         }
       }
     },
+    "/nsfw/image": {
+      "post": {
+        "description": "Binary NSFW classification for image URLs or data URLs",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "NSFW image classification request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NsfwImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "NSFW classification response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NsfwImageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid image URLs, JSON parsing error, or policy violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or API key"
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - NSFW classification failed"
+          }
+        }
+      }
+    },
     "/generate-video": {
       "post": {
         "description": "Generate videos using supported text-to-video, image-to-video, and video-to-video models. The response includes a runId and pending status; poll the status endpoint for completion. See the docs for the current model list and required inputs.",
@@ -2916,6 +2978,126 @@
           "total_received": {
             "type": "string",
             "description": "Total amount of Nano received"
+          }
+        }
+      },
+      "NsfwImageRequest": {
+        "type": "object",
+        "description": "NSFW image classification request payload",
+        "properties": {
+          "image_urls": {
+            "description": "Primary input field. One URL or an array of URLs (only the first 10 are processed).",
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "example": "https://example.com/image.jpg"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "minItems": 1,
+                "example": [
+                  "https://example.com/image-1.jpg",
+                  "https://example.com/image-2.jpg"
+                ]
+              }
+            ]
+          },
+          "imageUrls": {
+            "description": "Alias for image_urls. One URL or an array of URLs (only the first 10 are processed).",
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "example": "https://example.com/image.jpg"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "minItems": 1
+              }
+            ]
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Alias for a single image URL",
+            "example": "https://example.com/image.jpg"
+          },
+          "imageDataUrl": {
+            "type": "string",
+            "description": "Base64 data URL for a single image (format: data:image/[type];base64,[data])",
+            "example": "data:image/jpeg;base64,/9j/4AAQ..."
+          },
+          "imageDataUrls": {
+            "type": "array",
+            "description": "Base64 data URLs for multiple images (only the first 10 are processed)",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "model": {
+            "type": "string",
+            "description": "Only supported value is nsfw-classifier",
+            "default": "nsfw-classifier"
+          }
+        }
+      },
+      "NsfwImageResponse": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "The classifier model used",
+            "example": "nsfw-classifier"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Request ID (if available; helpful for support)"
+          },
+          "inputCount": {
+            "type": "integer",
+            "description": "Number of images processed (max 10)",
+            "example": 2
+          },
+          "cost": {
+            "type": "number",
+            "description": "Final charged amount (after discounts and currency conversion)",
+            "example": 0.003
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency of the charge",
+            "example": "USD"
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "True if more than 10 images were provided",
+            "example": false
+          },
+          "has_nsfw_concepts": {
+            "type": "array",
+            "description": "Per-image NSFW flags in input order",
+            "items": {
+              "type": "boolean"
+            },
+            "example": [
+              false,
+              true
+            ]
+          },
+          "is_nsfw": {
+            "type": "boolean",
+            "description": "True if any image was flagged",
+            "example": true
           }
         }
       },

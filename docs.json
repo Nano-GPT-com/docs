@@ -30,6 +30,7 @@
           "api-reference/endpoint/embeddings",
           "api-reference/endpoint/embedding-models",
           "api-reference/endpoint/image-generation-openai",
+          "api-reference/endpoint/nsfw-image",
           "api-reference/endpoint/transcribe",
           "api-reference/endpoint/transcribe-status",
           "api-reference/endpoint/youtube-transcribe",

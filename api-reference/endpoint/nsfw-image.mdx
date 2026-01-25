@@ -1,0 +1,185 @@
+---
+title: "NSFW Image Classification"
+openapi: "POST /nsfw/image"
+description: "Binary NSFW classification for up to 10 image URLs or data URLs per request"
+---
+
+## Overview
+
+The NSFW Image Classification endpoint performs **binary classification** on image URLs (or base64 data URLs) and returns whether each image contains NSFW concepts. Send up to **10 images per request**.
+
+## Authentication
+
+Include your API key in the request header:
+
+```
+x-api-key: YOUR_API_KEY
+```
+
+Alternatively, you can use Bearer token authentication:
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Request
+
+### Headers
+
+```
+Content-Type: application/json
+x-api-key: YOUR_API_KEY
+```
+
+### Body parameters
+
+You may provide images in **any** of the following fields. The endpoint accepts **up to 10 images per request**.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `image_urls` | string \| string[] | No | Primary input field. One URL or an array of URLs. |
+| `imageUrls` | string \| string[] | No | Alias for `image_urls`. |
+| `imageUrl` | string | No | Alias for a single image URL. |
+| `imageDataUrl` | string | No | Base64 data URL for a single image. |
+| `imageDataUrls` | string[] | No | Base64 data URLs for multiple images. |
+| `model` | string | No | Only supported value is `nsfw-classifier` (default). |
+
+At least one image field is required. If more than 10 images are provided, only the **first 10** are processed and billed.
+
+### Example request
+
+```json
+{
+  "image_urls": [
+    "https://example.com/image-1.jpg",
+    "https://example.com/image-2.jpg"
+  ]
+}
+```
+
+## Response
+
+### Success (200)
+
+```json
+{
+  "model": "nsfw-classifier",
+  "requestId": "<request-id>",
+  "inputCount": 2,
+  "cost": 0.003,
+  "currency": "USD",
+  "truncated": false,
+  "has_nsfw_concepts": [false, true],
+  "is_nsfw": true
+}
+```
+
+### Response fields
+
+- `model`: The classifier model used.
+- `requestId`: Request ID (if available; helpful for support).
+- `inputCount`: Number of images processed (max 10).
+- `cost`: Final charged amount (after discounts and currency conversion).
+- `currency`: `USD` or `XNO` depending on payment source.
+- `truncated`: `true` if more than 10 images were provided.
+- `has_nsfw_concepts`: List of booleans (one per image, in input order).
+- `is_nsfw`: `true` if any image was flagged.
+
+## Errors
+
+### 400 – Invalid or policy violation
+
+- Missing or invalid image URLs
+- JSON parsing error
+- Policy violation (returns a safety error message)
+
+```json
+{ "error": "No valid image URLs provided" }
+```
+
+### 401 – Unauthorized
+
+```json
+{ "error": "Unauthorized" }
+```
+
+### 429 – Rate limit or API key usage limits
+
+```json
+{ "error": "Rate limit exceeded" }
+```
+
+### 500 – Server or provider failure
+
+```json
+{ "error": "NSFW classification failed" }
+```
+
+## Billing Notes
+
+- Charged **$0.0015 per image** actually sent to the classifier.
+- If more than 10 images are provided, only the **first 10** are billed/processed.
+- Discounts and referral policies apply as with other endpoints.
+
+## Code Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/nsfw/image \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "image_urls": [
+      "https://example.com/image-1.jpg",
+      "https://example.com/image-2.jpg"
+    ]
+  }'
+```
+
+```python Python
+import requests
+
+api_key = "YOUR_API_KEY"
+
+payload = {
+    "image_urls": [
+        "https://example.com/image-1.jpg",
+        "https://example.com/image-2.jpg"
+    ]
+}
+
+response = requests.post(
+    "https://nano-gpt.com/api/nsfw/image",
+    headers={
+        "Content-Type": "application/json",
+        "x-api-key": api_key
+    },
+    json=payload
+)
+
+print(response.json())
+```
+
+```javascript JavaScript
+const apiKey = 'YOUR_API_KEY';
+
+const response = await fetch('https://nano-gpt.com/api/nsfw/image', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': apiKey
+  },
+  body: JSON.stringify({
+    image_urls: [
+      'https://example.com/image-1.jpg',
+      'https://example.com/image-2.jpg'
+    ]
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+</CodeGroup>
