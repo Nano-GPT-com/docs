@@ -39,7 +39,7 @@ The easiest way to use the NanoGPT MCP server is via npx. Add it to your MCP cli
 
 ```bash
 # For Claude Code
-claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
+claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
   --env NANOGPT_API_KEY=YOUR_API_KEY
 ```
 
@@ -48,7 +48,7 @@ Replace `YOUR_API_KEY` with your actual NanoGPT API key.
 ### Option 2: Global Installation
 
 ```bash
-npm install -g @anthropic-ai/nanogpt-mcp
+npm install -g @nanogpt/mcp
 ```
 
 Then add to your MCP client:
@@ -308,7 +308,7 @@ The MCP server provides clear error messages for common issues:
 Make sure you've set your API key when adding the MCP server:
 
 ```bash
-claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
+claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
   --env NANOGPT_API_KEY=your_actual_key_here
 ```
 
@@ -323,7 +323,7 @@ claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
 For long-running operations like web search, you can increase the timeout:
 
 ```bash
-claude mcp add nanogpt "npx" "@anthropic-ai/nanogpt-mcp" --scope user \
+claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
   --env NANOGPT_API_KEY=your_key \
   --env NANOGPT_TIMEOUT_MS=900000
 ```
