@@ -634,6 +634,14 @@ To migrate from Anthropic's API to NanoGPT:
 
 3. No other code changes required -- the API is fully compatible
 
+## Service tier compatibility
+
+Anthropic-style service tiers are normalized when routing to providers that support service tiers:
+
+- `standard` → `default`
+- `priority` → `priority`
+- `batch` → ignored for service-tier routing
+
 ## Notes
 
 - The `anthropic-version` header is accepted but not required

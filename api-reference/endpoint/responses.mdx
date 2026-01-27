@@ -77,7 +77,7 @@ Authorization: Bearer YOUR_API_KEY
 | `safety_identifier` | string | No | Safety tracking identifier |
 | `prompt_cache_key` | string | No | Key for prompt caching |
 | `background` | boolean | No | Enable background/async processing |
-| `service_tier` | string | No | Service tier: `auto`, `default`, `flex`, or `priority` |
+| `service_tier` | string | No | Service tier. Use `"priority"` where supported. See [Service tiers (priority)](#service-tiers-priority) near the end. |
 
 ### Input Types
 
@@ -487,7 +487,7 @@ All fields below are always present; nullable values indicate an option was not 
 | `error` | object | Error details (if status is `failed`) |
 | `incomplete_details` | object | Details if status is `incomplete` |
 | `metadata` | object | Custom metadata (if provided) |
-| `service_tier` | string | Service tier used |
+| `service_tier` | string | Service tier used (echoed when provided) |
 
 ### Usage Object
 
@@ -1082,6 +1082,31 @@ curl https://nano-gpt.com/api/v1/responses/resp_abc123 \
 2. GPU-TEE streaming: Streaming is not supported for GPU-TEE models. Use `/v1/chat/completions` for these models.
 3. Background mode: Maximum duration is approximately 800 seconds.
 4. Metadata limits: Maximum 16 keys, 64 character key names, 512 character values.
+
+## Service tiers (priority)
+
+Set `service_tier: "priority"` to request priority processing on providers that support service tiers.
+
+Behavior notes:
+
+- Priority tiers are only applied when the routed provider supports them.
+- Priority tiers are gated on the routed provider, not just the model name.
+- Header provider overrides (like `X-Provider`) and explicit provider selection are honored for pricing and x402 estimates.
+- Provider-native web search can force routing; priority pricing follows that routing.
+
+Billing note:
+
+- Priority tier billing uses priority pricing when applicable.
+
+### Example: priority tier
+
+```json
+{
+  "model": "gpt-5.2",
+  "input": "Say hi in one sentence.",
+  "service_tier": "priority"
+}
+```
 
 ## Response Headers
 

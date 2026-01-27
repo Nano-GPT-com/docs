@@ -2122,6 +2122,11 @@
             "description": "Whether to stream the response",
             "default": false
           },
+          "service_tier": {
+            "type": "string",
+            "enum": ["auto", "default", "flex", "priority"],
+            "description": "Optional service tier. Set to \"priority\" to request priority processing when supported by the routed provider"
+          },
           "temperature": {
             "type": "number",
             "description": "Classic randomness control. Accepts any decimal between 0-2. Lower numbers bias toward deterministic responses, higher values explore more aggressively",
@@ -2442,6 +2447,10 @@
                 "description": "Total number of tokens used"
               }
             }
+          },
+          "service_tier": {
+            "type": "string",
+            "description": "Service tier used (echoed when provided on the request)"
           }
         }
       },
@@ -5314,8 +5323,8 @@
           },
           "service_tier": {
             "type": "string",
-            "enum": ["auto", "default", "flex"],
-            "description": "Service tier"
+            "enum": ["auto", "default", "flex", "priority"],
+            "description": "Optional service tier. Set to \"priority\" to request priority processing when supported by the routed provider"
           }
         }
       },

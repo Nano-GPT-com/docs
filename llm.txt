@@ -295,6 +295,7 @@ PRICING AND BILLING
 - Expect usage.prompt_tokens/completion_tokens on JSON responses and per-chunk pricing metadata via x_nanogpt_pricing.
 - Pricing frames include sanitized errors when provider billing fails; surface the message without exposing vendor codes.
 - Conversation-level transactions are billed in USD with optional auto-conversion to Nano when applicable.
+- Service tiers: pass service_tier: "priority" on /v1/chat/completions, /v1/responses, or /v1/messages. Priority is gated on the routed provider, and routing overrides like X-Provider or provider-native web search affect priority pricing.
 - Use 429 handling with exponential backoff; subscription-free buckets allow roughly 60 RPM, while premium models may enforce tighter limits.
 
 ERROR HANDLING AND OBSERVABILITY

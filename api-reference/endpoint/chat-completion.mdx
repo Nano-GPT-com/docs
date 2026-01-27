@@ -1225,6 +1225,39 @@ Older clients that expect the legacy `reasoning_content` field can opt in per re
 - GPU-TEE models (`phala/*`) require byte-for-byte SSE passthrough for signature verification. For those models, streaming cannot be filtered; the suffix has no effect on the streaming bytes.
 - When assistant content is an array (e.g., vision/text parts), only text parts are filtered; images and tool/metadata content are untouched.
 
+## Service tiers (priority)
+
+Set `service_tier: "priority"` to request priority processing on providers that support service tiers.
+
+Behavior notes:
+
+- When `service_tier` is `"priority"`, NanoGPT prefers routing to providers that support service tiers (for example, routing away from providers that do not).
+- Priority tiers are gated on the routed provider, not just the model name.
+- Not all providers support service tiers, so priority requests may be routed differently than non-priority requests.
+- Header provider overrides (like `X-Provider`) and explicit provider selection are honored for pricing and x402 estimates.
+- Provider-native web search can force routing; priority pricing follows that routing.
+- If you explicitly force a provider that does not support service tiers, priority tiers may be ignored by the upstream provider.
+
+Billing note:
+
+- Priority requests are billed at priority rates when routed to providers with priority pricing. If a model is missing from the explicit priority pricing table, NanoGPT falls back to a 2x multiplier and logs the mismatch.
+
+Response note:
+
+- Responses now include a top-level `service_tier` field when it is provided on the request.
+
+### Example: priority tier
+
+```json
+{
+  "model": "gpt-5.2",
+  "messages": [
+    { "role": "user", "content": "Give me a concise release note." }
+  ],
+  "service_tier": "priority"
+}
+```
+
 ## YouTube Transcripts
 
 Automatically fetch and prepend YouTube video transcripts when the latest user message contains YouTube links.
