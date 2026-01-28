@@ -285,6 +285,9 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 ## Related Endpoints
 
 - [/api/v1/embedding-models](/api-reference/endpoint/embedding-models) - List all available embedding models with detailed information
+- [/api/v1/image-models](/api-reference/endpoint/image-models) - List all available image generation models
+- [/api/v1/video-models](/api-reference/endpoint/video-models) - List all available video generation models
+- [/api/v1/audio-models](/api-reference/endpoint/audio-models) - List all available audio models (TTS, STT, music)
 - [/api/v1/embeddings](/api-reference/endpoint/embeddings) - Create embeddings using the available models
 - [Provider Selection](/api-reference/miscellaneous/provider-selection) - Discover model providers and set provider preferences
 - `/api/subscription/v1/models` - Subscription-included text models
@@ -292,5 +295,5 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 
 ## Notes
 
-- Scope: These endpoints list text-chat models. Image models used in the UI are covered by separate routes and/or the non-OpenAI UI endpoint `GET /api/models`.
+- Scope: These endpoints list text-chat models. For image, video, and audio model listings, use `GET /api/v1/image-models`, `GET /api/v1/video-models`, and `GET /api/v1/audio-models`.
 - Fields are subject to change as new capabilities or providers are added. We aim to remain OpenAI-API compatible for basic consumers (`id`/`object`/`created`/`owned_by`).

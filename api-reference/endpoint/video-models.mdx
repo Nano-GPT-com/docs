@@ -1,0 +1,74 @@
+---
+title: 'Video Models'
+---
+
+## Overview
+
+List all available video generation models. Base URL: `https://nano-gpt.com/api`.
+
+All endpoints return JSON. Authentication is not required.
+
+## Endpoint
+
+- GET `/api/v1/video-models`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `detailed` | boolean | `true` | Include pricing, capabilities, and supported parameters |
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [ ... ],
+  "meta": {
+    "count": 5,
+    "generated_at": "2025-01-28T12:00:00.000Z"
+  }
+}
+```
+
+Each model (detailed):
+
+```json
+{
+  "id": "kling-video",
+  "object": "model",
+  "created": 1706745600,
+  "owned_by": "kling",
+  "name": "Kling Video",
+  "description": "...",
+  "architecture": {
+    "modality": "text+image->video",
+    "input_modalities": ["text", "image"],
+    "output_modalities": ["video"]
+  },
+  "pricing": { },
+  "capabilities": {
+    "video_generation": true,
+    "text_to_video": true,
+    "image_to_video": true,
+    "video_to_video": false,
+    "audio_input": false,
+    "audio_generation": false,
+    "fps_control": false,
+    "nsfw": false
+  },
+  "settings": [ ],
+  "icon_url": "...",
+  "label": "...",
+  "tags": ["..."],
+  "category": "video"
+}
+```
+
+## Notes
+
+- With `detailed=false`, the response includes only `id`, `object`, `created`, and `owned_by` per model.
+- Video pricing structures vary by model (per-second, per-generation, tiered by duration, etc.). The `pricing` object shape depends on the specific model.
+- This endpoint runs on the edge runtime.
+- Responses are compressed (gzip/brotli) when supported by the client.
+- Pricing values are in USD.

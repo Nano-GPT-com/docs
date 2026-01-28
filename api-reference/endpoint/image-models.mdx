@@ -1,0 +1,78 @@
+---
+title: 'Image Models'
+---
+
+## Overview
+
+List all available image generation models. Base URL: `https://nano-gpt.com/api`.
+
+All endpoints return JSON. Authentication is not required.
+
+## Endpoint
+
+- GET `/api/v1/image-models`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `detailed` | boolean | `true` | Include pricing, capabilities, and supported parameters |
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [ ... ],
+  "meta": {
+    "count": 12,
+    "generated_at": "2025-01-28T12:00:00.000Z"
+  }
+}
+```
+
+Each model (detailed):
+
+```json
+{
+  "id": "flux-pro",
+  "object": "model",
+  "created": 1706745600,
+  "owned_by": "bfl",
+  "name": "FLUX Pro",
+  "description": "...",
+  "architecture": {
+    "modality": "text->image",
+    "input_modalities": ["text"],
+    "output_modalities": ["image"]
+  },
+  "pricing": {
+    "per_image": {
+      "1024x1024": 0.05,
+      "1024x768": 0.04
+    },
+    "currency": "USD"
+  },
+  "capabilities": {
+    "image_generation": true,
+    "image_to_image": false,
+    "inpainting": false,
+    "nsfw": false
+  },
+  "supported_parameters": {
+    "resolutions": ["1024x1024", "1024x768", "768x1024"],
+    "max_images": 4,
+    "fixed_image_count": 1
+  },
+  "icon_url": "...",
+  "tags": ["..."],
+  "category": "image"
+}
+```
+
+## Notes
+
+- With `detailed=false`, the response includes only `id`, `object`, `created`, and `owned_by` per model.
+- This endpoint runs on the edge runtime.
+- Responses are compressed (gzip/brotli) when supported by the client.
+- Pricing values are in USD.

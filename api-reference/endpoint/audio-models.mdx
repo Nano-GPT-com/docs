@@ -1,0 +1,141 @@
+---
+title: 'Audio Models'
+---
+
+## Overview
+
+List all available audio models (text-to-speech, speech-to-text, and music generation). Base URL: `https://nano-gpt.com/api`.
+
+All endpoints return JSON. Authentication is not required.
+
+## Endpoint
+
+- GET `/api/v1/audio-models`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `detailed` | boolean | `true` | Include pricing, capabilities, and supported parameters |
+| `type` | string | `all` | Filter by type: `tts`, `stt`, or `all` |
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [ ... ],
+  "meta": {
+    "count": 8,
+    "generated_at": "2025-01-28T12:00:00.000Z",
+    "filter": { "type": "tts" }
+  }
+}
+```
+
+The `filter` field in `meta` is only present when `type` is not `all`.
+
+### TTS model (detailed)
+
+```json
+{
+  "id": "openai-tts",
+  "object": "model",
+  "created": 1706745600,
+  "owned_by": "openai",
+  "name": "OpenAI TTS",
+  "description": "...",
+  "architecture": {
+    "modality": "text->audio",
+    "input_modalities": ["text"],
+    "output_modalities": ["audio"]
+  },
+  "pricing": {
+    "per_thousand_chars": 0.015,
+    "currency": "USD"
+  },
+  "capabilities": {
+    "text_to_speech": true
+  },
+  "supported_parameters": {
+    "max_chars": 4096,
+    "voices": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+  },
+  "icon_url": "...",
+  "category": "audio_tts"
+}
+```
+
+### Music model (detailed)
+
+```json
+{
+  "id": "music-model",
+  "object": "model",
+  "created": 1706745600,
+  "owned_by": "...",
+  "name": "...",
+  "description": "...",
+  "architecture": {
+    "modality": "text->music",
+    "input_modalities": ["text"],
+    "output_modalities": ["music"]
+  },
+  "pricing": {
+    "per_second": 0.01,
+    "minimum": 0.05,
+    "currency": "USD"
+  },
+  "capabilities": {
+    "text_to_music": true
+  },
+  "supported_parameters": {
+    "min_duration": 5,
+    "max_duration": 300
+  },
+  "icon_url": "...",
+  "category": "audio_music"
+}
+```
+
+### STT model (detailed)
+
+```json
+{
+  "id": "whisper-large-v3",
+  "object": "model",
+  "created": 1706745600,
+  "owned_by": "openai",
+  "name": "Whisper Large V3",
+  "description": "...",
+  "architecture": {
+    "modality": "audio->text",
+    "input_modalities": ["audio"],
+    "output_modalities": ["text"]
+  },
+  "pricing": {
+    "per_minute": 0.006,
+    "currency": "USD"
+  },
+  "capabilities": {
+    "speech_to_text": true,
+    "diarization": true,
+    "word_timestamps": true
+  },
+  "supported_parameters": {
+    "max_file_size_mb": 25,
+    "supported_formats": ["mp3", "wav", "webm", "mp4", "m4a", "ogg", "flac"],
+    "supported_languages": ["en", "es", "fr", "..."],
+    "features": ["Speaker diarization", "Word-level timestamps"]
+  },
+  "icon_url": "...",
+  "category": "audio_stt"
+}
+```
+
+## Notes
+
+- With `detailed=false`, the response includes only `id`, `object`, `created`, and `owned_by` per model.
+- This endpoint runs on the edge runtime.
+- Responses are compressed (gzip/brotli) when supported by the client.
+- Pricing values are in USD.
