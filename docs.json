@@ -22,9 +22,6 @@
         "group": "Endpoint Examples",
         "pages": [
           "api-reference/endpoint/models",
-          "api-reference/endpoint/image-models",
-          "api-reference/endpoint/video-models",
-          "api-reference/endpoint/audio-models",
           "api-reference/endpoint/personalized-models",
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/responses",
