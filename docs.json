@@ -105,7 +105,8 @@
           "integrations/openhands",
           "integrations/opencode",
           "integrations/janitorai",
-          "integrations/droid"
+          "integrations/droid",
+          "integrations/clawdbot"
         ]
       }
     ],
