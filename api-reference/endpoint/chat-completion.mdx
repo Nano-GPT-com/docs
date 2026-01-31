@@ -429,6 +429,8 @@ Append one of these to your `model` value:
 - `:online/linkup-deep` (Linkup, deep)
 - `:online/tavily` (Tavily, standard)
 - `:online/tavily-deep` (Tavily, deep)
+- `:online/brave` (Brave, standard)
+- `:online/brave-deep` (Brave, deep)
 - `:online/exa-fast` (Exa, fast)
 - `:online/exa-auto` (Exa, auto)
 - `:online/exa-neural` (Exa, neural)
@@ -453,9 +455,9 @@ Send a `webSearch` object in the request body. The legacy `linkup` object is acc
 `webSearch` fields:
 
 - `enabled` (boolean, required to activate web search)
-- `provider` (string): `linkup` | `tavily` | `exa` | `kagi` | `perplexity` | `valyu`
+- `provider` (string): `linkup` | `tavily` | `brave` | `exa` | `kagi` | `perplexity` | `valyu`
 - `depth` (string):
-  - Linkup/Tavily/Perplexity/Valyu: `standard` or `deep`
+  - Linkup/Tavily/Brave/Perplexity/Valyu: `standard` or `deep`
   - Exa: `fast`, `auto`, `neural`, `deep` (use `standard` if you want `auto`)
   - Kagi: `standard` or `deep` (`search` source only)
 - `search_context_size` or `searchContextSize` (string, OpenAI native): `low` | `medium` | `high` (default: `medium`)
@@ -683,11 +685,12 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 | Kagi Search | $0.025 | N/A | Full search mode |
 | Perplexity | $0.005 | N/A | Flat rate |
 | Valyu | ~$0.0015/result | Variable | Dynamic pricing |
+| Brave | $0.009 | $0.009 | Flat rate |
 | OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
 
 ### Bring your own key (BYOK)
 
-BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup always uses NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
+BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup and Brave always use NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
 
 ## Image Input
 
