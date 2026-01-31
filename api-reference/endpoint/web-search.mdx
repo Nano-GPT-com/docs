@@ -6,7 +6,7 @@ description: "Perform AI-powered web searches across multiple providers with fle
 
 ## Overview
 
-The Web Search API allows you to perform AI-powered web searches across supported providers (Linkup, Tavily, Exa, Kagi, Perplexity, Valyu), returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and provider-specific depth modes. If `provider` is omitted, Linkup is used by default.
+The Web Search API allows you to perform AI-powered web searches across supported providers (Linkup, Tavily, Exa, Kagi, Perplexity, Valyu, Brave), returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and provider-specific depth modes. If `provider` is omitted, Linkup is used by default.
 
 ## Authentication
 
@@ -27,18 +27,18 @@ Alternatively, you can use Bearer token authentication:
 </ParamField>
 
 <ParamField body="provider" type="string" default="linkup">
-  Search provider. Options: "linkup", "tavily", "exa", "kagi", "perplexity", "valyu"
+  Search provider. Options: "linkup", "tavily", "exa", "kagi", "perplexity", "valyu", "brave". "openai-native" is not supported on `/api/web`.
 </ParamField>
 
 <ParamField body="depth" type="string" default="standard">
   Search depth. Options vary by provider:
-  - Linkup/Tavily/Perplexity/Valyu: "standard" or "deep"
-  - Exa: "fast", "auto", "neural", "deep"
+  - Linkup/Tavily/Perplexity/Valyu/Brave: "standard" or "deep"
+  - Exa: "fast", "auto", "neural", "deep" (Exa-only)
   - Kagi: "standard" or "deep" ("search" source only for deep)
 </ParamField>
 
 <ParamField body="outputType" type="string" default="searchResults">
-  Output format. Options: "searchResults", "sourcedAnswer", or "structured"
+  Output format. Options: "searchResults", "sourcedAnswer", or "structured". For Tavily, Exa, Kagi, Perplexity, Valyu, and Brave, outputType must be "searchResults".
 </ParamField>
 
 <ParamField body="structuredOutputSchema" type="string">
@@ -156,6 +156,26 @@ Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entri
 }
 ```
 
+### Brave options
+
+```json
+{
+  "count": 0-20,
+  "maxResults": 0-20,
+  "offset": 0-9,
+  "safesearch": "off" | "moderate" | "strict",
+  "freshness": "2024-01-01to2024-02-01",
+  "searchLang": "string",
+  "uiLang": "string",
+  "eSnippets": boolean,
+  "spellcheck": boolean,
+  "goggles": "string" | ["string"],
+  "country": "string"
+}
+```
+
+Use either `count` or `maxResults` (0-20). `searchLang` and `uiLang` are passed to Brave as `search_lang` and `ui_lang`. If `freshness` is not provided but both `fromDate` and `toDate` are set, the API builds a Brave freshness range (`fromDate + "to" + toDate`). For deep searches, Brave defaults `extraSnippets` to true unless `eSnippets` is explicitly set.
+
 ## Response
 
 <ResponseField name="data" type="object|array">
@@ -168,7 +188,7 @@ Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entri
       The search query that was executed
     </ResponseField>
     <ResponseField name="provider" type="string">
-      The provider used for the search
+      The provider used for the search (may be "brave")
     </ResponseField>
     <ResponseField name="depth" type="string">
       The search depth used (provider-specific)
@@ -393,6 +413,24 @@ curl -X POST https://nano-gpt.com/api/web \
 
 </CodeGroup>
 
+### Brave example (request body)
+
+```json
+POST /api/web
+{
+  "query": "latest EU AI Act amendments",
+  "provider": "brave",
+  "depth": "standard",
+  "outputType": "searchResults",
+  "count": 10,
+  "offset": 0,
+  "safesearch": "moderate",
+  "searchLang": "en",
+  "uiLang": "en",
+  "freshness": "2024-01-01to2024-02-01"
+}
+```
+
 ## Advanced Examples
 
 ### Deep Search with Date Filtering
@@ -561,13 +599,14 @@ The API is rate-limited to 60 requests per minute per IP address for `/api/web`.
 | Kagi Search | $0.025 | N/A | Full search mode |
 | Perplexity | $0.005 | N/A | Flat rate |
 | Valyu | ~$0.0015/result | Variable | Dynamic pricing |
+| Brave | $0.009 | $0.009 | Flat rate |
 | OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
 
 A minimum balance of $1.00 is required to use the web search API. OpenAI native applies to GPT-5/o-series chat completions only and is not used by `/api/web`.
 
 ## Bring your own key (BYOK)
 
-BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup always uses NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
+BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup and Brave always use NanoGPT's key and are not BYOK on `/api/web`. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
 
 ## X-402 payment protocol (optional)
 
