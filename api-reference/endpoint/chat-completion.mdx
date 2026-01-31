@@ -11,11 +11,77 @@ openapi: 'POST /v1/chat/completions'
   Provider selection is available for pay-as-you-go requests on supported open-source models. Set the `X-Provider` header or save preferences to choose a provider. See [Provider Selection](/api-reference/miscellaneous/provider-selection).
 </Note>
 
-### Tool calling
+## Page map
+
+Use the jump list below to navigate the long-form reference quickly.
+
+<AccordionGroup>
+  <Accordion title="Basics">
+    - [Tool calling](#tool-calling)
+    - [Overview](#overview)
+  </Accordion>
+  <Accordion title="Sampling & decoding">
+    - [Sampling & Decoding Controls](#sampling-decoding-controls)
+    - [Temperature & Nucleus](#temperature-nucleus)
+    - [Length & Stopping](#length-stopping)
+    - [Penalties & Repetition Guards](#penalties-repetition-guards)
+    - [Logit Shaping & Determinism](#logit-shaping-determinism)
+    - [Sampling example request](#example-request-1)
+  </Accordion>
+  <Accordion title="Structured outputs">
+    - [Structured Outputs (response_format)](#structured-outputs-response-format)
+    - [Supported Formats](#supported-formats)
+    - [JSON Object Mode](#json-object-mode)
+    - [JSON Schema Mode](#json-schema-mode-structured-outputs)
+    - [Schema Requirements](#schema-requirements)
+    - [Example Request](#example-request-2)
+    - [Example Response](#example-response)
+    - [Vercel AI SDK](#usage-with-vercel-ai-sdk)
+  </Accordion>
+  <Accordion title="Web search">
+    - [Web Search](#web-search)
+    - [Option A: model suffixes](#option-a-model-suffixes)
+    - [Option B: request body configuration](#option-b-request-body-configuration-recommended)
+    - [Provider-specific options](#provider-specific-options-set-inside-websearch)
+    - [Examples](#examples)
+    - [Pricing by provider](#pricing-by-provider)
+    - [Bring your own key (BYOK)](#bring-your-own-key-byok)
+  </Accordion>
+  <Accordion title="Images & caching">
+    - [Image Input](#image-input)
+    - [Supported Forms](#supported-forms)
+    - [Message Shape](#message-shape)
+    - [cURL - Image URL](#curl-image-url-non-streaming)
+    - [cURL - Base64 Data URL](#curl-base64-data-url-non-streaming)
+    - [cURL - Streaming SSE](#curl-streaming-sse)
+    - [Prompt Caching (Claude Models)](#prompt-caching-claude-models)
+    - [Cache Consistency](#cache-consistency-with-stickyprovider)
+    - [Troubleshooting](#troubleshooting)
+  </Accordion>
+  <Accordion title="Memory & reasoning">
+    - [Context Memory](#context-memory)
+    - [Custom Context Size Override](#custom-context-size-override)
+    - [Reasoning Streams](#reasoning-streams)
+    - [Endpoint variants](#endpoint-variants)
+    - [Streaming payload format](#streaming-payload-format)
+    - [Showing or hiding reasoning](#showing-or-hiding-reasoning)
+    - [Reasoning Effort](#reasoning-effort)
+    - [Model suffix: :reasoning-exclude](#model-suffix-reasoning-exclude)
+    - [Legacy delta field compatibility](#legacy-delta-field-compatibility)
+  </Accordion>
+  <Accordion title="Other">
+    - [Service tiers (priority)](#service-tiers-priority)
+    - [YouTube Transcripts](#youtube-transcripts)
+    - [Performance Benchmarks](#performance-benchmarks)
+    - [Important Notes](#important-notes)
+  </Accordion>
+</AccordionGroup>
+
+## Tool calling
 
 The `/api/v1/chat/completions` endpoint supports OpenAI-compatible function calling. You can describe callable functions in the `tools` array, control when the model may invoke them, and continue the conversation by echoing `tool` role messages that reference the assistant's chosen call.
 
-#### Request parameters
+### Request parameters
 
 - `tools` (optional array): Each entry must be `{ "type": "function", "function": { "name": string, "description"?: string, "parameters"?: JSON-Schema object } }`. Only `function` tools are accepted. The serialized `tools` payload is limited to 200 KB (overrides via `TOOL_SPEC_MAX_BYTES`); violating the shape or size yields a 400 with `tool_spec_too_large`, `invalid_tool_spec`, or `invalid_tool_spec_parse`.
 - `tool_choice` (optional string or object): Defaults to `auto`. Set `"none"` to guarantee no tool calls (the server also drops the `tools` payload upstream), `"required"` to force the next response to be a tool call, or `{ "type": "function", "function": { "name": "your_function" } }` to pin the exact function.
@@ -24,7 +90,7 @@ The `/api/v1/chat/completions` endpoint supports OpenAI-compatible function call
 - `messages[]` with `role: "tool"`: Respond to the model by sending `{ "role": "tool", "tool_call_id": "<assistant tool_calls id>", "content": "<JSON or text payload>" }`. The server drops any tool response that references an unknown `tool_call_id`, so keep the IDs in sync.
 - Validation behavior: If you send `tool_choice: "none"` with a `tools` array the request is accepted but the tools are omitted before hitting the model; invalid schemas or oversize payloads return the error codes above.
 
-#### Example request
+### Example request
 
 ```http
 POST /api/v1/chat/completions
@@ -55,7 +121,7 @@ POST /api/v1/chat/completions
 }
 ```
 
-#### Example assistant/tool turn
+### Example assistant/tool turn
 
 ```json
 {
