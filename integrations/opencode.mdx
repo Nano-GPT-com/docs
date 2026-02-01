@@ -30,7 +30,10 @@ Add your NanoGPT API key to `~/.local/share/opencode/auth.json`:
 
 ```json
 {
-  "nanogpt": "your-nanogpt-api-key"
+  "nanogpt": {
+    "type": "api",
+    "key": "your-nanogpt-api-key"
+  }
 }
 ```
 
@@ -141,4 +144,4 @@ OpenCode searches for config in this order:
 
 **Authentication errors?**
 
-Check that your API key is correctly set in `~/.local/share/opencode/auth.json` and that the key name matches the provider ID (`nanogpt`).
+Check that your API key is correctly set in `~/.local/share/opencode/auth.json` (as an object with `type` and `key`) and that the key name matches the provider ID (`nanogpt`).
