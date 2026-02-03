@@ -1,0 +1,77 @@
+---
+title: 'OpenClaw (ClawdBot)'
+description: 'Use OpenClaw with NanoGPT to access Claude, GPT, Gemini, and more'
+---
+
+## Quick Setup Guide
+
+1. Install OpenClaw (ClawdBot) and skip any default model setup.
+2. Get your API key from [nano-gpt.com/api](https://nano-gpt.com/api).
+3. Open your config (Config -> Models -> Raw, or edit `~/.clawdbot/clawdbot.json`).
+4. Add a NanoGPT provider block like this:
+
+```json
+{
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "nanogpt": {
+        "baseUrl": "https://nano-gpt.com/api/v1",
+        "apiKey": "YOUR_NANOGPT_API_KEY_HERE",
+        "auth": "api-key",
+        "api": "openai-completions",
+        "headers": {},
+        "authHeader": false,
+        "models": [
+          {
+            "id": "anthropic/claude-opus-4.5",
+            "name": "Claude Opus 4.5",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+5. Replace `YOUR_NANOGPT_API_KEY_HERE` with your actual key.
+6. Restart OpenClaw (or restart the gateway if you are using it).
+
+## Some Models To Try
+
+These are examples only. Use the model IDs returned by the models endpoint below.
+
+- `anthropic/claude-opus-4.5`
+- `openai/gpt-5.2`
+- `google/gemini-3-flash-preview`
+- `minimax/minimax-m2.1`
+- `moonshotai/kimi-k2-thinking`
+
+## Get The Most Recent Models
+
+```bash
+curl https://nano-gpt.com/api/v1/models
+```
+
+If you want filtered lists:
+
+- `https://nano-gpt.com/api/subscription/v1/models` (subscription-only)
+- `https://nano-gpt.com/api/paid/v1/models` (paid-only)
+
+## Verify Your Setup
+
+Once OpenClaw is running, confirm requests are flowing by checking your usage at [nano-gpt.com/usage](https://nano-gpt.com/usage).
+
+## Problems?
+
+Email support at [support@nano-gpt.com](mailto:support@nano-gpt.com) or use the in-app chat.

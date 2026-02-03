@@ -103,6 +103,7 @@
           "integrations/typingmind",
           "integrations/librechat",
           "integrations/openhands",
+          "integrations/openclaw",
           "integrations/opencode",
           "integrations/janitorai",
           "integrations/droid",
