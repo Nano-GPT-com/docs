@@ -32,6 +32,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-Billing-Mode",
+            "in": "header",
+            "description": "Optional billing override to force pay-as-you-go (e.g., paygo). Header name is case-insensitive.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -75,6 +84,26 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Provider",
+            "in": "header",
+            "description": "Optional provider override for pay-as-you-go requests on supported open-source models (case-insensitive). Subscription requests ignore this header.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Billing-Mode",
+            "in": "header",
+            "description": "Optional billing override to force pay-as-you-go (e.g., paygo). Header name is case-insensitive.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1972,6 +2001,22 @@
           { "bearerAuth": [] },
           { "apiKeyAuth": [] }
         ],
+        "parameters": [
+          {
+            "name": "X-Provider",
+            "in": "header",
+            "description": "Optional provider override for pay-as-you-go requests on supported open-source models (case-insensitive). Subscription requests ignore this header.",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "X-Billing-Mode",
+            "in": "header",
+            "description": "Optional billing override to force pay-as-you-go (e.g., paygo). Header name is case-insensitive.",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
         "requestBody": {
           "description": "Parameters for the response request",
           "required": true,
@@ -2078,6 +2123,14 @@
             "description": "The model to use for completion. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
             "default": "openai/gpt-5.2",
             "examples": ["openai/gpt-5.2", "openai/gpt-5.2:online", "openai/gpt-5.2:online/linkup-deep", "anthropic/claude-opus-4.5:online"]
+          },
+          "billing_mode": {
+            "type": "string",
+            "description": "Billing override to force pay-as-you-go. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
+          },
+          "billingMode": {
+            "type": "string",
+            "description": "Alias for billing_mode."
           },
           "messages": {
             "type": "array",
@@ -2466,6 +2519,14 @@
             "description": "The model to use for completion. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
             "default": "openai/gpt-5.2",
             "examples": ["openai/gpt-5.2", "openai/gpt-5.2:online", "openai/gpt-5.2:online/linkup-deep", "anthropic/claude-opus-4.5:online"]
+          },
+          "billing_mode": {
+            "type": "string",
+            "description": "Billing override to force pay-as-you-go. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
+          },
+          "billingMode": {
+            "type": "string",
+            "description": "Alias for billing_mode."
           },
           "prompt": {
             "type": "string",
@@ -5227,6 +5288,14 @@
           "model": {
             "type": "string",
             "description": "Model ID to use for the response"
+          },
+          "billing_mode": {
+            "type": "string",
+            "description": "Billing override to force pay-as-you-go. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
+          },
+          "billingMode": {
+            "type": "string",
+            "description": "Alias for billing_mode."
           },
           "input": {
             "description": "Prompt string or array of input items",

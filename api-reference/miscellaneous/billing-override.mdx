@@ -1,0 +1,114 @@
+---
+title: 'Pay-As-You-Go Billing Override'
+description: 'Force paid routing for subscription-included models'
+---
+
+# Pay-As-You-Go Billing Override (API)
+
+This override forces a request to be treated as paid (pay-as-you-go), even when the user has an active subscription and the model is subscription-included. It is intended for API documentation and support.
+
+## What It Does
+
+- Forces a request to be treated as paid (pay-as-you-go).
+- Bypasses subscription coverage for that request.
+- Allows provider selection on subscription-included models when the model supports provider selection.
+- Applies provider selection markup when a provider is explicitly chosen.
+- Does not change which models support provider selection.
+
+## When to Use It
+
+Use `billing_mode: "paygo"` when:
+
+- A subscriber wants to select a specific upstream provider for a model.
+- A subscriber wants to pay per-request even if the model is normally covered by subscription.
+
+## Supported Inputs
+
+**Header**
+
+- `X-Billing-Mode: paygo` (header name is case-insensitive)
+- `x-billing-mode` is also accepted
+
+**Body (all endpoints)**
+
+- `"billing_mode": "paygo"`
+- Alias: `"billingMode": "paygo"`
+
+**Accepted values (case-insensitive)**
+
+- `paygo`
+- `pay-as-you-go`
+- `pay_as_you_go`
+- `paid`
+- `payg`
+
+**Precedence**: Body value wins if both body and header are present.
+
+## API Examples
+
+Chat Completions:
+
+```http
+POST /api/v1/chat/completions
+X-Billing-Mode: paygo
+X-Provider: chutes
+
+{
+  "model": "zai-org/GLM-4.6",
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+Completions:
+
+```http
+POST /api/v1/completions
+X-Billing-Mode: paygo
+X-Provider: deepinfra
+
+{
+  "model": "zai-org/GLM-4.6",
+  "prompt": "Hello"
+}
+```
+
+Responses:
+
+```http
+POST /api/v1/responses
+X-Billing-Mode: paygo
+
+{
+  "model": "gpt-4o-mini",
+  "input": "Hello"
+}
+```
+
+## Provider Selection Notes
+
+- Provider selection only works for models that support it.
+- If a model does not support provider selection, `X-Provider` is ignored.
+- For provider-selectable models, the request is treated as paid and provider selection markup applies when a provider is explicitly chosen.
+
+## Subscription and Limits Behavior
+
+When `billing_mode: "paygo"` is set:
+
+- The request is not eligible for subscription coverage.
+- Subscription quota is not consumed.
+- Pay-as-you-go balance checks apply as normal.
+
+If `subscription.enablePaidModelsApi` is `false`, the request is rejected (same as any other paid API request).
+
+## FAQ
+
+**Does this affect which models are available?**
+No. It only changes billing eligibility. Model availability is unchanged.
+
+**Does it force a provider for non-selectable models?**
+No. It only affects billing, not routing, unless the model supports provider selection.
+
+**Can I combine this with BYOK?**
+Yes. BYOK still works; paygo override only changes subscription eligibility.

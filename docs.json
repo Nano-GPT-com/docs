@@ -73,6 +73,7 @@
         "pages": [
           "api-reference/miscellaneous/rate-limits",
           "api-reference/miscellaneous/pricing",
+          "api-reference/miscellaneous/billing-override",
           "api-reference/miscellaneous/provider-selection",
           "api-reference/miscellaneous/for-providers",
           "api-reference/miscellaneous/auto-recharge",

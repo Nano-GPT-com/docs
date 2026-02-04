@@ -11,7 +11,7 @@ If you are using a TEE-backed model (e.g., prefixed with `TEE/`), you can also v
 
 ## Provider Selection
 
-Pay-as-you-go requests can select an upstream provider for supported open-source models using the `X-Provider` header or saved preferences. Subscription endpoints ignore provider selection. See [Provider Selection](/api-reference/miscellaneous/provider-selection).
+Pay-as-you-go requests can select an upstream provider for supported open-source models using the `X-Provider` header or saved preferences. Subscription endpoints ignore provider selection unless you force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Provider Selection](/api-reference/miscellaneous/provider-selection) and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 
 ## OpenAI Compatible Endpoints
 

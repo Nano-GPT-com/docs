@@ -8,7 +8,7 @@ openapi: 'POST /v1/chat/completions'
 </Note>
 
 <Note>
-  Provider selection is available for pay-as-you-go requests on supported open-source models. Set the `X-Provider` header or save preferences to choose a provider. See [Provider Selection](/api-reference/miscellaneous/provider-selection).
+  Provider selection is available for pay-as-you-go requests on supported open-source models. Set the `X-Provider` header or save preferences to choose a provider. If you are on a subscription and want provider selection for a subscription-included model, force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Provider Selection](/api-reference/miscellaneous/provider-selection) and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 </Note>
 
 ## Page map

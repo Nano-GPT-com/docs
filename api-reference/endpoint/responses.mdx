@@ -14,6 +14,10 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
 - Function/tool calling support
 - Multimodal inputs (images, files) for supported models
 
+<Note>
+  Provider selection is available for pay-as-you-go requests on supported open-source models. Set the `X-Provider` header or save preferences to choose a provider. If you are on a subscription and want provider selection for a subscription-included model, force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Provider Selection](/api-reference/miscellaneous/provider-selection) and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
+</Note>
+
 ## Authentication
 
 All requests require authentication via API key:

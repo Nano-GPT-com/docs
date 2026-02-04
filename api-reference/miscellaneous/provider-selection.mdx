@@ -5,7 +5,7 @@ description: 'Choose the upstream provider for supported open-source models'
 
 # Provider Selection
 
-Provider selection lets pay-as-you-go users choose the upstream provider for supported open-source models. It is optional; if you do nothing, the platform picks the provider. Subscription requests ignore provider preferences.
+Provider selection lets pay-as-you-go users choose the upstream provider for supported open-source models. It is optional; if you do nothing, the platform picks the provider. Subscription requests ignore provider preferences unless you force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 
 ## When Provider Selection Applies
 
@@ -65,6 +65,7 @@ Notes:
 
 - `X-Provider` is case-insensitive (`x-provider` also works).
 - The provider ID must be one of the values returned by the providers endpoint.
+- If the request would otherwise be subscription-covered, set `billing_mode: "paygo"` or `X-Billing-Mode: paygo` to force paid routing.
 
 ## Persistent Provider Preferences
 
