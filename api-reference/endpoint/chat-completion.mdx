@@ -484,7 +484,7 @@ console.log(object);
 
 Enable web search in two ways: model suffixes or a `webSearch` object in the request body. The legacy `linkup` object is still supported as an alias. If `webSearch.enabled` (or `linkup.enabled`) is `true`, it takes precedence over any model suffix.
 
-OpenAI native web search: GPT-5.2 uses OpenAI's built-in web search automatically. No suffix is required; you can still set `webSearch.search_context_size` and `webSearch.user_location`. To force a different provider, specify a provider or suffix.
+OpenAI native web search: GPT-5+ / o1 / o3 / o4 models use OpenAI's built-in web search automatically. No suffix is required; you can still set `webSearch.search_context_size` and `webSearch.user_location`. To force a different provider, specify a provider or suffix.
 
 ### Option A: model suffixes
 
@@ -757,6 +757,12 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 ### Bring your own key (BYOK)
 
 BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup and Brave always use NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
+
+### Advanced behavior (optional)
+
+- **Provider routing**: For GPT-5+ / o1 / o3 / o4 models, `:online` without an explicit provider uses OpenAI native web search. If you set `webSearch.provider` or use an explicit `:online/<provider>` suffix, that provider is used instead.
+- **Query formation (non-OpenAI providers)**: The search query is derived from your latest user message and may include the previous user message if the latest is short. If you need full control over the query or raw results, use the Web Search endpoint (`/api/web`).
+- **`scraping: true` URL handling**: When enabled, NanoGPT scans messages for public `http(s)` URLs, ignores local/private URLs, de-duplicates, and caps at 5. If no eligible URLs are found, scraping is skipped. For explicit URL lists and options, use `/scrape-urls`.
 
 ## Image Input
 
