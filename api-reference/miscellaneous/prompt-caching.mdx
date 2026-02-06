@@ -1,0 +1,215 @@
+---
+title: "Prompt Caching"
+description: "Cache large, reusable prompt prefixes for lower latency and cost on supported Claude models."
+---
+
+## Overview
+
+Prompt caching lets you cache large, reusable prompt prefixes (system prompts, reference documents, tool definitions, and long conversation history) so follow-up requests can reuse the cached prefix instead of reprocessing it from scratch.
+
+Benefits:
+
+- Up to ~90% cost reduction on cached input tokens (cache hits)
+- Lower latency on requests with large static prefixes
+
+Caching is opt-in and configured per request.
+
+## Supported Models
+
+Prompt caching is available on Claude models, including these families (examples):
+
+| Model family | Example model IDs |
+| --- | --- |
+| Claude 3.5 Sonnet v2 | `claude-3-5-sonnet-20241022` |
+| Claude 3.5 Haiku | `claude-3-5-haiku-20241022` |
+| Claude 3.7 Sonnet | `claude-3-7-sonnet-20250219` (and `:thinking` variants) |
+| Claude Sonnet 4 | `claude-sonnet-4-20250514` (and `:thinking` variants) |
+| Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` (and `:thinking` variants) |
+| Claude Haiku 4.5 | `claude-haiku-4-5-20251001` |
+| Claude Opus 4 | `claude-opus-4-20250514` (and `:thinking` variants) |
+| Claude Opus 4.1 | `claude-opus-4-1-20250805` (and `:thinking` variants) |
+| Claude Opus 4.5 | `claude-opus-4-5-20251101` (and `:thinking` variants) |
+| Claude Opus 4.6 | `claude-opus-4-6` (and `:thinking` variants) |
+
+All of the above are also supported via the `anthropic/` model prefix (for example `anthropic/claude-sonnet-4.5`, `anthropic/claude-opus-4.6:thinking`).
+
+### Minimum Cacheable Tokens
+
+If your cached prefix is smaller than the minimum, the request still succeeds but no cache entry is created.
+
+| Model | Minimum cacheable tokens |
+| --- | --- |
+| Claude Opus 4.5 | 4,096 |
+| Claude Haiku 4.5 | 4,096 |
+| Claude Sonnet 4.5, Sonnet 4, Opus 4, Opus 4.1, Opus 4.6, Sonnet 3.7 | 1,024 |
+| Claude Haiku 3.5 | 2,048 |
+
+## How To Enable Prompt Caching
+
+Prompt caching works on `POST /api/v1/chat/completions`.
+
+You can enable it in 3 ways.
+
+### Method A: `prompt_caching` / `promptCaching` helper
+
+Add a top-level helper object:
+
+```json
+{
+  "model": "anthropic/claude-sonnet-4.5",
+  "messages": [
+    { "role": "system", "content": "Your large static content..." },
+    { "role": "user", "content": "Summarize the key points." }
+  ],
+  "prompt_caching": {
+    "enabled": true,
+    "ttl": "5m",
+    "cut_after_message_index": 0
+  }
+}
+```
+
+Parameters:
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enabled` | boolean | -- | Enable prompt caching |
+| `ttl` | `"5m"` or `"1h"` | `"5m"` | Cache time-to-live |
+| `cut_after_message_index` | integer | -- | Zero-based index; cache all messages up to and including this index |
+| `stickyProvider` | boolean | `false` | When `true`, avoid failover to preserve cache consistency (see [stickyProvider](#cache-consistency-with-stickyprovider)) |
+
+If `cut_after_message_index` is omitted, NanoGPT selects a cache boundary automatically. Set it explicitly for full control.
+
+### Method B: explicit `cache_control` markers (advanced)
+
+Attach `cache_control` directly to content blocks you want cached:
+
+```json
+{
+  "model": "anthropic/claude-opus-4.5",
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "type": "text",
+          "text": "Your long reference document...",
+          "cache_control": { "type": "ephemeral", "ttl": "5m" }
+        }
+      ]
+    },
+    { "role": "user", "content": "Live question goes here" }
+  ]
+}
+```
+
+When using explicit markers, include:
+
+```text
+anthropic-beta: prompt-caching-2024-07-31
+```
+
+For 1-hour TTL, also include:
+
+```text
+anthropic-beta: prompt-caching-2024-07-31,extended-cache-ttl-2025-04-11
+```
+
+### Method C: `anthropic-beta` header
+
+You can enable caching via headers (especially useful if you are sending explicit `cache_control` blocks):
+
+- 5 minutes:
+  - `anthropic-beta: prompt-caching-2024-07-31`
+- 1 hour:
+  - `anthropic-beta: prompt-caching-2024-07-31,extended-cache-ttl-2025-04-11`
+
+### NanoGPT Web UI
+
+In the NanoGPT web UI, supported Claude models show a prompt caching toggle where you can choose a cache duration.
+
+## Costs and Savings
+
+Prompt caching changes the effective price of cached input tokens:
+
+### Cache creation (first request)
+
+| TTL | Multiplier on cached input tokens |
+| --- | --- |
+| 5 minutes | 1.25x |
+| 1 hour | 2.0x |
+
+### Cache reads (subsequent requests)
+
+| TTL | Multiplier on cached input tokens |
+| --- | --- |
+| 5 minutes or 1 hour | 0.1x (about 90% discount) |
+
+The first cached request costs more than uncached (cache creation surcharge), but cache hits are much cheaper. Break-even is typically 2 requests (5m) or 3 requests (1h) with the same cached prefix.
+
+## Structuring Prompts for Cache Hits
+
+Cache hits require the cached prefix to be byte-identical across requests.
+
+Best practices:
+
+- Put static content first (system prompt, reference docs, tool definitions).
+- Keep cached content identical across requests (no timestamps, request IDs, or dynamic inserts).
+- Put dynamic content after the cache boundary (typically the final user message).
+
+## TTL and Invalidation
+
+Supported TTL values:
+
+- `"5m"` (5 minutes)
+- `"1h"` (1 hour)
+
+Behavior:
+
+- On a cache hit, the TTL timer resets.
+- If a cache entry is not referenced again before its TTL expires, it expires.
+- Any change to the cached prefix (even a single character) results in a cache miss and a new cache creation.
+
+## Usage Fields (How To Verify Cache Hits)
+
+When caching is active, responses include cache-related usage fields:
+
+- `cache_creation_input_tokens`: tokens written to cache on this request
+- `cache_read_input_tokens`: tokens read from cache on this request (cache hit when > 0)
+- `prompt_tokens_details.cached_tokens`: OpenAI-style cached token count
+
+Example (cache hit):
+
+```json
+{
+  "usage": {
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 4269,
+    "prompt_tokens_details": { "cached_tokens": 4269 }
+  }
+}
+```
+
+For streaming requests, the final SSE chunk includes the same usage fields when usage is included.
+
+## Limitations and Caveats
+
+- Prompt caching is only supported on Claude models. Other models ignore caching helpers/markers.
+- A maximum of 4 cache breakpoints (`cache_control`) are supported per request.
+- Some models may report `prompt_tokens` differently across generations; use `cache_creation_input_tokens` and `cache_read_input_tokens` for the authoritative cached token counts.
+- On cache hits, it is normal to sometimes see a small non-zero `cache_creation_input_tokens` value (small per-request overhead). It does not necessarily mean a cache miss.
+
+## Cache Consistency with `stickyProvider`
+
+If a later request is routed differently, it can miss the cache even if the prefix is identical. If cache consistency is more important than availability, set:
+
+```json
+{
+  "prompt_caching": { "enabled": true, "ttl": "5m", "stickyProvider": true }
+}
+```
+
+Behavior:
+
+- `stickyProvider: false` (default): the request may succeed even if routing changes, but you might rebuild caches.
+- `stickyProvider: true`: if a fallback would be required, the request returns `503` instead.

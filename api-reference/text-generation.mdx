@@ -208,6 +208,8 @@ else:
 
 ### Prompt Caching (Claude Models)
 
+For the full guide (supported models, thresholds, pricing, and usage fields), see [Prompt Caching](/api-reference/miscellaneous/prompt-caching).
+
 Claude caching follows Anthropic's Messages schema: `cache_control` lives on the message content blocks you want to reuse. NanoGPT simply forwards those markers to Anthropic, so you decide where each cache breakpoint sits. The first invocation costs 1.25× (5 min TTL) or 2× (1 hour TTL); cached replays discount the same tokens by ~90%.
 
 > **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
@@ -314,7 +316,7 @@ requests.post(
 )
 ```
 
-`cut_after_message_index` is zero-based and points at the last message in the static prefix. NanoGPT will attach a `cache_control` block with your TTL to each message up to that index before forwarding the request to Anthropic—no additional heuristics are applied. If you need different cache durations or non-contiguous breakpoints, fall back to explicit `cache_control` markers in your `messages` array.
+`cut_after_message_index` is zero-based and points at the last message in the static prefix. NanoGPT will attach a `cache_control` block with your TTL to each message up to that index before forwarding the request upstream. If you omit `cut_after_message_index`, NanoGPT will select a cache boundary automatically; set it explicitly if you need full control. If you need different cache durations or non-contiguous breakpoints, fall back to explicit `cache_control` markers in your `messages` array.
 
 ### Cache Consistency with `stickyProvider`
 

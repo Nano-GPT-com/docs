@@ -877,6 +877,8 @@ _Note: Prompt-caching helpers implicitly force `include_usage`, so cached reques
 
 ### Prompt Caching (Claude Models)
 
+For the full guide (supported models, thresholds, pricing, and usage fields), see [Prompt Caching](/api-reference/miscellaneous/prompt-caching).
+
 Claude caching works exactly like Anthropic's `/v1/messages`: you must place `cache_control` objects on the content blocks you want the model to reuse, or instruct NanoGPT to do it for you via the `prompt_caching` helper.
 
 > **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
@@ -944,7 +946,7 @@ await client.chat.completions.create(
 );
 ```
 
-`cut_after_message_index` is zero-based and NanoGPT does not guess—everything at or before that index is cached, everything after is not. Switch back to explicit `cache_control` blocks if you need multiple cache breakpoints or mixed TTLs in the same payload.
+`cut_after_message_index` is zero-based. If omitted, NanoGPT will select a cache boundary automatically; set it explicitly if you need full control. Switch back to explicit `cache_control` blocks if you need multiple cache breakpoints or mixed TTLs in the same payload.
 
 ### Cache Consistency with `stickyProvider`
 

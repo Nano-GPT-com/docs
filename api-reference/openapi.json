@@ -2643,7 +2643,7 @@
           },
           "prompt_caching": {
             "type": "object",
-            "description": "Helper to tag the leading messages for Claude prompt caching. NanoGPT injects cache_control blocks on each message up to the specified index before forwarding to Anthropic.",
+            "description": "Helper to tag the leading messages for Claude prompt caching. NanoGPT injects cache_control blocks on each message up to the specified index before forwarding upstream. If cut_after_message_index is omitted, NanoGPT selects a cache boundary automatically.",
             "properties": {
               "enabled": {
                 "type": "boolean",
@@ -2660,6 +2660,11 @@
                 "type": "integer",
                 "minimum": 0,
                 "description": "Zero-based index of the last message that should be cached. All messages up to and including this index receive the same cache_control block."
+              },
+              "stickyProvider": {
+                "type": "boolean",
+                "description": "When true, avoids failover to preserve prompt cache consistency. If a fallback would be required, the request can return 503 instead.",
+                "default": false
               }
             }
           }
@@ -2789,6 +2794,24 @@
               "prompt_tokens": {
                 "type": "integer",
                 "description": "Number of tokens in the prompt"
+              },
+              "prompt_tokens_details": {
+                "type": "object",
+                "description": "Optional details about prompt token accounting",
+                "properties": {
+                  "cached_tokens": {
+                    "type": "integer",
+                    "description": "Cached input tokens (when prompt caching is used)"
+                  }
+                }
+              },
+              "cache_creation_input_tokens": {
+                "type": "integer",
+                "description": "Input tokens written to cache on this request (when prompt caching is used)"
+              },
+              "cache_read_input_tokens": {
+                "type": "integer",
+                "description": "Input tokens read from cache on this request (when prompt caching is used)"
               },
               "completion_tokens": {
                 "type": "integer",
