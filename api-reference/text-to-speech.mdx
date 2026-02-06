@@ -7,6 +7,8 @@ description: "Complete guide to text-to-speech synthesis APIs"
 
 The NanoGPT TTS API allows you to convert text into natural-sounding speech using various models from different providers. The API supports multiple languages, voices, and customization options including speed control, voice instructions, and audio format selection.
 
+For voice cloning (create a reusable custom voice from a reference clip), see `api-reference/endpoint/voice-cloning.mdx`.
+
 ## Available Models
 
 - **Kokoro-82m**: High-quality multilingual model with 44 voices ($0.001/1k chars)
@@ -14,6 +16,8 @@ The NanoGPT TTS API allows you to convert text into natural-sounding speech usin
 - **tts-1**: OpenAI's standard quality model with low latency ($0.015/1k chars)
 - **tts-1-hd**: OpenAI's high definition model ($0.030/1k chars)
 - **gpt-4o-mini-tts**: Ultra-low cost OpenAI model ($0.0006/1k chars)
+- **MiniMax Speech models**: Supports cloned voices via custom voice IDs
+- **Qwen-3-TTS-1.7B**: Supports cloned voices via speaker embeddings
 
 ## Authentication
 

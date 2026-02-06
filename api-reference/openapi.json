@@ -2164,6 +2164,280 @@
         }
       }
     },
+    "/voice-clone/minimax": {
+      "post": {
+        "description": "Submit a MiniMax voice cloning job. Returns 202 with a runId. Use the status endpoint to poll until completion.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Voice clone submission. Use multipart/form-data for file uploads or application/json for URL-based requests.",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceCloneMinimaxFormRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceCloneMinimaxJsonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Voice clone job started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceCloneAsyncResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or audio format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large - Audio exceeds size limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voice-clone/minimax/status": {
+      "post": {
+        "description": "Check the status of a MiniMax voice clone job.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Status polling request. Include cost/paymentSource/isApiRequest from the submit ticket when available.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceCloneStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Voice clone status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceCloneMinimaxStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid runId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voice-clone/qwen": {
+      "post": {
+        "description": "Submit a Qwen voice cloning job (1.7B). Returns 202 with a runId. Use the status endpoint to poll until completion.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Voice clone submission. Use multipart/form-data for file uploads or application/json for URL-based requests.",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceCloneQwenFormRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceCloneQwenJsonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Voice clone job started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceCloneAsyncResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or audio format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large - Audio exceeds size limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voice-clone/qwen/status": {
+      "post": {
+        "description": "Check the status of a Qwen voice clone job.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Status polling request. Include cost/paymentSource/isApiRequest from the submit ticket when available.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceCloneStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Voice clone status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceCloneQwenStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid runId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/embeddings": {
       "post": {
         "description": "Create embeddings for text using OpenAI-compatible and alternative embedding models",
@@ -4745,13 +5019,41 @@
           "model": {
             "type": "string",
             "description": "The TTS model to use for generation",
-            "enum": ["Kokoro-82m", "Elevenlabs-Turbo-V2.5", "tts-1", "tts-1-hd", "gpt-4o-mini-tts"],
+            "enum": [
+              "Kokoro-82m",
+              "Elevenlabs-Turbo-V2.5",
+              "tts-1",
+              "tts-1-hd",
+              "gpt-4o-mini-tts",
+              "Minimax-Speech-02-HD",
+              "Minimax-Speech-2.6-HD",
+              "Minimax-Speech-2.6-Turbo",
+              "Minimax-Speech-2.8-HD",
+              "Minimax-Speech-2.8-Turbo",
+              "Qwen-3-TTS-1.7B"
+            ],
             "default": "Kokoro-82m"
           },
           "voice": {
             "type": "string",
             "description": "The voice to use for synthesis (available voices depend on selected model)",
             "example": "af_bella"
+          },
+          "speaker_voice_embedding_file_url": {
+            "type": "string",
+            "description": "Speaker embedding file URL for Qwen TTS voice cloning (Qwen-3-TTS-1.7B only)"
+          },
+          "reference_text": {
+            "type": "string",
+            "description": "Optional transcript of the reference clip (Qwen TTS)"
+          },
+          "language": {
+            "type": "string",
+            "description": "Language hint (Qwen TTS). Example values: Auto, English, Chinese, Japanese"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Optional style prompt (Qwen TTS)"
           },
           "speed": {
             "type": "number",
@@ -4791,6 +5093,223 @@
             "minimum": 0,
             "maximum": 1,
             "default": 0
+          }
+        }
+      },
+      "VoiceCloneMinimaxJsonRequest": {
+        "type": "object",
+        "required": ["customVoiceId"],
+        "properties": {
+          "audioUrl": {
+            "type": "string",
+            "description": "URL to a hosted audio file"
+          },
+          "customVoiceId": {
+            "type": "string",
+            "description": "Unique identifier for the cloned voice (MiniMax). Must match ^[A-Za-z][A-Za-z0-9]{7,}$"
+          },
+          "voiceCloneModel": {
+            "type": "string",
+            "description": "Voice clone model variant (provider-specific)"
+          },
+          "needNoiseReduction": {
+            "type": "boolean",
+            "description": "Apply noise reduction to the reference audio",
+            "default": false
+          },
+          "needVolumeNormalization": {
+            "type": "boolean",
+            "description": "Normalize reference audio volume",
+            "default": false
+          },
+          "accuracy": {
+            "type": "number",
+            "description": "Text validation accuracy threshold (0-1)",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.7
+          },
+          "text": {
+            "type": "string",
+            "description": "Preview text to generate a sample audio clip"
+          }
+        }
+      },
+      "VoiceCloneMinimaxFormRequest": {
+        "type": "object",
+        "required": ["customVoiceId"],
+        "properties": {
+          "audio": {
+            "type": "string",
+            "format": "binary",
+            "description": "Audio file to clone from (mp3, m4a, wav)"
+          },
+          "audioUrl": {
+            "type": "string",
+            "description": "Alternative to file upload: URL to hosted audio"
+          },
+          "customVoiceId": {
+            "type": "string",
+            "description": "Unique identifier for the cloned voice (MiniMax). Must match ^[A-Za-z][A-Za-z0-9]{7,}$"
+          },
+          "voiceCloneModel": {
+            "type": "string",
+            "description": "Voice clone model variant (provider-specific)"
+          },
+          "needNoiseReduction": {
+            "type": "boolean",
+            "default": false
+          },
+          "needVolumeNormalization": {
+            "type": "boolean",
+            "default": false
+          },
+          "accuracy": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.7
+          },
+          "text": {
+            "type": "string",
+            "description": "Preview text"
+          }
+        }
+      },
+      "VoiceCloneQwenJsonRequest": {
+        "type": "object",
+        "properties": {
+          "audioUrl": {
+            "type": "string",
+            "description": "URL to a hosted audio file"
+          },
+          "referenceText": {
+            "type": "string",
+            "description": "Optional transcript of the reference audio clip"
+          }
+        }
+      },
+      "VoiceCloneQwenFormRequest": {
+        "type": "object",
+        "properties": {
+          "audio": {
+            "type": "string",
+            "format": "binary",
+            "description": "Audio file to clone from (mp3, ogg, wav, m4a, aac)"
+          },
+          "audioUrl": {
+            "type": "string",
+            "description": "Alternative to file upload: URL to hosted audio"
+          },
+          "referenceText": {
+            "type": "string",
+            "description": "Optional transcript of the reference audio clip"
+          }
+        }
+      },
+      "VoiceCloneAsyncResponse": {
+        "type": "object",
+        "required": ["runId", "status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Current status",
+            "enum": ["pending"]
+          },
+          "runId": {
+            "type": "string",
+            "description": "Unique identifier for the clone job"
+          },
+          "model": {
+            "type": "string",
+            "description": "Voice clone model identifier"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost of the clone run"
+          },
+          "paymentSource": {
+            "type": "string",
+            "description": "Payment source used (USD or XNO)"
+          },
+          "isApiRequest": {
+            "type": "boolean",
+            "description": "Whether this is an API request"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Original file name"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "File size in bytes"
+          }
+        }
+      },
+      "VoiceCloneStatusRequest": {
+        "type": "object",
+        "required": ["runId"],
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Unique identifier for the clone job"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost from the submit ticket (optional)"
+          },
+          "paymentSource": {
+            "type": "string",
+            "description": "Payment source from the submit ticket (optional)"
+          },
+          "isApiRequest": {
+            "type": "boolean",
+            "description": "Pass true when polling from API clients (optional)"
+          }
+        }
+      },
+      "VoiceCloneMinimaxStatusResponse": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "audioUrls": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Preview audio URLs (when completed)"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message (when failed)"
+          }
+        }
+      },
+      "VoiceCloneQwenStatusResponse": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "speakerEmbeddingUrl": {
+            "type": "string",
+            "description": "Speaker embedding file URL (when completed)"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message (when failed)"
           }
         }
       },

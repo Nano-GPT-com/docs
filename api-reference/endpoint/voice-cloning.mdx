@@ -1,0 +1,276 @@
+---
+title: "Voice Cloning"
+description: "Clone voices from reference audio and reuse them with compatible TTS models"
+---
+
+## Overview
+
+NanoGPT supports voice cloning so you can create reusable custom voices from short reference audio clips and then use them in text-to-speech (TTS).
+
+There are two voice-clone providers exposed via NanoGPT:
+
+- **MiniMax voice clone**: creates a reusable `customVoiceId` you can pass as `voice` when using compatible MiniMax Speech TTS models.
+- **Qwen voice clone (1.7B)**: generates a speaker embedding file URL that you can pass to Qwen 3 TTS as `speaker_voice_embedding_file_url`.
+
+Both flows are asynchronous:
+
+1. Submit a clone job, receive a `runId` (HTTP 202).
+2. Poll the status endpoint until `status: "completed"`.
+
+## Authentication
+
+All voice clone endpoints support:
+
+- API key auth: `x-api-key: <your NanoGPT API key>` (or `Authorization: Bearer <key>`)
+- Session auth (web app): browser cookies
+
+## Endpoints
+
+| Provider | Submit | Status |
+| --- | --- | --- |
+| MiniMax | `POST /api/voice-clone/minimax` | `POST /api/voice-clone/minimax/status` |
+| Qwen | `POST /api/voice-clone/qwen` | `POST /api/voice-clone/qwen/status` |
+
+## MiniMax Voice Clone
+
+### Submit a Clone Job
+
+```
+POST /api/voice-clone/minimax
+```
+
+Supports:
+
+- `multipart/form-data` (upload an audio file)
+- `application/json` (provide `audioUrl`)
+
+**JSON request**
+```json
+{
+  "audioUrl": "https://example.com/reference-audio.mp3",
+  "customVoiceId": "MyVoice001",
+  "voiceCloneModel": "speech-02-hd",
+  "needNoiseReduction": false,
+  "needVolumeNormalization": false,
+  "accuracy": 0.7,
+  "text": "Hello! This is a preview of my cloned voice."
+}
+```
+
+**Form fields**
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `audio` | file | Yes (if no `audioUrl`) | MP3, M4A, WAV |
+| `audioUrl` | string | Yes (if no `audio`) | Hosted audio URL |
+| `customVoiceId` / `custom_voice_id` | string | Yes | Must match `^[A-Za-z][A-Za-z0-9]{7,}$` |
+| `voiceCloneModel` / `model` | string | No | Example values: `speech-02-hd`, `speech-02-turbo` |
+| `needNoiseReduction` / `need_noise_reduction` | boolean | No | Default `false` |
+| `needVolumeNormalization` / `need_volume_normalization` | boolean | No | Default `false` |
+| `accuracy` | number | No | 0 to 1, default `0.7` |
+| `text` / `previewText` | string | No | Preview text |
+
+**Response (202)**
+```json
+{
+  "status": "pending",
+  "runId": "abc123-def456",
+  "model": "MiniMax-Voice-Clone",
+  "cost": 1.0,
+  "paymentSource": "USD",
+  "isApiRequest": true,
+  "fileName": "reference.mp3",
+  "fileSize": 245000
+}
+```
+
+### Poll Job Status
+
+```
+POST /api/voice-clone/minimax/status
+```
+
+**Request body**
+```json
+{
+  "runId": "abc123-def456",
+  "cost": 1.0,
+  "paymentSource": "USD",
+  "isApiRequest": true
+}
+```
+
+**Response (in progress)**
+```json
+{
+  "status": "processing"
+}
+```
+
+**Response (completed)**
+```json
+{
+  "status": "completed",
+  "audioUrls": ["https://cdn.example.com/preview-audio.mp3"],
+  "metadata": {
+    "model": "MiniMax-Voice-Clone"
+  }
+}
+```
+
+## Qwen Voice Clone (1.7B)
+
+### Submit a Clone Job
+
+```
+POST /api/voice-clone/qwen
+```
+
+Supports:
+
+- `multipart/form-data` (upload an audio file)
+- `application/json` (provide `audioUrl`)
+
+**JSON request**
+```json
+{
+  "audioUrl": "https://example.com/reference-audio.mp3",
+  "referenceText": "Optional transcript of the reference clip."
+}
+```
+
+**Form fields**
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `audio` | file | Yes (if no `audioUrl`) | MP3, OGG, WAV, M4A, AAC |
+| `audioUrl` / `audio_url` | string | Yes (if no `audio`) | Hosted audio URL |
+| `referenceText` / `reference_text` | string | No | Optional transcript |
+
+**Response (202)**
+```json
+{
+  "status": "pending",
+  "runId": "fal-request-id-789",
+  "model": "qwen-voice-clone",
+  "cost": 0.25,
+  "paymentSource": "USD",
+  "isApiRequest": true,
+  "fileName": "audio_file",
+  "fileSize": 0
+}
+```
+
+### Poll Job Status
+
+```
+POST /api/voice-clone/qwen/status
+```
+
+**Request body**
+```json
+{
+  "runId": "fal-request-id-789",
+  "cost": 0.25,
+  "paymentSource": "USD",
+  "isApiRequest": true
+}
+```
+
+**Response headers**
+
+While the job is still processing, the response may include an `X-Poll-After` header indicating how many seconds to wait before polling again.
+
+**Response (completed)**
+```json
+{
+  "status": "completed",
+  "speakerEmbeddingUrl": "https://storage.example.com/speaker-embedding.safetensors",
+  "metadata": {
+    "model": "qwen-voice-clone"
+  }
+}
+```
+
+## Using Cloned Voices with TTS
+
+### MiniMax cloned voice (`customVoiceId`)
+
+Use your `customVoiceId` as the normal `voice` on `POST /api/tts` with a compatible MiniMax Speech TTS model:
+
+```json
+{
+  "text": "Text you want spoken in the cloned voice.",
+  "voice": "MyVoice001",
+  "model": "Minimax-Speech-02-HD",
+  "speed": 1
+}
+```
+
+### Qwen cloned voice (`speakerEmbeddingUrl`)
+
+Use `speakerEmbeddingUrl` as `speaker_voice_embedding_file_url` on `POST /api/tts` with `Qwen-3-TTS-1.7B`:
+
+```json
+{
+  "text": "Text you want spoken in the cloned voice.",
+  "model": "Qwen-3-TTS-1.7B",
+  "speaker_voice_embedding_file_url": "https://storage.example.com/speaker-embedding.safetensors",
+  "reference_text": "Optional: transcript of the original reference audio.",
+  "language": "Auto"
+}
+```
+
+## Saving MiniMax Voice IDs (Web App)
+
+If you use the NanoGPT web app, you can save and list your MiniMax `customVoiceId` values.
+
+These endpoints are **session-authenticated only** (they do not support API key auth).
+
+### List Saved Voice IDs
+
+```
+GET /api/user/voice-ids
+```
+
+**Response**
+```json
+{
+  "voiceIds": ["MyVoice001", "MyVoice002"]
+}
+```
+
+### Save a Voice ID
+
+```
+POST /api/user/voice-ids
+```
+
+**Request body**
+```json
+{
+  "voiceId": "MyVoice001"
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "voiceIds": ["MyVoice001", "MyVoice002"]
+}
+```
+
+## Pricing
+
+Clone runs are charged as a flat per-run fee:
+
+- MiniMax voice clone: $1.00 per run
+- Qwen voice clone (1.7B): $0.25 per run
+
+The submit response includes `cost` and `paymentSource` for the run.
+
+## Limitations
+
+- Both providers are asynchronous; clients must poll status until completion.
+- MiniMax `customVoiceId` must match `^[A-Za-z][A-Za-z0-9]{7,}$`.
