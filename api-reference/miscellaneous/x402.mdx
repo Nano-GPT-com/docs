@@ -1,0 +1,165 @@
+---
+title: "X-402 Micropayments (HTTP 402)"
+description: "Anonymous, pay-per-request API access using X-402 payment challenges"
+---
+
+## Overview
+
+X-402 is an HTTP-native micropayment flow built around `402 Payment Required`.
+
+With NanoGPT, X-402 lets clients pay for API calls without creating an account or pre-funding a NanoGPT balance:
+
+1. Client requests an API resource.
+2. Server replies `402 Payment Required` with payment options.
+3. Client pays using one of the offered schemes.
+4. Client retries the original request with `X-PAYMENT` (exact schemes), or completes the request after an on-chain transfer (polling schemes).
+
+If you send a normal NanoGPT API key with sufficient balance, the request uses standard billing and will not trigger X-402.
+
+## Supported Payment Schemes
+
+NanoGPT can offer multiple schemes in a single 402 response:
+
+| Scheme | Network | Asset | Flow |
+| --- | --- | --- | --- |
+| `nano` | `nano-mainnet` | XNO | Send to an ephemeral address, then poll + complete |
+| `exact` | `nano:mainnet` | XNO | Retry the original request with `X-PAYMENT` |
+| `exact` | `base` | USDC | Retry the original request with `X-PAYMENT` (EIP-3009) |
+| `usdc-base` | `base` | USDC | Send to an ephemeral address, then poll + complete |
+
+## Flow A: Exact Schemes (`X-PAYMENT` header)
+
+1. Call an API endpoint (no auth).
+2. Receive `402` with an `accepts` array that includes an `exact` option.
+3. Construct a base64-encoded JSON payment payload and retry the same request with the `X-PAYMENT` header.
+4. On success, the server returns the normal API response and may include `X-PAYMENT-RESPONSE` with settlement metadata.
+
+## Flow B: Polling Schemes (Ephemeral Address)
+
+1. Call an API endpoint (no auth).
+2. Receive `402` with an `accepts` entry that includes `payTo` and `paymentId`.
+3. Send funds to `payTo` using a wallet.
+4. Poll `GET /api/x402/status/{paymentId}` until the payment is ready.
+5. Call `POST /api/x402/complete/{paymentId}` to execute the original request.
+
+## API Endpoints
+
+### Get Payment Status
+
+```
+GET /api/x402/status/{paymentId}
+```
+
+**Response**
+```json
+{
+  "paymentId": "pay_abc123def456...",
+  "status": "pending",
+  "amountRequired": "0.05",
+  "amountReceived": "0",
+  "amountRemaining": "0.05",
+  "payTo": "nano_1abc...",
+  "expiresAt": 1700000900,
+  "pollAfterSeconds": 2,
+  "readyToComplete": false
+}
+```
+
+Common `status` values include: `pending`, `underpaid`, `paid`, `processing`, `completed`, `failed`, `refunded`, `expired`.
+
+### Complete a Payment and Execute the Original Request
+
+```
+POST /api/x402/complete/{paymentId}
+```
+
+If the payment has not yet been settled (for example, if you are completing an exact scheme via the complete endpoint), include the same `X-PAYMENT` header you would use when retrying the original request.
+
+On success, the response body is the original endpoint's response.
+
+## 402 Response Format
+
+When an endpoint returns `402 Payment Required`, the body includes:
+
+- An OpenAI-compatible `error` object
+- `x402Version`
+- An `accepts` array with payment options
+
+Example (shape):
+
+```json
+{
+  "error": {
+    "message": "Payment required.",
+    "type": "insufficient_quota",
+    "code": "insufficient_quota"
+  },
+  "x402Version": 1,
+  "accepts": [
+    {
+      "scheme": "nano",
+      "network": "nano-mainnet",
+      "maxAmountRequired": "50000000000000000000000000",
+      "maxAmountRequiredFormatted": "0.05 XNO",
+      "maxAmountRequiredUSD": 0.05,
+      "resource": "/v1/chat/completions",
+      "description": "Payment required - $0.0500 USD",
+      "payTo": "nano_1ephemeral...",
+      "paymentId": "pay_abc123...",
+      "expiresAt": 1700000900,
+      "callbackUrl": "/api/x402/status/pay_abc123...",
+      "completeUrl": "/api/x402/complete/pay_abc123...",
+      "extra": {}
+    }
+  ]
+}
+```
+
+Some responses also include convenience headers such as `X-Payment-Id`, `X-Payment-Address`, and amount hints.
+
+## Pricing Notes
+
+- Fixed-cost endpoints (for example, many media endpoints) can quote an exact USD amount in the 402 response.
+- Variable-cost endpoints (for example, chat completions) may quote a maximum based on your input and the requested output limit. If the final cost is lower than the quote, the difference may be refunded automatically.
+
+## Example: Polling (Nano)
+
+```bash
+# 1) Request (no auth)
+curl -sS -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "max_tokens": 100
+  }'
+
+# 2) Send XNO to the returned payTo address, then poll status
+curl -sS https://nano-gpt.com/api/x402/status/pay_abc123...
+
+# 3) Complete the original request once paid
+curl -sS -X POST https://nano-gpt.com/api/x402/complete/pay_abc123...
+```
+
+## Example: Exact (Base USDC)
+
+```bash
+# 1) Request (no auth) -> receive 402 with an accepts option: scheme=exact, network=base
+curl -sS -X POST https://nano-gpt.com/api/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "dall-e-3",
+    "prompt": "A sunset over mountains",
+    "size": "1024x1024"
+  }'
+
+# 2) Retry the same request with X-PAYMENT (base64 JSON payload containing your signed authorization)
+curl -sS -X POST https://nano-gpt.com/api/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -H "X-PAYMENT: <base64-encoded-payload>" \
+  -d '{
+    "model": "dall-e-3",
+    "prompt": "A sunset over mountains",
+    "size": "1024x1024"
+  }'
+```

@@ -75,6 +75,7 @@
         "pages": [
           "api-reference/miscellaneous/rate-limits",
           "api-reference/miscellaneous/error-handling",
+          "api-reference/miscellaneous/x402",
           "api-reference/miscellaneous/extended-thinking",
           "api-reference/miscellaneous/streaming-protocol",
           "api-reference/miscellaneous/prompt-caching",

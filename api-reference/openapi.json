@@ -2438,6 +2438,126 @@
         }
       }
     },
+    "/x402/status/{paymentId}": {
+      "get": {
+        "description": "Poll the status of an X-402 payment by paymentId.",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment status response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/X402StatusResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x402/complete/{paymentId}": {
+      "post": {
+        "description": "Complete a paid X-402 request and execute the original API request associated with the paymentId.",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "X-PAYMENT",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Base64-encoded payment proof for exact schemes"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Original endpoint response (after payment is verified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required or underpaid",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/X402PaymentRequiredResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            "description": "Payment already completed or processing",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "410": {
+            "description": "Payment expired",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Processing failed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/embeddings": {
       "post": {
         "description": "Create embeddings for text using OpenAI-compatible and alternative embedding models",
@@ -5311,6 +5431,78 @@
             "type": "string",
             "description": "Error message (when failed)"
           }
+        }
+      },
+      "X402AcceptOption": {
+        "type": "object",
+        "description": "One payment option offered in an X-402 402 response.",
+        "additionalProperties": true,
+        "properties": {
+          "scheme": { "type": "string" },
+          "network": { "type": "string" },
+          "asset": { "type": "string" },
+          "resource": { "type": "string" },
+          "description": { "type": "string" },
+          "payTo": { "type": "string" },
+          "paymentId": { "type": "string" },
+          "expiresAt": { "type": "integer" },
+          "callbackUrl": { "type": "string" },
+          "completeUrl": { "type": "string" },
+          "maxAmountRequired": { "type": "string" },
+          "maxAmountRequiredFormatted": { "type": "string" },
+          "maxAmountRequiredUSD": { "type": "number" },
+          "mimeType": { "type": "string" },
+          "extra": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "X402PaymentRequiredResponse": {
+        "type": "object",
+        "description": "402 Payment Required body with X-402 payment options.",
+        "additionalProperties": true,
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "message": { "type": "string" },
+              "type": { "type": "string" },
+              "code": { "type": "string" }
+            }
+          },
+          "x402Version": { "type": "integer", "example": 1 },
+          "accepts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/X402AcceptOption" }
+          },
+          "requestHash": { "type": "string" }
+        }
+      },
+      "X402StatusResponse": {
+        "type": "object",
+        "description": "X-402 status response for polling-based payment flows.",
+        "additionalProperties": true,
+        "properties": {
+          "paymentId": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "underpaid",
+              "paid",
+              "processing",
+              "completed",
+              "failed",
+              "refunded",
+              "expired"
+            ]
+          },
+          "amountRequired": { "type": "string" },
+          "amountReceived": { "type": "string" },
+          "amountRemaining": { "type": "string" },
+          "payTo": { "type": "string" },
+          "expiresAt": { "type": "integer" },
+          "pollAfterSeconds": { "type": "integer" },
+          "readyToComplete": { "type": "boolean" }
         }
       },
       "TTSResponse": {
