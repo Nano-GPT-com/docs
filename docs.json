@@ -73,6 +73,7 @@
         "group": "Miscellaneous",
         "pages": [
           "api-reference/miscellaneous/rate-limits",
+          "api-reference/miscellaneous/error-handling",
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/billing-override",
           "api-reference/miscellaneous/provider-selection",

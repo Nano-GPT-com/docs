@@ -246,12 +246,13 @@ chat_response = client.chat.completions.create(
 
 ## Rate Limits
 
-- **Default**: 100 requests per second per IP address
-- **Internal requests**: No rate limiting (requires internal auth token)
+Rate limits vary by endpoint and account. See [Rate Limits](/api-reference/miscellaneous/rate-limits).
 
 ## Error Handling
 
 The API returns standard HTTP status codes and OpenAI-compatible error responses:
+
+See also: [Error Handling](/api-reference/miscellaneous/error-handling).
 
 ```json
 {

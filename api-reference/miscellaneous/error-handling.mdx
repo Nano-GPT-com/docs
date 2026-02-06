@@ -1,0 +1,204 @@
+---
+title: "Error Handling"
+description: "Error formats, status codes, and retry guidance for the NanoGPT API."
+---
+
+## Overview
+
+NanoGPT APIs return standard HTTP status codes. Many endpoints also follow OpenAI- or Anthropic-compatible error shapes so you can reuse existing SDK error handling.
+
+If you contact support about an API error, include the `X-Request-ID` response header (when present).
+
+## Error Response Formats
+
+NanoGPT has a few common error envelopes depending on the API surface.
+
+### OpenAI-compatible (most `/api/v1/*` endpoints)
+
+Used by endpoints like:
+
+- `POST /api/v1/chat/completions`
+- `POST /api/v1/responses`
+- `POST /api/v1/embeddings`
+- `GET /api/v1/models`
+
+```json
+{
+  "error": {
+    "message": "Human-readable error message",
+    "type": "invalid_request_error",
+    "code": "missing_required_parameter",
+    "param": "model"
+  }
+}
+```
+
+Fields:
+
+- `error.message`: human-readable
+- `error.type`: high-level category (see [Error Types](#error-types))
+- `error.code`: optional machine-readable code (see [Error Codes](#error-codes))
+- `error.param`: optional name of the request field that caused the error
+
+### Anthropic-compatible (`POST /api/v1/messages`)
+
+The Messages API uses the Anthropic-style wrapper:
+
+```json
+{
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "max_tokens is required",
+    "param": "max_tokens"
+  }
+}
+```
+
+### Legacy / simple format (some `/api/*` endpoints)
+
+Some older endpoints return a simpler body:
+
+```json
+{ "error": "Insufficient balance", "status": 402 }
+```
+
+Some responses also include a structured object and convenience fields (for example, `requiredBalance` on `402`).
+
+## Status Codes
+
+This table covers the most common HTTP error statuses you may encounter.
+
+| Status | Meaning | Typical client action |
+| --- | --- | --- |
+| `400` | Invalid request / validation failed | Fix the request, then retry |
+| `401` | Missing/invalid API key | Do not retry until credentials are fixed |
+| `402` | Insufficient balance | Add funds or disable paid enhancements, then retry |
+| `403` | Authenticated but not permitted | Choose an allowed model/feature or change permissions |
+| `404` | Resource not found | Check the model/resource ID |
+| `408` / `504` | Timeout | Retry with backoff |
+| `409` | Conflict | Resolve state (duplicate/redeemed/already processed) |
+| `413` | Payload too large | Reduce payload size and retry |
+| `429` | Rate limited | Wait (use `Retry-After` if present), then retry |
+| `500` | Server error | Retry with backoff |
+| `503` | Temporarily unavailable | Retry with backoff; consider changing model if persistent |
+
+Notes:
+
+- Some endpoints include convenience fields like `status` in the JSON body mirroring the HTTP status code.
+- Some error responses include `Retry-After` (seconds) for `429`.
+
+## Error Types
+
+Depending on the endpoint, you may see different type strings. Common values include:
+
+- `invalid_request_error` (400)
+- `authentication_error` (401)
+- `permission_denied_error` or `permission_error` (403)
+- `not_found_error` (404)
+- `rate_limit_error` (429)
+- `server_error`, `service_unavailable`, or `api_error` (500/503)
+
+## Error Codes
+
+Not every error includes a `code`. When present, codes are useful for programmatic handling.
+
+Common codes include:
+
+### Request validation
+
+- `missing_required_parameter`
+- `invalid_parameter_value`
+- `invalid_json`
+- `invalid_json_schema`
+- `tool_choice_unsupported`
+- `image_input_not_supported`
+
+### Content and context
+
+- `content_policy_violation`
+- `context_length_exceeded`
+- `empty_response`
+
+### Model and routing
+
+- `model_not_found`
+- `model_not_allowed`
+- `model_not_available`
+- `all_fallbacks_failed`
+- `no_fallback_available`
+- `fallback_blocked_for_cache_consistency`
+
+### Balance and payment
+
+- `memory_balance_required`
+- `webSearch_balance_required`
+- `both_balance_required`
+
+### Rate limiting
+
+- `rate_limit_exceeded`
+
+## Streaming Errors
+
+When using Server-Sent Events (`"stream": true`), errors can happen:
+
+- Before streaming begins (you get a normal JSON error response with an HTTP status code)
+- Mid-stream (you may receive an error frame/chunk, or the connection may terminate)
+
+Example (mid-stream error frame):
+
+```text
+data: {"id":"chatcmpl_...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"error"}],"error":{"status":503,"message":"Service temporarily unavailable. Please try again later.","code":"service_unavailable"}}
+data: [DONE]
+```
+
+If an error happens mid-stream, treat it as a failed request:
+
+- Surface/log the error message
+- Log the `X-Request-ID` header if available
+- Retry only when the status/category indicates it is safe to retry (for example 408/429/500/503)
+
+## Retry Guidance
+
+General retry recommendations:
+
+- Retry: `408`, `429`, `500`, `503` (use exponential backoff and respect `Retry-After`)
+- Do not blindly retry: `400`, `401`, `402`, `403`, `404`, `409`, `413`
+
+Suggested backoff (example):
+
+```text
+Attempt 1: 1s
+Attempt 2: 2s
+Attempt 3: 4s
+```
+
+Add jitter to avoid synchronized retries.
+
+If you need current guidance on global rate limits, see [Rate Limits](/api-reference/miscellaneous/rate-limits).
+
+## Balance Errors (402)
+
+Some endpoints return `402 Payment Required` when your account balance is insufficient. These responses often include a `requiredBalance` field.
+
+Example:
+
+```json
+{
+  "error": "Insufficient balance",
+  "requiredBalance": 0.0035,
+  "status": 402
+}
+```
+
+Feature-specific variants may include a structured error `code` such as `memory_balance_required` or `webSearch_balance_required`.
+
+## Content Policy and Empty Responses
+
+- If a request is blocked by safety checks (`content_policy_violation`), the API will return a `400` error and is intended to avoid charging for the blocked request.
+- If the API returns `empty_response`, the request is intended to avoid charging (common causes: stop sequences, very low `max_tokens`, or filtering).
+
+## BYOK Notes
+
+When using BYOK (Bring Your Own Key), some error messages may reference "your API key" because the upstream credentials belong to you.
