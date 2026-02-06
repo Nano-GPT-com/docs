@@ -15,6 +15,69 @@ The Teams API enables programmatic management of teams, members, invitations, us
 
 ---
 
+## Default Team Selection
+
+If you belong to multiple teams, you can set a default team. The default team affects which team context is used by the NanoGPT web app and other session-authenticated requests that support team billing and settings.
+
+### Set Default Team
+
+```
+PATCH /api/user/default-team
+```
+
+**Request Body** (all fields optional):
+```json
+{
+  "team_uuid": "550e8400-e29b-xxxx-xxxx-xxxxxxxxxxxx"
+}
+```
+
+Or by numeric ID:
+```json
+{
+  "team_id": 123
+}
+```
+
+To clear the default team and return to personal billing:
+```json
+{
+  "team_uuid": null
+}
+```
+
+**Response**:
+```json
+{
+  "ok": true,
+  "metadata": {
+    "default_team_uuid": "550e8400-e29b-xxxx-xxxx-xxxxxxxxxxxx"
+  }
+}
+```
+
+---
+
+## Referral Link
+
+Referral links let you share a signup link that is tied to your account.
+
+### Get or Create Referral Link
+
+```
+GET /api/subscription/referral-link
+```
+
+**Response**:
+```json
+{
+  "code": "AbCdEfGh",
+  "url": "https://nano-gpt.com/subscription/AbCdEfGh"
+}
+```
+
+---
+
 ## Error Response Format
 
 All errors return JSON in this format:
@@ -122,6 +185,7 @@ GET /api/teams/{teamUuid}
     "default_member_usage_limit_usd": 100,
     "usage_limit_usd": null,
     "usage_limit_enforced": true,
+    "high_spend_text_discount": false,
     "balances": {
       "usd_balance": 250.00,
       "nano_balance": 1500.00
@@ -133,6 +197,7 @@ GET /api/teams/{teamUuid}
 
 **Notes**:
 - `balances` shows the team owner's account balance
+- `high_spend_text_discount` indicates whether a high-spend discount is currently active for this team (when active, it applies automatically)
 - `role` is the requesting user's role in this team
 
 ---
@@ -839,6 +904,24 @@ GET /api/teams/{teamUuid}/usage
 
 ---
 
+**Notes**:
+- Team-billed usage is charged against the team's balances (shown on `GET /api/teams/{teamUuid}`).
+- Individual members can choose whether to bill to the team or their personal account via `PATCH /api/teams/{teamUuid}/members/self` (`bill_to_team`).
+
+---
+
+### High-Spend Text Discount
+
+Some teams may automatically qualify for discounted pricing on text model usage. When active, `GET /api/teams/{teamUuid}` will show:
+
+```json
+{
+  "team": {
+    "high_spend_text_discount": true
+  }
+}
+```
+
 ## Settings
 
 ### Update Team Settings
@@ -869,6 +952,170 @@ PATCH /api/teams/{teamUuid}/settings
   "ok": true
 }
 ```
+
+---
+
+## BYOK (Team Settings & Provider Keys)
+
+Teams can store provider keys and configure how team-billed traffic uses BYOK.
+
+For provider slugs and key formats (including JSON-based credentials like AWS/Azure), see `api-reference/miscellaneous/byok`.
+
+**Rate Limits**:
+- Key management (list/add/revoke): 5 operations per minute per team
+- Key validation: 10 requests per minute per team
+
+### Get BYOK Settings
+
+```
+GET /api/teams/{teamUuid}/byok-settings
+```
+
+**Authorization**: Any team member
+
+**Response**:
+```json
+{
+  "byok_enabled": true,
+  "byok_mode": "prefer_team"
+}
+```
+
+BYOK modes:
+
+| Mode | Behavior |
+| --- | --- |
+| `disabled` | Team BYOK is off |
+| `prefer_team` | Use team keys when available; otherwise fall back |
+| `require_team` | Require team keys; fail if missing |
+
+### Update BYOK Settings
+
+```
+PATCH /api/teams/{teamUuid}/byok-settings
+```
+
+**Authorization**: Owner or Admin
+
+**Request Body**:
+```json
+{
+  "byok_enabled": true,
+  "byok_mode": "prefer_team"
+}
+```
+
+**Response**:
+```json
+{
+  "ok": true,
+  "byok_enabled": true,
+  "byok_mode": "prefer_team"
+}
+```
+
+### List Team Provider Keys
+
+```
+GET /api/teams/{teamUuid}/provider-keys
+```
+
+**Authorization**: Any team member
+
+**Response**:
+```json
+{
+  "keys": [
+    {
+      "id": 42,
+      "provider": "openai",
+      "key_suffix": "abcd",
+      "status": "active",
+      "created_at": "2025-01-15T10:00:00Z",
+      "last_used_at": "2025-01-20T14:30:00Z",
+      "added_by_session_id": 123
+    }
+  ]
+}
+```
+
+### Add or Replace a Team Provider Key
+
+```
+POST /api/teams/{teamUuid}/provider-keys
+```
+
+**Authorization**: Owner or Admin
+
+**Request Body**:
+```json
+{
+  "provider": "openai",
+  "key": "sk-..."
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "id": 43,
+  "provider": "openai",
+  "key_suffix": "abcd"
+}
+```
+
+### Revoke a Team Provider Key
+
+```
+DELETE /api/teams/{teamUuid}/provider-keys?provider=openai
+```
+
+**Authorization**: Owner or Admin
+
+**Response**:
+```json
+{
+  "success": true
+}
+```
+
+### Validate a Team Provider Key (Optional Preflight)
+
+```
+POST /api/teams/{teamUuid}/provider-keys/validate
+```
+
+**Authorization**: Owner or Admin
+
+**Request Body**:
+```json
+{
+  "provider": "openai",
+  "key": "sk-...",
+  "model": "gpt-4o-mini"
+}
+```
+
+**Response**:
+```json
+{
+  "valid": true,
+  "model": "gpt-4o-mini"
+}
+```
+
+Or on failure:
+```json
+{
+  "valid": false,
+  "error": "Invalid API key",
+  "model": "gpt-4o-mini"
+}
+```
+
+**Notes**:
+- In `prefer_team` mode, team-billed traffic will not use a member's personal BYOK keys unless the client explicitly enables BYOK for the request.
 
 ---
 
@@ -946,9 +1193,10 @@ To allow all models:
 ```
 
 **Notes**:
-- Models not listed in the map are allowed by default
-- Set a model to `false` to explicitly restrict it
-- Set `allowed_models` to `null` to allow all models
+- `allowed_models: null` means all models are allowed.
+- When `allowed_models` is an object, only models with a value of `true` are allowed for non-owners. Any missing models (or models with `false`) are blocked.
+- An empty object `{}` blocks all models for non-owners.
+- Team owners are not restricted by the allowlist.
 
 ---
 
@@ -992,11 +1240,32 @@ POST /api/teams/{teamUuid}/owner
 
 ## Role Reference
 
-| Role | Create Team | View Team | Manage Members | Manage Settings | Delete Team |
-|------|-------------|-----------|----------------|-----------------|-------------|
-| Owner | - | Yes | Yes | Yes | Yes |
-| Admin | - | Yes | Yes | Yes | No |
-| Member | - | Yes | No | No | No |
+| Feature | Owner | Admin | Member |
+| --- | --- | --- | --- |
+| View team details | Yes | Yes | Yes |
+| Update team (name/status) | Yes | Yes | No |
+| Delete team | Yes | No | No |
+| List members | Yes | Yes | Yes |
+| Change member roles | Yes | Yes | No |
+| Set member usage limits | Yes | Yes | No |
+| Remove members | Yes | Yes | No |
+| Update own preferences (`/members/self`) | Yes | Yes | Yes |
+| Manage invitations | Yes | Yes | No |
+| Manage invite link | Yes | Yes | No |
+| Send invite link email | Yes | Yes | No |
+| View join requests | Yes | Yes | No |
+| Accept/reject join requests | Yes | Yes | No |
+| Delete processed join requests | Yes | Yes | No |
+| View team usage (`/usage`) | Yes | Yes | Yes |
+| Update team settings (`/settings`) | Yes | Yes | No |
+| View allowed models | Yes | Yes | Yes |
+| Update allowed models | Yes | Yes | No |
+| Transfer ownership | Yes | No | No |
+| View BYOK settings | Yes | Yes | Yes |
+| Update BYOK settings | Yes | Yes | No |
+| List team provider keys | Yes | Yes | Yes |
+| Add/revoke team provider keys | Yes | Yes | No |
+| Validate team provider keys | Yes | Yes | No |
 
 ---
 
