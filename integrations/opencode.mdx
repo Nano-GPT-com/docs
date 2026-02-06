@@ -30,9 +30,9 @@ Add your NanoGPT API key to `~/.local/share/opencode/auth.json`:
 
 ```json
 {
-  "nanogpt": {
+  "nano-gpt": {
     "type": "api",
-    "key": "your-nanogpt-api-key"
+    "key": "your-nano-gpt-api-key"
   }
 }
 ```
@@ -43,9 +43,9 @@ Create `~/.config/opencode/.opencode.json`:
 
 ```json
 {
-  "model": "nanogpt/claude-sonnet-4-5-20250929",
+  "model": "nano-gpt/claude-sonnet-4-5-20250929",
   "provider": {
-    "nanogpt": {
+    "nano-gpt": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "NanoGPT",
       "options": {
@@ -96,7 +96,7 @@ Use the `/model` command inside OpenCode to switch between models, or edit the `
 
 ```json
 {
-  "model": "nanogpt/claude-opus-4-5-20251101"
+  "model": "nano-gpt/claude-opus-4-5-20251101"
 }
 ```
 
@@ -106,12 +106,12 @@ The setup script preconfigures these models:
 
 | Model ID | Description |
 |----------|-------------|
-| `nanogpt/claude-sonnet-4-5-20250929` | Claude Sonnet 4.5 (default) |
-| `nanogpt/claude-opus-4-5-20251101` | Claude 4.5 Opus |
-| `nanogpt/openai/gpt-5.2` | GPT 5.2 |
-| `nanogpt/google/gemini-3-flash-preview` | Gemini 3 Flash (Preview) |
-| `nanogpt/gemini-3-pro-preview` | Gemini 3 Pro |
-| `nanogpt/zai-org/glm-4.7` | GLM 4.7 |
+| `nano-gpt/claude-sonnet-4-5-20250929` | Claude Sonnet 4.5 (default) |
+| `nano-gpt/claude-opus-4-5-20251101` | Claude 4.5 Opus |
+| `nano-gpt/openai/gpt-5.2` | GPT 5.2 |
+| `nano-gpt/google/gemini-3-flash-preview` | Gemini 3 Flash (Preview) |
+| `nano-gpt/gemini-3-pro-preview` | Gemini 3 Pro |
+| `nano-gpt/zai-org/glm-4.7` | GLM 4.7 |
 
 ### Adding More Models
 
@@ -144,4 +144,4 @@ OpenCode searches for config in this order:
 
 **Authentication errors?**
 
-Check that your API key is correctly set in `~/.local/share/opencode/auth.json` (as an object with `type` and `key`) and that the key name matches the provider ID (`nanogpt`).
+Check that your API key is correctly set in `~/.local/share/opencode/auth.json` (as an object with `type` and `key`) and that the key name matches the provider ID (`nano-gpt`).
