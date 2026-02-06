@@ -756,7 +756,18 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 ### Bring your own key (BYOK)
 
-BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup and Brave always use NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search. Configure keys in team settings or pass them via headers.
+BYOK lets you route requests through your own upstream provider credentials.
+
+- Configure keys once: https://nano-gpt.com/byok
+- Opt in per request via `x-use-byok: true` or `byok.enabled: true`
+- Optionally force the provider via `x-byok-provider` or `byok.provider`
+- BYOK usage includes a **5% platform fee** (your provider bills you directly for usage)
+
+See: [Bring Your Own Key (BYOK)](/api-reference/miscellaneous/byok)
+
+#### Web search BYOK
+
+For web search enhancements, BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup and Brave always use NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search.
 
 ### Advanced behavior (optional)
 
