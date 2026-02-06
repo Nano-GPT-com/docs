@@ -1,0 +1,119 @@
+---
+title: "Extended Thinking (Reasoning)"
+description: "How NanoGPT surfaces and controls reasoning output across OpenAI-compatible endpoints"
+---
+
+## Overview
+
+Some models generate a separate **reasoning** stream (sometimes called *thinking*) in addition to the final **answer** content.
+
+NanoGPT exposes this in an OpenAI-compatible way for Chat Completions:
+
+- Streaming (SSE): `choices[0].delta.reasoning` (or legacy `choices[0].delta.reasoning_content`)
+- Non-streaming: `choices[0].message.reasoning` (or legacy `choices[0].message.reasoning_content`)
+
+Not every model exposes reasoning text. If a model does not emit a reasoning stream, these fields may be absent even if the model internally "reasons".
+
+## Endpoint Variants (Chat Completions)
+
+NanoGPT provides three base paths for chat completions. All accept the same request format and model names, but differ in how reasoning content is delivered:
+
+| Base URL | Behavior | Use When |
+| --- | --- | --- |
+| `/api/v1/chat/completions` | Reasoning and answer are separate fields (`reasoning` + `content`). | Most OpenAI-compatible clients |
+| `/api/v1legacy/chat/completions` | Same as `/api/v1/`, but uses the legacy field name `reasoning_content`. | Clients that only parse `reasoning_content` |
+| `/api/v1thinking/chat/completions` | Reasoning and answer are merged into the normal `content` stream. | Clients that ignore reasoning fields but should still display thoughts |
+
+This is the same behavior documented under **Reasoning Streams** on the [Chat Completion](/api-reference/endpoint/chat-completion) page.
+
+## Controlling Reasoning Output
+
+### Hide Reasoning
+
+To strip reasoning from the response (both streaming and non-streaming), send:
+
+```json
+{
+  "reasoning": { "exclude": true }
+}
+```
+
+Or append the model suffix:
+
+- `:reasoning-exclude`
+
+Example:
+
+```json
+{
+  "model": "anthropic/claude-opus-4.5:reasoning-exclude",
+  "messages": [{ "role": "user", "content": "What is 2+2?" }]
+}
+```
+
+### Reasoning Effort
+
+For reasoning-capable models, you can ask for lighter/heavier reasoning:
+
+```json
+{
+  "reasoning_effort": "high"
+}
+```
+
+Or:
+
+```json
+{
+  "reasoning": { "effort": "high" }
+}
+```
+
+Valid values are `none`, `minimal`, `low`, `medium`, `high`.
+
+### Legacy Field Name Compatibility (`reasoning_content`)
+
+If a client expects `reasoning_content` instead of `reasoning`, you can:
+
+1. Use `/api/v1legacy/chat/completions`, or
+2. Set `reasoning.delta_field: "reasoning_content"`, or
+3. Use the shorthands `reasoning_delta_field` / `reasoning_content_compat`.
+
+## How Reasoning Appears in Responses
+
+### Streaming (SSE)
+
+Reasoning deltas appear before or alongside content deltas:
+
+```text
+data: {"choices":[{"index":0,"delta":{"reasoning":"Thinking..."},"finish_reason":null}]}
+
+data: {"choices":[{"index":0,"delta":{"content":"Here is the answer."},"finish_reason":null}]}
+```
+
+### Non-Streaming
+
+The final message may include a separate reasoning field:
+
+```json
+{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "Here is the answer.",
+        "reasoning": "Thinking..."
+      }
+    }
+  ]
+}
+```
+
+## Cost Notes
+
+Reasoning tokens are billed as output tokens. If you enable higher reasoning effort (or use thinking variants), expect higher `completion_tokens` and higher cost.
+
+## See Also
+
+- Chat Completions: reasoning controls and endpoint variants ([Chat Completion](/api-reference/endpoint/chat-completion))
+- Streaming protocol details across endpoints ([Streaming Protocol](/api-reference/miscellaneous/streaming-protocol))

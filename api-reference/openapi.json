@@ -2667,6 +2667,41 @@
                 "default": false
               }
             }
+          },
+          "reasoning_effort": {
+            "type": "string",
+            "description": "Controls reasoning depth for reasoning-capable models",
+            "enum": ["none", "minimal", "low", "medium", "high"]
+          },
+          "reasoning": {
+            "type": "object",
+            "description": "Reasoning configuration. Use exclude to hide reasoning output, effort to control reasoning depth, and delta_field to switch to legacy reasoning_content fields.",
+            "additionalProperties": true,
+            "properties": {
+              "exclude": {
+                "type": "boolean",
+                "description": "When true, omits reasoning fields from the response"
+              },
+              "effort": {
+                "type": "string",
+                "description": "Alias for reasoning_effort",
+                "enum": ["none", "minimal", "low", "medium", "high"]
+              },
+              "delta_field": {
+                "type": "string",
+                "description": "When set to \"reasoning_content\", uses legacy reasoning_content fields instead of reasoning",
+                "enum": ["reasoning_content"]
+              }
+            }
+          },
+          "reasoning_delta_field": {
+            "type": "string",
+            "description": "Shorthand for reasoning.delta_field",
+            "enum": ["reasoning_content"]
+          },
+          "reasoning_content_compat": {
+            "type": "boolean",
+            "description": "Shorthand to force legacy reasoning_content fields in the response"
           }
         }
       },
@@ -2777,6 +2812,19 @@
                     "content": {
                       "type": "string",
                       "description": "Content of the completion message"
+                    },
+                    "reasoning": {
+                      "type": "string",
+                      "description": "Optional reasoning output (when supported and not excluded)"
+                    },
+                    "reasoning_content": {
+                      "type": "string",
+                      "description": "Legacy alias of reasoning (only present when legacy compatibility is enabled)"
+                    },
+                    "reasoning_details": {
+                      "type": "array",
+                      "description": "Optional structured reasoning metadata (when available)",
+                      "items": { "type": "object", "additionalProperties": true }
                     }
                   }
                 },
@@ -2816,6 +2864,21 @@
               "completion_tokens": {
                 "type": "integer",
                 "description": "Number of tokens in the completion"
+              },
+              "completion_tokens_details": {
+                "type": "object",
+                "description": "Optional breakdown of completion token accounting",
+                "additionalProperties": true,
+                "properties": {
+                  "reasoning_tokens": {
+                    "type": "integer",
+                    "description": "Reasoning tokens within the completion (when reported)"
+                  }
+                }
+              },
+              "reasoning_tokens": {
+                "type": "integer",
+                "description": "Reasoning tokens within the completion (when reported)"
               },
               "total_tokens": {
                 "type": "integer",

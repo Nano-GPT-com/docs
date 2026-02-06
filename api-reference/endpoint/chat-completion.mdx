@@ -1134,6 +1134,8 @@ curl -s -X POST \
 
 The Chat Completions endpoint separates the model’s visible answer from its internal reasoning. By default, reasoning is included and delivered alongside normal content so that clients can decide whether to display it. Requests that use the `thinking` model suffix (for example `:thinking` or `-thinking:8192`) are normalized before dispatch, but the response contract remains the same.
 
+See also: [Extended Thinking (Reasoning)](/api-reference/miscellaneous/extended-thinking).
+
 ### Endpoint variants
 
 Choose the base path that matches how your client consumes reasoning streams:
