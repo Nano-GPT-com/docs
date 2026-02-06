@@ -1605,7 +1605,7 @@
     },
     "/transaction/create/{ticker}": {
       "post": {
-        "description": "Generate a cryptocurrency deposit address via BTCPayServer integration. When crypto is sent to the generated address, the user's account balance is automatically credited.",
+        "description": "Create a deposit payment intent for the specified ticker. Depending on the ticker, the response may include a pay-in address and/or a payment link. When payment confirms, the user's account balance is automatically credited.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1618,11 +1618,11 @@
           {
             "name": "ticker",
             "in": "path",
-            "description": "Cryptocurrency ticker symbol",
+            "description": "Deposit method ticker symbol",
             "required": true,
             "schema": {
               "type": "string",
-              "enum": ["btc", "ltc", "xmr", "doge", "dash", "bch", "ban"]
+              "enum": ["btc", "btc-ln", "ltc", "ltc-mweb", "xmr", "doge", "dash", "zec", "bch", "ban", "kas", "ton", "near", "egld", "vvv", "zano", "fusd"]
             }
           }
         ],
@@ -1686,7 +1686,7 @@
     },
     "/transaction/limits/{ticker}": {
       "get": {
-        "description": "Get minimum and maximum deposit amounts for a cryptocurrency",
+        "description": "Get minimum and maximum deposit amounts for a payment method",
         "security": [
           {
             "apiKeyAuth": []
@@ -1699,17 +1699,17 @@
           {
             "name": "ticker",
             "in": "path",
-            "description": "Cryptocurrency ticker symbol",
+            "description": "Deposit method ticker symbol",
             "required": true,
             "schema": {
               "type": "string",
-              "enum": ["btc", "ltc", "xmr", "doge", "dash", "bch", "ban"]
+              "enum": ["btc", "btc-ln", "ltc", "ltc-mweb", "xmr", "doge", "dash", "zec", "bch", "ban", "kas", "ton", "near", "egld", "vvv", "zano", "fusd", "usdc", "usdt", "eth", "sol", "usd", "eur", "gbp"]
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Payment limits for the cryptocurrency",
+            "description": "Payment limits for the deposit method",
             "content": {
               "application/json": {
                 "schema": {
@@ -1730,6 +1730,305 @@
           },
           "401": {
             "description": "Unauthorized - Invalid or missing API key"
+          }
+        }
+      }
+    },
+    "/transaction/create/daimo/{ticker}": {
+      "post": {
+        "description": "Create a multi-chain payment intent via Daimo Pay. Daimo settles these payments as USDC.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "description": "Daimo payment ticker",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["usdc", "usdt", "eth", "sol"]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Payment amount parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CryptoDepositRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Daimo payment intent created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DaimoCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid amount or unsupported ticker",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error - Payment provider unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transaction/create/usd": {
+      "post": {
+        "description": "Create a Stripe Checkout session for card deposits.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Deposit amount parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CryptoDepositRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Stripe Checkout session created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripeCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid amount",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transaction/status/{ticker}/{txId}": {
+      "get": {
+        "description": "Check the status of a deposit transaction for a given ticker and transaction ID.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "description": "Deposit method ticker symbol",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "txId",
+            "in": "path",
+            "description": "Transaction identifier returned by the create endpoint (or a provider session ID, depending on ticker).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current transaction status",
+            "headers": {
+              "x-poll-after": {
+                "description": "Recommended polling interval (seconds) before checking again.",
+                "schema": { "type": "integer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Unsupported ticker or invalid txId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "404": {
+            "description": "Not Found - Transaction not found"
+          }
+        }
+      }
+    },
+    "/transaction/status/events": {
+      "get": {
+        "description": "Subscribe to real-time deposit status updates via Server-Sent Events (SSE).",
+        "security": [
+          {
+            "apiKeyAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "description": "Deposit method ticker symbol",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "txId",
+            "in": "query",
+            "description": "Transaction identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of status updates",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          }
+        }
+      }
+    },
+    "/get-nano-price": {
+      "get": {
+        "description": "Get the latest NANO/USD price used by Nano-related deposit flows.",
+        "responses": {
+          "200": {
+            "description": "Nano price response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NanoPriceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get-fiat-prices": {
+      "get": {
+        "description": "Get fiat exchange rates (USD conversion rates for common currencies).",
+        "responses": {
+          "200": {
+            "description": "Fiat prices response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiatPricesResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -4790,7 +5089,7 @@
         "properties": {
           "amount": {
             "type": "number",
-            "description": "Amount of cryptocurrency to deposit. Must be between minimum and maximum limits based on USD equivalent (default $1-$2,000, varies by currency).",
+            "description": "Amount to deposit. Interpretation depends on ticker/provider (for example, crypto units for invoice-based deposits, or a USD/USDC amount for checkout-style deposits). Must be within the limits for the ticker.",
             "example": 0.001
           }
         }
@@ -4817,7 +5116,7 @@
           "status": {
             "type": "string",
             "description": "Payment status",
-            "enum": ["New", "Pending", "Processing", "Completed"],
+            "enum": ["New", "Pending", "Processing", "Paid", "Completed", "Expired", "Failed"],
             "example": "New"
           },
           "paymentLink": {
@@ -4836,6 +5135,75 @@
             "format": "date-time",
             "description": "ISO timestamp when address expires",
             "example": "2026-01-19T13:00:00.000Z"
+          }
+        }
+      },
+      "DaimoCreateResponse": {
+        "type": "object",
+        "required": ["paymentId"],
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "description": "Encrypted Daimo payment identifier used by the client to launch the Daimo Pay widget",
+            "example": "encrypted_payment_id"
+          }
+        }
+      },
+      "StripeCreateResponse": {
+        "type": "object",
+        "required": ["paymentLink"],
+        "properties": {
+          "paymentLink": {
+            "type": "string",
+            "description": "Stripe Checkout URL the user should open to complete payment",
+            "example": "https://checkout.stripe.com/c/pay/cs_test_..."
+          }
+        }
+      },
+      "TransactionStatusResponse": {
+        "type": "object",
+        "description": "Transaction status response. Fields vary by ticker/provider.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Current status value"
+          }
+        },
+        "additionalProperties": true
+      },
+      "NanoPriceResponse": {
+        "type": "object",
+        "required": ["pair", "latestPrice"],
+        "properties": {
+          "pair": {
+            "type": "string",
+            "description": "Price pair identifier",
+            "example": "NANOUSD"
+          },
+          "latestPrice": {
+            "type": "number",
+            "description": "Latest price",
+            "example": 1.23
+          }
+        }
+      },
+      "FiatPricesResponse": {
+        "type": "object",
+        "required": ["usdTo", "currencies"],
+        "properties": {
+          "usdTo": {
+            "type": "object",
+            "description": "Map of currency code to conversion rate (1 USD = rate * currency)",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "currencies": {
+            "type": "object",
+            "description": "Map of currency code to display name",
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
