@@ -1,0 +1,194 @@
+---
+title: "Streaming Protocol (SSE)"
+description: "How NanoGPT streams responses over Server-Sent Events across chat completions, messages, and responses."
+---
+
+## Overview
+
+NanoGPT supports streaming responses via Server-Sent Events (SSE). Streaming is available on these endpoints:
+
+| Endpoint | Style | Content-Type |
+| --- | --- | --- |
+| `POST /v1/chat/completions` | OpenAI Chat Completions compatible | `text/event-stream` |
+| `POST /v1/messages` | Anthropic Messages compatible | `text/event-stream` (named SSE events) |
+| `POST /v1/responses` | OpenAI Responses API compatible | `text/event-stream` |
+
+All SSE streams are delivered as a sequence of `data:` frames separated by a blank line. Some endpoints also include an `event:` line to name the event type.
+
+## Enabling Streaming
+
+Set `"stream": true` in the JSON request body.
+
+Chat Completions:
+
+```json
+{
+  "model": "openai/gpt-5.2",
+  "messages": [{ "role": "user", "content": "Hello!" }],
+  "stream": true
+}
+```
+
+Messages:
+
+```json
+{
+  "model": "claude-sonnet-4-5-20250929",
+  "max_tokens": 1024,
+  "messages": [{ "role": "user", "content": "Hello!" }],
+  "stream": true
+}
+```
+
+Responses:
+
+```json
+{
+  "model": "openai/gpt-5.2",
+  "input": "Hello!",
+  "stream": true
+}
+```
+
+If `stream` is omitted or `false`, the endpoint returns a single JSON response.
+
+## Chat Completions Streaming (`/v1/chat/completions`)
+
+Chat Completions streams OpenAI-style `chat.completion.chunk` objects.
+
+### Frame Format
+
+Each SSE frame is a JSON object in a `data:` line:
+
+```text
+data: {"id":"chatcmpl_...","object":"chat.completion.chunk","created":1700000000,"model":"...","choices":[{"index":0,"delta":{"role":"assistant","content":"Hello"},"finish_reason":null}]}
+```
+
+The first chunk often includes `delta.role: "assistant"`. Subsequent chunks typically include only incremental deltas like `delta.content`.
+
+### Finish Reasons
+
+The final chunk has a non-null `finish_reason`:
+
+- `stop`
+- `length`
+- `tool_calls`
+- `content_filter`
+
+### End of Stream
+
+After the final chunk, the stream terminates with:
+
+```text
+data: [DONE]
+```
+
+Clients should treat `[DONE]` as a literal string (do not JSON-parse it).
+
+### Reasoning / Thinking Deltas
+
+Some models stream reasoning alongside content. Depending on the endpoint variant you use, the delta field may be `reasoning` or `reasoning_content`.
+
+Example:
+
+```text
+data: {"choices":[{"index":0,"delta":{"reasoning":"Thinking..."},"finish_reason":null}]}
+data: {"choices":[{"index":0,"delta":{"content":"Answer text..."},"finish_reason":null}]}
+```
+
+### Tool Call Deltas
+
+Tool calls stream via `delta.tool_calls[]`. Accumulate `function.arguments` across frames for the same `tool_calls[index]`.
+
+### Usage In Streaming
+
+Usage is not included by default in streaming.
+
+To receive usage, set:
+
+```json
+{
+  "stream": true,
+  "stream_options": { "include_usage": true }
+}
+```
+
+If enabled, a final chunk includes a `usage` field. (Some features, like prompt caching helpers, can cause usage to be included automatically.)
+
+## Messages Streaming (`/v1/messages`)
+
+The Messages endpoint streams Anthropic-style **named SSE events**. Each event includes an `event:` line and a `data:` line.
+
+Typical sequence:
+
+1. `message_start`
+2. `content_block_start`
+3. `content_block_delta` (repeated)
+4. `content_block_stop`
+5. `message_delta`
+6. `message_stop`
+
+Example (end of stream):
+
+```text
+event: message_stop
+data: {"type":"message_stop"}
+```
+
+### Tool Use
+
+Tool calls appear as `tool_use` content blocks. Tool input streams as `input_json_delta` fragments inside `content_block_delta` events.
+
+### Thinking Blocks
+
+Thinking can appear as a separate content block type (`thinking`) before normal text blocks.
+
+### Usage
+
+Usage information is included near the end of the stream (for example on `message_delta`), and includes `input_tokens` and `output_tokens`. When prompt caching is active, cache token fields may also appear.
+
+## Responses Streaming (`/v1/responses`)
+
+Responses streams a sequence of typed objects. NanoGPT emits these as SSE `data:` frames containing JSON with a `type` field (for example `response.created`, `response.output_text.delta`, etc.).
+
+Example:
+
+```text
+data: {"type":"response.created","response":{...},"sequence_number":0}
+
+data: {"type":"response.output_text.delta","item_id":"msg_...","output_index":0,"content_index":0,"delta":"Hello","sequence_number":3}
+
+data: {"type":"response.completed","response":{...},"sequence_number":11}
+
+data: [DONE]
+```
+
+Terminal events include:
+
+- `response.completed`
+- `response.incomplete`
+- `response.failed`
+
+### Tool Calls
+
+Tool calls appear as `function_call` output items. Arguments stream via `response.function_call_arguments.delta` frames and finish with `response.function_call_arguments.done`.
+
+### Usage
+
+Usage appears on the terminal event inside the full `response` object (for example `response.completed.response.usage`).
+
+## Error Handling Notes
+
+- If an error happens before streaming begins, you will receive a normal JSON error response with an HTTP status code.
+- If an error happens mid-stream, the stream may end early. Your parser should handle EOF without a terminal marker as an error/retry condition.
+
+For general status-code handling and retry guidance, see [Error Handling](/api-reference/miscellaneous/error-handling).
+
+## Raw SSE Parsing Tips
+
+When parsing SSE manually:
+
+- Events are separated by a blank line (`\\n\\n` or `\\r\\n\\r\\n`).
+- A single event can include multiple `data:` lines; concatenate them with `\\n` before parsing as JSON.
+- Handle `[DONE]` as a sentinel string.
+
