@@ -1,40 +1,35 @@
 ---
-title: 'v1/speech (Synchronous TTS)'
-openapi: 'POST /v1/speech'
+title: 'v1/audio/speech (TTS + Music)'
 ---
 
 ## Overview
 
-Synthesize speech with a single, low‑latency request. The `POST /v1/speech` endpoint returns audio bytes directly in the HTTP response—ideal for simple request/response flows, UI playback, and short prompts without job polling.
+Synthesize speech (TTS) or generate music with a single request. The OpenAI-compatible `POST /v1/audio/speech` endpoint returns audio bytes directly in the HTTP response.
+
+When you use a music model (for example `Minimax-Music-02`), the `input` field is treated as a music prompt (not text to speak) and `voice` is ignored. For a dedicated music guide and model list, see `api-reference/music-generation.mdx`.
 
 ## Endpoint
 
-- Method/Path: `POST https://nano-gpt.com/api/v1/speech`
+- Method/Path: `POST https://nano-gpt.com/api/v1/audio/speech`
 - Auth: `Authorization: Bearer <API_KEY>`
 - Required header: `Content-Type: application/json`
-- Optional header: `Accept` to prefer a MIME type (for example `audio/mpeg`, `audio/wav`, `audio/ogg`). If omitted, the response `Content-Type` follows the requested `format` in the body.
+- You may see older examples using `POST https://nano-gpt.com/api/v1/speech`. Prefer `/api/v1/audio/speech` for OpenAI SDK compatibility.
 
 ## Request Body (JSON)
 
-- `model` (string, required): TTS‑capable model ID (for example `nano-tts-1`).
-- `input` (string, required): The text to synthesize. Plain text is supported.
-- `voice` (string, required): Voice preset (for example `luna`, `verse`, `sonic`). See Voices below.
-- `format` (string, optional): Output container/codec. Common values: `mp3`, `wav`, `ogg`, `opus`, `aac`, `flac`, `pcm16`.
-- `sample_rate` (number, optional): Required when `format=pcm16` (for example `16000`).
-- `speed` (number, optional): Speaking rate multiplier (for example `0.5`–`2.0`).
-- `language` (string, optional): BCP‑47 tag (for example `en-US`).
+- `model` (string, required): Audio-speech model ID (TTS or music).
+- `input` (string, required): Text to speak (TTS) or a music prompt (music models).
+- `voice` (string, required by many OpenAI SDKs): Voice preset for TTS. Ignored for music models; if required by your client, pass any string (for example `"alloy"`).
+- `response_format` (string, optional): Output format. Common values: `mp3`, `wav`, `ogg`, `opus`, `aac`, `flac`.
+- `speed` (number, optional): Speaking rate multiplier for TTS (for example `0.5`–`2.0`). Ignored for music models.
+- `instructions` (string, optional): Voice/style instructions (supported by some models/providers).
 
-Additional controls (if supported by the selected model):
-
-- `pitch` (number, optional): Pitch shift or style value; model‑specific range.
-- `emotion` (string, optional): Style tag (for example `neutral`, `friendly`, `excited`).
-- `stability` (number, optional): 0–1; voice stability (provider‑specific).
-- `similarity` (number, optional): 0–1; similarity boost (provider‑specific).
+Note: Some provider-backed models may support additional fields; parameters accepted can vary by model.
 
 ## Response
 
 - Success: `200 OK`, body contains binary audio.
-- `Content-Type`: Based on `format`/`Accept` (for example `audio/mpeg`, `audio/wav`, `audio/ogg`).
+- `Content-Type`: Based on the selected output format (for example `audio/mpeg`, `audio/wav`, `audio/ogg`).
 
 On error, returns JSON with details and a non‑2xx status:
 
@@ -42,7 +37,7 @@ On error, returns JSON with details and a non‑2xx status:
 { "error": { "type": "invalid_request_error", "message": "details" } }
 ```
 
-Common error types: `invalid_model`, `invalid_voice`, `unsupported_format`, `invalid_sample_rate`, `input_too_long`, `rate_limit_exceeded`.
+Common error types: `invalid_model`, `invalid_voice`, `unsupported_format`, `input_too_long`, `rate_limit_exceeded`.
 
 ## Examples
 
@@ -54,13 +49,13 @@ All examples write audio to disk.
 curl -X POST \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
-  -H "Accept: audio/mpeg" \
-  https://nano-gpt.com/api/v1/speech \
+  https://nano-gpt.com/api/v1/audio/speech \
   -d '{
-    "model": "nano-tts-1",
+    "model": "gpt-4o-mini-tts",
     "input": "Hello from NanoGPT!",
-    "voice": "luna",
-    "format": "mp3"
+    "voice": "alloy",
+    "response_format": "mp3",
+    "instructions": "Speak in a warm, friendly tone."
   }' \
   --output speech.mp3
 ```
@@ -68,18 +63,17 @@ curl -X POST \
 ```ts Node (fetch)
 import fs from "node:fs";
 
-const res = await fetch("https://nano-gpt.com/api/v1/speech", {
+const res = await fetch("https://nano-gpt.com/api/v1/audio/speech", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
     "Content-Type": "application/json",
-    Accept: "audio/mpeg",
   },
   body: JSON.stringify({
-    model: "nano-tts-1",
+    model: "gpt-4o-mini-tts",
     input: "Hello from NanoGPT!",
-    voice: "luna",
-    format: "mp3",
+    voice: "alloy",
+    response_format: "mp3",
   }),
 });
 
@@ -93,17 +87,16 @@ import requests
 import os
 
 resp = requests.post(
-    "https://nano-gpt.com/api/v1/speech",
+    "https://nano-gpt.com/api/v1/audio/speech",
     headers={
-        "Authorization": f"Bearer {os.environ.get('NANOGPT_API_KEY')} ",
+        "Authorization": f"Bearer {os.environ.get('NANOGPT_API_KEY')}",
         "Content-Type": "application/json",
-        "Accept": "audio/mpeg",
     },
     json={
-        "model": "nano-tts-1",
+        "model": "gpt-4o-mini-tts",
         "input": "Hello from NanoGPT!",
-        "voice": "luna",
-        "format": "mp3",
+        "voice": "alloy",
+        "response_format": "mp3",
     },
 )
 resp.raise_for_status()
@@ -116,23 +109,21 @@ with open("speech.mp3", "wb") as f:
 ## Notes & Limits
 
 - Max input length: depends on model; measured in characters or tokens. For short, interactive prompts, prefer under ~1–2k characters.
-- Language support: varies by model. Specify `language` to force selection; otherwise, language may be auto‑detected.
-- Typical latency: scales with input length and selected `format`; compressed formats like `mp3` are often faster than `wav`.
+- Typical latency: scales with input length and output format; compressed formats like `mp3` are often faster than `wav`.
 - Usage metering: billed by characters/tokens or generated audio seconds (provider‑specific). See Pricing.
 
 ## Audio Formats
 
-Mapping between `format` and response `Content-Type`:
+Common `response_format` values and typical `Content-Type`:
 
-| format  | Content-Type            | Notes |
-|---------|-------------------------|-------|
-| mp3     | `audio/mpeg`            | Widely supported in browsers |
-| wav     | `audio/wav`             | PCM; larger payloads |
-| ogg     | `audio/ogg`             | Container; may include Opus |
-| opus    | `audio/opus` or `audio/ogg` | Streaming‑friendly |
-| aac     | `audio/aac`             | Safari‑friendly |
-| flac    | `audio/flac`            | Lossless |
-| pcm16   | `application/octet-stream` | Little‑endian mono; requires `sample_rate` |
+| response_format | Content-Type | Notes |
+|-----------------|--------------|-------|
+| mp3             | `audio/mpeg` | Widely supported in browsers |
+| wav             | `audio/wav`  | Larger payloads |
+| ogg             | `audio/ogg`  | Container; may include Opus |
+| opus            | `audio/opus` or `audio/ogg` | Streaming-friendly |
+| aac             | `audio/aac`  | Safari-friendly |
+| flac            | `audio/flac` | Lossless |
 
 Browser notes: Safari supports AAC/MP3; Ogg/Opus plays in Chrome/Firefox; WAV is universal but larger.
 
@@ -143,7 +134,7 @@ Browser notes: Safari supports AAC/MP3; Ogg/Opus plays in Chrome/Firefox; WAV is
 
 ## Errors & Troubleshooting
 
-- `invalid_model`, `invalid_voice`, `unsupported_format`, `invalid_sample_rate`: Verify `model`, `voice`, `format`, and required `sample_rate` for `pcm16`.
+- `invalid_model`, `invalid_voice`, `unsupported_format`: Verify `model`, `voice`, and `response_format`.
 - `input_too_long`: Reduce length; split long text into chunks and stitch audio client‑side.
 - `rate_limit_exceeded`: Exponential backoff; retry after the window resets.
 - Network/client tips: Set `Accept` to your preferred audio type and write the raw response body directly to a file.
@@ -163,16 +154,16 @@ Browser notes: Safari supports AAC/MP3; Ogg/Opus plays in Chrome/Firefox; WAV is
 
 Already using the async `POST /tts` + `GET /tts/status` flow?
 
-- When to switch: choose `v1/speech` for short prompts, low latency, and direct playback; keep job‑based TTS for long/batch generation and webhook workflows.
-- Parameter mapping: `text` → `input`, `voice` stays `voice`, `output_format` → `format`, speed/controls map directly when supported.
-- Retries/timeouts: `v1/speech` returns inline; implement client‑side timeouts and simple retries on 5xx.
+- When to switch: choose `v1/audio/speech` for short prompts, low latency, and direct playback; keep job‑based TTS for long/batch generation and webhook workflows.
+- Parameter mapping: `text` → `input`, `voice` stays `voice`, and output format can be requested with `response_format` when supported.
+- Retries/timeouts: `v1/audio/speech` returns inline; implement client‑side timeouts and simple retries on 5xx.
 
 ## Streaming
 
 If chunked audio streaming is enabled for your account, you can request streaming with compatible formats (for example Opus/MP3) and consume the response as a stream. Example Node pattern:
 
 ```ts
-const res = await fetch("https://nano-gpt.com/api/v1/speech", { /* headers/body as above */ });
+const res = await fetch("https://nano-gpt.com/api/v1/audio/speech", { /* headers/body as above */ });
 if (!res.ok) throw new Error(await res.text());
 const file = await fs.open("speech.mp3", "w");
 for await (const chunk of res.body) {

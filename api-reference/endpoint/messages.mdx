@@ -7,6 +7,10 @@ openapi: 'POST /v1/messages'
 
 The `/v1/messages` endpoint provides full Anthropic API compatibility. Clients using the Anthropic SDK can use NanoGPT by simply changing the base URL -- no code changes required.
 
+NanoGPT accepts requests in the **Anthropic Messages** format, routes them to the requested NanoGPT model, and returns responses back in the Anthropic Messages shape.
+
+For non‑Anthropic models, NanoGPT transparently translates the request to an OpenAI-style chat format internally and then converts the response back to Anthropic Messages format.
+
 This endpoint supports:
 
 - Text generation (streaming and non-streaming)
@@ -35,7 +39,7 @@ Use either header:
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `model` | string | Model identifier (e.g., `claude-opus-4-5-20251101`) |
+| `model` | string | Model identifier (any NanoGPT model, including non‑Anthropic models) |
 | `max_tokens` | number | Maximum tokens to generate (must be a finite number) |
 | `messages` | array | Array of conversation messages |
 
@@ -203,6 +207,8 @@ Requirements:
 - `budget_tokens` must be < `max_tokens`
 - Model must support thinking (e.g., models with `-thinking` suffix)
 
+If the requested model does not support thinking, NanoGPT automatically ignores/strips the `thinking` parameter and routes the request to the base model.
+
 ## Response Format
 
 ### Non-Streaming Response
@@ -314,7 +320,9 @@ data: {"type": "content_block_stop", "index": 0}
 
 | Model | Streaming | Tools | Vision | Thinking |
 | --- | --- | --- | --- | --- |
+| claude-opus-4-6 | Yes | Yes | Yes | Yes* |
 | claude-opus-4-5-20251101 | Yes | Yes | Yes | Yes* |
+| claude-opus-4-1-20250805 | Yes | Yes | Yes | Yes* |
 | claude-sonnet-4-5-20250929 | Yes | Yes | Yes | Yes* |
 
 *Use the model with `-thinking` suffix for extended reasoning.
@@ -625,6 +633,10 @@ print(message.content[0].text)
 | Request timeout | 800 seconds |
 | Tool argument size | ~100 KB per tool call |
 | Image types | JPEG, PNG, GIF, WebP |
+
+## Limitations
+
+- GPU-TEE models do not support streaming through `POST /api/v1/messages`. Use `POST /api/v1/chat/completions` if you need streaming with GPU-TEE models.
 
 ## Migration from Anthropic
 

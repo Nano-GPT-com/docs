@@ -28,6 +28,7 @@
           "api-reference/endpoint/responses",
           "api-reference/endpoint/messages",
           "api-reference/endpoint/completion",
+          "api-reference/endpoint/audio-transcriptions",
           "api-reference/endpoint/embeddings",
           "api-reference/endpoint/embedding-models",
           "api-reference/endpoint/image-generation-openai",
@@ -66,6 +67,7 @@
           "api-reference/video-generation",
           "api-reference/speech-to-text",
           "api-reference/text-to-speech",
+          "api-reference/music-generation",
           "api-reference/tee-verification",
           "api-reference/teams"
         ]

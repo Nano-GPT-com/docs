@@ -135,7 +135,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
     ```
 - **Precedence**: If both suffix and header are provided, the header value takes precedence for retention.
 - **Data lifecycle**: The compressed chat state is retained server‑side for the configured period (or until you delete the conversation). When you delete conversations locally, no memory data persists on Polychat’s systems.
-- **Caching**: There is currently no caching of compressed memory messages; compression runs per request. This simplifies correctness and privacy. Caching strategies may be introduced later.
+- **Caching**: The Context Memory backend may cache portions of repeated prefixes and report them as cached input tokens in usage. Cached input tokens (when present) are billed at the cached input rate (see Pricing below).
 
 ## Technical Details
 
@@ -161,9 +161,13 @@ See Polychat’s full privacy policy at [https://polychat.co/legal/privacy](http
 
 ## Pricing
 
-- **Input Processing**: $5.00 per million tokens
-- **Output Generation**: $10.00 per million tokens
-- **Typical Usage**: 8k–20k tokens per session
+Context Memory is billed as a separate feature, in addition to your model inference costs.
+
+- **Input (non-cached)**: $3.75 per 1M tokens
+- **Input (cached)**: $1.00 per 1M tokens
+- **Output**: $1.25 per 1M tokens
+
+Typical usage is often ~8k–20k tokens per session, but depends on your conversation length and how much needs to be expanded.
 
 ## Getting Started
 

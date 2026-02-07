@@ -1,0 +1,88 @@
+---
+title: "Music Generation"
+description: "Generate music from text prompts using NanoGPT's OpenAI-compatible audio/speech endpoint."
+---
+
+## Overview
+
+NanoGPT supports AI music generation through the same OpenAI-compatible Text-to-Speech endpoint. When you specify a music model, the `input` field is treated as a music prompt (not text to speak) and the API returns an audio file.
+
+## Endpoint
+
+```http
+POST https://nano-gpt.com/api/v1/audio/speech
+```
+
+## Choosing A Music Model
+
+Music model availability changes over time. Discover available audio models via `GET https://nano-gpt.com/api/v1/audio-models` (see `api-reference/endpoint/models.mdx`) and select a model intended for music generation.
+
+## Request Format
+
+```json
+{
+  "model": "YOUR_MUSIC_MODEL_ID",
+  "input": "A chill lo-fi hip hop beat with soft piano chords and vinyl crackle, 120 BPM"
+}
+```
+
+If you are using an OpenAI client that enforces the OpenAI TTS schema (for example the official OpenAI SDK), you may need to include a `voice` field. For music models, `voice` is ignored, so it can be any string (many examples use `"alloy"`).
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `model` | string | Yes | A music-capable audio model ID (discover via `GET https://nano-gpt.com/api/v1/audio-models`) |
+| `input` | string | Yes | A text prompt describing the music you want generated |
+| `voice` | string | No | Ignored for music models. Some OpenAI-compatible clients require this field; if so, pass any string (for example `"alloy"`). |
+
+## Response
+
+The response is an audio file (typically MP3). The `Content-Type` header indicates the format.
+
+```http
+HTTP/1.1 200 OK
+Content-Type: audio/mpeg
+```
+
+The response body is raw audio bytes.
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://nano-gpt.com/api/v1/audio/speech \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "YOUR_MUSIC_MODEL_ID",
+    "input": "An energetic electronic dance track with heavy bass drops and synth leads"
+  }' \
+  --output music.mp3
+```
+
+```python Python (OpenAI SDK)
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://nano-gpt.com/api/v1",
+    api_key="YOUR_API_KEY",
+)
+
+response = client.audio.speech.create(
+    model="YOUR_MUSIC_MODEL_ID",
+    input="A peaceful acoustic guitar melody with soft drums",
+    voice="alloy",  # Ignored for music models; included for OpenAI SDK compatibility
+)
+
+response.stream_to_file("output.mp3")
+```
+
+</CodeGroup>
+
+## Tips
+
+- Be descriptive: include genre, instruments, tempo (BPM), mood, and style.
+- Duration: generation duration varies by model. Most models produce ~10-30 seconds by default; duration may be influenced by the prompt.
+- Cost/quality vary by model. If cost predictability matters, prefer models with flat per-generation pricing (when available).

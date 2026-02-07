@@ -7,7 +7,7 @@ openapi: 'POST /tts'
 
 Convert text into natural-sounding speech using various TTS models. Supports multiple languages, voices, and customization options including speed control and voice instructions.
 
-Looking for synchronous, low‑latency TTS that returns audio bytes directly? See `api-reference/endpoint/speech.mdx` (POST `/v1/speech`).
+Looking for synchronous, low‑latency TTS that returns audio bytes directly? See `api-reference/endpoint/speech.mdx` (POST `/v1/audio/speech`).
 
 Want to clone a custom voice from a reference audio clip? See `api-reference/endpoint/voice-cloning.mdx`.
 
@@ -257,6 +257,8 @@ async function pollTTSStatus({ runId, model, cost, paymentSource, isApiRequest }
 
 - Synchronous models (examples: `tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`, `Kokoro-82m`) return immediately from `POST /api/tts` with either binary audio or JSON containing `{ audioUrl, contentType }` depending on the provider.
 - Asynchronous models (examples: `Elevenlabs-Turbo-V2.5`, `Elevenlabs-V3`, `Elevenlabs-Music-V1`) return HTTP 202 with a polling ticket. Use `GET /api/tts/status` until completed.
+
+For OpenAI-compatible music generation via `POST /api/v1/audio/speech`, see `api-reference/music-generation.mdx`.
 
 ### Best Practices
 

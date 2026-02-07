@@ -5,7 +5,7 @@ openapi: 'POST /v1/embeddings'
 
 ## Overview
 
-Create embeddings for text using OpenAI-compatible and alternative embedding models. Our API provides access to 16 different embedding models at competitive prices, fully compatible with OpenAI's embedding API.
+Create embeddings for text using OpenAI-compatible and alternative embedding models. NanoGPT supports 20+ embedding models (and this list changes over time); use `GET /api/v1/embedding-models` for the source-of-truth list.
 
 ## Available Models
 
@@ -21,7 +21,8 @@ Create embeddings for text using OpenAI-compatible and alternative embedding mod
 - `jina-clip-v1` - 768 dimensions, $0.04/1M tokens - Multimodal CLIP embeddings
 
 **Language-Specific:**
-- `BAAI/bge-large-en-v1.5` - 768 dimensions, $0.01/1M tokens - English optimized
+- `BAAI/bge-base-en-v1.5` - 768 dimensions, $0.01/1M tokens - English (base)
+- `BAAI/bge-large-en-v1.5` - 1024 dimensions, $0.01/1M tokens - English optimized
 - `BAAI/bge-large-zh-v1.5` - 1024 dimensions, $0.01/1M tokens - Chinese optimized
 - `jina-embeddings-v2-base-en` - 768 dimensions, $0.05/1M tokens - English
 - `jina-embeddings-v2-base-de` - 768 dimensions, $0.05/1M tokens - German
@@ -29,11 +30,18 @@ Create embeddings for text using OpenAI-compatible and alternative embedding mod
 - `jina-embeddings-v2-base-es` - 768 dimensions, $0.05/1M tokens - Spanish
 
 **Specialized:**
+- `BAAI/bge-reranker-large` - 1024 dimensions, $0.01/1M tokens - Reranker
 - `jina-embeddings-v2-base-code` - 768 dimensions, $0.05/1M tokens - Code embeddings
 - `Baichuan-Text-Embedding` - 1024 dimensions, $0.088/1M tokens
 - `netease-youdao/bce-embedding-base_v1` - 1024 dimensions, $0.02/1M tokens
 - `zhipu-embedding-2` - 1024 dimensions, $0.07/1M tokens
 - `Qwen/Qwen3-Embedding-0.6B` - 1024 dimensions, $0.01/1M tokens - Supports dimension reduction
+- `Qwen/Qwen3-Embedding-4B` - 1536 dimensions, $0.03/1M tokens - Supports dimension reduction
+- `Qwen/Qwen3-Embedding-8B` - 1536 dimensions, $0.05/1M tokens - Supports dimension reduction
+- `jina-embeddings-v3` - 1024 dimensions, $0.10/1M tokens
+- `jina-embeddings-v4` - 2048 dimensions, $0.10/1M tokens
+- `gemini-embedding-001` - 3072 dimensions, $0.15/1M tokens
+- `doubao-embedding-large-text-240915` - 4096 dimensions, $0.10/1M tokens
 
 ## Request Parameters
 
@@ -145,7 +153,7 @@ for i, data in enumerate(response.data):
 
 ### Dimension Reduction
 
-For models that support it (text-embedding-3-small, text-embedding-3-large, Qwen/Qwen3-Embedding-0.6B):
+For models that support it (`text-embedding-3-small`, `text-embedding-3-large`, `Qwen/Qwen3-Embedding-0.6B`, `Qwen/Qwen3-Embedding-4B`, `Qwen/Qwen3-Embedding-8B`):
 
 ```python
 # Reduce dimensions to 256 for faster similarity comparisons

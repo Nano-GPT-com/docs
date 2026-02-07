@@ -34,7 +34,7 @@ curl "https://nano-gpt.com/api/v1/models" \
 ### Common errors
 
 - `401 Unauthorized`: Missing/invalid/revoked API key (or your key is inactive/expired, if your account has expiration enabled)
-- `429 Too Many Requests`: Rate limit exceeded
+- `429 Too Many Requests`: Rate limit exceeded (per-second throughput, or a per-key daily cap if configured)
 
 For rate-limit details, see [Rate Limits](/api-reference/miscellaneous/rate-limits).
 

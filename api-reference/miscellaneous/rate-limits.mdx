@@ -5,8 +5,58 @@ description: 'Information about API rate limits'
 
 # Rate Limits
 
-The NanoGPT API currently imposes a limit of 25 requests per second. If you need a higher limit than this reach out to us at support@nano-gpt.com and let us know what model(s) and roughly what capacity you would need.
+NanoGPT enforces a mix of global throughput limits and (optionally) per-key daily limits.
 
-If your usecase requires more than 1 billion tokens daily of a specific model, reach out to us at support@nano-gpt.com. It should be no problem, but we might be able to offer a discount.
+## Global Throughput Limits (Per-Second)
 
-If rate limits are implemented in the future, this documentation will be updated accordingly. 
+The NanoGPT API currently imposes a limit of **25 requests per second**.
+
+If you need a higher limit, email support@nano-gpt.com with:
+
+- which model(s) you need
+- your target RPS / peak traffic patterns
+- whether requests are streaming
+
+If your use case requires more than **1 billion tokens/day** of a specific model, contact support. We can usually support it, and may be able to offer better pricing.
+
+## Per-Key Daily Limits (Optional)
+
+NanoGPT supports **per-API-key daily limits** to help you cap usage and spend. You can set these when creating or editing an API key in the NanoGPT dashboard.
+
+Available limits:
+
+| Limit | Description | Reset |
+| --- | --- | --- |
+| Requests per Day (RPD) | Maximum number of API requests the key can make per day (across endpoints) | Midnight UTC |
+| USD per Day | Maximum estimated USD spend the key can incur per day | Midnight UTC |
+
+Notes:
+
+- Limits are enforced **per API key**, not per user. Multiple keys have independent counters.
+- If a limit is not set, that dimension is unlimited for the key.
+- Counters reset at **00:00 UTC** every day.
+- USD/day uses **cost estimation at request time**. Actual cost can differ slightly, so the effective cap is approximate.
+- Subscription-covered requests (models included in your subscription plan) can bypass the USD/day limit since no balance is spent, but they still count toward RPD.
+
+## When A Daily Limit Is Exceeded
+
+When a per-key daily limit is exceeded, NanoGPT returns an **OpenAI-compatible** `429` error and includes a `Retry-After` header (seconds until the next reset at midnight UTC).
+
+Example response:
+
+```json
+{
+  "error": {
+    "message": "Daily request limit exceeded (1000/1000). Resets at midnight UTC.",
+    "code": "daily_rpd_limit_exceeded",
+    "type": "rate_limit_error"
+  }
+}
+```
+
+Error codes:
+
+| Code | Description |
+| --- | --- |
+| `daily_rpd_limit_exceeded` | Request count limit reached |
+| `daily_usd_limit_exceeded` | Spend limit reached |

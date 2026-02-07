@@ -7,11 +7,20 @@ openapi: 'POST /transcribe'
 
 The Speech-to-Text transcription endpoint converts audio files into text using state-of-the-art speech recognition models. Supports multiple languages, speaker diarization, and various audio formats.
 
+Looking for a drop-in OpenAI-compatible STT endpoint? Use `POST /api/v1/audio/transcriptions`. See `api-reference/endpoint/audio-transcriptions.mdx`.
+
 ## Supported Models
 
-- **Whisper-Large-V3**: OpenAI's flagship model ($0.01/min) - Synchronous
-- **Wizper**: Fast and efficient model ($0.01/min) - Synchronous  
-- **Elevenlabs-STT**: Premium with diarization ($0.03/min) - Asynchronous
+- **Whisper-Large-V3**: High-accuracy transcription (~$0.0005/min) - Synchronous
+- **Wizper**: Fast and efficient transcription ($0.01/min) - Synchronous
+- **Elevenlabs-STT**: Premium transcription with diarization ($0.03/min) - Asynchronous
+- **gpt-4o-mini-transcribe**: Efficient OpenAI transcription ($0.003/min) - Synchronous
+- **gpt-4o-mini-transcribe-2025-03-20**: Snapshot ($0.003/min) - Synchronous
+- **gpt-4o-mini-transcribe-2025-12-15**: Snapshot ($0.003/min) - Synchronous
+- **gpt-4o-mini-transcribe-latest**: Alias ($0.003/min) - Synchronous
+- **openai-whisper-with-video**: Video-to-text transcription ($0.06/min) - Synchronous
+- **qwen-voice-clone**: Voice cloning ($0.25/run) - Asynchronous
+- **minimax-voice-clone**: Voice cloning ($1.00/run) - Asynchronous
 
 ## Upload Methods
 
@@ -220,7 +229,7 @@ languages = {
 
 ## Response Examples
 
-### Synchronous Response (Whisper/Wizper)
+### Synchronous Response (most models)
 
 ```json
 {
@@ -231,14 +240,14 @@ languages = {
     "chargedDuration": 2.5,
     "actualDuration": 2.5,
     "language": "en",
-    "cost": 0.025,
+    "cost": 0.0012,
     "currency": "USD",
     "model": "Whisper-Large-V3"
   }
 }
 ```
 
-### Asynchronous Response (Elevenlabs-STT)
+### Asynchronous Response (Elevenlabs-STT and voice cloning)
 
 Initial response (202):
 ```json

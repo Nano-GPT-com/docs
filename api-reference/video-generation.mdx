@@ -173,7 +173,7 @@ These parameters are available across models. Only send the fields your chosen m
 
 #### Seedance Models
 
-> Accepts base64 via `imageDataUrl` or a public URL via `imageUrl`. Ensure URLs are directly fetchable by the provider.
+> Accepts base64 via `imageDataUrl` or a public URL via `imageUrl`. Ensure URLs are directly fetchable.
 ```json
 {
   "model": "seedance-video",
@@ -303,7 +303,7 @@ Max source video length: 120 seconds.
 - `cost`: Estimated/pre-charged cost
 - `paymentSource`: "USD" or "XNO"
 - `remainingBalance`: Account balance after deduction
-- `prechargeLabel`: Provider label for the precharge
+- `prechargeLabel`: Billing label for the precharge
 
 ## Cost Information
 
@@ -759,7 +759,7 @@ Use `referenceImages` with image URLs or data URLs.
 
 ### Automatic Refunds
 Refunds are automatically issued when:
-- Provider returns a failure
+- The job returns a failure
 - Content policy violation (before processing)
 - Submission fails before acknowledgement
 

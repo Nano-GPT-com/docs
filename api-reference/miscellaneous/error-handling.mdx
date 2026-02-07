@@ -79,7 +79,7 @@ This table covers the most common HTTP error statuses you may encounter.
 | `408` / `504` | Timeout | Retry with backoff |
 | `409` | Conflict | Resolve state (duplicate/redeemed/already processed) |
 | `413` | Payload too large | Reduce payload size and retry |
-| `429` | Rate limited | Wait (use `Retry-After` if present), then retry |
+| `429` | Rate limited | Wait (use `Retry-After` if present), then retry. This can be a per-second throughput limit or a per-key daily limit. |
 | `500` | Server error | Retry with backoff |
 | `503` | Temporarily unavailable | Retry with backoff; consider changing model if persistent |
 
@@ -138,6 +138,8 @@ Common codes include:
 ### Rate limiting
 
 - `rate_limit_exceeded`
+- `daily_rpd_limit_exceeded`
+- `daily_usd_limit_exceeded`
 
 ## Streaming Errors
 
@@ -177,6 +179,10 @@ Attempt 3: 4s
 Add jitter to avoid synchronized retries.
 
 If you need current guidance on global rate limits, see [Rate Limits](/api-reference/miscellaneous/rate-limits).
+
+## Daily Per-Key Limit Notes
+
+NanoGPT can enforce optional per-key daily limits (Requests/Day and USD/Day). When a daily limit is exceeded, the API returns `429` and typically includes a `Retry-After` header indicating the number of seconds until the next reset at **00:00 UTC**.
 
 ## Balance Errors (402)
 

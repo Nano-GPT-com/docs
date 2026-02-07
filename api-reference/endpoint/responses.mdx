@@ -39,6 +39,37 @@ x-api-key: YOUR_API_KEY
 - `GET /v1/responses/{id}` - Retrieve a stored response by ID
 - `DELETE /v1/responses/{id}` - Delete a stored response (soft delete)
 
+## BYOK Encryption (Stored Responses)
+
+If you set `store: true`, you can optionally encrypt the stored response at rest using your own key or passphrase.
+
+To encrypt a stored response, include one of these headers on `POST /v1/responses`:
+
+- `x-encryption-key: YOUR_ENCRYPTION_KEY`
+- `x-encryption-passphrase: YOUR_PASSPHRASE`
+
+When retrieving or deleting an encrypted response, include the same header you used at creation time.
+
+Example:
+
+```bash
+# Create an encrypted, stored response
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-encryption-key: YOUR_ENCRYPTION_KEY" \
+  -d '{
+    "model": "openai/gpt-5.2",
+    "input": "Sensitive information",
+    "store": true
+  }'
+
+# Retrieve it later (must include the same encryption header)
+curl https://nano-gpt.com/api/v1/responses/resp_abc123 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "x-encryption-key: YOUR_ENCRYPTION_KEY"
+```
+
 ## Create Response
 
 ### Request
@@ -58,7 +89,7 @@ Authorization: Bearer YOUR_API_KEY
 | `instructions` | string | No | System instructions for the model |
 | `max_output_tokens` | integer | No | Maximum tokens in the response (minimum: 16) |
 | `max_tool_calls` | integer | No | Maximum number of tool calls allowed |
-| `temperature` | number | No | Sampling temperature (0-2). Not supported by reasoning-capable models |
+| `temperature` | number | No | Sampling temperature (0-2). If omitted, NanoGPT does not force a value and the routed provider/model default applies (OpenAI defaults to 1.0). Not supported by reasoning-capable models |
 | `top_p` | number | No | Nucleus sampling parameter. Not supported by reasoning-capable models |
 | `presence_penalty` | number | No | Presence penalty for sampling (-2.0 to 2.0) |
 | `frequency_penalty` | number | No | Frequency penalty for sampling (-2.0 to 2.0) |

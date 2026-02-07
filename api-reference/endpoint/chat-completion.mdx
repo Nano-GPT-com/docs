@@ -162,7 +162,7 @@ The `/api/v1/chat/completions` endpoint accepts a full set of sampling and decod
 
 | Parameter | Range/Default | Description |
 | --- | --- | --- |
-| `temperature` | 0–2 (default 0.7) | Classic randomness control; higher values explore more. |
+| `temperature` | 0–2 (provider default) | Classic randomness control; higher values explore more. If omitted, NanoGPT does not force a value and the routed provider/model default applies. |
 | `top_p` | 0–1 (default 1) | Nucleus sampling that trims to the smallest set above `top_p` cumulative probability. |
 | `top_k` | 1+ | Sample only from the top-k tokens each step. |
 | `top_a` | provider default | Blends temperature and nucleus behavior; set only if a model calls for it. |
@@ -177,7 +177,7 @@ The `/api/v1/chat/completions` endpoint accepts a full set of sampling and decod
 
 | Parameter | Range/Default | Description |
 | --- | --- | --- |
-| `max_tokens` | 1+ (default 4000) | Upper bound on generated tokens. |
+| `max_tokens` | 1+ (provider default) | Upper bound on generated tokens. If omitted, NanoGPT does not enforce an explicit default and the routed provider/model default applies. |
 | `min_tokens` | 0+ (default 0) | Minimum completion length when provider supports it. |
 | `stop` | string or string[] | Stop sequences passed upstream. |
 | `stop_token_ids` | int[] | Stop generation on specific token IDs (limited provider support). |
@@ -531,6 +531,18 @@ Send a `webSearch` object in the request body. The legacy `linkup` object is acc
 - `searchType` (string, Valyu only): `all` | `web`
 - `kagiSource` or `kagi_source` (string, Kagi only): `web` | `news` | `search`
 
+Legacy alias example:
+
+```json
+{
+  "linkup": {
+    "enabled": true,
+    "provider": "tavily",
+    "search_context_size": "medium"
+  }
+}
+```
+
 #### Provider-specific options (set inside `webSearch`)
 
 ##### Perplexity
@@ -772,8 +784,9 @@ For web search enhancements, BYOK is supported for Tavily, Exa, Kagi, Perplexity
 ### Advanced behavior (optional)
 
 - **Provider routing**: For GPT-5+ / o1 / o3 / o4 models, `:online` without an explicit provider uses OpenAI native web search. If you set `webSearch.provider` or use an explicit `:online/<provider>` suffix, that provider is used instead.
+- **Model suffix normalization**: `:online` (and provider/depth suffixes) are stripped from the model name before routing to the base model; the suffix only controls search behavior.
 - **Query formation (non-OpenAI providers)**: The search query is derived from your latest user message and may include the previous user message if the latest is short. If you need full control over the query or raw results, use the Web Search endpoint (`/api/web`).
-- **`scraping: true` URL handling**: When enabled, NanoGPT scans messages for public `http(s)` URLs, ignores local/private URLs, de-duplicates, and caps at 5. If no eligible URLs are found, scraping is skipped. For explicit URL lists and options, use `/scrape-urls`.
+- **`scraping: true` URL handling**: When enabled, NanoGPT scans messages for public `http(s)` URLs, ignores local/private URLs, de-duplicates, and caps at 5. If no eligible URLs are found, scraping is skipped. Inline scraping in chat is billed at **$0.0015 per successfully scraped URL**. For explicit URL lists and the standalone endpoint price (**$0.001 per URL**), use `/scrape-urls`.
 
 ## Image Input
 
@@ -1332,7 +1345,7 @@ Behavior notes:
 
 Billing note:
 
-- Priority requests are billed at priority rates when routed to providers with priority pricing. If a model is missing from the explicit priority pricing table, NanoGPT falls back to a 2x multiplier and logs the mismatch.
+- Priority requests are billed at priority rates when routed to providers with priority pricing.
 
 Response note:
 
@@ -1360,6 +1373,7 @@ Automatically fetch and prepend YouTube video transcripts when the latest user m
 - Default: `false` (opt-in)
 - Opt-in: set `youtube_transcripts` to `true` (string `"true"` is also accepted) to fetch transcripts
 - Limit: Up to 3 YouTube URLs processed per request
+- Higher volume: Use the standalone [`POST /api/youtube-transcribe`](/api-reference/endpoint/youtube-transcribe) endpoint for up to 10 URLs per request
 - Injection: Transcripts are added as a system message before your messages
 - Billing: $0.01 per transcript fetched
 

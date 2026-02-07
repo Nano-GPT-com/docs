@@ -5,7 +5,7 @@ description: "Complete guide to text embeddings API"
 
 ## Overview
 
-NanoGPT provides a fully OpenAI-compatible embeddings API that offers access to both OpenAI's industry-leading embedding models and a curated selection of alternative embedding models at competitive prices. Our API supports 16 different embedding models, providing options for various use cases, languages, and budget requirements.
+NanoGPT provides a fully OpenAI-compatible embeddings API that offers access to both OpenAI's industry-leading embedding models and a curated selection of alternative embedding models at competitive prices. Our API supports 20+ embedding models (and this list changes over time); use `GET /api/v1/embedding-models` for the source-of-truth list.
 
 ## Quick Start
 
@@ -49,7 +49,8 @@ print(f"Embedding has {len(embedding)} dimensions")
 #### Language-Specific Models
 | Model | Language | Dimensions | Price/1M tokens |
 |-------|----------|------------|-----------------|
-| `BAAI/bge-large-en-v1.5` | English | 768 | $0.01 |
+| `BAAI/bge-base-en-v1.5` | English | 768 | $0.01 |
+| `BAAI/bge-large-en-v1.5` | English | 1024 | $0.01 |
 | `BAAI/bge-large-zh-v1.5` | Chinese | 1024 | $0.01 |
 | `jina-embeddings-v2-base-en` | English | 768 | $0.05 |
 | `jina-embeddings-v2-base-de` | German | 768 | $0.05 |
@@ -59,11 +60,18 @@ print(f"Embedding has {len(embedding)} dimensions")
 #### Specialized Models
 | Model | Use Case | Dimensions | Price/1M tokens |
 |-------|----------|------------|-----------------|
+| `BAAI/bge-reranker-large` | Reranking | 1024 | $0.01 |
 | `jina-embeddings-v2-base-code` | Code | 768 | $0.05 |
 | `Baichuan-Text-Embedding` | General | 1024 | $0.088 |
 | `netease-youdao/bce-embedding-base_v1` | General | 1024 | $0.02 |
 | `zhipu-embedding-2` | Chinese | 1024 | $0.07 |
 | `Qwen/Qwen3-Embedding-0.6B` | General | 1024 | $0.01 |
+| `Qwen/Qwen3-Embedding-4B` | General | 1536 | $0.03 |
+| `Qwen/Qwen3-Embedding-8B` | General | 1536 | $0.05 |
+| `jina-embeddings-v3` | General | 1024 | $0.10 |
+| `jina-embeddings-v4` | General | 2048 | $0.10 |
+| `gemini-embedding-001` | General | 3072 | $0.15 |
+| `doubao-embedding-large-text-240915` | General | 4096 | $0.10 |
 
 ## API Endpoints
 

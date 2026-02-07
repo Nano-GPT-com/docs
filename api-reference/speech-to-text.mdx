@@ -7,11 +7,24 @@ description: "Complete guide to speech-to-text transcription APIs"
 
 The NanoGPT STT API allows you to transcribe audio files into text using state-of-the-art speech recognition models. The API supports multiple languages, speaker diarization, and various audio formats with both synchronous and asynchronous processing options.
 
+For drop-in OpenAI SDK compatibility, you can also use the OpenAI-compatible endpoint: `POST /api/v1/audio/transcriptions` (see `api-reference/endpoint/audio-transcriptions.mdx`).
+
 ## Available Models
 
-- **Whisper-Large-V3**: OpenAI's flagship model with high accuracy ($0.01/min)
-- **Wizper**: Fast and efficient model optimized for speed ($0.01/min)  
-- **Elevenlabs-STT**: Premium model with speaker diarization and word-level timestamps ($0.03/min)
+NanoGPT supports multiple Speech-to-Text and audio-to-text workflows, including standard transcription, video transcription, and voice cloning.
+
+| Model ID | Type | Billing | Price |
+| --- | --- | --- | --- |
+| `Whisper-Large-V3` | Transcription | Per minute | ~$0.0005/min |
+| `Wizper` | Transcription | Per minute | $0.01/min |
+| `Elevenlabs-STT` | Transcription (async + diarization) | Per minute | $0.03/min |
+| `gpt-4o-mini-transcribe` | Transcription | Per minute | $0.003/min |
+| `gpt-4o-mini-transcribe-2025-03-20` | Transcription | Per minute | $0.003/min |
+| `gpt-4o-mini-transcribe-2025-12-15` | Transcription | Per minute | $0.003/min |
+| `gpt-4o-mini-transcribe-latest` | Transcription | Per minute | $0.003/min |
+| `openai-whisper-with-video` | Video transcription | Per minute | $0.06/min |
+| `qwen-voice-clone` | Voice cloning (async) | Per run | $0.25/run |
+| `minimax-voice-clone` | Voice cloning (async) | Per run | $1.00/run |
 
 ## Authentication
 
@@ -507,9 +520,19 @@ def validate_audio_file(file_path):
 
 ## Pricing and Billing
 
-- **Whisper-Large-V3**: $0.01 per minute
-- **Wizper**: $0.01 per minute  
-- **Elevenlabs-STT**: $0.03 per minute
+Transcription models are billed by audio/video duration. Voice cloning models are billed per run.
 
-Costs are calculated based on audio duration.
+### Transcription (per minute)
 
+- **Whisper-Large-V3**: ~$0.0005/min
+- **Wizper**: $0.01/min
+- **Elevenlabs-STT**: $0.03/min
+- **gpt-4o-mini-transcribe** (and snapshots/aliases): $0.003/min
+- **openai-whisper-with-video**: $0.06/min
+
+### Voice cloning (per run)
+
+- **qwen-voice-clone**: $0.25/run
+- **minimax-voice-clone**: $1.00/run
+
+Costs are calculated based on audio/video duration (transcription) or per run (voice cloning).

@@ -9,6 +9,20 @@ The `/api/v1/models` endpoint provides a list of available text generation model
 
 For embedding models, use the dedicated [/api/v1/embedding-models](/api-reference/endpoint/embedding-models) endpoint which provides comprehensive information about all available embedding models.
 
+## Notable Model IDs (Examples)
+
+Model availability changes over time. Use `GET /api/v1/models` for the full, up-to-date list. Some commonly-used families you may see include:
+
+- **OpenAI**: `openai/gpt-5.2`, `openai/gpt-5.2-chat-latest`, `openai/gpt-5.2-codex`, `openai/gpt-5.2-pro`
+- **Anthropic**: `anthropic/claude-opus-4.6` (and `:thinking` variants), `claude-opus-4-1-20250805` (and `:thinking` variants)
+- **Google Gemini 3**: `google/gemini-3-flash-preview`, `google/gemini-3-pro-preview`, `gemini-3-pro-image-preview` (and `*-thinking` variants where available)
+- **xAI Grok 4 / 4.1**: `grok-4-0709`, `x-ai/grok-4-07-09`, `grok-4-fast`, `x-ai/grok-4-fast:thinking`, `x-ai/grok-4-fast:free`, `x-ai/grok-4.1-fast-reasoning`, `x-ai/grok-4.1-fast:thinking`
+- **Moonshot Kimi K2.5**: `kimi-k2.5:cloud`, `kimi-k2.5:thinking:cloud`, `moonshotai/kimi-k2.5` (and `:thinking`)
+- **Zhipu GLM 4.6 / 4.7**: `glm-4.6:cloud`, `glm-4.7:cloud` (and `:thinking`)
+- **DeepSeek V3.2**: `deepseek-v3.2`, `deepseek-v3.2-thinking`, `deepseek-v3.2-speciale`, `deepseek/deepseek-v3.2:thinking`
+- **Qwen3 Coder**: `qwen3-coder:480b-cloud`, `qwen3-coder-next`, `qwen/qwen3-coder-plus`, `qwen/qwen3-coder-flash`
+- **NousResearch Hermes 4**: `nousresearch/hermes-4-405b` (and `:thinking`), `nousresearch/hermes-4-70b`
+
 ## Compatibility
 
 Responses mirror OpenAI's Models API shape. All models endpoints return:
@@ -46,16 +60,31 @@ Provider selection support and provider IDs are discovered via `GET /api/models/
 |-----------|------|---------|-------------|
 | `detailed` | boolean | `false` | Returns detailed model information including pricing and capabilities |
 
-When `detailed=true`, additional human-friendly fields may be included per model:
+When `detailed=true`, additional fields may be included per model:
 
 - `name` — display name
 - `description` — short model description
 - `context_length` — max input tokens (if known)
-- `capabilities.vision` — whether the model supports native image input
+- `max_output_tokens` — max output tokens (if known)
+- `capabilities` — feature flags (see below)
 - `pricing.prompt` and `pricing.completion` — at-cost per-million-token pricing in USD
 - `pricing.unit` — `per_million_tokens`
 - `icon_url` — small icon representing the provider
-- `cost_estimate` — internal rollup used in UI for cost hints
+- `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
+- `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
+
+### `capabilities` (detailed mode)
+
+Common capability flags:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `vision` | boolean | Supports image inputs |
+| `reasoning` | boolean | Supports extended thinking/reasoning |
+| `tool_calling` | boolean | Supports function/tool calling |
+| `parallel_tool_calls` | boolean | Supports multiple tool calls in parallel |
+| `structured_output` | boolean | Supports structured/JSON output modes |
+| `pdf_upload` | boolean | Supports PDF/document inputs |
 
 ## Authentication
 
@@ -113,15 +142,24 @@ Enhanced format with model descriptions, context lengths, and pricing:
       "name": "GPT-5.2",
       "description": "OpenAI's flagship general-purpose model",
       "context_length": 128000,
-      "capabilities": { "vision": true },
+      "max_output_tokens": 16384,
+      "capabilities": {
+        "vision": true,
+        "reasoning": false,
+        "tool_calling": true,
+        "parallel_tool_calls": true,
+        "structured_output": true,
+        "pdf_upload": true
+      },
       "pricing": {
-        "prompt": 0.003,
-        "completion": 0.012,
+        "prompt": 2.50,
+        "completion": 10.00,
         "currency": "USD",
         "unit": "per_million_tokens"
       },
       "icon_url": "/icons/OpenAI.svg",
-      "cost_estimate": { "cheap": false }
+      "cost_estimate": "$",
+      "category": "flagship"
     },
     {
       "id": "anthropic/claude-opus-4.5",
@@ -131,14 +169,17 @@ Enhanced format with model descriptions, context lengths, and pricing:
       "name": "Claude Opus 4.5",
       "description": "Anthropic's top-tier model for deep reasoning and writing",
       "context_length": 200000,
-      "capabilities": { "vision": false },
+      "max_output_tokens": 8192,
+      "capabilities": { "vision": true, "reasoning": true, "tool_calling": true },
       "pricing": {
-        "prompt": 0.003,
-        "completion": 0.015,
+        "prompt": 15.00,
+        "completion": 75.00,
         "currency": "USD", 
         "unit": "per_million_tokens"
       },
-      "icon_url": "/icons/Anthropic.svg"
+      "icon_url": "/icons/Anthropic.svg",
+      "cost_estimate": "$$$",
+      "category": "reasoning"
     }
   ]
 }
@@ -162,10 +203,12 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `name` | string | Human-readable model name |
 | `description` | string | Detailed model description |
 | `context_length` | number | Maximum input tokens (null if not available) |
+| `max_output_tokens` | number | Maximum output tokens (null if not available) |
 | `capabilities` | object | Feature flags (e.g., `vision: boolean`) |
 | `pricing` | object | Pricing information object |
 | `icon_url` | string | Path/URL for a small provider icon |
-| `cost_estimate` | object | Internal hints (e.g., `{ cheap: true }`) |
+| `cost_estimate` | string or object | Internal hints (for example `"$"` / `"$$"` or `{ cheap: true }`) |
+| `category` | string | Optional category (e.g., `"flagship"`, `"mini"`, `"reasoning"`) |
 
 ### Pricing Object Structure
 
@@ -449,6 +492,8 @@ Each model (detailed):
 
 Lists all available audio models (text-to-speech, speech-to-text, and music generation).
 
+For how to generate music with these models, see `api-reference/music-generation.mdx`.
+
 ### Query Parameters
 
 | Parameter | Type | Default | Description |
@@ -463,9 +508,9 @@ Lists all available audio models (text-to-speech, speech-to-text, and music gene
   "object": "list",
   "data": [ ... ],
   "meta": {
-    "count": 8,
+    "count": 10,
     "generated_at": "2025-01-28T12:00:00.000Z",
-    "filter": { "type": "tts" }
+    "filter": { "type": "stt" }
   }
 }
 ```

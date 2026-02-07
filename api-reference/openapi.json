@@ -1060,7 +1060,7 @@
     },
     "/video/status": {
       "get": {
-        "description": "Unified video status endpoint that works with any provider. Check the status of a video generation request using only the request ID - the system automatically determines the provider and returns normalized status information.",
+        "description": "Unified video status endpoint that works across all video backends. Check the status of a video generation request using only the request ID and receive normalized status information.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1075,7 +1075,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "fal-1234567890"
+            "example": "vid_m1abc123def456"
           }
         ],
         "responses": {
@@ -1235,7 +1235,7 @@
     },
     "/transcribe": {
       "post": {
-        "description": "Transcribe audio files into text using state-of-the-art speech recognition models. Supports multiple languages, speaker diarization, and various audio formats. Returns synchronous results for Whisper/Wizper models and asynchronous job IDs for Elevenlabs-STT.",
+        "description": "Transcribe audio (and supported video formats) into text using speech recognition models. Supports multiple languages, diarization (model-dependent), and various formats. Most models return synchronous results; some models (for example Elevenlabs-STT and voice cloning workflows) return asynchronous job IDs.",
         "security": [
           {
             "apiKeyAuth": []
@@ -2875,15 +2875,13 @@
           },
           "temperature": {
             "type": "number",
-            "description": "Classic randomness control. Accepts any decimal between 0-2. Lower numbers bias toward deterministic responses, higher values explore more aggressively",
+            "description": "Classic randomness control. Accepts any decimal between 0-2. If omitted, NanoGPT does not force a value and the routed provider/model default applies",
             "minimum": 0,
-            "maximum": 2,
-            "default": 0.7
+            "maximum": 2
           },
           "max_tokens": {
             "type": "integer",
-            "description": "Upper bound on generated tokens",
-            "default": 4000,
+            "description": "Upper bound on generated tokens. If omitted, NanoGPT does not enforce an explicit default and the routed provider/model default applies",
             "minimum": 1
           },
           "top_p": {
@@ -3313,16 +3311,14 @@
           },
           "max_tokens": {
             "type": "integer",
-            "description": "Upper bound on generated tokens",
-            "default": 4000,
+            "description": "Upper bound on generated tokens. If omitted, NanoGPT does not enforce an explicit default and the routed provider/model default applies",
             "minimum": 1
           },
           "temperature": {
             "type": "number",
-            "description": "Classic randomness control. Accepts any decimal between 0-2. Lower numbers bias toward deterministic responses, higher values explore more aggressively",
+            "description": "Classic randomness control. Accepts any decimal between 0-2. If omitted, NanoGPT does not force a value and the routed provider/model default applies",
             "minimum": 0,
-            "maximum": 2,
-            "default": 0.7
+            "maximum": 2
           },
           "top_p": {
             "type": "number",
@@ -4257,7 +4253,7 @@
           },
           "aspect_ratio": {
             "type": "string",
-            "description": "Aspect ratio for FAL models",
+            "description": "Aspect ratio (supported by select models)",
             "enum": ["16:9", "9:16", "1:1", "4:3", "3:4"],
             "default": "16:9"
           },
@@ -4409,7 +4405,7 @@
           }
         },
         "example": {
-          "taskId": "fal-request-abc123xyz",
+          "taskId": "vid_m1abc123def456",
           "index": 0
         }
       },
@@ -4805,7 +4801,18 @@
           "model": {
             "type": "string",
             "description": "The STT model to use for transcription",
-            "enum": ["Whisper-Large-V3", "Wizper", "Elevenlabs-STT"],
+            "enum": [
+              "Whisper-Large-V3",
+              "Wizper",
+              "Elevenlabs-STT",
+              "gpt-4o-mini-transcribe",
+              "gpt-4o-mini-transcribe-2025-03-20",
+              "gpt-4o-mini-transcribe-2025-12-15",
+              "gpt-4o-mini-transcribe-latest",
+              "openai-whisper-with-video",
+              "qwen-voice-clone",
+              "minimax-voice-clone"
+            ],
             "default": "Whisper-Large-V3"
           },
           "language": {
@@ -4844,7 +4851,18 @@
           "model": {
             "type": "string",
             "description": "The STT model to use for transcription",
-            "enum": ["Whisper-Large-V3", "Wizper", "Elevenlabs-STT"],
+            "enum": [
+              "Whisper-Large-V3",
+              "Wizper",
+              "Elevenlabs-STT",
+              "gpt-4o-mini-transcribe",
+              "gpt-4o-mini-transcribe-2025-03-20",
+              "gpt-4o-mini-transcribe-2025-12-15",
+              "gpt-4o-mini-transcribe-latest",
+              "openai-whisper-with-video",
+              "qwen-voice-clone",
+              "minimax-voice-clone"
+            ],
             "default": "Whisper-Large-V3"
           },
           "language": {
