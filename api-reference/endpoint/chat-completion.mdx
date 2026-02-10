@@ -491,7 +491,7 @@ OpenAI native web search: GPT-5+ / o1 / o3 / o4 models use OpenAI's built-in web
 <Note>
   Brave appears in this section in two different ways:
   1) `:online/brave` / `webSearch.provider = "brave"` uses the Web Search integration (raw results injected into another model).
-  2) `model: "brave"` / `model: "brave-research"` uses Brave's own grounded answer pipeline (search + generation in one model).
+  2) `model: "brave"` / `model: "brave-pro"` / `model: "brave-research"` uses Brave's own grounded answer pipeline (search + generation in one model).
 </Note>
 
 ### Option A: model suffixes
@@ -558,6 +558,7 @@ NanoGPT also exposes two Brave-powered text models that combine web search with 
 | Model ID | Description |
 |---|---|
 | `brave` | Brave Grounding. Single search + answer. Fast, low cost. |
+| `brave-pro` | Brave Pro Grounding. Premium tier with higher quality answers, more search depth, and priority processing. |
 | `brave-research` | Brave Research. Multi-search deep research with reasoning. Slower (can take minutes), higher cost. |
 
 These models are separate from the Web Search integration (`:online/*` suffixes and the `webSearch` object).
@@ -566,15 +567,20 @@ These models are separate from the Web Search integration (`:online/*` suffixes 
 
 When using `model: "brave"` or `model: "brave-research"`, you can pass these optional top-level fields in the request body (OpenAI SDK `extra_body` style):
 
-| Parameter | Type | Default (`brave`) | Default (`brave-research`) | Description |
+| Parameter | Type | Default (`brave`/`brave-pro`) | Default (`brave-research`) | Description |
 |---|---|---|---|---|
 | `enable_research` | boolean | `false` | `true` | Enables multi-search deep research mode with reasoning. Performs multiple iterative searches for a thorough answer. Requires streaming. |
 | `enable_citations` | boolean | `false` | `false` | Includes `<citation>` markup in the response text linking to sources. Requires streaming. |
 | `enable_entities` | boolean | `false` | `false` | Includes entity metadata in the response. Requires streaming. |
 | `country` | string | — | — | Country code for search localization (for example `"US"` or `"GB"`). |
 | `language` | string | — | — | Language code for response language (for example `"en"` or `"fr"`). |
+| `max_completion_tokens` | integer | — | — | Maximum number of tokens to generate in the completion. |
+| `metadata` | object | — | — | Optional metadata to attach to the request. |
+| `research_allow_thinking` | boolean | — | — | Allow the research model to show its thinking/reasoning process. |
+| `research_maximum_number_of_iterations` | integer | — | — | Maximum number of research iterations. |
+| `number_of_queries` | integer | — | — | Maximum number of search queries to issue during research (1-50). |
 
-**Streaming requirement:** `enable_research`, `enable_citations`, and `enable_entities` require `stream: true`. Since `brave-research` defaults to `enable_research: true`, `brave-research` requires `stream: true`.
+**Streaming requirement:** `enable_research`, `enable_citations`, and `enable_entities` require `stream: true`. The `brave-research` model is streaming-first and will use streaming even if `stream` is omitted (recommended: always set `stream: true` explicitly).
 
 Example (`brave-research`):
 

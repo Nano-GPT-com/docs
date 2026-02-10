@@ -443,12 +443,13 @@ For more advanced web search capabilities including structured output, domain fi
 
 ### Brave Grounding & Research
 
-NanoGPT offers two Brave-powered text models that combine web search with LLM generation:
+NanoGPT offers three Brave-powered text models that combine web search with LLM generation:
 
 - **`brave`**: Brave Grounding. Performs a single web search and generates a grounded answer. Fast responses (often ~4-5 seconds) and typically low cost. Good for quick factual questions.
+- **`brave-pro`**: Brave Pro Grounding. Premium tier with higher quality answers, more search depth, and priority processing.
 - **`brave-research`**: Brave Research. Performs multiple iterative searches with reasoning and planning for thorough answers. Response times can extend to minutes. Best for complex questions that need deeper research.
 
-Both models use the OpenAI-compatible chat completions format: set `model` to `brave` or `brave-research` and send `messages`.
+All three models use the OpenAI-compatible chat completions format: set `model` to `brave`, `brave-pro`, or `brave-research` and send `messages`.
 
 This is separate from the Web Search integration (`:online/*` model suffixes and the `/api/web` endpoint), which returns raw search results to be injected into another model.
 
