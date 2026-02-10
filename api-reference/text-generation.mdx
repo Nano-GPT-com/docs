@@ -440,3 +440,25 @@ for content in chat_completion_with_web_search(research_messages, search_depth="
 Web search dramatically improves factuality - Gemini 3 Flash Preview with web access shows a 10x improvement in accuracy, making it twice as accurate as non-web baselines.
 
 For more advanced web search capabilities including structured output, domain filtering, and date filtering, see the [Web Search API](/api-reference/endpoint/web-search).
+
+### Brave Grounding & Research
+
+NanoGPT offers two Brave-powered text models that combine web search with LLM generation:
+
+- **`brave`**: Brave Grounding. Performs a single web search and generates a grounded answer. Fast responses (often ~4-5 seconds) and typically low cost. Good for quick factual questions.
+- **`brave-research`**: Brave Research. Performs multiple iterative searches with reasoning and planning for thorough answers. Response times can extend to minutes. Best for complex questions that need deeper research.
+
+Both models use the OpenAI-compatible chat completions format: set `model` to `brave` or `brave-research` and send `messages`.
+
+This is separate from the Web Search integration (`:online/*` model suffixes and the `/api/web` endpoint), which returns raw search results to be injected into another model.
+
+#### Pricing
+
+Brave models use variable pricing based on usage reported upstream (number of searches and total tokens processed). At a high level:
+
+```text
+cost = (searches * $4 / 1,000) + (tokens * $5 / 1,000,000)
+```
+
+- **`brave`**: Typically about $0.007-$0.01 per request (one search).
+- **`brave-research`**: Higher cost due to multiple searches per request; cost scales with query complexity.

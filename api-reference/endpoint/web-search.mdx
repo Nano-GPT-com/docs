@@ -8,6 +8,10 @@ description: "Perform AI-powered web searches across multiple providers with fle
 
 The Web Search API allows you to perform AI-powered web searches across supported providers (Linkup, Tavily, Exa, Kagi, Perplexity, Valyu, Brave), returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and provider-specific depth modes. If `provider` is omitted, Linkup is used by default.
 
+<Note>
+  The Brave provider on this page (`provider: "brave"` on `/api/web`, or `:online/brave` on chat completions) returns raw search results that you can inject into another model. This is different from the Brave grounding text models (`model: "brave"` and `model: "brave-research"`), which generate complete answers using Brave's own search + LLM pipeline.
+</Note>
+
 ## Authentication
 
 <ParamField header="x-api-key" type="string" required>
