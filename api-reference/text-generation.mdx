@@ -445,9 +445,9 @@ For more advanced web search capabilities including structured output, domain fi
 
 NanoGPT offers three Brave-powered text models that combine web search with LLM generation:
 
-- **`brave`**: Brave Grounding. Performs a single web search and generates a grounded answer. Fast responses (often ~4-5 seconds) and typically low cost. Good for quick factual questions.
+- **`brave`**: Brave Grounding. Performs a single web search and generates a grounded answer. Fast responses (~4.5 seconds), low cost. Good for quick factual questions.
 - **`brave-pro`**: Brave Pro Grounding. Premium tier with higher quality answers, more search depth, and priority processing.
-- **`brave-research`**: Brave Research. Performs multiple iterative searches with reasoning and planning for thorough answers. Response times can extend to minutes. Best for complex questions that need deeper research.
+- **`brave-research`**: Brave Deep Research. Performs multiple iterative searches with reasoning and planning for thorough, well-sourced answers. Response times can extend to minutes. Best for complex questions requiring comprehensive research.
 
 All three models use the OpenAI-compatible chat completions format: set `model` to `brave`, `brave-pro`, or `brave-research` and send `messages`.
 
@@ -462,4 +462,5 @@ cost = (searches * $4 / 1,000) + (tokens * $5 / 1,000,000)
 ```
 
 - **`brave`**: Typically about $0.007-$0.01 per request (one search).
+- **`brave-pro`**: Similar baseline profile to `brave`, but premium tier behavior may increase effective request cost depending on usage.
 - **`brave-research`**: Higher cost due to multiple searches per request; cost scales with query complexity.

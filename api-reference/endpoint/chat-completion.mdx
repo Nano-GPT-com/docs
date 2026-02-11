@@ -553,11 +553,11 @@ Legacy alias example:
 
 ### Brave Grounding and Research models
 
-NanoGPT also exposes two Brave-powered text models that combine web search with generation. Use them by setting the `model` directly:
+NanoGPT also exposes three Brave-powered text models that combine web search with generation. Use them by setting the `model` directly:
 
 | Model ID | Description |
 |---|---|
-| `brave` | Brave Grounding. Single search + answer. Fast, low cost. |
+| `brave` | Brave Grounding. Single web search + LLM answer. Fast (~4.5s), low cost. |
 | `brave-pro` | Brave Pro Grounding. Premium tier with higher quality answers, more search depth, and priority processing. |
 | `brave-research` | Brave Research. Multi-search deep research with reasoning. Slower (can take minutes), higher cost. |
 
@@ -567,22 +567,45 @@ These models are separate from the Web Search integration (`:online/*` suffixes 
 
 When using `model: "brave"`, `model: "brave-pro"`, or `model: "brave-research"`, you can pass these optional top-level fields in the request body (OpenAI SDK `extra_body` style):
 
+#### Core parameters
+
 | Parameter | Type | Default (`brave`/`brave-pro`) | Default (`brave-research`) | Description |
 |---|---|---|---|---|
-| `enable_research` | boolean | `false` | `true` | Enables multi-search deep research mode with reasoning. Performs multiple iterative searches for a thorough answer. Requires streaming. |
+| `enable_research` | boolean | `false` | `true` | Enables multi-search deep research mode with reasoning. Requires streaming. |
 | `enable_citations` | boolean | `false` | `false` | Includes `<citation>` markup in the response text linking to sources. Requires streaming. |
 | `enable_entities` | boolean | `false` | `false` | Includes entity metadata in the response. Requires streaming. |
 | `country` | string | — | — | Country code for search localization (for example `"US"` or `"GB"`). |
 | `language` | string | — | — | Language code for response language (for example `"en"` or `"fr"`). |
 | `max_completion_tokens` | integer | — | — | Maximum number of tokens to generate in the completion. |
+| `safesearch` | string | — | — | Safe search filtering level. |
 | `metadata` | object | — | — | Optional metadata to attach to the request. |
-| `research_allow_thinking` | boolean | — | — | Allow the research model to show its thinking/reasoning process. |
-| `research_maximum_number_of_iterations` | integer | — | — | Maximum number of research iterations (1-5). |
-| `research_maximum_number_of_queries` | integer | — | — | Maximum number of search queries to issue during research (1-50). |
+
+#### Research tuning parameters
+
+These parameters control `enable_research` mode (`brave-research` by default, or any Brave model when `enable_research: true`).
+
+| Parameter | Type | Range | Description |
+|---|---|---|---|
+| `research_allow_thinking` | boolean | — | Allow the research model to show its thinking/reasoning process in the response. |
+| `research_maximum_number_of_iterations` | integer | 1-5 | Maximum number of research iterations (rounds of search + analysis). |
+| `research_maximum_number_of_queries` | integer | 1-50 | Maximum number of search queries to issue during research. |
+| `research_maximum_number_of_results_per_query` | integer | 1-60 | Maximum number of search results to analyze per query. |
+| `research_maximum_number_of_seconds` | integer | 1-300 | Maximum time in seconds for the research process. |
+| `research_maximum_number_of_tokens_per_query` | integer | 1024-16384 | Maximum tokens to process per search query. |
+
+#### Web search options
+
+| Parameter | Type | Description |
+|---|---|---|
+| `web_search_options` | object | Nested object to configure web search behavior. |
+| `web_search_options.search_context_size` | string | Amount of search context: `"low"`, `"medium"`, or `"high"`. |
+| `web_search_options.user_location` | object | User location for localized results. |
+| `web_search_options.user_location.type` | enum | Must be `"approximate"`. |
+| `web_search_options.user_location.approximate` | object | Contains `city`, `country`, `region`, and `timezone` (nullable strings). |
 
 **Streaming requirement:** `enable_research`, `enable_citations`, and `enable_entities` require `stream: true`. The `brave-research` model is streaming-first and will use streaming even if `stream` is omitted (recommended: always set `stream: true` explicitly).
 
-Example (`brave-research`):
+Basic research query:
 
 ```json
 {
@@ -594,16 +617,57 @@ Example (`brave-research`):
 }
 ```
 
-Example (override defaults on `brave`):
+Research with tuning parameters:
+
+```json
+{
+  "model": "brave-research",
+  "messages": [
+    { "role": "user", "content": "Compare the top 5 JavaScript frameworks in 2026" }
+  ],
+  "stream": true,
+  "research_allow_thinking": true,
+  "research_maximum_number_of_iterations": 3,
+  "research_maximum_number_of_queries": 20,
+  "research_maximum_number_of_seconds": 120
+}
+```
+
+Standard model with research enabled and web search options:
 
 ```json
 {
   "model": "brave",
   "messages": [
-    { "role": "user", "content": "What are the latest developments in fusion energy?" }
+    { "role": "user", "content": "Best restaurants in Tokyo" }
   ],
   "enable_research": true,
-  "stream": true
+  "stream": true,
+  "web_search_options": {
+    "search_context_size": "high",
+    "user_location": {
+      "type": "approximate",
+      "approximate": {
+        "city": "Tokyo",
+        "country": "JP",
+        "timezone": "Asia/Tokyo"
+      }
+    }
+  }
+}
+```
+
+Brave Pro with citations:
+
+```json
+{
+  "model": "brave-pro",
+  "messages": [
+    { "role": "user", "content": "Explain quantum computing" }
+  ],
+  "stream": true,
+  "enable_citations": true,
+  "safesearch": "moderate"
 }
 ```
 
