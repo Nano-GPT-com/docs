@@ -565,7 +565,7 @@ These models are separate from the Web Search integration (`:online/*` suffixes 
 
 #### Brave-specific request fields
 
-When using `model: "brave"` or `model: "brave-research"`, you can pass these optional top-level fields in the request body (OpenAI SDK `extra_body` style):
+When using `model: "brave"`, `model: "brave-pro"`, or `model: "brave-research"`, you can pass these optional top-level fields in the request body (OpenAI SDK `extra_body` style):
 
 | Parameter | Type | Default (`brave`/`brave-pro`) | Default (`brave-research`) | Description |
 |---|---|---|---|---|
@@ -577,8 +577,8 @@ When using `model: "brave"` or `model: "brave-research"`, you can pass these opt
 | `max_completion_tokens` | integer | — | — | Maximum number of tokens to generate in the completion. |
 | `metadata` | object | — | — | Optional metadata to attach to the request. |
 | `research_allow_thinking` | boolean | — | — | Allow the research model to show its thinking/reasoning process. |
-| `research_maximum_number_of_iterations` | integer | — | — | Maximum number of research iterations. |
-| `number_of_queries` | integer | — | — | Maximum number of search queries to issue during research (1-50). |
+| `research_maximum_number_of_iterations` | integer | — | — | Maximum number of research iterations (1-5). |
+| `research_maximum_number_of_queries` | integer | — | — | Maximum number of search queries to issue during research (1-50). |
 
 **Streaming requirement:** `enable_research`, `enable_citations`, and `enable_entities` require `stream: true`. The `brave-research` model is streaming-first and will use streaming even if `stream` is omitted (recommended: always set `stream: true` explicitly).
 
