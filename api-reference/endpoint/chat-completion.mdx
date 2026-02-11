@@ -593,7 +593,9 @@ These parameters control `enable_research` mode (`brave-research` by default, or
 | `research_maximum_number_of_seconds` | integer | 1-300 | Maximum time in seconds for the research process. |
 | `research_maximum_number_of_tokens_per_query` | integer | 1024-16384 | Maximum tokens to process per search query. |
 
-#### Web search options
+#### Web search options (Brave models)
+
+For `model: "brave"`, `model: "brave-pro"`, and `model: "brave-research"`, pass these as a top-level `web_search_options` object in the same chat completions request body.
 
 | Parameter | Type | Description |
 |---|---|---|
@@ -602,6 +604,19 @@ These parameters control `enable_research` mode (`brave-research` by default, or
 | `web_search_options.user_location` | object | User location for localized results. |
 | `web_search_options.user_location.type` | enum | Must be `"approximate"`. |
 | `web_search_options.user_location.approximate` | object | Required location object containing `city`, `country`, `region`, and `timezone` (nullable strings). |
+
+Minimal Brave example:
+
+```json
+{
+  "model": "brave",
+  "messages": [{ "role": "user", "content": "What's new in battery tech?" }],
+  "stream": true,
+  "web_search_options": {
+    "search_context_size": "high"
+  }
+}
+```
 
 **Streaming requirement:** `enable_research`, `enable_citations`, and `enable_entities` require `stream: true`. The `brave-research` model is streaming-first and will use streaming even if `stream` is omitted (recommended: always set `stream: true` explicitly).
 
