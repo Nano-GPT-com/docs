@@ -598,10 +598,10 @@ These parameters control `enable_research` mode (`brave-research` by default, or
 | Parameter | Type | Description |
 |---|---|---|
 | `web_search_options` | object | Nested object to configure web search behavior. |
-| `web_search_options.search_context_size` | string | Amount of search context: `"low"`, `"medium"`, or `"high"`. |
+| `web_search_options.search_context_size` | string | Amount of search context: `"low"`, `"medium"`, or `"high"` (when omitted, Brave defaults to `"low"`). |
 | `web_search_options.user_location` | object | User location for localized results. |
 | `web_search_options.user_location.type` | enum | Must be `"approximate"`. |
-| `web_search_options.user_location.approximate` | object | Contains `city`, `country`, `region`, and `timezone` (nullable strings). |
+| `web_search_options.user_location.approximate` | object | Required location object containing `city`, `country`, `region`, and `timezone` (nullable strings). |
 
 **Streaming requirement:** `enable_research`, `enable_citations`, and `enable_entities` require `stream: true`. The `brave-research` model is streaming-first and will use streaming even if `stream` is omitted (recommended: always set `stream: true` explicitly).
 
