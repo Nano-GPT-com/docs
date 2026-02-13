@@ -42,7 +42,7 @@ Use the jump list below to navigate the long-form reference quickly.
     - [Web Search](#web-search)
     - [Option A: model suffixes](#option-a-model-suffixes)
     - [Option B: request body configuration](#option-b-request-body-configuration-recommended)
-    - [Brave Grounding and Research models](#brave-grounding-and-research-models)
+    - [Brave Answers and Research models](#brave-answers-and-research-models)
     - [Brave-specific request fields](#brave-specific-request-fields)
     - [Provider-specific options](#provider-specific-options-set-inside-websearch)
     - [Examples](#examples)
@@ -491,7 +491,7 @@ OpenAI native web search: GPT-5+ / o1 / o3 / o4 models use OpenAI's built-in web
 <Note>
   Brave appears in this section in two different ways:
   1) `:online/brave` / `webSearch.provider = "brave"` uses the Web Search integration (raw results injected into another model).
-  2) `model: "brave"` / `model: "brave-pro"` / `model: "brave-research"` uses Brave's own grounded answer pipeline (search + generation in one model).
+  2) `model: "brave"` / `model: "brave-pro"` / `model: "brave-research"` uses Brave's own Answers pipeline (search + generation in one model).
 </Note>
 
 ### Option A: model suffixes
@@ -551,17 +551,21 @@ Legacy alias example:
 }
 ```
 
-### Brave Grounding and Research models
+### Brave Answers and Research models
 
 NanoGPT also exposes three Brave-powered text models that combine web search with generation. Use them by setting the `model` directly:
 
 | Model ID | Description |
 |---|---|
-| `brave` | Brave Grounding. Single web search + LLM answer. Fast (~4.5s), low cost. |
-| `brave-pro` | Brave Pro Grounding. Premium tier with higher quality answers, more search depth, and priority processing. |
-| `brave-research` | Brave Research. Multi-search deep research with reasoning. Slower (can take minutes), higher cost. |
+| `brave` | Brave (Answers). Single web search + LLM answer. Fast (~4.5s), low cost. |
+| `brave-pro` | Brave (Pro). Premium tier with higher quality answers, more search depth, and priority processing. |
+| `brave-research` | Brave (Research). Multi-search deep research with reasoning. Slower (can take minutes), higher cost. |
 
 These models are separate from the Web Search integration (`:online/*` suffixes and the `webSearch` object).
+
+<Note>
+  Brave also offers an LLM Context API (search-derived, relevance-ranked chunks for LLM workflows). NanoGPT does not currently integrate this mode; current Brave integrations in this endpoint are Web Search injection and the Brave Answers model family above.
+</Note>
 
 #### Brave-specific request fields
 
@@ -674,7 +678,7 @@ Standard model with research enabled and web search options:
 }
 ```
 
-Brave Pro with citations:
+Brave (Pro) with citations:
 
 ```json
 {
@@ -908,8 +912,10 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 | Kagi Search | $0.025 | N/A | Full search mode |
 | Perplexity | $0.005 | N/A | Flat rate |
 | Valyu | ~$0.0015/result | Variable | Dynamic pricing |
-| Brave | $0.009 | $0.009 | Flat rate |
+| Brave | $0.005 | $0.005 | Flat rate |
 | OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
+
+For standard NanoGPT usage, Brave credentials are handled automatically.
 
 ### Bring your own key (BYOK)
 
@@ -924,7 +930,15 @@ See: [Bring Your Own Key (BYOK)](/api-reference/miscellaneous/byok)
 
 #### Web search BYOK
 
-For web search enhancements, BYOK is supported for Tavily, Exa, Kagi, Perplexity, and Valyu. Linkup and Brave always use NanoGPT's key. When you supply your own provider key, NanoGPT does not add a platform charge for web search.
+Web search BYOK availability is provider-dependent and can change over time. See the BYOK reference for the current support matrix.
+
+#### Brave terms highlights (updated February 11, 2026)
+
+- No caching beyond transient storage.
+- No AI training on Brave search results.
+- No redistribution or reselling of Brave results.
+- Termination: Brave may terminate with 10 days' notice; customer may terminate with 30 days' notice.
+- Liability cap: limited to fees paid in the prior 12 months.
 
 ### Advanced behavior (optional)
 
