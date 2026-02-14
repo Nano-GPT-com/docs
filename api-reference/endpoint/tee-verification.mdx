@@ -9,14 +9,14 @@ NanoGPT supports private TEE-backed models. Use these endpoints to verify enclav
 ### Fetch Attestation Report
 
 ```bash
-curl "https://nano-gpt.com/v1/tee/attestation?model=TEE/hermes-3-llama-3.1-70b" \
+curl "https://nano-gpt.com/v1/tee/attestation?model=TEE/llama-3.3-70b-instruct" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
 ### Fetch ECDSA Signature
 
 ```bash
-curl "https://nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/hermes-3-llama-3.1-70b&signing_algo=ecdsa" \
+curl "https://nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/llama-3.3-70b-instruct&signing_algo=ecdsa" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
@@ -25,7 +25,7 @@ curl "https://nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/hermes-3-llama
 Save the following as `test_tee.py` and run:
 
 ```bash
-python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/hermes-3-llama-3.1-70b
+python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/llama-3.3-70b-instruct
 ```
 
 ```python
@@ -34,7 +34,7 @@ python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --mod
 TEE Attestation & Signature Verification Example for NanoGPT.
 
 Usage:
-    python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/hermes-3-llama-3.1-70b
+    python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/llama-3.3-70b-instruct
 """
 import argparse
 import requests
@@ -45,7 +45,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Verify TEE attestation & signatures for NanoGPT TEE models.")
     parser.add_argument("--api-key", required=True, help="NanoGPT API key")
     parser.add_argument("--base-url", default="https://nano-gpt.com", help="NanoGPT server base URL")
-    parser.add_argument("--model", required=True, help="TEE model identifier (e.g. TEE/hermes-3-llama-3.1-70b)")
+    parser.add_argument("--model", required=True, help="TEE model identifier (e.g. TEE/llama-3.3-70b-instruct)")
     return parser.parse_args()
 
 
