@@ -58,6 +58,51 @@ To clear the default team and return to personal billing:
 
 ---
 
+## User Response Retention Default
+
+Set a user-level default retention for `/v1/responses`. This applies when a request does not provide `retention_days` and no team override is active.
+
+### Get User Responses Retention
+
+```
+GET /api/user/responses-retention
+```
+
+**Response**:
+```json
+{
+  "responsesRetentionDays": 0
+}
+```
+
+### Set User Responses Retention
+
+```
+POST /api/user/responses-retention
+```
+
+**Request Body**:
+```json
+{
+  "responsesRetentionDays": 0
+}
+```
+
+To clear the user-level override and fall back to team/platform defaults:
+```json
+{
+  "responsesRetentionDays": null
+}
+```
+
+Rules:
+
+- `responsesRetentionDays` accepts integer values `0..365` or `null`.
+- `null` clears the user-level override.
+- The setting is stored in `sessions.metadata.responsesRetentionDays`.
+
+---
+
 ## Referral Link
 
 Referral links let you share a signup link that is tied to your account.
@@ -184,6 +229,7 @@ GET /api/teams/{teamUuid}
     "invite_link_token": "abc123...",
     "default_member_usage_limit_usd": 100,
     "usage_limit_usd": null,
+    "responses_retention_days": 14,
     "usage_limit_enforced": true,
     "high_spend_text_discount": false,
     "balances": {
@@ -198,6 +244,7 @@ GET /api/teams/{teamUuid}
 **Notes**:
 - `balances` shows the team owner's account balance
 - `high_spend_text_discount` indicates whether a high-spend discount is currently active for this team (when active, it applies automatically)
+- `responses_retention_days` is the optional team default for `/v1/responses` retention (`0..365` or `null`).
 - `role` is the requesting user's role in this team
 
 ---
@@ -936,6 +983,7 @@ PATCH /api/teams/{teamUuid}/settings
 ```json
 {
   "default_member_usage_limit_usd": 100,
+  "responses_retention_days": 14,
   "usage_limit_enforced": true
 }
 ```
@@ -944,6 +992,7 @@ PATCH /api/teams/{teamUuid}/settings
 |-------|------|----------|-------------|
 | `default_member_usage_limit_usd` | number\|null | No | Default monthly limit for members |
 | `team_usage_limit_usd` | number\|null | No | Team-wide spending limit |
+| `responses_retention_days` | number\|null | No | Team default retention for `/v1/responses` (`0..365`). Use `null` to clear |
 | `usage_limit_enforced` | boolean | No | Hard-enforce limits |
 
 **Response**:

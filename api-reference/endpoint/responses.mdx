@@ -32,6 +32,8 @@ Or alternatively:
 x-api-key: YOUR_API_KEY
 ```
 
+For API-key requests, you can optionally pass `x-team-id` to choose team context when team defaults are evaluated (for example, retention defaults).
+
 ## Endpoints
 
 - `POST /v1/responses` - Create a new response from the model
@@ -100,6 +102,8 @@ Authorization: Bearer YOUR_API_KEY
 | `stream` | boolean | No | Enable streaming responses (default: false) |
 | `stream_options` | object | No | Streaming options: `{ include_obfuscation?: boolean }` |
 | `store` | boolean | No | Store response for later retrieval (default: true) |
+| `retention_days` | integer or null | No | Per-request retention override in days (`0..365`). `null` means no request-level override |
+| `retentionDays` | integer or null | No | Alias for `retention_days`. If both are sent, values must match |
 | `previous_response_id` | string | No | Link to previous response for conversation threading |
 | `reasoning` | object | No | Reasoning configuration for reasoning-capable models |
 | `text` | object | No | Text output configuration (format + verbosity) |
@@ -113,6 +117,34 @@ Authorization: Bearer YOUR_API_KEY
 | `prompt_cache_key` | string | No | Key for prompt caching |
 | `background` | boolean | No | Enable background/async processing |
 | `service_tier` | string | No | Service tier. Use `"priority"` where supported. See [Service tiers (priority)](#service-tiers-priority) near the end. |
+
+### Retention Resolution
+
+Effective retention for `/v1/responses` resolves in this order:
+
+1. Request override (`retention_days` / `retentionDays`)
+2. Team setting (`responses_retention_days`)
+3. User setting (`responsesRetentionDays`)
+4. Platform default (`7` days)
+
+Rules:
+
+- `retention_days` and `retentionDays` accept integer values `0..365`, or `null`.
+- `null` means "no request override" and falls back to team/user/platform defaults.
+- If both request fields are provided, they must match.
+- Invalid retention values return `400` with `invalid_request_error`.
+- `0` enables zero-retention behavior for that request.
+- Existing clients that omit retention fields keep default behavior (team/user/platform retention resolution).
+
+With effective retention `0`:
+
+- `previous_response_id` is rejected.
+- `background` is rejected.
+
+API-key team context for retention defaults:
+
+- If `x-team-id` is present and the caller is a member, that team is used.
+- Otherwise, the API uses the caller session's default team (`default_team_uuid` / `default_team_id`) when membership is valid.
 
 ### Input Types
 
@@ -840,7 +872,7 @@ Response includes `id`: `"resp_abc123"`
 
 The model has access to the conversation history and responds: "Your name is Alice."
 
-Note: `previous_response_id` requires authentication and `store: true` (default) on previous responses.
+Note: `previous_response_id` requires authentication, `store: true` (default) on previous responses, and effective retention greater than `0`.
 
 ## Background Mode
 
@@ -882,6 +914,7 @@ Constraints:
 
 - Cannot be combined with `stream: true`
 - Requires authentication
+- Effective retention must be greater than `0`
 - Maximum processing time: approximately 800 seconds
 
 ## Retrieve Response
@@ -950,6 +983,7 @@ Authorization: Bearer YOUR_API_KEY
 | `model_not_found` | Specified model does not exist |
 | `response_not_found` | Response ID not found |
 | `invalid_response_id` | Invalid response ID format |
+| `invalid_request_error` | Invalid request shape/value (for example retention out of range or mismatched alias fields) |
 | `authentication_required` | No API key provided |
 | `invalid_api_key` | API key is invalid or inactive |
 
@@ -1000,6 +1034,20 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
     "model": "openai/gpt-5.2",
     "input": "Write a haiku about programming",
     "stream": true
+  }'
+```
+
+### Per-request Retention Override
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "hello",
+    "store": true,
+    "retention_days": 3
   }'
 ```
 

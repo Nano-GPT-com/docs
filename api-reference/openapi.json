@@ -2708,6 +2708,13 @@
             "description": "Optional billing override to force pay-as-you-go (e.g., paygo). Header name is case-insensitive.",
             "required": false,
             "schema": { "type": "string" }
+          },
+          {
+            "name": "X-Team-Id",
+            "in": "header",
+            "description": "Optional team context override for API-key requests. If provided, it must reference a team the caller belongs to.",
+            "required": false,
+            "schema": { "type": "string" }
           }
         ],
         "requestBody": {
@@ -6536,6 +6543,20 @@
             "type": "boolean",
             "description": "Store response for later retrieval",
             "default": true
+          },
+          "retention_days": {
+            "description": "Per-request retention override in days. Use null to disable request-level override.",
+            "oneOf": [
+              { "type": "integer", "minimum": 0, "maximum": 365 },
+              { "type": "null" }
+            ]
+          },
+          "retentionDays": {
+            "description": "Alias for retention_days. If both are provided, values must match.",
+            "oneOf": [
+              { "type": "integer", "minimum": 0, "maximum": 365 },
+              { "type": "null" }
+            ]
           },
           "previous_response_id": {
             "type": "string",
