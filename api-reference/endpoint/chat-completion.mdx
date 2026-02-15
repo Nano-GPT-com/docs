@@ -945,7 +945,7 @@ Web search BYOK availability is provider-dependent and can change over time. See
 - **Provider routing**: For GPT-5+ / o1 / o3 / o4 models, `:online` without an explicit provider uses OpenAI native web search. If you set `webSearch.provider` or use an explicit `:online/<provider>` suffix, that provider is used instead.
 - **Model suffix normalization**: `:online` (and provider/depth suffixes) are stripped from the model name before routing to the base model; the suffix only controls search behavior.
 - **Query formation (non-OpenAI providers)**: The search query is derived from your latest user message and may include the previous user message if the latest is short. If you need full control over the query or raw results, use the Web Search endpoint (`/api/web`).
-- **`scraping: true` URL handling**: When enabled, NanoGPT scans messages for public `http(s)` URLs, ignores local/private URLs, de-duplicates, and caps at 5. If no eligible URLs are found, scraping is skipped. Inline scraping in chat is billed at **$0.0015 per successfully scraped URL**. For explicit URL lists and the standalone endpoint price (**$0.001 per URL**), use `/scrape-urls`.
+- **`scraping: true` URL handling**: When enabled, NanoGPT scans messages for public `http(s)` URLs, ignores local/private URLs, de-duplicates, and caps at 5. If no eligible URLs are found, scraping is skipped. Inline scraping in chat is billed at **\$0.0015 per successfully scraped URL**. For explicit URL lists and the standalone endpoint price (**\$0.001 per URL**), use `/scrape-urls`.
 
 ## Image Input
 
