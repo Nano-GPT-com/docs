@@ -261,6 +261,68 @@ POST /api/user/voice-ids
 }
 ```
 
+## Voice Clone Storage and Retention
+
+Last verified: February 21, 2026.
+
+Retention depends on the provider behind each voice clone model:
+
+- `minimax-voice-clone` (WaveSpeed + MiniMax):
+  New cloned voice IDs are temporary. If a cloned voice is not used in a real TTS synthesis call within 7 days (168 hours), it is deleted. If it is used at least once in TTS within that window, it is kept long-term. Preview generated during clone creation does not activate or persist the voice.
+- `qwen-voice-clone` (fal.ai):
+  The returned speaker embedding file URL is hosted by fal. fal guarantees hosted generated files for at least 7 days, then they may be removed at any time. Download and store the embedding yourself immediately for long-term reuse.
+- `inworld-voice-clone` (Inworld Voice API, if enabled in your workspace):
+  Inworld does not publish a fixed auto-delete window for cloned voices in public docs. Treat cloned voices as persistent until explicitly deleted from your workspace.
+  Note: Inworld's Zero Data Retention mode explicitly does not apply to voice-cloning audio samples.
+
+## How to Keep and Reuse Voice Clones
+
+### MiniMax / WaveSpeed (`customVoiceId`)
+
+1. Save the returned voice ID (`customVoiceId`; provider docs may also call this `voice_id`).
+2. Run at least one real TTS synthesis with that voice ID within 7 days.
+3. Reuse the same voice ID in later TTS requests.
+
+### Qwen (`speakerEmbeddingUrl`)
+
+1. Save the returned `speakerEmbeddingUrl` (`speaker_embedding_url` in some provider docs).
+2. Download the embedding file right away.
+3. Store it in your own durable storage (S3, R2, etc.).
+4. Use your stored URL later as `speaker_voice_embedding_file_url`.
+
+Example:
+
+```bash
+curl -L "$SPEAKER_EMBEDDING_URL" -o my-voice.safetensors
+```
+
+### Inworld (`voice_id`, if enabled)
+
+1. Save the returned `voice_id`.
+2. Reuse it directly for Inworld TTS.
+3. If deleted from Inworld, it must be re-cloned.
+
+## Can I Download the Clone if It Gets Deleted?
+
+- MiniMax / WaveSpeed: no portable voice embedding download is documented; keep the voice ID active by using it in time.
+- Qwen: yes, download the speaker embedding file from `speakerEmbeddingUrl` / `speaker_embedding_url`.
+- Inworld: no documented voice-embedding export endpoint; keep the `voice_id` and avoid accidental deletion.
+
+> **Warning:** Provider retention policies may change. This page reflects provider docs as of February 21, 2026.
+
+### Provider Source Links
+
+- MiniMax voice cloning intro: https://platform.minimax.io/docs/api-reference/voice-cloning-intro
+- MiniMax voice clone endpoint: https://platform.minimax.io/docs/api-reference/voice-cloning-clone
+- MiniMax FAQ (voice ID validity, activation, preview behavior): https://platform.minimax.io/docs/faq/about-apis
+- WaveSpeed MiniMax voice clone persistence notes: https://wavespeed.ai/docs/docs-api/minimax/minimax-voice-clone
+- fal FAQ (file retention): https://fal-d8505a2e.mintlify.app/model-apis/faq
+- fal Queue API (`X-Fal-Object-Lifecycle-Preference`): https://fal-d8505a2e.mintlify.app/model-apis/mndpoints/queue
+- Inworld clone voice API: https://docs.inworld.ai/api-reference/voiceAPI/voiceservice/clone-voice
+- Inworld list voices: https://docs.inworld.ai/api-reference/voiceAPI/voiceservice/list-voices
+- Inworld delete voice: https://docs.inworld.ai/api-reference/voiceAPI/voiceservice/delete-voice
+- Inworld zero data retention (voice cloning samples excluded): https://docs.inworld.ai/docs/tts/zero-data-retention
+
 ## Pricing
 
 Clone runs are charged as a flat per-run fee:
@@ -272,5 +334,5 @@ The submit response includes `cost` and `paymentSource` for the run.
 
 ## Limitations
 
-- Both providers are asynchronous; clients must poll status until completion.
+- MiniMax and Qwen clone endpoints are asynchronous; clients must poll status until completion.
 - MiniMax `customVoiceId` must match `^[A-Za-z][A-Za-z0-9]{7,}$`.
