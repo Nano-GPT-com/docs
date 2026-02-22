@@ -443,33 +443,8 @@ For more advanced web search capabilities including structured output, domain fi
 
 ### Brave Answers & Research
 
-NanoGPT offers three Brave-powered text models that combine web search with LLM generation:
+Brave documentation has been moved to a dedicated page: [Brave](/api-reference/miscellaneous/brave).
 
-- **`brave`**: Brave (Answers). Performs a single web search and generates a grounded answer. Fast responses (~4.5 seconds), low cost. Good for quick factual questions.
-- **`brave-pro`**: Brave (Pro). Premium tier with higher quality answers, more search depth, and priority processing.
-- **`brave-research`**: Brave (Research). Performs multiple iterative searches with reasoning and planning for thorough, well-sourced answers. Response times can extend to minutes. Best for complex questions requiring comprehensive research.
-
-All three models use the OpenAI-compatible chat completions format: set `model` to `brave`, `brave-pro`, or `brave-research` and send `messages`.
-
-This is separate from the Web Search integration (`:online/*` model suffixes and the `/api/web` endpoint), which returns raw search results to be injected into another model.
-
-Brave also offers an LLM Context API (relevance-ranked smart chunks optimized for LLM consumption). NanoGPT does not currently integrate that API surface.
-
-For all Brave request parameters, see:
-
-- [Brave model overview and parameter entry point](/api-reference/endpoint/chat-completion#brave-answers-and-research-models)
-- [Brave-specific request fields](/api-reference/endpoint/chat-completion#brave-specific-request-fields)
-- [Research tuning parameters](/api-reference/endpoint/chat-completion#research-tuning-parameters)
-- [Web search options for Brave models (`web_search_options.search_context_size`, `user_location`)](/api-reference/endpoint/chat-completion#web-search-options-brave-models)
-
-#### Pricing
-
-Brave models use variable pricing based on usage reported upstream (number of searches and total tokens processed). At a high level:
-
-```text
-cost = (searches * $4 / 1,000) + (tokens * $5 / 1,000,000)
-```
-
-- **`brave`**: Typically about $0.007-$0.01 per request (one search).
-- **`brave-pro`**: Similar baseline profile to `brave`, but premium tier behavior may increase effective request cost depending on usage.
-- **`brave-research`**: Higher cost due to multiple searches per request; cost scales with query complexity.
+- Includes Brave Answers model IDs (`brave`, `brave-pro`, `brave-research`)
+- Covers all Brave-specific request fields and `web_search_options`
+- Includes Brave `/api/web` provider fields, examples, pricing, and terms highlights

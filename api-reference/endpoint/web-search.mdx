@@ -9,11 +9,7 @@ description: "Perform AI-powered web searches across multiple providers with fle
 The Web Search API allows you to perform AI-powered web searches across supported providers (Linkup, Tavily, Exa, Kagi, Perplexity, Valyu, Brave), returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and provider-specific depth modes. If `provider` is omitted, Linkup is used by default.
 
 <Note>
-  The Brave provider on this page (`provider: "brave"` on `/api/web`, or `:online/brave` on chat completions) returns raw search results that you can inject into another model. This is different from the Brave Answers text models (`model: "brave"`, `model: "brave-pro"`, and `model: "brave-research"`), which generate complete answers using Brave's own search + LLM pipeline.
-</Note>
-
-<Note>
-  Brave also offers an LLM Context API (pre-processed, relevance-ranked chunks in LLM-friendly formats). NanoGPT does not currently expose that Brave API surface on `/api/web`.
+  Brave-specific documentation now lives on a dedicated page: [Brave](/api-reference/miscellaneous/brave). This page's `provider: "brave"` mode returns raw search results; Brave Answers models (`model: "brave"`, `model: "brave-pro"`, `model: "brave-research"`) are documented there.
 </Note>
 
 ## Authentication
@@ -166,23 +162,7 @@ Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entri
 
 ### Brave options
 
-```json
-{
-  "count": 0-20,
-  "maxResults": 0-20,
-  "offset": 0-9,
-  "safesearch": "off" | "moderate" | "strict",
-  "freshness": "2024-01-01to2024-02-01",
-  "searchLang": "string",
-  "uiLang": "string",
-  "eSnippets": boolean,
-  "spellcheck": boolean,
-  "goggles": "string" | ["string"],
-  "country": "string"
-}
-```
-
-Use either `count` or `maxResults` (0-20). `searchLang` and `uiLang` are passed to Brave as `search_lang` and `ui_lang`. If `freshness` is not provided but both `fromDate` and `toDate` are set, the API builds a Brave freshness range (`fromDate + "to" + toDate`). For deep searches, Brave defaults `extraSnippets` to true unless `eSnippets` is explicitly set.
+Brave provider options (`count`, `maxResults`, `offset`, `safesearch`, `freshness`, `searchLang`, `uiLang`, `eSnippets`, `spellcheck`, `goggles`, `country`) are documented on [Brave](/api-reference/miscellaneous/brave).
 
 ## Response
 
@@ -421,23 +401,7 @@ curl -X POST https://nano-gpt.com/api/web \
 
 </CodeGroup>
 
-### Brave example (request body)
-
-```json
-POST /api/web
-{
-  "query": "latest EU AI Act amendments",
-  "provider": "brave",
-  "depth": "standard",
-  "outputType": "searchResults",
-  "count": 10,
-  "offset": 0,
-  "safesearch": "moderate",
-  "searchLang": "en",
-  "uiLang": "en",
-  "freshness": "2024-01-01to2024-02-01"
-}
-```
+For a Brave-specific request example, see [Brave](/api-reference/miscellaneous/brave).
 
 ## Advanced Examples
 
@@ -586,7 +550,7 @@ The API is rate-limited to 60 requests per minute per IP address for `/api/web`.
 
 6. **Handle Errors Gracefully**: Always implement error handling for rate limits, insufficient balance, and network errors.
 
-7. **Respect provider data policies**: Cache only where provider terms allow it. Brave restricts caching to transient storage.
+7. **Respect provider data policies**: Cache only where provider terms allow it.
 
 ## Output Type Selection Guide
 
@@ -620,13 +584,7 @@ BYOK availability is provider-dependent and can change over time. See the BYOK r
 
 See: [Bring Your Own Key (BYOK)](/api-reference/miscellaneous/byok)
 
-### Brave terms highlights (updated February 11, 2026)
-
-- No caching beyond transient storage.
-- No AI training on Brave search results.
-- No redistribution or reselling of Brave results.
-- Termination: Brave may terminate with 10 days' notice; customer may terminate with 30 days' notice.
-- Liability cap: limited to fees paid in the prior 12 months.
+Brave-specific terms highlights are documented on [Brave](/api-reference/miscellaneous/brave).
 
 ## X-402 payment protocol (optional)
 

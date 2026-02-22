@@ -1,0 +1,169 @@
+---
+title: "Brave"
+description: "Brave integration reference for web search and Brave Answers models"
+---
+
+# Brave
+
+NanoGPT supports Brave in two different integration modes:
+
+1. **Web Search provider**: `provider: "brave"` on `/api/web` or `webSearch.provider = "brave"` / `:online/brave` in chat completions. This returns raw search results that are injected into another model.
+2. **Brave Answers models**: `model: "brave"`, `model: "brave-pro"`, or `model: "brave-research"`. This runs Brave's own search + answer pipeline.
+
+<Note>
+  Brave also offers an LLM Context API (relevance-ranked chunks for downstream LLM workflows). NanoGPT does not currently expose that API surface.
+</Note>
+
+## Brave model IDs
+
+| Model ID | Description |
+| --- | --- |
+| `brave` | Brave (Answers). Single web search + LLM answer. Fast (~4.5s), low cost. |
+| `brave-pro` | Brave (Pro). Premium tier with higher quality answers, more search depth, and priority processing. |
+| `brave-research` | Brave (Research). Multi-search deep research with reasoning. Slower (can take minutes), higher cost. |
+
+## Brave model request fields (`/api/v1/chat/completions`)
+
+When using `model: "brave"`, `model: "brave-pro"`, or `model: "brave-research"`, pass these optional top-level fields in the request body.
+
+### Core parameters
+
+| Parameter | Type | Default (`brave`/`brave-pro`) | Default (`brave-research`) | Description |
+| --- | --- | --- | --- | --- |
+| `enable_research` | boolean | `false` | `true` | Enables multi-search deep research mode with reasoning. Requires streaming. |
+| `enable_citations` | boolean | `false` | `false` | Includes `<citation>` markup in response text linking to sources. Requires streaming. |
+| `enable_entities` | boolean | `false` | `false` | Includes entity metadata in the response. Requires streaming. |
+| `country` | string | - | - | Country code for search localization (for example `"US"`). |
+| `language` | string | - | - | Language code for response language (for example `"en"`). |
+| `max_completion_tokens` | integer | - | - | Maximum completion tokens. |
+| `seed` | integer | - | - | Optional deterministic seed where supported. |
+| `stream` | boolean | `false` | auto-streaming | Streams SSE responses. `brave-research` uses streaming when omitted. |
+| `safesearch` | string | `moderate` | `moderate` | Safe search level: `off`, `moderate`, or `strict`. |
+| `metadata` | object | - | - | Optional metadata to attach to the request. |
+
+### Research tuning parameters
+
+These control `enable_research` mode (`brave-research` by default, or any Brave model when `enable_research: true`).
+
+| Parameter | Type | Range | Description |
+| --- | --- | --- | --- |
+| `research_allow_thinking` | boolean | - | Allow visible reasoning output. Default: `true`. |
+| `research_maximum_number_of_iterations` | integer | 1-5 | Maximum research iterations. |
+| `research_maximum_number_of_queries` | integer | 1-50 | Maximum search queries. |
+| `research_maximum_number_of_results_per_query` | integer | 1-60 | Maximum results analyzed per query. |
+| `research_maximum_number_of_seconds` | integer | 1-300 | Maximum research duration. |
+| `research_maximum_number_of_tokens_per_query` | integer | 1024-16384 | Maximum tokens processed per query. |
+
+### `web_search_options` (Brave models)
+
+For Brave models, pass a top-level `web_search_options` object in the same chat completions request.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `web_search_options` | object | Nested object to configure search behavior. |
+| `web_search_options.search_context_size` | string | Search context size: `"low"`, `"medium"`, or `"high"` (Brave default when omitted: `"low"`). |
+| `web_search_options.user_location` | object | User location for localized results. |
+| `web_search_options.user_location.type` | enum | Must be `"approximate"`. |
+| `web_search_options.user_location.approximate` | object | `city`, `country`, `region`, `timezone` (nullable strings). |
+
+### Brave model examples
+
+```json
+{
+  "model": "brave",
+  "messages": [{ "role": "user", "content": "What's new in battery tech?" }],
+  "stream": true,
+  "web_search_options": {
+    "search_context_size": "high"
+  }
+}
+```
+
+```json
+{
+  "model": "brave-research",
+  "messages": [{ "role": "user", "content": "What are the latest developments in fusion energy?" }],
+  "stream": true,
+  "research_maximum_number_of_iterations": 3,
+  "research_maximum_number_of_queries": 20
+}
+```
+
+`enable_research`, `enable_citations`, and `enable_entities` require `stream: true`. For consistency, set `stream: true` explicitly on Brave model requests.
+
+## Brave provider fields (`/api/web` and `webSearch.provider = "brave"`)
+
+```json
+{
+  "count": 0-20,
+  "maxResults": 0-20,
+  "offset": 0-9,
+  "safesearch": "off" | "moderate" | "strict",
+  "freshness": "2024-01-01to2024-02-01",
+  "searchLang": "string",
+  "uiLang": "string",
+  "eSnippets": boolean,
+  "spellcheck": boolean,
+  "goggles": "string" | ["string"],
+  "country": "string"
+}
+```
+
+Use either `count` or `maxResults` (0-20). `searchLang` and `uiLang` are mapped to Brave's `search_lang` and `ui_lang`. If `freshness` is omitted and both `fromDate` and `toDate` are set, NanoGPT builds `freshness` as `fromDate + "to" + toDate`. For deep searches, Brave defaults `extraSnippets` to `true` unless `eSnippets` is set explicitly.
+
+### Brave provider example (`/api/web`)
+
+```json
+POST /api/web
+{
+  "query": "latest EU AI Act amendments",
+  "provider": "brave",
+  "depth": "standard",
+  "outputType": "searchResults",
+  "count": 10,
+  "offset": 0,
+  "safesearch": "moderate",
+  "searchLang": "en",
+  "uiLang": "en",
+  "freshness": "2024-01-01to2024-02-01"
+}
+```
+
+## Pricing
+
+### Brave as Web Search provider
+
+- Standard: `$0.005` per request
+- Deep: `$0.005` per request
+
+### Brave Answers models
+
+Brave model costs are usage-based (searches + tokens):
+
+```text
+cost = (searches * $4 / 1,000) + (tokens * $5 / 1,000,000)
+```
+
+- `brave`: typically about `$0.007-$0.01` per request (one search)
+- `brave-pro`: similar baseline profile to `brave`, with premium-tier behavior
+- `brave-research`: higher cost due to multiple searches per request
+
+## BYOK and credentials
+
+For standard NanoGPT usage, Brave credentials are handled automatically. BYOK availability is provider-dependent and can change over time.
+
+See [Bring Your Own Key (BYOK)](/api-reference/miscellaneous/byok).
+
+## Brave terms highlights (updated February 11, 2026)
+
+- No caching beyond transient storage.
+- No AI training on Brave search results.
+- No redistribution or reselling of Brave results.
+- Termination: Brave may terminate with 10 days' notice; customer may terminate with 30 days' notice.
+- Liability cap: limited to fees paid in the prior 12 months.
+
+## Related pages
+
+- [Chat Completions endpoint](/api-reference/endpoint/chat-completion)
+- [Web Search endpoint](/api-reference/endpoint/web-search)
+- [Text Generation guide](/api-reference/text-generation)
