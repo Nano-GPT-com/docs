@@ -6542,7 +6542,7 @@
           "store": {
             "type": "boolean",
             "description": "Store response for later retrieval",
-            "default": true
+            "default": false
           },
           "retention_days": {
             "description": "Per-request retention override in days. Use null to disable request-level override.",

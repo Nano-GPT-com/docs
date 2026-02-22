@@ -101,7 +101,7 @@ Authorization: Bearer YOUR_API_KEY
 | `parallel_tool_calls` | boolean | No | Allow multiple tool calls in parallel |
 | `stream` | boolean | No | Enable streaming responses (default: false) |
 | `stream_options` | object | No | Streaming options: `{ include_obfuscation?: boolean }` |
-| `store` | boolean | No | Store response for later retrieval (default: true) |
+| `store` | boolean | No | Store response for later retrieval (default: false) |
 | `retention_days` | integer or null | No | Per-request retention override in days (`0..365`). `null` means no request-level override |
 | `retentionDays` | integer or null | No | Alias for `retention_days`. If both are sent, values must match |
 | `previous_response_id` | string | No | Link to previous response for conversation threading |
@@ -872,7 +872,7 @@ Response includes `id`: `"resp_abc123"`
 
 The model has access to the conversation history and responds: "Your name is Alice."
 
-Note: `previous_response_id` requires authentication, `store: true` (default) on previous responses, and effective retention greater than `0`.
+Note: `previous_response_id` requires authentication, `store: true` on previous responses, and effective retention greater than `0`.
 
 ## Background Mode
 
