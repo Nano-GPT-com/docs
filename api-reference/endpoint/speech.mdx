@@ -6,6 +6,10 @@ title: 'v1/audio/speech (TTS + Music)'
 
 Synthesize speech (TTS) or generate music with a single request. The OpenAI-compatible `POST /v1/audio/speech` endpoint returns audio bytes directly in the HTTP response.
 
+Optional chunked streaming is available with `stream: true`. In streaming mode, audio bytes are delivered progressively as generated, which reduces time-to-first-byte (TTFB) for real-time playback.
+
+Default behavior is unchanged: omit `stream` (or set `false`) to receive one buffered audio file after generation completes.
+
 When you use a music model (for example `Minimax-Music-02`), the `input` field is treated as a music prompt (not text to speak) and `voice` is ignored. For a dedicated music guide and model list, see `api-reference/music-generation.mdx`.
 
 ## Endpoint
@@ -15,37 +19,76 @@ When you use a music model (for example `Minimax-Music-02`), the `input` field i
 - Required header: `Content-Type: application/json`
 - You may see older examples using `POST https://nano-gpt.com/api/v1/speech`. Prefer `/api/v1/audio/speech` for OpenAI SDK compatibility.
 
-## Request Body (JSON)
+## Request Parameters
 
-- `model` (string, required): Audio-speech model ID (TTS or music).
-- `input` (string, required): Text to speak (TTS) or a music prompt (music models).
-- `voice` (string, required by many OpenAI SDKs): Voice preset for TTS. Ignored for music models; if required by your client, pass any string (for example `"alloy"`).
-- `response_format` (string, optional): Output format. Common values: `mp3`, `wav`, `ogg`, `opus`, `aac`, `flac`.
-- `speed` (number, optional): Speaking rate multiplier for TTS (for example `0.5`–`2.0`). Ignored for music models.
-- `instructions` (string, optional): Voice/style instructions (supported by some models/providers).
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model` | string | None | Audio-speech model ID (TTS or music). |
+| `input` | string | None | Text to speak (TTS) or a music prompt (music models). |
+| `voice` | string | None | Voice preset for TTS. Ignored for music models. If your client requires this field, pass any string (for example `"alloy"`). |
+| `response_format` | string | `mp3` | Output format when supported by the selected provider/model. |
+| `speed` | number | `1` | Speaking rate multiplier for TTS (for example `0.5`-`2.0`). Ignored for music models. |
+| `instructions` | string | None | Voice/style instructions (supported by some models/providers). |
+| `stream` | boolean | `false` | When `true`, returns chunked audio bytes progressively. |
 
-Note: Some provider-backed models may support additional fields; parameters accepted can vary by model.
+Notes:
+- Some provider-backed models may support additional fields; accepted parameters vary by model.
+- For unsupported models, `stream: true` is ignored and the endpoint returns the normal buffered response.
 
-## Response
+## Streaming Support (TTS Models)
 
-- Success: `200 OK`, body contains binary audio.
-- `Content-Type`: Based on the selected output format (for example `audio/mpeg`, `audio/wav`, `audio/ogg`).
+| Model | Provider | Streaming Support |
+|-------|----------|-------------------|
+| `tts-1` | OpenAI | Yes |
+| `tts-1-hd` | OpenAI | Yes |
+| `gpt-4o-mini-tts` | OpenAI | Yes |
+| `Elevenlabs-Turbo-V2.5` | ElevenLabs (via FAL) | Yes |
+| `Elevenlabs-V3` | ElevenLabs (via FAL) | Yes |
 
-On error, returns JSON with details and a non‑2xx status:
+All other TTS models (Gemini, Inworld, Kokoro, Qwen, MiniMax, and others) ignore `stream` and return buffered responses.
+
+## Response Behavior
+
+### Non-streaming (default)
+
+- Status: `200 OK`
+- Body: complete audio file returned once generation finishes
+- Headers: typically includes `Content-Length`
+
+### Streaming (`stream: true`)
+
+- Status: `200 OK`
+- Body: audio bytes arrive progressively in chunks
+- Headers: no `Content-Length`; uses `Transfer-Encoding: chunked`
+- Client can start playback/processing as soon as the first chunk arrives
+- `Content-Type` by provider:
+  - OpenAI TTS models: matches the selected output format (for example `audio/mpeg`, `audio/wav`, `audio/opus`, `audio/flac`, `audio/aac`, `audio/pcm`)
+  - ElevenLabs TTS models: always `audio/mpeg`
+
+### Errors
+
+- If an error happens before streaming starts, the API returns the standard OpenAI-style JSON error envelope:
 
 ```json
-{ "error": { "type": "invalid_request_error", "message": "details" } }
+{
+  "error": {
+    "message": "...",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "invalid_request"
+  }
+}
 ```
+
+- If streaming fails after bytes have started, the connection is terminated and clients may receive partial/corrupt audio.
 
 Common error types: `invalid_model`, `invalid_voice`, `unsupported_format`, `input_too_long`, `rate_limit_exceeded`.
 
 ## Examples
 
-All examples write audio to disk.
+### Non-streaming request (unchanged)
 
-<CodeGroup>
-
-```bash cURL (MP3)
+```bash
 curl -X POST \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
@@ -54,127 +97,140 @@ curl -X POST \
     "model": "gpt-4o-mini-tts",
     "input": "Hello from NanoGPT!",
     "voice": "alloy",
-    "response_format": "mp3",
-    "instructions": "Speak in a warm, friendly tone."
+    "response_format": "mp3"
   }' \
   --output speech.mp3
 ```
 
-```ts Node (fetch)
-import fs from "node:fs";
+### Streaming request (cURL)
 
-const res = await fetch("https://nano-gpt.com/api/v1/audio/speech", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    model: "gpt-4o-mini-tts",
-    input: "Hello from NanoGPT!",
-    voice: "alloy",
-    response_format: "mp3",
-  }),
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  https://nano-gpt.com/api/v1/audio/speech \
+  -d '{
+    "model": "gpt-4o-mini-tts",
+    "input": "Hello, this is a streaming test with a longer message to observe progressive chunking.",
+    "voice": "alloy",
+    "response_format": "mp3",
+    "stream": true
+  }' \
+  --output speech.mp3
+```
+
+### OpenAI Node.js SDK (streaming)
+
+```ts
+import OpenAI from "openai";
+import { createWriteStream } from "node:fs";
+
+const client = new OpenAI({
+  apiKey: process.env.NANOGPT_API_KEY,
+  baseURL: "https://nano-gpt.com/api/v1",
 });
 
-if (!res.ok) throw new Error(await res.text());
-const buffer = Buffer.from(await res.arrayBuffer());
-await fs.promises.writeFile("speech.mp3", buffer);
+const response = await client.audio.speech.create({
+  model: "gpt-4o-mini-tts",
+  voice: "alloy",
+  input: "Hello from the streaming API!",
+  response_format: "mp3",
+  stream: true,
+});
+
+if (!response.body) throw new Error("Missing response body stream");
+const out = createWriteStream("output.mp3");
+const reader = response.body.getReader();
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  out.write(Buffer.from(value));
+}
+
+out.end();
 ```
 
-```python Python (requests)
-import requests
-import os
+### OpenAI Python SDK (streaming)
 
-resp = requests.post(
-    "https://nano-gpt.com/api/v1/audio/speech",
-    headers={
-        "Authorization": f"Bearer {os.environ.get('NANOGPT_API_KEY')}",
-        "Content-Type": "application/json",
-    },
-    json={
-        "model": "gpt-4o-mini-tts",
-        "input": "Hello from NanoGPT!",
-        "voice": "alloy",
-        "response_format": "mp3",
-    },
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="your-nanogpt-api-key",
+    base_url="https://nano-gpt.com/api/v1",
 )
-resp.raise_for_status()
-with open("speech.mp3", "wb") as f:
-    f.write(resp.content)
+
+with client.audio.speech.with_streaming_response.create(
+    model="gpt-4o-mini-tts",
+    voice="alloy",
+    input="Hello from the streaming API!",
+    response_format="mp3",
+    extra_body={"stream": True},
+) as response:
+    with open("output.mp3", "wb") as f:
+        for chunk in response.iter_bytes(chunk_size=4096):
+            f.write(chunk)
 ```
 
-</CodeGroup>
+### Compare TTFB (streaming vs non-streaming)
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/audio/speech \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini-tts","input":"A longer sentence to demonstrate the streaming improvement.","voice":"alloy","stream":true}' \
+  -o streaming.mp3 \
+  -w "\nTTFB: %{time_starttransfer}s\nTotal: %{time_total}s\n"
+```
 
 ## Notes & Limits
 
-- Max input length: depends on model; measured in characters or tokens. For short, interactive prompts, prefer under ~1–2k characters.
+- Max input length: depends on model; measured in characters or tokens. For short, interactive prompts, prefer under ~1-2k characters.
 - Typical latency: scales with input length and output format; compressed formats like `mp3` are often faster than `wav`.
-- Usage metering: billed by characters/tokens or generated audio seconds (provider‑specific). See Pricing.
+- Usage metering: billed by input characters for TTS models; output file size does not affect billing.
 
-## Audio Formats
+## Audio Format Support by Provider
 
-Common `response_format` values and typical `Content-Type`:
-
-| response_format | Content-Type | Notes |
-|-----------------|--------------|-------|
-| mp3             | `audio/mpeg` | Widely supported in browsers |
-| wav             | `audio/wav`  | Larger payloads |
-| ogg             | `audio/ogg`  | Container; may include Opus |
-| opus            | `audio/opus` or `audio/ogg` | Streaming-friendly |
-| aac             | `audio/aac`  | Safari-friendly |
-| flac            | `audio/flac` | Lossless |
-
-Browser notes: Safari supports AAC/MP3; Ogg/Opus plays in Chrome/Firefox; WAV is universal but larger.
+| Provider | Supported `response_format` values |
+|----------|-----------------------------------|
+| OpenAI (`tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`) | `mp3` (default), `opus`, `aac`, `flac`, `wav`, `pcm` |
+| ElevenLabs (`Elevenlabs-Turbo-V2.5`, `Elevenlabs-V3`) | Always returns `audio/mpeg` (MP3). `response_format` is ignored. |
 
 ## Voices
 
-- Voice IDs vary by model/provider. See model‑specific voices on Text‑to‑Speech: `api-reference/text-to-speech.mdx`.
+- Voice IDs vary by model/provider. See model-specific voices on Text-to-Speech: `api-reference/text-to-speech.mdx`.
 - If a voices listing endpoint is available (for example `GET /v1/voices`), it returns available voice IDs and metadata (language coverage, gender/pitch, sample links).
 
 ## Errors & Troubleshooting
 
 - `invalid_model`, `invalid_voice`, `unsupported_format`: Verify `model`, `voice`, and `response_format`.
-- `input_too_long`: Reduce length; split long text into chunks and stitch audio client‑side.
+- `input_too_long`: Reduce length; split long text into chunks and stitch audio client-side.
 - `rate_limit_exceeded`: Exponential backoff; retry after the window resets.
-- Network/client tips: Set `Accept` to your preferred audio type and write the raw response body directly to a file.
+- Network/client tips: set `Accept` to your preferred audio type and write raw response bytes directly to a file/stream.
 
 ## Security
 
 - Do not expose API keys in browsers. Proxy via your server.
 - Redact PII in logs; avoid logging raw text/audio in production.
-- Rate‑limit public routes.
+- Rate-limit public routes.
 
 ## Pricing, Quotas, and Rate Limits
 
-- Billing: per characters/tokens or generated seconds depending on provider/model; minimum billing increments may apply.
-- Rate limits: per‑minute/day caps; contact support to request increases. See `api-reference/miscellaneous/pricing.mdx` and `api-reference/miscellaneous/rate-limits.mdx`.
+- Billing is based on input character count, not output audio size.
+- For streaming requests, billing is recorded after the first audio chunk is confirmed. If the upstream provider fails before any audio is produced, no charge is applied.
+- If the client disconnects mid-stream after audio starts, the charge still applies because generation already began upstream.
+- Rate limits: per-minute/day caps; contact support to request increases. See `api-reference/miscellaneous/pricing.mdx` and `api-reference/miscellaneous/rate-limits.mdx`.
 
-## Migration from Job‑based TTS
+## Migration from Job-based TTS
 
 Already using the async `POST /tts` + `GET /tts/status` flow?
 
-- When to switch: choose `v1/audio/speech` for short prompts, low latency, and direct playback; keep job‑based TTS for long/batch generation and webhook workflows.
-- Parameter mapping: `text` → `input`, `voice` stays `voice`, and output format can be requested with `response_format` when supported.
-- Retries/timeouts: `v1/audio/speech` returns inline; implement client‑side timeouts and simple retries on 5xx.
-
-## Streaming
-
-If chunked audio streaming is enabled for your account, you can request streaming with compatible formats (for example Opus/MP3) and consume the response as a stream. Example Node pattern:
-
-```ts
-const res = await fetch("https://nano-gpt.com/api/v1/audio/speech", { /* headers/body as above */ });
-if (!res.ok) throw new Error(await res.text());
-const file = await fs.open("speech.mp3", "w");
-for await (const chunk of res.body) {
-  await file.write(chunk);
-}
-await file.close();
-```
-
-Note: Streaming availability and formats may vary by model/provider.
+- When to switch: choose `v1/audio/speech` for short prompts, low latency, and direct playback; keep job-based TTS for long/batch generation and webhook workflows.
+- Parameter mapping: `text` -> `input`, `voice` stays `voice`, and output format can be requested with `response_format` when supported.
+- Retries/timeouts: `v1/audio/speech` returns inline; implement client-side timeouts and simple retries on 5xx.
 
 ## See Also
 
-- Async/job‑based TTS: `api-reference/endpoint/tts.mdx`
+- Async/job-based TTS: `api-reference/endpoint/tts.mdx`
 - TTS Status polling: `api-reference/endpoint/tts-status.mdx`

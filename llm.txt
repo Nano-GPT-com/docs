@@ -231,8 +231,16 @@ console.log(embeddings.data.map((row) => row.embedding.length));
 
 AUDIO SPEECH
 POST /v1/audio/speech mirrors OpenAI’s text-to-speech API.
+Default behavior is unchanged: omit `stream` (or set `false`) to receive one buffered audio file.
+Set `stream: true` to receive chunked audio bytes progressively for lower time-to-first-byte (TTFB).
+
+Streaming currently works on:
+- OpenAI: `tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`
+- ElevenLabs via FAL: `Elevenlabs-Turbo-V2.5`, `Elevenlabs-V3`
+Other TTS models ignore `stream` and return buffered audio.
 
 ```ts
+// Non-streaming (default)
 import { writeFile } from 'node:fs/promises';
 
 const speech = await client.audio.speech.create({
@@ -243,6 +251,26 @@ const speech = await client.audio.speech.create({
 });
 
 await writeFile('welcome.mp3', Buffer.from(await speech.arrayBuffer()));
+```
+
+```ts
+// Streaming (chunked transfer encoding)
+const streamingSpeech = await client.audio.speech.create({
+  model: 'gpt-4o-mini-tts',
+  voice: 'alloy',
+  input: 'Welcome to the NanoGPT API.',
+  response_format: 'mp3',
+  stream: true,
+});
+
+const reader = streamingSpeech.body?.getReader();
+if (!reader) throw new Error('Missing response body stream');
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  // value is a Uint8Array audio chunk
+}
 ```
 
 BYOK (BRING YOUR OWN KEY)
