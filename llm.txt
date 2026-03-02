@@ -25,7 +25,7 @@ CORE CONCEPTS
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
 - Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
 - Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, and combine suffixes as needed.
-- Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle sanitized x_nanogpt_pricing frames.
+- Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
 - Prompt caching and memory: prompt_caching/cache_control toggles 5m or 1h cache TTLs, and memory compression replaces prior turns before dispatch.
 
 GLOSSARY
@@ -33,13 +33,13 @@ GLOSSARY
 - Polychat memory: hierarchical compression invoked by :memory suffix or memory header; stores 1-365 day summaries and replaces conversation history.
 - Prompt caching: reusable prompt segments activated by prompt_caching/cache_control or anthropic-beta headers with optional cutAfterMessageIndex.
 - Reasoning stream: delta.reasoning text emitted by reasoning-enabled models; reasoning_details provides structured metadata when available.
-- Pricing frame: sanitized billing payload returned as x_nanogpt_pricing { amount, currency, usage } during streaming or in the final JSON.
+- x_nanogpt_pricing: billing extension object with stable core fields (amount, currency, sanitized error) plus provider-dependent optional metadata (cost, paymentSource, token counters, team billing flags).
 - BYOK: bring-your-own-key mode activated with x-use-byok: true or byok.enabled: true to forward requests using stored provider credentials.
 
 HARD RULES AND GOTCHAS
 - Always set baseURL to https://nano-gpt.com/api (or https://nano-gpt.com for /v1/messages) and include Authorization or x-api-key on every call.
 - Do not hardcode model support; call GET /api/v1/models?detailed=true to confirm vision, context length, and subscription status.
-- Handle streaming as SSE: group chunks by id, concatenate delta.content, capture delta.reasoning separately, stop on [DONE], and watch for x_nanogpt_pricing frames.
+- Handle streaming as SSE: group chunks by id, concatenate delta.content, capture delta.reasoning separately, stop on [DONE], and read usage/x_nanogpt_pricing on the final chunk.
 - Never rely on <think> tags; reasoning text lives in reasoning/reasoning_details and may be omitted when reasoning.exclude is true.
 - Memory replaces the entire history with a compressed summary; send the up-to-date messages each turn and avoid mixing original transcripts with memory output.
 - BYOK requests skip fallback providers; warn developers that misconfigured downstream keys return provider errors directly without NanoGPT failover.
@@ -75,7 +75,7 @@ run().catch((err) => {
 ```
 
 STREAMING WITH REASONING
-Use stream: true to read delta.content and delta.reasoning while capturing sanitized pricing frames.
+Use stream: true to read delta.content and delta.reasoning while capturing final-chunk pricing metadata.
 
 ```ts
 import OpenAI from 'openai';
@@ -103,7 +103,7 @@ async function streamSummary() {
     if (delta?.reasoning) reasoning += delta.reasoning;
     if (delta?.content) output += delta.content;
     const pricing = (chunk as any).x_nanogpt_pricing;
-    if (pricing) console.info('pricing update', pricing);
+    if (pricing) console.info('final pricing metadata', pricing);
   }
 
   console.log({ reasoning, output });
@@ -320,16 +320,117 @@ console.log(response.content);
 ```
 
 PRICING AND BILLING
-- Expect usage.prompt_tokens/completion_tokens on JSON responses and per-chunk pricing metadata via x_nanogpt_pricing.
-- Pricing frames include sanitized errors when provider billing fails; surface the message without exposing vendor codes.
+- `usage` appears on non-stream JSON responses and on the final streaming chunk when `stream_options.include_usage` is enabled (or forced by helpers like prompt caching).
+- Supported `usage` fields are provider-dependent and may include:
+  - `prompt_tokens`
+  - `completion_tokens`
+  - `total_tokens`
+  - `prompt_tokens_details.cached_tokens`
+  - `prompt_tokens_details.audio_tokens`
+  - `completion_tokens_details.reasoning_tokens`
+  - `completion_tokens_details.audio_tokens`
+  - `completion_tokens_details.accepted_prediction_tokens`
+  - `completion_tokens_details.rejected_prediction_tokens`
+  - `reasoning_tokens`
+  - `citation_tokens`
+  - `num_search_queries`
+  - `cache_creation_input_tokens`
+  - `cache_read_input_tokens`
+  - `input_tokens`
+- Streaming consistency note: when provider-reported usage is missing or zero, server-side normalization may backfill final usage from `x_nanogpt_pricing.inputTokens` and `x_nanogpt_pricing.outputTokens`.
+- `x_nanogpt_pricing` is an extension object (final chunk only in streaming; top-level on non-stream JSON):
+  - Stable/core fields:
+    - `amount?: number`
+    - `currency?: string`
+    - `error?: { status?: number; message: string }` (`message` is sanitized)
+  - Common optional fields:
+    - `cost?: number`
+    - `paymentSource?: string`
+    - `inputTokens?: number`
+    - `outputTokens?: number`
+    - `cacheCost?: number`
+    - `billedToTeam?: boolean`
+    - `billedTeamId?: number | null`
+    - `billedTeamName?: string | null`
+- Compatibility rule: clients must tolerate additional fields in both `usage` and `x_nanogpt_pricing`; unknown keys should be ignored, not treated as schema errors.
 - Conversation-level transactions are billed in USD with optional auto-conversion to Nano when applicable.
 - Service tiers: pass service_tier: "priority" on /v1/chat/completions, /v1/responses, or /v1/messages. Priority is gated on the routed provider, and routing overrides like X-Provider or provider-native web search affect priority pricing.
 - Use 429 handling with exponential backoff; subscription-free buckets allow roughly 60 RPM, while premium models may enforce tighter limits.
 
+Streaming final-chunk example (with `stream_options.include_usage: true`):
+
+```json
+{
+  "id": "chatcmpl_x",
+  "object": "chat.completion.chunk",
+  "created": 1772346058,
+  "model": "gpt-5.1",
+  "choices": [{ "index": 0, "delta": {}, "finish_reason": "stop" }],
+  "usage": {
+    "prompt_tokens": 123,
+    "completion_tokens": 20,
+    "total_tokens": 143,
+    "prompt_tokens_details": { "cached_tokens": 123, "audio_tokens": 0 },
+    "completion_tokens_details": {
+      "reasoning_tokens": 12,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "cache_creation_input_tokens": 123,
+    "cache_read_input_tokens": 123
+  },
+  "x_nanogpt_pricing": {
+    "cost": 0.000169,
+    "inputTokens": 9,
+    "outputTokens": 20,
+    "cacheCost": 0,
+    "paymentSource": "USD",
+    "billedToTeam": false,
+    "billedTeamId": null,
+    "billedTeamName": null
+  }
+}
+```
+
+Non-stream JSON example:
+
+```json
+{
+  "id": "chatcmpl_y",
+  "object": "chat.completion",
+  "created": 1772346068,
+  "model": "gpt-5.1",
+  "choices": [
+    {
+      "index": 0,
+      "message": { "role": "assistant", "content": "Paris." },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 9,
+    "completion_tokens": 5,
+    "total_tokens": 14,
+    "prompt_tokens_details": { "cached_tokens": 0, "audio_tokens": 0 },
+    "completion_tokens_details": { "reasoning_tokens": 0, "audio_tokens": 0 },
+    "input_tokens": 9
+  },
+  "x_nanogpt_pricing": {
+    "amount": 0.000021,
+    "currency": "USD",
+    "cost": 0.000021,
+    "paymentSource": "USD",
+    "inputTokens": 9,
+    "outputTokens": 5
+  }
+}
+```
+
 ERROR HANDLING AND OBSERVABILITY
 - Error responses follow OpenAI envelopes: { error: { message, type, code, param } } with x-request-id headers for support.
 - Authentication failures increment an abuse counter; repeated failures yield 429 with rate_limit_exceeded.
-- Streaming parsers must guard against unexpected JSON-only frames (pricing) and handle [DONE] closure explicitly.
+- Streaming parsers must handle terminal metadata fields (`usage`, `x_nanogpt_pricing`) and [DONE] closure explicitly.
 - Log request ids alongside model and payment_source for easier reconciliation with the NanoGPT dashboard.
 
 LINKS
