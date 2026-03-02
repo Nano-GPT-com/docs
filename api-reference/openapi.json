@@ -3042,7 +3042,7 @@
           },
           "prompt_caching": {
             "type": "object",
-            "description": "Helper to tag the leading messages for Claude prompt caching. NanoGPT injects cache_control blocks on each message up to the specified index before forwarding upstream. If cut_after_message_index is omitted, NanoGPT selects a cache boundary automatically.",
+            "description": "Helper to tag leading messages for provider prompt caching (including Claude and Gemini). NanoGPT injects cache_control blocks on each message up to the specified index before forwarding upstream. If cut_after_message_index is omitted, NanoGPT selects a cache boundary automatically.",
             "properties": {
               "enabled": {
                 "type": "boolean",
@@ -3159,7 +3159,7 @@
           },
           "cache_control": {
             "type": "object",
-            "description": "Claude-only prompt caching control applied to this block. When present, NanoGPT forwards it unchanged to Anthropic.",
+            "description": "Prompt caching control applied to this content block for compatible providers (including Claude and Gemini).",
             "properties": {
               "type": {
                 "type": "string",

@@ -55,7 +55,7 @@ Use the jump list below to navigate the long-form reference quickly.
     - [cURL - Image URL](#curl-image-url-non-streaming)
     - [cURL - Base64 Data URL](#curl-base64-data-url-non-streaming)
     - [cURL - Streaming SSE](#curl-streaming-sse)
-    - [Prompt Caching (Claude Models)](#prompt-caching-claude-models)
+    - [Prompt Caching (Claude + Gemini Models)](#prompt-caching-claude-gemini-models)
     - [Cache Consistency](#cache-consistency-with-stickyprovider)
     - [Troubleshooting](#troubleshooting)
   </Accordion>
@@ -909,11 +909,11 @@ The response streams `data: { ... }` lines until a final terminator. Usage metri
 
 _Note: Prompt-caching helpers implicitly force `include_usage`, so cached requests still receive usage data without extra flags._
 
-### Prompt Caching (Claude Models)
+### Prompt Caching (Claude + Gemini Models)
 
 For the full guide (supported models, thresholds, pricing, and usage fields), see [Prompt Caching](/api-reference/miscellaneous/prompt-caching).
 
-Claude caching works exactly like Anthropic's `/v1/messages`: you must place `cache_control` objects on the content blocks you want the model to reuse, or instruct NanoGPT to do it for you via the `prompt_caching` helper.
+Prompt caching is available for Claude and Gemini models. You can either place inline `cache_control` blocks on reusable content, or use the body-level helper (`prompt_caching`, `promptCaching`, and `cache_control` alias).
 
 > **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
 
@@ -923,18 +923,17 @@ The `prompt_caching` / `promptCaching` helper accepts these options:
 |-----------|------|---------|-------------|
 | `enabled` | boolean | — | Enable prompt caching |
 | `ttl` | string | `"5m"` | Cache time-to-live: `"5m"` or `"1h"` |
-| `cut_after_message_index` | integer | — | Zero-based index; cache all messages up to and including this index |
+| `cut_after_message_index` / `cutAfterMessageIndex` | integer | — | Zero-based index; cache all messages up to and including this index |
 | `stickyProvider` | boolean | `false` | **New:** When `true`, disable automatic failover to preserve cache consistency. Returns 503 error instead of switching services. |
 
 ```python
 headers = {
   "Authorization": "Bearer YOUR_API_KEY",
-  "Content-Type": "application/json",
-  "anthropic-beta": "prompt-caching-2024-07-31"
+  "Content-Type": "application/json"
 }
 
 payload = {
-  "model": "anthropic/claude-opus-4.5",
+  "model": "google/gemini-3.1-pro-preview",
   "messages": [
     {
       "role": "system",
@@ -954,10 +953,10 @@ requests.post("https://nano-gpt.com/api/v1/chat/completions", headers=headers, j
 ```
 
 - Each `cache_control` marker caches the full prefix up to that block. Place them on every static chunk (system messages, tool definitions, large contexts) you plan to reuse.
-- Anthropic currently supports TTLs of `5m` (1.25× one-time billing) and `1h` (2× one-time). Replays show the discounted tokens inside `usage.prompt_tokens_details.cached_tokens`.
-- The `anthropic-beta: prompt-caching-2024-07-31` header is mandatory on requests that include caching metadata.
+- Gemini and Claude both support `5m` and `1h` TTLs, with provider-specific pricing. See [Prompt Caching](/api-reference/miscellaneous/prompt-caching#pricing).
+- `anthropic-beta: prompt-caching-2024-07-31` is supported for compatibility (and required for Anthropic-native Claude caching flows).
 
-For a simpler experience, send the helper fields and NanoGPT will stamp the first _N_ messages for you before reaching Anthropic:
+For a simpler experience, send the helper fields and NanoGPT will stamp the first _N_ messages for you before forwarding upstream:
 
 ```ts
 await client.chat.completions.create(

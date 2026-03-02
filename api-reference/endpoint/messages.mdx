@@ -352,14 +352,16 @@ Enable prompt caching to reduce costs on repeated prompts.
 anthropic-beta: prompt-caching-2024-07-31
 ```
 
+This Anthropic-compatible header also works with Gemini models.
+
 ### TTL Options
 
 - Default: 5-minute cache TTL
-- Extended: Add `extended-cache-ttl-2025-04-11` to request 1-hour TTL
+- Extended: Add `extended-cache-ttl-2025-04-11` to request 1-hour TTL on Anthropic-native Claude flows
 
 ### Cache Control in Content
 
-Add `cache_control` to content blocks:
+Add `cache_control` to content blocks (Claude and Gemini):
 
 ```json
 {
