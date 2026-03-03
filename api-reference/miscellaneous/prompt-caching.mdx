@@ -90,6 +90,15 @@ Parameters:
 | `ttl` | `"5m"` or `"1h"` | `"5m"` | Cache time-to-live |
 | `cutAfterMessageIndex` / `cut_after_message_index` | integer | -- | Zero-based index; cache all messages up to and including this index |
 | `stickyProvider` | boolean | `false` | When `true`, avoid failover to preserve cache consistency (see [stickyProvider](#cache-consistency-with-stickyprovider)) |
+| `explicitCacheControl` / `explicit_cache_control` | boolean | `false` | When `true`, only refresh TTLs on existing inline `cache_control` blocks and do not auto-add cache breakpoints |
+
+**`explicitCacheControl`** *(boolean, default `false`)*
+
+When `true`, the system only refreshes TTLs on `cache_control` blocks you already placed in your request. No additional cache breakpoints are added automatically.
+
+This is useful when you use inline `cache_control` markers (Option 2) but also want body-level settings like `ttl` or `stickyProvider` to apply. Without this flag, the system may add its own cache breakpoints on top of yours.
+
+Also accepts the snake_case alias `explicit_cache_control`.
 
 Aliases are accepted:
 
@@ -128,6 +137,37 @@ Attach `cache_control` directly to content blocks you want cached:
 }
 ```
 
+### Combining inline markers with body-level settings
+
+```json
+{
+  "model": "google/gemini-2.5-flash",
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "type": "text",
+          "text": "You are a helpful coding assistant with access to a large codebase...",
+          "cache_control": { "type": "ephemeral" }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Summarize the auth module"
+    }
+  ],
+  "promptCaching": {
+    "enabled": true,
+    "ttl": "1h",
+    "explicitCacheControl": true
+  }
+}
+```
+
+In this example, the system prompt's `cache_control` marker is preserved and its TTL is set to `1h`. The user message does not receive an auto-generated cache breakpoint.
+
 ### Option 3: `anthropic-beta` header
 
 The Anthropic-compatible header is supported:
@@ -145,6 +185,8 @@ anthropic-beta: prompt-caching-2024-07-31,extended-cache-ttl-2025-04-11
 ```
 
 ## Controlling What Gets Cached
+
+> **Note:** `explicitCacheControl` and `cutAfterMessageIndex` serve different purposes. `cutAfterMessageIndex` tells the system where to auto-place cache breakpoints. `explicitCacheControl` tells the system not to auto-place any and only refresh what you already marked. If both are set, `explicitCacheControl` takes precedence.
 
 ### `cutAfterMessageIndex`
 
