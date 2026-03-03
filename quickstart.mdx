@@ -141,7 +141,11 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
   </Accordion> 
 
   <Accordion icon="globe" title="Web Search">
-    Enable real-time web search for any model by adding suffixes to the model name:
+    You can use web search in two ways:
+    - `POST /api/v1/chat/completions` with suffixes like `:online` and `:online/linkup-deep`
+    - `POST /api/web` for direct search control (query, output type, filters)
+
+    Enable real-time web search in chat completions by adding suffixes to the model name:
 
     ```python
     import requests
@@ -193,7 +197,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
     - Standard search: 10 results quickly
     - Deep search: Iterative searching for comprehensive information
 
-    For more advanced web search capabilities including structured output, domain filtering, and date filtering, see the [Web Search API](/api-reference/endpoint/web-search).
+    For direct endpoint usage (including `sourcedAnswer`, `structured`, date/domain filters, and auth header variants), see [Direct Web Search API](/api-reference/endpoint/web-search).
     
     Check out our [Chat Completion Guide](/api-reference/endpoint/chat-completion) for more examples.
   </Accordion>

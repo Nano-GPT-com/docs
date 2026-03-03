@@ -1533,7 +1533,7 @@
     },
     "/web": {
       "post": {
-        "description": "Perform AI-powered web searches using Linkup with multiple output formats, date filtering, and domain filtering.",
+        "description": "Perform direct web searches with explicit query control. Defaults to Linkup and supports provider-specific filtering and output formats.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1597,8 +1597,25 @@
               }
             }
           },
-          "500": {
-            "description": "Internal Server Error - An error occurred while processing your request"
+          "503": {
+            "description": "Service Unavailable - Provider key missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout - Search failed or timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2820,7 +2837,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
+            "description": "The model to use for completion. Append ':online' for web search ($0.006/request) or ':online/linkup-deep' for deep web search ($0.06/request)",
             "default": "openai/gpt-5.2",
             "examples": ["openai/gpt-5.2", "openai/gpt-5.2:online", "openai/gpt-5.2:online/linkup-deep", "anthropic/claude-opus-4.5:online"]
           },
@@ -3300,7 +3317,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
+            "description": "The model to use for completion. Append ':online' for web search ($0.006/request) or ':online/linkup-deep' for deep web search ($0.06/request)",
             "default": "openai/gpt-5.2",
             "examples": ["openai/gpt-5.2", "openai/gpt-5.2:online", "openai/gpt-5.2:online/linkup-deep", "anthropic/claude-opus-4.5:online"]
           },
@@ -3666,7 +3683,7 @@
           },
           "model": {
             "type": "string",
-            "description": "The model to use for generation. Append ':online' for web search ($0.005/request) or ':online/linkup-deep' for deep web search ($0.05/request)",
+            "description": "The model to use for generation. Append ':online' for web search ($0.006/request) or ':online/linkup-deep' for deep web search ($0.06/request)",
             "default": "openai/gpt-5.2",
             "examples": ["openai/gpt-5.2", "openai/gpt-5.2:online", "anthropic/claude-opus-4.5:online/linkup-deep"]
           },
@@ -5750,18 +5767,24 @@
         "properties": {
           "query": {
             "type": "string",
-            "description": "The search query to send to Linkup",
+            "description": "The search query to execute",
             "example": "latest AI news"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Search provider. Defaults to 'linkup'. 'openai-native' is not supported on /api/web.",
+            "default": "linkup",
+            "example": "linkup"
           },
           "depth": {
             "type": "string",
-            "description": "Search depth. Standard ($0.006) or deep ($0.06)",
+            "description": "Search depth. For Linkup: standard ($0.006) or deep ($0.06). Linkup standard is executed as fast under the hood.",
             "enum": ["standard", "deep"],
             "default": "standard"
           },
           "outputType": {
             "type": "string",
-            "description": "Output format for search results",
+            "description": "Output format. Linkup supports searchResults, sourcedAnswer, and structured. Non-Linkup providers currently support searchResults only.",
             "enum": ["searchResults", "sourcedAnswer", "structured"],
             "default": "searchResults"
           },
@@ -5877,11 +5900,15 @@
           },
           "metadata": {
             "type": "object",
-            "required": ["query", "depth", "outputType", "timestamp", "cost"],
+            "required": ["query", "provider", "depth", "outputType", "timestamp", "cost"],
             "properties": {
               "query": {
                 "type": "string",
                 "description": "The search query that was executed"
+              },
+              "provider": {
+                "type": "string",
+                "description": "The provider that executed the search"
               },
               "depth": {
                 "type": "string",

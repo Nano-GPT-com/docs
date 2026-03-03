@@ -487,6 +487,13 @@ Enable web search in two ways: model suffixes or a `webSearch` object in the req
 
 OpenAI native web search: GPT-5+ / o1 / o3 / o4 models use OpenAI's built-in web search automatically. No suffix is required; you can still set `webSearch.search_context_size` and `webSearch.user_location`. To force a different provider, specify a provider or suffix.
 
+If you need full direct control over the search call itself (`query`, `outputType`, date/domain filters, or structured schema output), use [Direct Web Search API (`POST /api/web`)](/api-reference/endpoint/web-search).
+
+| Use case | Recommended endpoint |
+| --- | --- |
+| Model should answer with web context in one call | `POST /api/v1/chat/completions` |
+| You need raw/structured web payload control | `POST /api/web` |
+
 <Note>
   Brave appears in this section in two different ways:
   1) `:online/brave` / `webSearch.provider = "brave"` uses the Web Search integration (raw results injected into another model).

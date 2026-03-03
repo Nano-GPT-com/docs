@@ -1,593 +1,209 @@
 ---
-title: "Web Search"
+title: "Direct Web Search API"
 api: "POST https://nano-gpt.com/api/web"
-description: "Perform AI-powered web searches across multiple providers with flexible output formats"
+description: "Run direct web search requests with explicit query control, Linkup output formats, and normalized metadata"
 ---
 
 ## Overview
 
-The Web Search API allows you to perform AI-powered web searches across supported providers (Linkup, Tavily, Exa, Kagi, Perplexity, Valyu, Brave), returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and provider-specific depth modes. If `provider` is omitted, Linkup is used by default.
+Use `POST /api/web` when you want direct control over search requests and output formatting.
 
-<Note>
-  Brave-specific documentation now lives on a dedicated page: [Brave](/api-reference/miscellaneous/brave). This page's `provider: "brave"` mode returns raw search results; Brave Answers models (`model: "brave"`, `model: "brave-pro"`, `model: "brave-research"`) are documented there.
-</Note>
+For chat-first workflows, use `POST /api/v1/chat/completions` with model suffixes like `:online`, `:online/linkup`, or `:online/linkup-deep`.
+
+## When to use which endpoint
+
+| Use case | Endpoint |
+| --- | --- |
+| You want the model to answer with web context in one call | `POST /api/v1/chat/completions` + `:online...` |
+| You need explicit control over `query`, `outputType`, domain/date filters, or structured schema output | `POST /api/web` |
+| You need OpenAI-native web search | `POST /api/v1/chat/completions` only |
 
 ## Authentication
 
-<ParamField header="x-api-key" type="string" required>
-  Your NanoGPT API key
-</ParamField>
-
-Alternatively, you can use Bearer token authentication:
+Either auth header is supported:
 
 <ParamField header="Authorization" type="string">
-  Bearer YOUR_API_KEY
+  Bearer `YOUR_API_KEY`
 </ParamField>
 
-## Request Body
+<ParamField header="x-api-key" type="string">
+  `YOUR_API_KEY`
+</ParamField>
+
+## Request body
 
 <ParamField body="query" type="string" required>
-  The search query to send to the provider
+  Search query string.
 </ParamField>
 
 <ParamField body="provider" type="string" default="linkup">
-  Search provider. Options: "linkup", "tavily", "exa", "kagi", "perplexity", "valyu", "brave". "openai-native" is not supported on `/api/web`.
+  Search provider. `openai-native` is not allowed on `/api/web`.
 </ParamField>
 
 <ParamField body="depth" type="string" default="standard">
-  Search depth. Options vary by provider:
-  - Linkup/Tavily/Perplexity/Valyu/Brave: "standard" or "deep"
-  - Exa: "fast", "auto", "neural", "deep" (Exa-only)
-  - Kagi: "standard" or "deep" ("search" source only for deep)
+  Search depth. For Linkup: `standard` or `deep`.
 </ParamField>
 
+<Note>
+  For Linkup, `depth: "standard"` is executed as Linkup `fast` under the hood.
+</Note>
+
 <ParamField body="outputType" type="string" default="searchResults">
-  Output format. Options: "searchResults", "sourcedAnswer", or "structured". For Tavily, Exa, Kagi, Perplexity, Valyu, and Brave, outputType must be "searchResults".
+  Output mode. Allowed values: `searchResults`, `sourcedAnswer`, `structured`.
 </ParamField>
 
 <ParamField body="structuredOutputSchema" type="string">
-  Required when outputType is "structured". JSON schema string defining the desired response format
+  Required when `outputType` is `structured`. Pass a JSON schema string.
 </ParamField>
 
 <ParamField body="includeImages" type="boolean" default={false}>
-  Whether to include image results in the search
-</ParamField>
-
-<ParamField body="kagiSource" type="string">
-  Kagi only. Source to query: "web", "news", or "search" (also accepts "kagi_source")
+  Include image results.
 </ParamField>
 
 <ParamField body="fromDate" type="string">
-  Filter results from this date (YYYY-MM-DD format)
+  Earliest result date (`YYYY-MM-DD`).
 </ParamField>
 
 <ParamField body="toDate" type="string">
-  Filter results until this date (YYYY-MM-DD format)
-</ParamField>
-
-<ParamField body="excludeDomains" type="string[]">
-  Array of domains to exclude from search results
+  Latest result date (`YYYY-MM-DD`).
 </ParamField>
 
 <ParamField body="includeDomains" type="string[]">
-  Array of domains to search exclusively
+  Restrict results to these domains.
 </ParamField>
 
-## Provider-specific options
+<ParamField body="excludeDomains" type="string[]">
+  Exclude these domains.
+</ParamField>
 
-Provider-specific fields are accepted at the top level of the request body and only apply to the selected provider.
+<Note>
+  Linkup supports `outputType: "searchResults"`, `"sourcedAnswer"`, and `"structured"`.
+  Non-Linkup providers currently support only `outputType: "searchResults"`.
+</Note>
 
-### Perplexity options
+## Response shape
 
-```json
-{
-  "maxResults": 1-20,
-  "maxTokensPerPage": number,
-  "maxTokens": 1-1000000,
-  "country": "string",
-  "searchDomainFilter": ["domain1.com", "domain2.com"],
-  "searchLanguageFilter": ["en", "de"]
-}
-```
-
-Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entries (ISO 639-1).
-
-### Valyu options
-
-```json
-{
-  "searchType": "all" | "web",
-  "fastMode": boolean,
-  "maxNumResults": 1-50,
-  "maxPrice": number,
-  "relevanceThreshold": 0-1,
-  "responseLength": "short" | "medium" | "large" | "max" | number,
-  "countryCode": "US",
-  "includedSources": ["source1.com"],
-  "excludedSources": ["source2.com"],
-  "urlOnly": boolean,
-  "category": "string"
-}
-```
-
-`countryCode` uses a 2-letter ISO country code.
-
-### Tavily options
-
-```json
-{
-  "maxResults": 0-20,
-  "includeAnswer": boolean | "basic" | "advanced",
-  "includeRawContent": boolean | "markdown" | "text",
-  "includeImages": boolean,
-  "includeImageDescriptions": boolean,
-  "includeFavicon": boolean,
-  "topic": "general" | "news" | "finance",
-  "timeRange": "day" | "week" | "month" | "year",
-  "startDate": "YYYY-MM-DD",
-  "endDate": "YYYY-MM-DD",
-  "chunksPerSource": 1-3,
-  "country": "string"
-}
-```
-
-### Exa options
-
-```json
-{
-  "numResults": 1-100,
-  "category": "company" | "research paper" | "news" | "pdf" | "github" | "tweet" | "personal site" | "people" | "financial report",
-  "userLocation": "US",
-  "additionalQueries": ["query2"],
-  "startCrawlDate": "ISO 8601",
-  "endCrawlDate": "ISO 8601",
-  "startPublishedDate": "ISO 8601",
-  "endPublishedDate": "ISO 8601",
-  "includeText": ["pattern"],
-  "excludeText": ["pattern"],
-  "livecrawl": "never" | "fallback" | "always" | "preferred",
-  "livecrawlTimeout": number,
-  "subpages": number,
-  "subpageTarget": "string" | ["strings"]
-}
-```
-
-### Kagi options
-
-```json
-{
-  "kagiSource": "web" | "news" | "search"
-}
-```
-
-### Brave options
-
-Brave provider options (`count`, `maxResults`, `offset`, `safesearch`, `freshness`, `searchLang`, `uiLang`, `eSnippets`, `spellcheck`, `goggles`, `country`) are documented on [Brave](/api-reference/miscellaneous/brave).
-
-## Response
-
-<ResponseField name="data" type="object|array">
-  Search results, answer, or structured data depending on outputType
+<ResponseField name="data" type="array|object">
+  Provider-formatted payload.
 </ResponseField>
 
 <ResponseField name="metadata" type="object">
   <Expandable title="metadata">
     <ResponseField name="query" type="string">
-      The search query that was executed
+      Executed query.
     </ResponseField>
     <ResponseField name="provider" type="string">
-      The provider used for the search (may be "brave")
+      Resolved provider (for example, `linkup`).
     </ResponseField>
     <ResponseField name="depth" type="string">
-      The search depth used (provider-specific)
+      Resolved depth.
     </ResponseField>
     <ResponseField name="outputType" type="string">
-      The output format used
+      Resolved output type.
     </ResponseField>
     <ResponseField name="timestamp" type="string">
-      ISO 8601 timestamp of when the search was performed
+      ISO-8601 timestamp.
     </ResponseField>
     <ResponseField name="cost" type="number">
-      The cost of the search in USD
+      Request cost in USD.
     </ResponseField>
   </Expandable>
 </ResponseField>
 
-## Output Formats
+For `searchResults`, `data` is an array of normalized results.
+For `sourcedAnswer` and `structured`, `data` is the provider response object.
 
-### Search Results (default)
-
-Returns an array of search results with text and image entries:
-
-```json
-{
-  "data": [
-    {
-      "type": "text",
-      "title": "Article Title",
-      "url": "https://example.com/article",
-      "snippet": "Article snippet...",
-      "publishedAt": "2025-07-01"
-    },
-    {
-      "type": "image",
-      "title": "Image Title",
-      "url": "https://example.com/image.jpg",
-      "imageUrl": "https://example.com/image.jpg",
-      "publishedAt": "2025-07-01"
-    }
-  ],
-  "metadata": {
-    "query": "your search query",
-    "provider": "linkup",
-    "depth": "standard",
-    "outputType": "searchResults",
-    "timestamp": "2025-07-08T09:00:00.000Z",
-    "cost": 0.006
-  }
-}
-```
-
-### Sourced Answer
-
-Returns a comprehensive answer with source citations:
+### Example response
 
 ```json
 {
-  "data": {
-    "answer": "The comprehensive answer to your query...",
-    "sources": [
-      {
-        "name": "Source Name",
-        "url": "https://example.com",
-        "snippet": "Relevant snippet from the source..."
-      }
-    ]
-  },
+  "data": "... provider-formatted payload ...",
   "metadata": {
-    "query": "your search query",
+    "query": "string",
     "provider": "linkup",
     "depth": "standard",
     "outputType": "sourcedAnswer",
-    "timestamp": "2025-07-08T09:00:00.000Z",
+    "timestamp": "ISO-8601",
     "cost": 0.006
   }
 }
 ```
 
-### Structured Output
+## Pricing (hosted key)
 
-Returns data matching your provided JSON schema:
+| Mode | Price |
+| --- | --- |
+| Linkup standard | $0.006 |
+| Linkup deep | $0.06 |
 
-```json
-{
-  "data": {
-    // Your structured data according to the schema
-  },
-  "metadata": {
-    "query": "your search query",
-    "provider": "linkup",
-    "depth": "standard",
-    "outputType": "structured",
-    "timestamp": "2025-07-08T09:00:00.000Z",
-    "cost": 0.006
-  }
-}
-```
+## Error codes
+
+| HTTP status | Meaning |
+| --- | --- |
+| `400` | Invalid parameters |
+| `401` | Invalid session or auth |
+| `402` | Insufficient balance or usage cap |
+| `429` | Rate limited |
+| `503` | Provider key missing |
+| `504` | Search failed or timed out |
 
 ## Examples
 
 <CodeGroup>
 
-```python Python
-import requests
-import json
-
-# Your API key
-api_key = "YOUR_API_KEY"
-
-# API endpoint
-url = "https://nano-gpt.com/api/web"
-
-# Headers
-headers = {
-    "Content-Type": "application/json",
-    "x-api-key": api_key
-}
-
-# Basic search
-basic_search = {
-    "query": "artificial intelligence trends 2025",
-    "provider": "linkup"
-}
-
-response = requests.post(url, headers=headers, json=basic_search)
-results = response.json()
-
-# Print results
-if results["metadata"]["outputType"] == "searchResults":
-    for result in results["data"]:
-        print(f"Title: {result['title']}")
-        print(f"URL: {result['url']}")
-        print(f"Snippet: {result.get('snippet', 'N/A')[:200]}...")
-        print("-" * 50)
-    print(f"Search cost: ${results['metadata']['cost']}")
-```
-
-```javascript JavaScript
-const axios = require('axios');
-
-// Your API key
-const apiKey = 'YOUR_API_KEY';
-
-// API endpoint
-const url = 'https://nano-gpt.com/api/web';
-
-// Search with structured output
-async function searchWithStructuredOutput() {
-  const searchData = {
-    query: 'top tech companies by revenue',
-    provider: 'linkup',
-    outputType: 'structured',
-    structuredOutputSchema: JSON.stringify({
-      type: 'object',
-      properties: {
-        companies: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              revenue: { type: 'string' },
-              year: { type: 'string' }
-            }
-          }
-        }
-      }
-    })
-  };
-
-  try {
-    const response = await axios.post(url, searchData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey
-      }
-    });
-
-    console.log('Structured Results:', JSON.stringify(response.data.data, null, 2));
-    console.log('Search Cost:', response.data.metadata.cost);
-  } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
-  }
-}
-
-searchWithStructuredOutput();
-```
-
-```bash cURL
-# Basic search
+```bash cURL (Authorization)
 curl -X POST https://nano-gpt.com/api/web \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "query": "latest AI news",
-    "provider": "linkup"
+    "query": "What happened in AI this week?",
+    "provider": "linkup",
+    "depth": "standard",
+    "outputType": "sourcedAnswer"
   }'
+```
 
-# Deep search with date filtering
+```bash cURL (x-api-key)
 curl -X POST https://nano-gpt.com/api/web \
-  -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
   -d '{
-    "query": "climate change research",
-    "provider": "tavily",
+    "query": "Latest OpenAI announcements",
+    "provider": "linkup",
     "depth": "deep",
-    "fromDate": "2025-01-01",
-    "toDate": "2025-07-01"
+    "outputType": "searchResults"
   }'
+```
 
-# Sourced answer with domain filtering
+```bash cURL (structured output)
 curl -X POST https://nano-gpt.com/api/web \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
   -d '{
-    "query": "Microsoft quarterly earnings",
-    "provider": "exa",
-    "outputType": "sourcedAnswer",
-    "includeDomains": ["microsoft.com", "reuters.com", "bloomberg.com"]
+    "query": "Top 5 AI coding tools in 2026 with pricing",
+    "provider": "linkup",
+    "depth": "standard",
+    "outputType": "structured",
+    "structuredOutputSchema": "{\"type\":\"object\",\"properties\":{\"tools\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"price\":{\"type\":\"string\"}},\"required\":[\"name\"]}}},\"required\":[\"tools\"]}"
+  }'
+```
+
+```bash cURL (chat completions with Linkup)
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o:online/linkup",
+    "messages": [
+      { "role": "user", "content": "Summarize today'\''s top AI headlines." }
+    ]
   }'
 ```
 
 </CodeGroup>
 
-For a Brave-specific request example, see [Brave](/api-reference/miscellaneous/brave).
+## Related docs
 
-## Advanced Examples
-
-### Deep Search with Date Filtering
-
-```python
-def deep_search_with_dates(query, from_date, to_date):
-    data = {
-        "query": query,
-        "depth": "deep",
-        "fromDate": from_date,
-        "toDate": to_date
-    }
-    
-    response = requests.post(url, headers=headers, json=data)
-    return response.json()
-
-# Search for recent research
-results = deep_search_with_dates(
-    "quantum computing breakthroughs",
-    "2025-01-01",
-    "2025-07-01"
-)
-```
-
-### Structured Output for Data Extraction
-
-```python
-def extract_structured_data(query, schema):
-    data = {
-        "query": query,
-        "outputType": "structured",
-        "structuredOutputSchema": json.dumps(schema)
-    }
-    
-    response = requests.post(url, headers=headers, json=data)
-    return response.json()
-
-# Define schema for extracting programming language data
-schema = {
-    "type": "object",
-    "properties": {
-        "languages": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "rank": {"type": "number"},
-                    "name": {"type": "string"},
-                    "popularityScore": {"type": "string"},
-                    "primaryUseCase": {"type": "string"}
-                }
-            }
-        }
-    }
-}
-
-# Extract structured data
-results = extract_structured_data(
-    "top 5 programming languages 2025",
-    schema
-)
-```
-
-### Domain-Specific Search
-
-```python
-def search_specific_domains(query, domains, exclude=False):
-    data = {
-        "query": query,
-        "outputType": "sourcedAnswer"
-    }
-    
-    if exclude:
-        data["excludeDomains"] = domains
-    else:
-        data["includeDomains"] = domains
-    
-    response = requests.post(url, headers=headers, json=data)
-    return response.json()
-
-# Search only trusted news sources
-news_results = search_specific_domains(
-    "latest tech acquisitions",
-    ["reuters.com", "bloomberg.com", "techcrunch.com"],
-    exclude=False
-)
-
-# Exclude certain domains
-filtered_results = search_specific_domains(
-    "python tutorials",
-    ["w3schools.com", "geeksforgeeks.org"],
-    exclude=True
-)
-```
-
-## Error Handling
-
-<ResponseExample>
-```json 400 Bad Request
-{
-  "error": "Query parameter is required and must be a string"
-}
-```
-
-```json 401 Unauthorized
-{
-  "error": "Invalid session"
-}
-```
-
-```json 402 Payment Required
-{
-  "error": "Insufficient balance. A minimum balance of $1.00 is required to use web search."
-}
-```
-
-```json 429 Too Many Requests
-{
-  "error": "Rate limit exceeded. Please wait before sending another request."
-}
-```
-
-```json 500 Internal Server Error
-{
-  "error": "An error occurred while processing your request"
-}
-```
-</ResponseExample>
-
-## Rate Limiting
-
-The API is rate-limited to 60 requests per minute per IP address for `/api/web`. Internal or authenticated requests may have different limits. If you exceed this limit, you'll receive a 429 status code.
-
-## Best Practices
-
-1. **Use Standard Search for General Queries**: Standard search is usually cheaper and sufficient for most use cases.
-
-2. **Use Deep Search for Research**: Deep search provides more comprehensive results and is ideal for research tasks or when you need extensive information.
-
-3. **Leverage Domain Filtering**: Use `includeDomains` to search specific trusted sources or `excludeDomains` to filter out unwanted sources.
-
-4. **Date Filtering for Current Events**: Use `fromDate` and `toDate` to get the most recent information on rapidly evolving topics.
-
-5. **Structured Output for Data Extraction**: Use structured output when you need to extract specific data points from search results in a predictable format.
-
-6. **Handle Errors Gracefully**: Always implement error handling for rate limits, insufficient balance, and network errors.
-
-7. **Respect provider data policies**: Cache only where provider terms allow it.
-
-## Output Type Selection Guide
-
-- **searchResults**: Best for general searches where you want to see multiple sources and snippets. Ideal for research and exploration.
-
-- **sourcedAnswer**: Best when you want a comprehensive answer synthesized from multiple sources. Great for factual questions and summaries.
-
-- **structured**: Best when you need to extract specific data points in a predictable format. Perfect for data collection and automation.
-
-## Pricing
-
-| Provider | Standard | Deep | Notes |
-| --- | --- | --- | --- |
-| Linkup | $0.006 | $0.06 | Default provider |
-| Tavily | $0.008 | $0.016 | Good value, free tier available |
-| Exa | $0.005 base | + $0.001/page | For contents retrieval |
-| Kagi Web/News | $0.002 | N/A | Cheapest for enrichment |
-| Kagi Search | $0.025 | N/A | Full search mode |
-| Perplexity | $0.005 | N/A | Flat rate |
-| Valyu | ~$0.0015/result | Variable | Dynamic pricing |
-| Brave | $0.005 | $0.005 | Flat rate |
-| OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
-
-For standard NanoGPT usage, Brave credentials are handled automatically.
-
-A minimum balance of $1.00 is required to use the web search API. OpenAI native applies to GPT-5/o-series chat completions only and is not used by `/api/web`.
-
-## Bring your own key (BYOK)
-
-BYOK availability is provider-dependent and can change over time. See the BYOK reference for the current support matrix.
-
-See: [Bring Your Own Key (BYOK)](/api-reference/miscellaneous/byok)
-
-Brave-specific terms highlights are documented on [Brave](/api-reference/miscellaneous/brave).
-
-## X-402 payment protocol (optional)
-
-Web search supports anonymous payment via the X-402 protocol. Accepted payment rails include Nano mainnet and Base USDC, using `X-PAYMENT` header schemes.
-
-See: [X-402 Micropayments (HTTP 402)](/api-reference/miscellaneous/x402)
+- [Chat Completion](/api-reference/endpoint/chat-completion)
+- [Web Search in Text Generation Guide](/api-reference/text-generation)
+- [Brave provider specifics](/api-reference/miscellaneous/brave)

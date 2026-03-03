@@ -11,6 +11,15 @@ The NanoGPT API allows you to generate text, images and video using any AI model
   All examples in this documentation also work on our alternative domains. Just replace the base URL `https://nano-gpt.com` with your preferred domain: [ai.bitcoin.com](https://ai.bitcoin.com), [bcashgpt.com](https://bcashgpt.com), or [cake.nano-gpt.com](https://cake.nano-gpt.com). Only the base URL changes; endpoints and request formats remain the same.
 </Note>
 
+## Main API Endpoints
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/v1/chat/completions` | OpenAI-compatible chat generation with optional web search via model suffixes like `:online` |
+| `POST /api/web` | Direct Web Search API with explicit query, filters, and output mode control |
+
+For direct search use cases, see [Direct Web Search API](/api-reference/endpoint/web-search).
+
 ## Chat Completion example
 
 Here's a simple python example using our OpenAI-compatible chat completions endpoint:
