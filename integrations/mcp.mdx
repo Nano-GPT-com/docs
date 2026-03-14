@@ -35,13 +35,29 @@ The NanoGPT MCP server provides the following tools:
 
 ### Option 1: Using npx (Recommended)
 
-The easiest way to use the NanoGPT MCP server is via npx. Add it to your MCP client with:
+The easiest way to use the NanoGPT MCP server is via `npx`.
+
+#### Claude Code
+
+**macOS / Linux**
 
 ```bash
-# For Claude Code
-claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
-  --env NANOGPT_API_KEY=YOUR_API_KEY
+claude mcp add nanogpt --scope user \
+  --env NANOGPT_API_KEY=YOUR_API_KEY \
+  -- npx -y @nanogpt/mcp
 ```
+
+**Windows**
+
+```powershell
+claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=YOUR_API_KEY -- cmd /c "C:\Program Files\nodejs\npx.cmd" -y @nanogpt/mcp
+```
+
+> On native Windows, `npx` is usually a `.cmd` shim, so it should be launched through `cmd /c`. If you use WSL, run the macOS/Linux command inside WSL instead of the native Windows one.
+>
+> Claude Code's MCP CLI syntax has changed over time. If you copied an older NanoGPT command, remove the existing `nanogpt` MCP entry and add it again using the commands on this page.
+>
+> An immediate `Invalid API key` error can be caused by a broken MCP launcher command, not just a bad key value.
 
 Replace `YOUR_API_KEY` with your actual NanoGPT API key.
 
@@ -54,8 +70,9 @@ npm install -g @nanogpt/mcp
 Then add to your MCP client:
 
 ```bash
-claude mcp add nanogpt "nanogpt-mcp" --scope user \
-  --env NANOGPT_API_KEY=YOUR_API_KEY
+claude mcp add nanogpt --scope user \
+  --env NANOGPT_API_KEY=YOUR_API_KEY \
+  -- nanogpt-mcp
 ```
 
 ## Configuration
@@ -289,7 +306,7 @@ The MCP server provides clear error messages for common issues:
 
 | Error | Meaning | Solution |
 |-------|---------|----------|
-| Invalid API key | Authentication failed | Check your `NANOGPT_API_KEY` |
+| Invalid API key | Authentication failed | Check your `NANOGPT_API_KEY` and MCP launch command |
 | Insufficient balance | Account balance too low | Top up your account at [nano-gpt.com](https://nano-gpt.com) |
 | Rate limited | Too many requests | Wait and try again |
 | Timeout | Request took too long | Try a simpler request or increase `NANOGPT_TIMEOUT_MS` |
@@ -305,27 +322,48 @@ The MCP server provides clear error messages for common issues:
 
 ### "Missing required env var: NANOGPT_API_KEY"
 
-Make sure you've set your API key when adding the MCP server:
+**macOS / Linux**
 
 ```bash
-claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
-  --env NANOGPT_API_KEY=your_actual_key_here
+claude mcp add nanogpt --scope user \
+  --env NANOGPT_API_KEY=your_actual_key_here \
+  -- npx -y @nanogpt/mcp
 ```
 
+**Windows**
+
+```powershell
+claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=your_actual_key_here -- cmd /c "C:\Program Files\nodejs\npx.cmd" -y @nanogpt/mcp
+```
+
+Make sure you set your API key when adding the MCP server. If you re-add the server later, include `--env NANOGPT_API_KEY=...` again.
+
 ### "Invalid API key" errors
+
+An immediate `Invalid API key` error can be caused by a broken MCP launcher command, not just a bad key value.
 
 1. Verify your API key at [nano-gpt.com/api](https://nano-gpt.com/api)
 2. Make sure you're using the full API key value
 3. Check for extra spaces or newlines in the key
+4. Verify that your Claude Code MCP launch command is correct, especially on Windows where `npx` should be run via `cmd /c "C:\Program Files\nodejs\npx.cmd"`.
 
 ### Requests timing out
 
 For long-running operations like web search, you can increase the timeout:
 
+**macOS / Linux**
+
 ```bash
-claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
+claude mcp add nanogpt --scope user \
   --env NANOGPT_API_KEY=your_key \
-  --env NANOGPT_TIMEOUT_MS=900000
+  --env NANOGPT_TIMEOUT_MS=900000 \
+  -- npx -y @nanogpt/mcp
+```
+
+**Windows**
+
+```powershell
+claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=your_key --env NANOGPT_TIMEOUT_MS=900000 -- cmd /c "C:\Program Files\nodejs\npx.cmd" -y @nanogpt/mcp
 ```
 
 ### MCP server not connecting
@@ -333,6 +371,7 @@ claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
 1. Ensure Node.js 22+ is installed: `node --version`
 2. Try removing and re-adding the MCP server
 3. Check your MCP client's logs for detailed error messages
+4. If you already added NanoGPT using an older command, remove the existing `nanogpt` MCP entry and add it again with the updated command
 
 ## Support
 

@@ -21,10 +21,21 @@ npx @nanogpt/mcp
 
 To add NanoGPT MCP to Claude Code via the CLI:
 
+**macOS / Linux**
+
 ```bash
-claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
-  --env NANOGPT_API_KEY=YOUR_API_KEY
+claude mcp add nanogpt --scope user \
+  --env NANOGPT_API_KEY=YOUR_API_KEY \
+  -- npx -y @nanogpt/mcp
 ```
+
+**Windows**
+
+```powershell
+claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=YOUR_API_KEY -- cmd /c "C:\Program Files\nodejs\npx.cmd" -y @nanogpt/mcp
+```
+
+On native Windows, `npx` is usually a `.cmd` shim, so it should be launched through `cmd /c`. If you use WSL, run the macOS/Linux command inside WSL instead of the native Windows one.
 
 Replace `YOUR_API_KEY` with your actual NanoGPT API key.
 
@@ -119,6 +130,7 @@ Resources allow agents to "read" data stored by the server. NanoGPT MCP provides
 
 - Ensure `NANOGPT_API_KEY` is set in your MCP client configuration.
 - Verify the key in your NanoGPT API dashboard and remove any extra spaces.
+- If Claude Code fails immediately with `Invalid API key`, verify the MCP launcher command too, especially on native Windows where `npx` should run via `cmd /c "C:\Program Files\nodejs\npx.cmd"`.
 
 ### Timeouts for long operations
 
