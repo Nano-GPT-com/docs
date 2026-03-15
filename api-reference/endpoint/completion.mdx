@@ -1,4 +1,8 @@
 ---
 title: 'Completions'
 openapi: 'POST /v1/completions'
---- 
+---
+
+<Note>
+  `POST /api/v1/completions` is available on a best-effort basis for legacy OpenAI compatibility. Performance and behavior may be less consistent than `POST /api/v1/chat/completions` because not all upstream providers support the legacy completions API.
+</Note>

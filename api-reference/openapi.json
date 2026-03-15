@@ -80,7 +80,7 @@
     },
     "/v1/completions": {
       "post": {
-        "description": "Creates a completion for the provided prompt",
+        "description": "Creates a completion for the provided prompt. This endpoint is available on a best-effort basis for legacy compatibility, and performance may be less consistent than /v1/chat/completions because not all upstream providers support the legacy completions API.",
         "security": [
           {
             "bearerAuth": []

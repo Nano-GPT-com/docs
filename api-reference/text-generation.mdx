@@ -125,6 +125,10 @@ See [Direct Web Search API](/api-reference/endpoint/web-search) for request/resp
 
 This endpoint mimics OpenAI's legacy text completions API:
 
+<Note>
+  `POST /api/v1/completions` is best effort. Performance and compatibility may be less consistent than `POST /api/v1/chat/completions` because not all providers we route to support the legacy completions API.
+</Note>
+
 ```python
 import requests
 import json
