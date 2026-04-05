@@ -7,6 +7,10 @@ openapi: 'POST /v1/embeddings'
 
 Create embeddings for text using OpenAI-compatible and alternative embedding models. NanoGPT supports 20+ embedding models (and this list changes over time); use `GET /api/v1/embedding-models` for the source-of-truth list.
 
+<Note>
+  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+</Note>
+
 ## Available Models
 
 ### OpenAI Models

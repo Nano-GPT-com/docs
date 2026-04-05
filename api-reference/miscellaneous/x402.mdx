@@ -9,12 +9,18 @@ X-402 is an HTTP-native micropayment flow built around `402 Payment Required`.
 
 With NanoGPT, X-402 lets clients pay for API calls without creating an account or pre-funding a NanoGPT balance:
 
-1. Client requests an API resource.
+1. Client requests an API resource **with the `X-X402: true` header** to opt-in to payment flows.
 2. Server replies `402 Payment Required` with payment options.
 3. Client pays using one of the offered schemes.
 4. Client retries the original request with `X-PAYMENT` (exact schemes), or completes the request after an on-chain transfer (polling schemes).
 
 If you send a normal NanoGPT API key with sufficient balance, the request uses standard billing and will not trigger X-402.
+
+<Warning>
+**Breaking Change (2026-04-05)**: X-402 payment flows now require explicit opt-in using the `X-X402: true` header. Without this header, users with insufficient balance will receive standard error responses instead of payment options.
+
+Existing clients using `X-PAYMENT` headers (already in the payment flow) continue to work without changes.
+</Warning>
 
 ## Supported Payment Schemes
 
@@ -29,14 +35,14 @@ NanoGPT can offer multiple schemes in a single 402 response:
 
 ## Flow A: Exact Schemes (`X-PAYMENT` header)
 
-1. Call an API endpoint (no auth).
+1. Call an API endpoint with the **`X-X402: true` header** to opt-in to payment flows.
 2. Receive `402` with an `accepts` array that includes an `exact` option.
 3. Construct a base64-encoded JSON payment payload and retry the same request with the `X-PAYMENT` header.
 4. On success, the server returns the normal API response and may include `X-PAYMENT-RESPONSE` with settlement metadata.
 
 ## Flow B: Polling Schemes (Ephemeral Address)
 
-1. Call an API endpoint (no auth).
+1. Call an API endpoint with the **`X-X402: true` header** to opt-in to payment flows.
 2. Receive `402` with an `accepts` entry that includes `payTo` and `paymentId`.
 3. Send funds to `payTo` using a wallet.
 4. Poll `GET /api/x402/status/{paymentId}` until the payment is ready.
@@ -117,6 +123,116 @@ Example (shape):
 
 Some responses also include convenience headers such as `X-Payment-Id`, `X-Payment-Address`, and amount hints.
 
+## Supported Endpoints
+
+The following endpoints support X-402 payment flows when the `X-X402: true` header is included:
+
+### Primary Endpoints
+- `POST /api/v1/chat/completions`
+- `POST /api/v1/embeddings` 
+- `POST /api/embeddings`
+- `POST /api/tts`
+- `POST /api/transcribe` 
+- `POST /api/youtube-transcribe`
+
+### OpenAI-Compatible Proxy Routes
+These routes also support the `X-X402` header and proxy to the primary endpoints:
+- `POST /api/v1/messages` → `/api/v1/chat/completions`
+- `POST /api/v1/audio/speech` → `/api/tts`
+- `POST /api/v1/audio/transcriptions` → `/api/transcribe`
+- `POST /api/v1/responses` → `/api/v1/chat/completions`
+
+## Migration Guide for Existing Clients
+
+### No Changes Required
+
+**Existing X-402 clients continue to work without modification** because:
+- Requests with `X-PAYMENT` headers (payment retries) are automatically allowed
+- The core X-402 protocol remains unchanged
+- No changes needed for clients already in the payment flow
+
+### New Clients Only
+
+**Only new X-402 clients** need to be updated to include the `X-X402: true` header on initial requests to opt-in to payment flows.
+
+### Error Response Changes
+
+Clients may now see different error responses based on the opt-in header:
+
+**Without `X-X402: true` header:**
+```json
+{
+  "error": "Insufficient balance",
+  "requiredBalance": 0.0035,
+  "status": 402
+}
+```
+
+**With `X-X402: true` header:**
+```json
+{
+  "error": {
+    "message": "Payment required.",
+    "type": "insufficient_quota",
+    "code": "insufficient_quota"
+  },
+  "x402Version": 1,
+  "accepts": [
+    {
+      "scheme": "nano",
+      "network": "nano-mainnet",
+      "maxAmountRequired": "50000000000000000000000000",
+      "maxAmountRequiredFormatted": "0.05 XNO",
+      "maxAmountRequiredUSD": 0.05,
+      "resource": "/v1/chat/completions",
+      "description": "Payment required - $0.0500 USD",
+      "payTo": "nano_1ephemeral...",
+      "paymentId": "pay_abc123...",
+      "expiresAt": 1700000900,
+      "callbackUrl": "/api/x402/status/pay_abc123...",
+      "completeUrl": "/api/x402/complete/pay_abc123...",
+      "extra": {}
+    }
+  ]
+}
+```
+
+### Complete Example Comparison
+
+**Before the change (old behavior):**
+```bash
+# Any request without sufficient balance would trigger X-402 automatically
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+# → Would return 402 with payment options
+```
+
+**After the change (new behavior):**
+```bash
+# Without X-X402 header - returns standard error
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini", 
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+# → Returns: {"error": "Insufficient balance", "requiredBalance": 0.0035, "status": 402}
+
+# With X-X402 header - enables payment options
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "X-X402: true" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+# → Returns 402 with X-402 payment options (accepts array)
+```
+
 ## Pricing Notes
 
 - Fixed-cost endpoints (for example, many media endpoints) can quote an exact USD amount in the 402 response.
@@ -125,9 +241,10 @@ Some responses also include convenience headers such as `X-Payment-Id`, `X-Payme
 ## Example: Polling (Nano)
 
 ```bash
-# 1) Request (no auth)
+# 1) Request with X-X402 opt-in header
 curl -sS -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "X-X402: true" \
   -d '{
     "model": "gpt-4o-mini",
     "messages": [{"role": "user", "content": "Hello"}],
@@ -144,9 +261,10 @@ curl -sS -X POST https://nano-gpt.com/api/x402/complete/pay_abc123...
 ## Example: Exact (Base USDC)
 
 ```bash
-# 1) Request (no auth) -> receive 402 with an accepts option: scheme=exact, network=base
+# 1) Request with X-X402 opt-in header -> receive 402 with accepts option: scheme=exact, network=base
 curl -sS -X POST https://nano-gpt.com/api/v1/images/generations \
   -H "Content-Type: application/json" \
+  -H "X-X402: true" \
   -d '{
     "model": "dall-e-3",
     "prompt": "A sunset over mountains",

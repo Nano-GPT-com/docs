@@ -11,6 +11,10 @@ openapi: 'POST /v1/chat/completions'
   Provider selection is available for pay-as-you-go requests on supported open-source models. Set the `X-Provider` header or save preferences to choose a provider. If you are on a subscription and want provider selection for a subscription-included model, force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Provider Selection](/api-reference/miscellaneous/provider-selection) and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 </Note>
 
+<Note>
+  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+</Note>
+
 ## Page map
 
 Use the jump list below to navigate the long-form reference quickly.

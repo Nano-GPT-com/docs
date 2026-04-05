@@ -12,6 +12,10 @@ Default behavior is unchanged: omit `stream` (or set `false`) to receive one buf
 
 When you use a music model (for example `Minimax-Music-02`), the `input` field is treated as a music prompt (not text to speak) and `voice` is ignored. For a dedicated music guide and model list, see `api-reference/music-generation.mdx`.
 
+<Note>
+  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+</Note>
+
 ## Endpoint
 
 - Method/Path: `POST https://nano-gpt.com/api/v1/audio/speech`

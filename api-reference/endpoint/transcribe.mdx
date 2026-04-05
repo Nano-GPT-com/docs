@@ -9,6 +9,10 @@ The Speech-to-Text transcription endpoint converts audio files into text using s
 
 Looking for a drop-in OpenAI-compatible STT endpoint? Use `POST /api/v1/audio/transcriptions`. See `api-reference/endpoint/audio-transcriptions.mdx`.
 
+<Note>
+  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+</Note>
+
 ## Supported Models
 
 - **Whisper-Large-V3**: High-accuracy transcription (~$0.0005/min) - Synchronous

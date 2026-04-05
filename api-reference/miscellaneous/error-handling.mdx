@@ -186,9 +186,9 @@ NanoGPT can enforce optional per-key daily limits (Requests/Day and USD/Day). Wh
 
 ## Balance Errors (402)
 
-Some endpoints return `402 Payment Required` when your account balance is insufficient. These responses often include a `requiredBalance` field.
+Some endpoints return `402 Payment Required` when your account balance is insufficient. The format depends on whether you've opted into X-402 payment flows.
 
-Example:
+### Standard Balance Error (without X-X402 header)
 
 ```json
 {
@@ -197,6 +197,40 @@ Example:
   "status": 402
 }
 ```
+
+### X-402 Payment Challenge (with X-X402: true header)
+
+When you include the `X-X402: true` header, insufficient balance triggers the X-402 payment protocol with payment options:
+
+```json
+{
+  "error": {
+    "message": "Payment required.",
+    "type": "insufficient_quota",
+    "code": "insufficient_quota"
+  },
+  "x402Version": 1,
+  "accepts": [
+    {
+      "scheme": "nano",
+      "network": "nano-mainnet",
+      "maxAmountRequired": "50000000000000000000000000",
+      "maxAmountRequiredFormatted": "0.05 XNO",
+      "maxAmountRequiredUSD": 0.05,
+      "resource": "/v1/chat/completions",
+      "description": "Payment required - $0.0500 USD",
+      "payTo": "nano_1ephemeral...",
+      "paymentId": "pay_abc123...",
+      "expiresAt": 1700000900,
+      "callbackUrl": "/api/x402/status/pay_abc123...",
+      "completeUrl": "/api/x402/complete/pay_abc123...",
+      "extra": {}
+    }
+  ]
+}
+```
+
+See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details on handling payment challenges.
 
 Feature-specific variants may include a structured error `code` such as `memory_balance_required` or `webSearch_balance_required`.
 

@@ -11,6 +11,10 @@ NanoGPT accepts requests in the **Anthropic Messages** format, routes them to th
 
 For non‑Anthropic models, NanoGPT transparently translates the request to an OpenAI-style chat format internally and then converts the response back to Anthropic Messages format.
 
+<Note>
+  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+</Note>
+
 This endpoint supports:
 
 - Text generation (streaming and non-streaming)
