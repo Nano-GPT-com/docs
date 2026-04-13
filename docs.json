@@ -111,6 +111,7 @@
           "integrations/mcp",
           "integrations/n8n",
           "integrations/sillytavern",
+          "integrations/risuai",
           "integrations/openwebui",
           "integrations/typingmind",
           "integrations/risuai",

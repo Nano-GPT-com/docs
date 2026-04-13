@@ -1,44 +1,57 @@
 ---
-title: 'Risuai'
-description: 'Using NanoGPT with Risuai'
+title: 'RisuAI'
+description: 'Using NanoGPT with RisuAI for chat and character-based conversations'
 ---
 
-# Using Risuai with NanoGPT
+# RisuAI Integration
 
-A quick guide to setting up Risuai with NanoGPT.
+Use this guide to connect RisuAI to NanoGPT so you can run your chats through NanoGPT models.
 
 ## Before You Start
 
-1. Get your NanoGPT API key from [nano-gpt.com/api](https://nano-gpt.com/api).
-2. Open [risuai.xyz](https://risuai.xyz/).
-3. If you see Risuai's initial onboarding tutorial, skip it. NanoGPT setup is done from the main settings screen.
+1. Create or log in to your NanoGPT account.
+2. Generate your API key at [nano-gpt.com/api](https://nano-gpt.com/api).
+3. Open [risuai.xyz](https://risuai.xyz/).
 
-## Setup Instructions
+If RisuAI shows onboarding, skip it. NanoGPT is configured in the main settings.
 
-1. Open the left menu in Risuai and go to **Settings**.
-   ![Open the menu and go to Settings](/images/integrations/for-nanogpt-docs-01.png)
-2. Open the **Chat Bot** panel.
-   ![Open the Chat Bot settings panel](/images/integrations/for-nanogpt-docs-02.png)
-3. Set both **Model** and **Auxiliary Model** to **NanoGPT**.
-   ![Set both Model and Auxiliary Model to NanoGPT](/images/integrations/for-nanogpt-docs-03.png)
-4. Paste your key into **NanoGPT API Key**.
+## Step-by-Step Setup
+
+1. From the RisuAI home screen, open the left menu (hamburger icon), then go to **Settings**.
+   <Frame>
+     <img src="/images/risuai-01.png" alt="Open the menu and go to Settings in RisuAI" style={{ borderRadius: '0.5rem' }} />
+   </Frame>
+2. In **Settings**, open the **Chat Bot** panel.
+   <Frame>
+     <img src="/images/risuai-02.png" alt="Open the Chat Bot settings panel in RisuAI" style={{ borderRadius: '0.5rem' }} />
+   </Frame>
+3. Set both of these fields to **NanoGPT**:
+   - **Model**
+   - **Auxiliary Model**
+   <Frame>
+     <img src="/images/risuai-03.png" alt="Set both Model and Auxiliary Model to NanoGPT in RisuAI" style={{ borderRadius: '0.5rem' }} />
+   </Frame>
+4. Paste your key from [nano-gpt.com/api](https://nano-gpt.com/api) into **NanoGPT API Key**.
 5. If you have a NanoGPT subscription, enable **Use subscription endpoint & models**.
-   ![Enable subscription endpoint and pick a model from the list](/images/integrations/for-nanogpt-docs-04.png)
-6. Choose a model under **NanoGPT Model** using either:
-   - **Select from List**
-   - **Manual Input** (recommended if the list does not load)
-7. Optional: enable **Response Streaming** to receive streamed responses.
+   - If this is not enabled, RisuAI uses pay-as-you-go mode by default.
+   <Frame>
+     <img src="/images/risuai-04.png" alt="Enable subscription endpoint and select NanoGPT model settings in RisuAI" style={{ borderRadius: '0.5rem' }} />
+   </Frame>
+6. Choose your model in **NanoGPT Model**:
+   - **Select from List** to browse available models.
+   - **Manual Input** if the model list does not load or you want to enter a model ID directly.
+7. Optional: enable **Response Streaming** for streamed output.
 
-## Pay-As-You-Go vs Subscription Mode
+## Pay-As-You-Go Provider Selection
 
-- If **Use subscription endpoint & models** is enabled, Risuai uses subscription-included endpoints/models.
-- If it is disabled, Risuai defaults to pay-as-you-go mode.
+In pay-as-you-go mode, some models expose multiple providers. RisuAI will show provider options with pricing so you can compare and choose.
 
-In pay-as-you-go mode, some models show multiple providers with pricing so you can compare options and choose the provider you prefer.
-![Compare provider options and pricing in pay-as-you-go mode](/images/integrations/for-nanogpt-docs-05.png)
+<Frame>
+  <img src="/images/risuai-05.png" alt="Compare provider options and pricing in RisuAI pay-as-you-go mode" style={{ borderRadius: '0.5rem' }} />
+</Frame>
 
-## Troubleshooting
+## Quick Troubleshooting
 
-- Model list does not load: switch to **Manual Input** and enter the model ID directly.
-- Pricing mode looks wrong: verify the **Use subscription endpoint & models** toggle.
-- Authentication errors: re-copy your key from [nano-gpt.com/api](https://nano-gpt.com/api) and ensure there are no extra spaces.
+- Model list not loading: switch to **Manual Input** and enter the model ID.
+- Unexpected pricing mode: verify whether **Use subscription endpoint & models** is enabled.
+- Auth errors: confirm your NanoGPT API key is valid and pasted without extra spaces.
