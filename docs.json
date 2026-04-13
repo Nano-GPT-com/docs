@@ -113,6 +113,7 @@
           "integrations/sillytavern",
           "integrations/openwebui",
           "integrations/typingmind",
+          "integrations/risuai",
           "integrations/librechat",
           "integrations/openhands",
           "integrations/openclaw",

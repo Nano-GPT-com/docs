@@ -1,0 +1,44 @@
+---
+title: 'Risuai'
+description: 'Using NanoGPT with Risuai'
+---
+
+# Using Risuai with NanoGPT
+
+A quick guide to setting up Risuai with NanoGPT.
+
+## Before You Start
+
+1. Get your NanoGPT API key from [nano-gpt.com/api](https://nano-gpt.com/api).
+2. Open [risuai.xyz](https://risuai.xyz/).
+3. If you see Risuai's initial onboarding tutorial, skip it. NanoGPT setup is done from the main settings screen.
+
+## Setup Instructions
+
+1. Open the left menu in Risuai and go to **Settings**.
+   ![Open the menu and go to Settings](/images/integrations/for-nanogpt-docs-01.png)
+2. Open the **Chat Bot** panel.
+   ![Open the Chat Bot settings panel](/images/integrations/for-nanogpt-docs-02.png)
+3. Set both **Model** and **Auxiliary Model** to **NanoGPT**.
+   ![Set both Model and Auxiliary Model to NanoGPT](/images/integrations/for-nanogpt-docs-03.png)
+4. Paste your key into **NanoGPT API Key**.
+5. If you have a NanoGPT subscription, enable **Use subscription endpoint & models**.
+   ![Enable subscription endpoint and pick a model from the list](/images/integrations/for-nanogpt-docs-04.png)
+6. Choose a model under **NanoGPT Model** using either:
+   - **Select from List**
+   - **Manual Input** (recommended if the list does not load)
+7. Optional: enable **Response Streaming** to receive streamed responses.
+
+## Pay-As-You-Go vs Subscription Mode
+
+- If **Use subscription endpoint & models** is enabled, Risuai uses subscription-included endpoints/models.
+- If it is disabled, Risuai defaults to pay-as-you-go mode.
+
+In pay-as-you-go mode, some models show multiple providers with pricing so you can compare options and choose the provider you prefer.
+![Compare provider options and pricing in pay-as-you-go mode](/images/integrations/for-nanogpt-docs-05.png)
+
+## Troubleshooting
+
+- Model list does not load: switch to **Manual Input** and enter the model ID directly.
+- Pricing mode looks wrong: verify the **Use subscription endpoint & models** toggle.
+- Authentication errors: re-copy your key from [nano-gpt.com/api](https://nano-gpt.com/api) and ensure there are no extra spaces.
