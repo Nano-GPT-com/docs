@@ -26,12 +26,12 @@ CORE CONCEPTS
 - Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
 - Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, and combine suffixes as needed.
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
-- Prompt caching and memory: prompt_caching/cache_control toggles 5m or 1h cache TTLs, and memory compression replaces prior turns before dispatch.
+- Caching and memory: most providers use implicit caching automatically when supported; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
 
 GLOSSARY
 - Linkup search: NanoGPT web search triggered by :online suffix; prepends fresh results and bills $0.006 (standard) or $0.06 (deep).
 - Polychat memory: hierarchical compression invoked by :memory suffix or memory header; stores 1-365 day summaries and replaces conversation history.
-- Prompt caching: reusable prompt segments for Gemini and Claude activated by prompt_caching/promptCaching/cache_control with optional cutAfterMessageIndex.
+- Prompt caching: implicit for providers that support it (including OpenAI, Gemini, and many open-source provider routes); explicit controls via prompt_caching/promptCaching/cache_control are mainly for Claude and support optional cutAfterMessageIndex.
 - Reasoning stream: delta.reasoning text emitted by reasoning-enabled models; reasoning_details provides structured metadata when available.
 - x_nanogpt_pricing: billing extension object with stable core fields (amount, currency, sanitized error) plus provider-dependent optional metadata (cost, paymentSource, token counters, team billing flags).
 - BYOK: bring-your-own-key mode activated with x-use-byok: true or byok.enabled: true to forward requests using stored provider credentials.
@@ -190,11 +190,11 @@ console.log(visionReply.choices[0]?.message.content);
 ```
 
 PROMPT CACHING
-Enable prompt reuse with prompt_caching / promptCaching / cache_control (body-level alias).
+NanoGPT uses implicit caching automatically on providers that support it (including OpenAI, Gemini, and many open-source provider routes). Use prompt_caching / promptCaching / cache_control (body-level alias) when you need explicit Claude cache controls.
 
 ```ts
 await client.chat.completions.create({
-  model: 'google/gemini-3.1-pro-preview',
+  model: 'anthropic/claude-sonnet-4.5',
   messages: [
     { role: 'system', content: 'Always respond with JSON.' },
     { role: 'user', content: 'Cache this conversation scaffold for 5 minutes.' },

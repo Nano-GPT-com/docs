@@ -1,6 +1,6 @@
 ---
 title: "Prompt Caching"
-description: "Cache large, reusable prompt prefixes for lower latency and cost on supported Gemini and Claude models."
+description: "Understand NanoGPT caching behavior: implicit caching by default on supported providers (including many open-source routes), plus explicit prompt-caching controls for Claude."
 ---
 
 ## Overview
@@ -12,24 +12,22 @@ Benefits:
 - Up to ~90% cost reduction on cached input tokens (cache hits)
 - Lower latency on requests with large static prefixes
 
-Caching is opt-in and configured per request.
+NanoGPT supports two caching modes:
+
+- **Implicit caching (default):** For providers/models that support provider-native prompt reuse (including OpenAI, Gemini, and many open-source provider routes), caching is applied automatically when eligible. No extra request fields are required.
+- **Explicit prompt caching (opt-in):** Claude models use explicit cache controls (`prompt_caching`/`promptCaching`/body-level `cache_control`, or inline `cache_control`) when you want deterministic cache boundaries and TTL control.
 
 ## Supported Models
 
-Prompt caching is available on Gemini and Claude models.
+### Implicit caching (automatic)
 
-### Gemini models
+NanoGPT automatically uses implicit caching on providers/models that support it, including OpenAI and Gemini model families plus many open-source provider/model routes.
 
-All Gemini models are eligible for prompt caching, including:
+No cache-control flags are required for this mode.
 
-- Gemini 3.1 Pro Preview (all variants)
-- Gemini 3 Flash Preview / 3 Pro Preview
-- Gemini 2.5 Flash / Pro
-- Gemini 2.0 Flash
+### Explicit prompt caching controls (Claude)
 
-### Claude models
-
-Prompt caching is also available on Claude models, including these families (examples):
+Explicit prompt-caching controls are available on Claude models, including these families (examples):
 
 | Model family | Example model IDs |
 | --- | --- |
@@ -57,7 +55,7 @@ If your cached prefix is smaller than the minimum, the request still succeeds bu
 | Claude Sonnet 4.5, Sonnet 4, Opus 4, Opus 4.1, Opus 4.6, Sonnet 3.7 | 1,024 |
 | Claude Haiku 3.5 | 2,048 |
 
-## How To Enable Prompt Caching
+## How To Enable Explicit Prompt Caching (Claude)
 
 Prompt caching works on `POST /api/v1/chat/completions`.
 
@@ -69,7 +67,7 @@ Add a top-level helper object:
 
 ```json
 {
-  "model": "google/gemini-3.1-pro-preview",
+  "model": "anthropic/claude-sonnet-4.5",
   "messages": [
     { "role": "system", "content": "Your large static content..." },
     { "role": "user", "content": "Summarize the key points." }
@@ -120,7 +118,7 @@ Attach `cache_control` directly to content blocks you want cached:
 
 ```json
 {
-  "model": "google/gemini-3.1-pro-preview",
+  "model": "anthropic/claude-sonnet-4.5",
   "messages": [
     {
       "role": "system",
@@ -141,7 +139,7 @@ Attach `cache_control` directly to content blocks you want cached:
 
 ```json
 {
-  "model": "google/gemini-2.5-flash",
+  "model": "anthropic/claude-sonnet-4.5",
   "messages": [
     {
       "role": "system",
@@ -168,15 +166,13 @@ Attach `cache_control` directly to content blocks you want cached:
 
 In this example, the system prompt's `cache_control` marker is preserved and its TTL is set to `1h`. The user message does not receive an auto-generated cache breakpoint.
 
-### Option 3: `anthropic-beta` header
+### Option 3: `anthropic-beta` header (Claude-compatible)
 
 The Anthropic-compatible header is supported:
 
 ```text
 anthropic-beta: prompt-caching-2024-07-31
 ```
-
-This header also works for Gemini models.
 
 For Claude 1-hour TTL requests using Anthropic-native routing, also include:
 
@@ -221,7 +217,7 @@ Enable prompt caching and send the request. The first eligible request writes ca
 
 ## Usage Fields (How To Verify Cache Hits)
 
-When caching is active, responses can include:
+When caching is active (implicit or explicit), responses can include:
 
 - `cache_creation_input_tokens`: tokens written to cache on this request
 - `cache_read_input_tokens`: tokens read from cache on this request (cache hit when `> 0`)
@@ -246,9 +242,9 @@ For streaming requests, the final SSE chunk includes the same usage fields when 
 
 ## Pricing
 
-Cache writes and reads are billed differently by provider.
+Cache writes and reads are billed differently by provider. Implicit-caching providers apply their cache pricing automatically when eligible. Explicit Claude caching uses the TTL settings below.
 
-### Gemini Pro models
+### Gemini Pro models (implicit caching, provider-native)
 
 | Token type | Rate (per 1M tokens) | Notes |
 | --- | --- | --- |
@@ -258,7 +254,7 @@ Cache writes and reads are billed differently by provider.
 
 Example: writing 10,000 cached tokens costs `(10k × $2.00/M) + (10k × $0.375/M) = $0.02375`. Reading 10,000 cached tokens costs `10k × $0.20/M = $0.002`.
 
-### Gemini Flash models
+### Gemini Flash models (implicit caching, provider-native)
 
 | Token type | Rate (per 1M tokens) | Notes |
 | --- | --- | --- |
@@ -268,14 +264,14 @@ Example: writing 10,000 cached tokens costs `(10k × $2.00/M) + (10k × $0.375/M
 
 For Gemini 2.0 models, cache reads are 25% of the base input rate (75% cheaper), not 10%.
 
-### Claude models
+### Claude models (explicit caching)
 
 | TTL | Creation multiplier on cached input tokens | Read multiplier |
 | --- | --- | --- |
 | `5m` | `1.25x` | `0.1x` |
 | `1h` | `2.0x` | `0.1x` |
 
-## TTL Options
+## TTL Options (Explicit Claude Controls)
 
 | TTL | Duration | Description |
 | --- | --- | --- |
@@ -298,7 +294,7 @@ Behavior:
 - If TTL expires without reuse, cache expires.
 - Any prefix change (even one character) causes a cache miss and new cache creation.
 
-## Cache Consistency with `stickyProvider`
+## Cache Consistency with `stickyProvider` (Explicit Caching)
 
 Each provider keeps its own cache. If a request fails over to another provider, the previous cache may be unavailable.
 
@@ -317,7 +313,7 @@ Behavior:
 
 ## NanoGPT Web UI
 
-In the NanoGPT web UI, supported models show a prompt caching toggle where you can choose cache duration.
+In the NanoGPT web UI, models with explicit prompt-caching controls show a prompt caching toggle where you can choose cache duration.
 
 ## Limitations and Caveats
 
@@ -325,3 +321,4 @@ In the NanoGPT web UI, supported models show a prompt caching toggle where you c
 - A maximum of 4 cache breakpoints (`cache_control`) are supported per request.
 - Some models report aggregate prompt usage differently; use `cache_creation_input_tokens` and `cache_read_input_tokens` for authoritative cached token counts.
 - On cache hits, a small non-zero `cache_creation_input_tokens` can appear due to per-request overhead and does not necessarily indicate a cache miss.
+- Implicit caching behavior (eligibility, TTL behavior, and exact discounts) is provider-dependent.

@@ -59,7 +59,7 @@ Use the jump list below to navigate the long-form reference quickly.
     - [cURL - Image URL](#curl-image-url-non-streaming)
     - [cURL - Base64 Data URL](#curl-base64-data-url-non-streaming)
     - [cURL - Streaming SSE](#curl-streaming-sse)
-    - [Prompt Caching (Claude + Gemini Models)](#prompt-caching-claude-gemini-models)
+    - [Caching (Implicit and Explicit Controls)](#caching-implicit-and-explicit-controls)
     - [Cache Consistency](#cache-consistency-with-stickyprovider)
     - [Troubleshooting](#troubleshooting)
   </Accordion>
@@ -920,11 +920,13 @@ The response streams `data: { ... }` lines until a final terminator. Usage metri
 
 _Note: Prompt-caching helpers implicitly force `include_usage`, so cached requests still receive usage data without extra flags._
 
-### Prompt Caching (Claude + Gemini Models)
+### Caching (Implicit and Explicit Controls)
 
 For the full guide (supported models, thresholds, pricing, and usage fields), see [Prompt Caching](/api-reference/miscellaneous/prompt-caching).
 
-Prompt caching is available for Claude and Gemini models. You can either place inline `cache_control` blocks on reusable content, or use the body-level helper (`prompt_caching`, `promptCaching`, and `cache_control` alias).
+NanoGPT automatically applies implicit caching on providers/models that support it (including OpenAI, Gemini, and many open-source provider/model routes), so most requests do not need caching flags.
+
+Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and body-level `cache_control` alias, plus inline `cache_control`) when you need Claude-specific cache boundaries, TTL selection, or `stickyProvider` consistency control.
 
 > **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
 
@@ -944,7 +946,7 @@ headers = {
 }
 
 payload = {
-  "model": "google/gemini-3.1-pro-preview",
+  "model": "anthropic/claude-sonnet-4.5",
   "messages": [
     {
       "role": "system",
@@ -964,8 +966,9 @@ requests.post("https://nano-gpt.com/api/v1/chat/completions", headers=headers, j
 ```
 
 - Each `cache_control` marker caches the full prefix up to that block. Place them on every static chunk (system messages, tool definitions, large contexts) you plan to reuse.
-- Gemini and Claude both support `5m` and `1h` TTLs, with provider-specific pricing. See [Prompt Caching](/api-reference/miscellaneous/prompt-caching#pricing).
+- Explicit TTL controls are `5m` and `1h` for Claude caching flows. See [Prompt Caching](/api-reference/miscellaneous/prompt-caching#pricing).
 - `anthropic-beta: prompt-caching-2024-07-31` is supported for compatibility (and required for Anthropic-native Claude caching flows).
+- For implicit-caching providers, no explicit `cache_control` markers are required.
 
 For a simpler experience, send the helper fields and NanoGPT will stamp the first _N_ messages for you before forwarding upstream:
 

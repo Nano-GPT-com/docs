@@ -348,7 +348,9 @@ See the [Models documentation](https://docs.nano-gpt.com/docs/endpoint-examples/
 
 For the full guide (supported models, thresholds, pricing, and usage fields), see [Prompt Caching](/api-reference/miscellaneous/prompt-caching).
 
-Enable prompt caching to reduce costs on repeated prompts.
+NanoGPT automatically applies implicit caching on providers/models that support it (including OpenAI, Gemini, and many open-source provider/model routes), with no extra request flags.
+
+Use explicit prompt-caching controls on Claude when you need deterministic cache boundaries, TTL selection, or `stickyProvider` consistency control.
 
 ### Enable via Header
 
@@ -356,16 +358,14 @@ Enable prompt caching to reduce costs on repeated prompts.
 anthropic-beta: prompt-caching-2024-07-31
 ```
 
-This Anthropic-compatible header also works with Gemini models.
-
 ### TTL Options
 
 - Default: 5-minute cache TTL
 - Extended: Add `extended-cache-ttl-2025-04-11` to request 1-hour TTL on Anthropic-native Claude flows
 
-### Cache Control in Content
+### Cache Control in Content (Explicit Claude Controls)
 
-Add `cache_control` to content blocks (Claude and Gemini):
+Add `cache_control` to content blocks for explicit Claude caching:
 
 ```json
 {

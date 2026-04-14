@@ -220,11 +220,13 @@ else:
     print("Failed to get response from GPT")
 ```
 
-### Prompt Caching (Claude + Gemini Models)
+### Caching (Implicit and Explicit Controls)
 
 For the full guide (supported models, thresholds, pricing, and usage fields), see [Prompt Caching](/api-reference/miscellaneous/prompt-caching).
 
-Prompt caching is available for Claude and Gemini models. Use inline `cache_control` markers on reusable blocks, or use the helper (`prompt_caching`, `promptCaching`, and body-level `cache_control` alias) to auto-mark the leading prefix.
+NanoGPT automatically applies implicit caching on providers/models that support it (including OpenAI, Gemini, and many open-source provider/model routes), so most requests do not need caching flags.
+
+Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and body-level `cache_control` alias, plus inline `cache_control`) when you need Claude-specific cache boundaries, TTL selection, or `stickyProvider` consistency control.
 
 > **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
 
@@ -240,7 +242,7 @@ The `prompt_caching` / `promptCaching` helper accepts these options:
 #### Explicit `cache_control` markers
 
 ```python
-def chat_completion_with_prompt_cache(messages, model="google/gemini-3.1-pro-preview"):
+def chat_completion_with_prompt_cache(messages, model="anthropic/claude-sonnet-4.5"):
     """
     Attach cache_control directly to the static prompt blocks you want reused.
     """
@@ -294,8 +296,9 @@ print(result["choices"][0]["message"]["content"])
 ```
 
 - `cache_control` belongs to individual content blocks (`system`, `user`, tool definitions, etc.). Each marker caches the entire prefix up to and including that block.
-- Supported TTLs are `5m` and `1h`. Omit `ttl` to use the default `5m` window.
+- Supported explicit TTLs are `5m` and `1h` (Claude flows). Omit `ttl` to use the default `5m` window.
 - `anthropic-beta: prompt-caching-2024-07-31` is supported for compatibility and required for Anthropic-native Claude caching flows.
+- For implicit-caching providers, no explicit `cache_control` markers are required.
 - Check `usage.prompt_tokens_details.cached_tokens` in NanoGPT's response to confirm what was billed at the discounted rate.
 
 #### Using the `prompt_caching` helper
