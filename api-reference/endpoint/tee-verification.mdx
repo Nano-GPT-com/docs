@@ -4,7 +4,7 @@
 
 ## Overview
 
-NanoGPT supports private TEE-backed models. Use these endpoints to verify enclave attestation and signatures for chat completions.
+NanoGPT supports TEE-backed models with attestation/signature verification for stronger integrity and data-in-use isolation. Confidentiality/logging outcomes are provider-specific, and plaintext may still exist at gateway/proxy layers outside the enclave depending on transport and provider architecture. Use these endpoints to verify enclave attestation and signatures for chat completions.
 
 ### Fetch Attestation Report
 
