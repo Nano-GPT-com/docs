@@ -58,7 +58,7 @@ Alternatively, you can use Bearer token authentication:
 </ParamField>
 
 <ParamField body="kagiSource" type="string">
-  Kagi only. Source to query: "web", "news", or "search" (also accepts "kagi_source")
+  Kagi only. Source to query: "web", "news", or "search"
 </ParamField>
 
 <ParamField body="fromDate" type="string">
@@ -407,14 +407,14 @@ curl -X POST https://nano-gpt.com/api/web \
     "toDate": "2025-07-01"
   }'
 
-# Sourced answer with domain filtering
+# Search results with domain filtering
 curl -X POST https://nano-gpt.com/api/web \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "query": "Microsoft quarterly earnings",
     "provider": "exa",
-    "outputType": "sourcedAnswer",
+    "outputType": "searchResults",
     "includeDomains": ["microsoft.com", "reuters.com", "bloomberg.com"]
   }'
 ```

@@ -194,7 +194,7 @@ For streaming requests, the final SSE chunk includes the same usage fields when 
 
 ## Limitations and Caveats
 
-- Prompt caching is only supported on Claude models. Other models ignore caching helpers/markers.
+- Prompt-caching behavior varies by model/provider. Claude offers the most complete explicit controls, while several non-Claude routes (including some Gemini/OpenRouter and selected provider-specific lanes) also support cache helpers or report cache usage. Unsupported models ignore the caching fields.
 - A maximum of 4 cache breakpoints (`cache_control`) are supported per request.
 - Some models may report `prompt_tokens` differently across generations; use `cache_creation_input_tokens` and `cache_read_input_tokens` for the authoritative cached token counts.
 - On cache hits, it is normal to sometimes see a small non-zero `cache_creation_input_tokens` value (small per-request overhead). It does not necessarily mean a cache miss.
