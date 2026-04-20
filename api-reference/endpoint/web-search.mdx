@@ -9,11 +9,11 @@ description: "Perform AI-powered web searches across multiple providers with fle
 The Web Search API allows you to perform AI-powered web searches across supported providers (Linkup, Tavily, Exa, Kagi, Perplexity, Valyu, Brave), returning up-to-date information from across the internet. This API supports multiple output formats, date filtering, domain filtering, and provider-specific depth modes. If `provider` is omitted, Linkup is used by default.
 
 <Note>
-  The Brave provider on this page (`provider: "brave"` on `/api/web`, or `:online/brave` on chat completions) returns raw search results that you can inject into another model. This is different from the Brave Answers text models (`model: "brave"`, `model: "brave-pro"`, and `model: "brave-research"`), which generate complete answers using Brave's own search + LLM pipeline.
+  The Brave provider on this page (`provider: "brave"` on `/api/web`, or `:online/brave` on chat completions) uses NanoGPT's Brave web-search integration. It prefers Brave's LLM Context API and automatically falls back to legacy Brave Web Search when the key lacks LLM Context entitlement or when you send legacy-only filters.
 </Note>
 
 <Note>
-  Brave also offers an LLM Context API (pre-processed, relevance-ranked chunks in LLM-friendly formats). NanoGPT does not currently expose that Brave API surface on `/api/web`.
+  This is different from the Brave Answers text models (`model: "brave"`, `model: "brave-pro"`, and `model: "brave-research"`), which generate complete answers using Brave's own search + LLM pipeline.
 </Note>
 
 ## Authentication
@@ -168,21 +168,21 @@ Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entri
 
 ```json
 {
-  "count": 0-20,
-  "maxResults": 0-20,
+  "count": 0-50,
+  "maxResults": 0-50,
   "offset": 0-9,
   "safesearch": "off" | "moderate" | "strict",
   "freshness": "2024-01-01to2024-02-01",
   "searchLang": "string",
   "uiLang": "string",
-  "eSnippets": boolean,
+  "extraSnippets": boolean,
   "spellcheck": boolean,
   "goggles": "string" | ["string"],
   "country": "string"
 }
 ```
 
-Use either `count` or `maxResults` (0-20). `searchLang` and `uiLang` are passed to Brave as `search_lang` and `ui_lang`. If `freshness` is not provided but both `fromDate` and `toDate` are set, the API builds a Brave freshness range (`fromDate + "to" + toDate`). For deep searches, Brave defaults `extraSnippets` to true unless `eSnippets` is explicitly set.
+Use either `count` or `maxResults`. When Brave LLM Context is available, `/api/web` currently returns grounded content for up to 20 URLs on standard searches and up to 30 URLs on deep searches, even though `count`/`maxResults` accepts values up to 50. If the key lacks that entitlement, or if you send legacy-only filters (`offset`, `freshness`, non-default `safesearch`, `uiLang`, `extraSnippets`, or `spellcheck`), NanoGPT automatically falls back to Brave Web Search, where the effective result cap is 20. `searchLang` and `uiLang` are passed to Brave as `search_lang` and `ui_lang`. If `freshness` is not provided but both `fromDate` and `toDate` are set, the API builds a Brave freshness range (`fromDate + "to" + toDate`). For deep searches on the legacy path, Brave defaults `extraSnippets` to `true` unless you set it explicitly.
 
 ## Response
 

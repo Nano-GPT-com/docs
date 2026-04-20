@@ -5,7 +5,7 @@ description: "Guide to verifying TEE attestation reports and signatures for TEE-
 
 ## Overview
 
-NanoGPT supports private TEE-backed models. Use these endpoints to verify enclave attestation and signatures for chat completions.
+NanoGPT supports TEE-backed models with attestation/signature verification for stronger integrity and data-in-use isolation. Confidentiality and logging guarantees remain provider-specific, and plaintext may still exist at gateway or proxy layers outside the enclave depending on transport and provider architecture. Use these endpoints to verify enclave attestation and signatures for chat completions.
 
 ### Fetch Attestation Report
 
@@ -26,7 +26,7 @@ curl "https://nano-gpt.com/api/v1/tee/signature/{requestId}?model=TEE/llama-3.3-
 Save the following as `test_tee.py` and run:
 
 ```bash
-python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/llama-3.3-70b-instruct
+python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com/api --model TEE/llama-3.3-70b-instruct
 ```
 
 ```python
@@ -52,7 +52,7 @@ from cryptography.x509.oid import ObjectIdentifier  # if needed
 
 # Hardcoded configuration - set your values here or even better use env vars!
 API_KEY = "INSERT_API_KEY"
-BASE_URL = "http://nano-gpt.com/api"  # Production base URL
+BASE_URL = "https://nano-gpt.com/api"  # Production API base URL
 MODEL = "TEE/llama-3.3-70b-instruct"
 
 def fetch_attestation(base_url, api_key, model):

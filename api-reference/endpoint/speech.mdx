@@ -6,7 +6,15 @@ title: 'v1/audio/speech (TTS + Music)'
 
 Synthesize speech (TTS) or generate music with a single request. The OpenAI-compatible `POST /v1/audio/speech` endpoint returns audio bytes directly in the HTTP response.
 
+Optional chunked streaming is available with `stream: true`. In streaming mode, audio bytes are delivered progressively as generated, which reduces time-to-first-byte (TTFB) for real-time playback.
+
+Default behavior is unchanged: omit `stream` (or set `false`) to receive one buffered audio file after generation completes.
+
 When you use a music model (for example `Minimax-Music-02`), the `input` field is treated as a music prompt (not text to speak) and `voice` is ignored. For a dedicated music guide and model list, see `api-reference/music-generation.mdx`.
+
+<Note>
+  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+</Note>
 
 ## Endpoint
 
@@ -23,13 +31,16 @@ When you use a music model (for example `Minimax-Music-02`), the `input` field i
 - `response_format` (string, optional): Output format. Common values: `mp3`, `wav`, `ogg`, `opus`, `aac`, `flac`.
 - `speed` (number, optional): Speaking rate multiplier for TTS (for example `0.5`–`2.0`). Ignored for music models.
 - `instructions` (string, optional): Voice/style instructions (supported by some models/providers).
+- `stream` (boolean, optional): When `true`, returns chunked audio bytes progressively on supported models/providers.
 
 Note: Some provider-backed models may support additional fields; parameters accepted can vary by model.
+For unsupported models, `stream: true` is ignored and the endpoint returns the normal buffered response.
 
 ## Response
 
 - Success: `200 OK`, body contains binary audio.
 - `Content-Type`: Based on the selected output format (for example `audio/mpeg`, `audio/wav`, `audio/ogg`).
+- Streaming (`stream: true` on supported models/providers): audio bytes arrive progressively, usually without `Content-Length`, so clients can start playback before generation finishes.
 
 On error, returns JSON with details and a non‑2xx status:
 
@@ -106,10 +117,28 @@ with open("speech.mp3", "wb") as f:
 
 </CodeGroup>
 
+### Streaming Example
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  https://nano-gpt.com/api/v1/audio/speech \
+  -d '{
+    "model": "gpt-4o-mini-tts",
+    "input": "Hello, this is a streaming test.",
+    "voice": "alloy",
+    "response_format": "mp3",
+    "stream": true
+  }' \
+  --output speech.mp3
+```
+
 ## Notes & Limits
 
 - Max input length: depends on model; measured in characters or tokens. For short, interactive prompts, prefer under ~1–2k characters.
 - Typical latency: scales with input length and output format; compressed formats like `mp3` are often faster than `wav`.
+- Streaming support is currently exposed on OpenAI TTS models and the ElevenLabs Turbo/V3 lanes; other models return buffered audio.
 - Usage metering: billed by characters/tokens or generated audio seconds (provider‑specific). See Pricing.
 
 ## Audio Formats

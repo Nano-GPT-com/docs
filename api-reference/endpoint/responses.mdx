@@ -32,6 +32,8 @@ Or alternatively:
 x-api-key: YOUR_API_KEY
 ```
 
+For API-key requests, you can optionally pass `x-team-id` to choose team context when team defaults are evaluated (for example, retention defaults).
+
 ## Endpoints
 
 - `POST /v1/responses` - Create a new response from the model
@@ -99,7 +101,9 @@ Authorization: Bearer YOUR_API_KEY
 | `parallel_tool_calls` | boolean | No | Allow multiple tool calls in parallel |
 | `stream` | boolean | No | Enable streaming responses (default: false) |
 | `stream_options` | object | No | Streaming options: `{ include_obfuscation?: boolean }` |
-| `store` | boolean | No | Store response for later retrieval (default: true) |
+| `store` | boolean | No | Store response for later retrieval. Synchronous responses persist only when this is explicitly set to `true`; background requests still require persisted state and reject `store: false` |
+| `retention_days` | integer or null | No | Override stored-response retention for this request (`0-365`, `0` disables retention, `null` uses the account/team default) |
+| `retentionDays` | integer or null | No | Camel-case alias for `retention_days` |
 | `previous_response_id` | string | No | Link to previous response for conversation threading |
 | `reasoning` | object | No | Reasoning configuration for reasoning-capable models |
 | `text` | object | No | Text output configuration (format + verbosity) |
@@ -113,6 +117,33 @@ Authorization: Bearer YOUR_API_KEY
 | `prompt_cache_key` | string | No | Key for prompt caching |
 | `background` | boolean | No | Enable background/async processing |
 | `service_tier` | string | No | Service tier. Use `"priority"` where supported. See [Service tiers (priority)](#service-tiers-priority) near the end. |
+
+### Retention Resolution
+
+Effective retention for `/v1/responses` resolves in this order:
+
+1. Request override (`retention_days` / `retentionDays`)
+2. Team setting (`responses_retention_days`)
+3. User setting (`responsesRetentionDays`)
+4. Platform default (`7` days)
+
+Rules:
+
+- `retention_days` and `retentionDays` accept integer values `0..365`, or `null`.
+- `null` means "no request override" and falls back to team/user/platform defaults.
+- If both request fields are provided, they must match.
+- Invalid retention values return `400` with `invalid_request_error`.
+- `0` enables zero-retention behavior for that request.
+
+With effective retention `0`:
+
+- `previous_response_id` is rejected.
+- `background` is rejected.
+
+API-key team context for retention defaults:
+
+- If `x-team-id` is present and the caller is a member, that team is used.
+- Otherwise, the API uses the caller session's default team (`default_team_uuid` / `default_team_id`) when membership is valid.
 
 ### Input Types
 
@@ -822,7 +853,8 @@ You can use `previous_response_id` or the `conversation` object (`id` or `messag
 ```json
 {
   "model": "openai/gpt-5.2",
-  "input": "My name is Alice."
+  "input": "My name is Alice.",
+  "store": true
 }
 ```
 
@@ -834,13 +866,14 @@ Response includes `id`: `"resp_abc123"`
 {
   "model": "openai/gpt-5.2",
   "input": "What is my name?",
-  "previous_response_id": "resp_abc123"
+  "previous_response_id": "resp_abc123",
+  "store": true
 }
 ```
 
 The model has access to the conversation history and responds: "Your name is Alice."
 
-Note: `previous_response_id` requires authentication and `store: true` (default) on previous responses.
+Note: `previous_response_id` requires authentication, `store: true` on previous responses, and effective retention greater than `0`.
 
 ## Background Mode
 
@@ -976,7 +1009,8 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "model": "openai/gpt-5.2",
-    "input": "I want to learn Python programming."
+    "input": "I want to learn Python programming.",
+    "store": true
   }'
 
 # Second turn (using response ID from first request)
@@ -986,7 +1020,22 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -d '{
     "model": "openai/gpt-5.2",
     "input": "Where should I start?",
-    "previous_response_id": "resp_abc123"
+    "previous_response_id": "resp_abc123",
+    "store": true
+  }'
+```
+
+### Per-request Retention Override
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "input": "hello",
+    "store": true,
+    "retention_days": 3
   }'
 ```
 

@@ -564,7 +564,7 @@ NanoGPT also exposes three Brave-powered text models that combine web search wit
 These models are separate from the Web Search integration (`:online/*` suffixes and the `webSearch` object).
 
 <Note>
-  Brave also offers an LLM Context API (search-derived, relevance-ranked chunks for LLM workflows). NanoGPT does not currently integrate this mode; current Brave integrations in this endpoint are Web Search injection and the Brave Answers model family above.
+  Brave also offers an LLM Context API (search-derived, relevance-ranked chunks for LLM workflows). NanoGPT's `:online/brave` / `webSearch.provider = "brave"` integration currently prefers LLM Context when available and falls back to legacy Brave Web Search when needed; the Brave Answers model family above is a separate integration.
 </Note>
 
 #### Brave-specific request fields
@@ -576,8 +576,8 @@ When using `model: "brave"`, `model: "brave-pro"`, or `model: "brave-research"`,
 | Parameter | Type | Default (`brave`/`brave-pro`) | Default (`brave-research`) | Description |
 |---|---|---|---|---|
 | `enable_research` | boolean | `false` | `true` | Enables multi-search deep research mode with reasoning. Requires streaming. |
-| `enable_citations` | boolean | `false` | `false` | Includes `<citation>` markup in the response text linking to sources. Requires streaming. |
-| `enable_entities` | boolean | `false` | `false` | Includes entity metadata in the response. Requires streaming. |
+| `enable_citations` | boolean | `false` | `false` | Includes `<citation>` markup in the response text linking to sources. Requires streaming, and is forced to `false` whenever research mode is enabled. |
+| `enable_entities` | boolean | `false` | `false` | Includes entity metadata in the response. Requires streaming, and is forced to `false` whenever research mode is enabled. |
 | `country` | string | — | — | Country code for search localization (for example `"US"` or `"GB"`). |
 | `language` | string | — | — | Language code for response language (for example `"en"` or `"fr"`). |
 | `max_completion_tokens` | integer | — | — | Maximum number of tokens to generate in the completion. |
@@ -1049,11 +1049,11 @@ The response streams `data: { ... }` lines until a final terminator. Usage metri
 
 _Note: Prompt-caching helpers implicitly force `include_usage`, so cached requests still receive usage data without extra flags._
 
-### Prompt Caching (Claude Models)
+### Caching (Implicit and Explicit Controls)
 
 For the full guide (supported models, thresholds, pricing, and usage fields), see [Prompt Caching](/api-reference/miscellaneous/prompt-caching).
 
-Claude caching works exactly like Anthropic's `/v1/messages`: you must place `cache_control` objects on the content blocks you want the model to reuse, or instruct NanoGPT to do it for you via the `prompt_caching` helper.
+NanoGPT automatically applies implicit caching on providers/models that support it, so most requests do not need caching flags. Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and inline `cache_control`) when you need Claude-style cache boundaries, TTL selection, or `stickyProvider` consistency control.
 
 > **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
 
@@ -1063,7 +1063,7 @@ The `prompt_caching` / `promptCaching` helper accepts these options:
 |-----------|------|---------|-------------|
 | `enabled` | boolean | — | Enable prompt caching |
 | `ttl` | string | `"5m"` | Cache time-to-live: `"5m"` or `"1h"` |
-| `cut_after_message_index` | integer | — | Zero-based index; cache all messages up to and including this index |
+| `cut_after_message_index` / `cutAfterMessageIndex` | integer | — | Zero-based index; cache all messages up to and including this index |
 | `stickyProvider` | boolean | `false` | **New:** When `true`, disable automatic failover to preserve cache consistency. Returns 503 error instead of switching services. |
 
 ```python
@@ -1095,7 +1095,7 @@ requests.post("https://nano-gpt.com/api/v1/chat/completions", headers=headers, j
 
 - Each `cache_control` marker caches the full prefix up to that block. Place them on every static chunk (system messages, tool definitions, large contexts) you plan to reuse.
 - Anthropic currently supports TTLs of `5m` (1.25× one-time billing) and `1h` (2× one-time). Replays show the discounted tokens inside `usage.prompt_tokens_details.cached_tokens`.
-- The `anthropic-beta: prompt-caching-2024-07-31` header is mandatory on requests that include caching metadata.
+- Inline `cache_control` requests should include the upstream `anthropic-beta` prompt-caching header. If you use the helper-based `prompt_caching` fields on `/v1/chat/completions`, NanoGPT adds it automatically.
 
 For a simpler experience, send the helper fields and NanoGPT will stamp the first _N_ messages for you before reaching Anthropic:
 
@@ -1113,10 +1113,7 @@ await client.chat.completions.create(
       ttl: '1h',
       cut_after_message_index: 1,
     },
-  },
-  {
-    headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' },
-  },
+  }
 );
 ```
 

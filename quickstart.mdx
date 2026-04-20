@@ -199,7 +199,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
   </Accordion>
 
   <Accordion icon="shield-check" title="TEE Model Verification">
-    NanoGPT supports TEE-backed models for verifiable privacy. You can fetch attestation reports and signatures for chat completions made with these models.
+    NanoGPT supports TEE-backed models with attestation/signature verification for stronger integrity and data-in-use isolation. Confidentiality and logging guarantees remain provider-specific, and plaintext may still exist at gateway or proxy layers outside the enclave depending on transport and provider architecture. You can fetch attestation reports and signatures for chat completions made with these models.
 
     Here's how to fetch an attestation report:
     ```bash

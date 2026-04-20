@@ -1,22 +1,22 @@
 ---
- title: 'TEE Verification'
+title: 'TEE Verification'
 ---
 
 ## Overview
 
-NanoGPT supports private TEE-backed models. Use these endpoints to verify enclave attestation and signatures for chat completions.
+NanoGPT supports TEE-backed models with attestation/signature verification for stronger integrity and data-in-use isolation. Confidentiality and logging guarantees remain provider-specific, and plaintext may still exist at gateway or proxy layers outside the enclave depending on transport and provider architecture. Use these endpoints to verify enclave attestation and signatures for chat completions.
 
 ### Fetch Attestation Report
 
 ```bash
-curl "https://nano-gpt.com/v1/tee/attestation?model=TEE/llama-3.3-70b-instruct" \
+curl "https://nano-gpt.com/api/v1/tee/attestation?model=TEE/llama-3.3-70b-instruct" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
 ### Fetch ECDSA Signature
 
 ```bash
-curl "https://nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/llama-3.3-70b-instruct&signing_algo=ecdsa" \
+curl "https://nano-gpt.com/api/v1/tee/signature/{requestId}?model=TEE/llama-3.3-70b-instruct&signing_algo=ecdsa" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
@@ -25,7 +25,7 @@ curl "https://nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/llama-3.3-70b-
 Save the following as `test_tee.py` and run:
 
 ```bash
-python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/llama-3.3-70b-instruct
+python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com/api --model TEE/llama-3.3-70b-instruct
 ```
 
 ```python
@@ -34,7 +34,7 @@ python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --mod
 TEE Attestation & Signature Verification Example for NanoGPT.
 
 Usage:
-    python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/llama-3.3-70b-instruct
+    python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com/api --model TEE/llama-3.3-70b-instruct
 """
 import argparse
 import requests
@@ -44,7 +44,7 @@ import json
 def parse_args():
     parser = argparse.ArgumentParser(description="Verify TEE attestation & signatures for NanoGPT TEE models.")
     parser.add_argument("--api-key", required=True, help="NanoGPT API key")
-    parser.add_argument("--base-url", default="https://nano-gpt.com", help="NanoGPT server base URL")
+    parser.add_argument("--base-url", default="https://nano-gpt.com/api", help="NanoGPT API base URL")
     parser.add_argument("--model", required=True, help="TEE model identifier (e.g. TEE/llama-3.3-70b-instruct)")
     return parser.parse_args()
 
