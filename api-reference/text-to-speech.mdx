@@ -7,11 +7,11 @@ description: "Complete guide to text-to-speech synthesis APIs"
 
 The NanoGPT TTS API allows you to convert text into natural-sounding speech using various models from different providers. The API supports multiple languages, voices, and customization options including speed control, voice instructions, and audio format selection.
 
-For voice cloning (create a reusable custom voice from a reference clip), see `api-reference/endpoint/voice-cloning.mdx`.
+For voice cloning (create a reusable custom voice from a reference clip), see [Voice Cloning](/api-reference/endpoint/voice-cloning).
 
 ## Music generation
 
-NanoGPT also supports text-to-music generation via the OpenAI-compatible `POST /v1/audio/speech` endpoint when you use a music model. See `api-reference/music-generation.mdx`.
+NanoGPT also supports text-to-music generation via the OpenAI-compatible `POST /v1/audio/speech` endpoint when you use a music model. See [Music Generation](/api-reference/music-generation).
 
 ## Available Models
 
@@ -34,7 +34,7 @@ x-api-key: YOUR_API_KEY
 
 ## Synchronous vs Asynchronous
 
-- Synchronous: `POST /v1/audio/speech` returns audio bytes directly. Best for UI playback and short prompts. See `api-reference/endpoint/speech.mdx`.
+- Synchronous: `POST /v1/audio/speech` returns audio bytes directly. Best for UI playback and short prompts. See the [Speech endpoint](/api-reference/endpoint/speech).
 - Asynchronous: `POST /tts` returns a ticket; poll `GET /tts/status` for completion. Best for long audio, batch jobs, and webhook workflows.
 
 | Aspect        | v1/audio/speech (sync) | TTS job flow (async) |
