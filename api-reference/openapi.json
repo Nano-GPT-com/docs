@@ -3086,12 +3086,12 @@
           },
           "reasoning_effort": {
             "type": "string",
-            "description": "Controls reasoning depth for reasoning-capable models",
-            "enum": ["none", "minimal", "low", "medium", "high"]
+            "description": "Controls reasoning depth and acts as an explicit reasoning-mode signal. Any value other than \"none\" requests reasoning/thinking behavior. Use \"none\" to explicitly disable reasoning.",
+            "enum": ["none", "minimal", "low", "medium", "high", "xhigh"]
           },
           "reasoning": {
             "type": "object",
-            "description": "Reasoning configuration. Use exclude to hide reasoning output, effort to control reasoning depth, and delta_field to switch to legacy reasoning_content fields.",
+            "description": "Reasoning configuration. `exclude` controls output visibility (hides reasoning fields/blocks) and does not inherently disable reasoning compute. `effort` controls depth, and `delta_field` switches to legacy `reasoning_content` fields.",
             "additionalProperties": true,
             "properties": {
               "exclude": {
@@ -3100,8 +3100,8 @@
               },
               "effort": {
                 "type": "string",
-                "description": "Alias for reasoning_effort",
-                "enum": ["none", "minimal", "low", "medium", "high"]
+                "description": "Alias for reasoning_effort. If both are provided, top-level reasoning_effort is authoritative for Chat Completions request shaping.",
+                "enum": ["none", "minimal", "low", "medium", "high", "xhigh"]
               },
               "delta_field": {
                 "type": "string",
@@ -6591,7 +6591,7 @@
           },
           "reasoning": {
             "type": "object",
-            "description": "Reasoning configuration for reasoning-capable models",
+            "description": "Reasoning configuration. Setting `reasoning.effort` to any non-`none` value explicitly requests reasoning mode.",
             "additionalProperties": true
           },
           "text": {

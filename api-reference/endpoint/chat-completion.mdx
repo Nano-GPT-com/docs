@@ -1254,17 +1254,20 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 ### Reasoning Effort
 
-Control how much computational effort the model puts into reasoning before generating a response. Higher values result in more thorough reasoning but slower responses and higher costs. Only applicable to reasoning-capable models.
+`reasoning_effort` controls reasoning depth and also acts as an explicit reasoning-mode signal.
+Any value other than `"none"` is treated as a request to enable reasoning/thinking behavior.
+Use `"none"` to explicitly disable reasoning.
 
 #### Parameter: `reasoning_effort`
 
 | Value | Description |
 | --- | --- |
-| `none` | Disables reasoning entirely |
-| `minimal` | Allocates ~10% of max_tokens for reasoning |
-| `low` | Allocates ~20% of max_tokens for reasoning |
-| `medium` | Allocates ~50% of max_tokens for reasoning (default when reasoning is enabled) |
-| `high` | Allocates ~80% of max_tokens for reasoning |
+| `none` | Explicitly disables reasoning |
+| `minimal` | Lowest reasoning depth |
+| `low` | Low reasoning depth |
+| `medium` | Medium reasoning depth |
+| `high` | High reasoning depth |
+| `xhigh` | Maximum reasoning depth |
 
 #### Usage
 
@@ -1296,11 +1299,12 @@ Alternatively, pass it as part of the `reasoning` object:
 }
 ```
 
-Both formats are equivalent.
+Both formats are accepted. If both are present, top-level `reasoning_effort` is authoritative for Chat Completions request shaping.
 
 #### Combining effort with exclude
 
-You can control both reasoning depth and visibility:
+`reasoning.exclude` controls output visibility only. It hides reasoning fields/blocks, but does not inherently disable reasoning compute.
+If an effort level is set to a non-`none` value, reasoning can still run while hidden.
 
 ```json
 {
@@ -1308,12 +1312,10 @@ You can control both reasoning depth and visibility:
   "messages": [{"role": "user", "content": "..."}],
   "reasoning": {
     "effort": "high",
-    "exclude": false
+    "exclude": true
   }
 }
 ```
-
-Sending `reasoning_effort` to models that don't support reasoning will have no effect (the parameter is ignored).
 
 ### Model suffix: `:reasoning-exclude`
 

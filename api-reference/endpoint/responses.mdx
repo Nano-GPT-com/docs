@@ -109,7 +109,7 @@ Authorization: Bearer YOUR_API_KEY
 | `retention_days` | integer or null | No | Per-request retention override in days (`0..365`). `null` means no request-level override |
 | `retentionDays` | integer or null | No | Alias for `retention_days`. If both are sent, values must match |
 | `previous_response_id` | string | No | Link to previous response for conversation threading |
-| `reasoning` | object | No | Reasoning configuration for reasoning-capable models |
+| `reasoning` | object | No | Reasoning configuration. Setting `reasoning.effort` to any non-`none` value explicitly requests reasoning mode. |
 | `text` | object | No | Text output configuration (format + verbosity) |
 | `metadata` | object | No | Custom metadata (max 16 keys, 64 char keys, 512 char values) |
 | `truncation` | string | No | Truncation strategy: `auto` or `disabled` |
@@ -377,7 +377,7 @@ Function tools in responses always include nullable fields:
 
 ## Reasoning Configuration
 
-For reasoning-capable models:
+Use `reasoning` to control depth and visibility of reasoning output:
 
 ```json
 {
@@ -392,8 +392,9 @@ For reasoning-capable models:
 
 | Parameter | Values | Description |
 | --- | --- | --- |
-| `effort` | `low`, `medium`, `high` | How much effort the model puts into reasoning |
+| `effort` | `none`, `minimal`, `low`, `medium`, `high`, `xhigh` | Reasoning depth. Any value other than `none` explicitly requests reasoning mode. |
 | `summary` | `none`, `auto`, `detailed`, `concise` | Reasoning summary format |
+| `exclude` | `true`, `false` | Controls output visibility (hides reasoning fields/blocks). It does not inherently disable reasoning compute. |
 
 ## Text/Format Configuration
 
@@ -593,7 +594,7 @@ The `usage` object always includes token details:
 
 ```json
 {
-  "effort": "low" | "medium" | "high" | null,
+  "effort": "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | null,
   "summary": "none" | "auto" | "detailed" | "concise" | null
 }
 ```

@@ -38,6 +38,8 @@ To strip reasoning from the response (both streaming and non-streaming), send:
 }
 ```
 
+`reasoning.exclude` controls output visibility. It is not the same as disabling reasoning compute.
+
 Or append the model suffix:
 
 - `:reasoning-exclude`
@@ -53,7 +55,9 @@ Example:
 
 ### Reasoning Effort
 
-For reasoning-capable models, you can ask for lighter/heavier reasoning:
+`reasoning_effort` (or `reasoning.effort`) controls reasoning depth and also acts as an explicit reasoning-mode signal.
+Any value other than `none` is treated as a request to enable reasoning/thinking behavior.
+Use `none` to explicitly disable reasoning.
 
 ```json
 {
@@ -69,7 +73,9 @@ Or:
 }
 ```
 
-Valid values are `none`, `minimal`, `low`, `medium`, `high`.
+Both formats are accepted. If both are present, top-level `reasoning_effort` is authoritative for Chat Completions request shaping.
+
+Valid values are `none`, `minimal`, `low`, `medium`, `high`, `xhigh`.
 
 ### Legacy Field Name Compatibility (`reasoning_content`)
 
