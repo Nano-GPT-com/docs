@@ -1,0 +1,26 @@
+name: Docs Guardrails
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  docs-guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify notable model IDs block is generated from live catalog
+        run: node scripts/sync-notable-model-ids.mjs --check
+
+      - name: Validate model-like IDs in docs against /api/v1/models
+        run: node scripts/validate-model-ids.mjs
+

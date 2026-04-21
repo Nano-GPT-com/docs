@@ -14,6 +14,10 @@ NanoGPT exposes this in an OpenAI-compatible way for Chat Completions:
 
 Not every model exposes reasoning text. If a model does not emit a reasoning stream, these fields may be absent even if the model internally "reasons".
 
+`:thinking` is model-specific and only works when that exact ID (or a documented alias) exists.
+`-thinking` is a legacy alias pattern for some model families only, not universal.
+Do not assume `-thinking` works for arbitrary model IDs. Always check `GET /api/v1/models` for exact valid IDs.
+
 ## Endpoint Variants (Chat Completions)
 
 NanoGPT provides three base paths for chat completions. All accept the same request format and model names, but differ in how reasoning content is delivered:
@@ -48,7 +52,7 @@ Example:
 
 ```json
 {
-  "model": "anthropic/claude-opus-4.5:reasoning-exclude",
+  "model": "anthropic/claude-opus-4.6:reasoning-exclude",
   "messages": [{ "role": "user", "content": "What is 2+2?" }]
 }
 ```
@@ -57,7 +61,7 @@ Example:
 
 `reasoning_effort` (or `reasoning.effort`) controls reasoning depth and also acts as an explicit reasoning-mode signal.
 Any value other than `none` is treated as a request to enable reasoning/thinking behavior.
-Use `none` to explicitly disable reasoning.
+Use `none` to explicitly disable reasoning behavior.
 
 ```json
 {

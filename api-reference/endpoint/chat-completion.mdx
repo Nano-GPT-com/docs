@@ -929,7 +929,7 @@ headers = {
 }
 
 payload = {
-  "model": "anthropic/claude-sonnet-4.5",
+  "model": "anthropic/claude-sonnet-4.6",
   "messages": [
     {
       "role": "system",
@@ -958,7 +958,7 @@ For a simpler experience, send the helper fields and NanoGPT will stamp the firs
 ```ts
 await client.chat.completions.create(
   {
-    model: 'anthropic/claude-opus-4.5',
+    model: 'anthropic/claude-opus-4.6',
     messages: [
       { role: 'system', content: 'Static rubric lives here.' },
       { role: 'user', content: 'Additional reusable context.' },
@@ -986,7 +986,7 @@ If cache consistency is more important than availability for your use case, you 
 
 ```json
 {
-  "model": "anthropic/claude-sonnet-4.5",
+  "model": "anthropic/claude-sonnet-4.6",
   "messages": [...],
   "prompt_caching": {
     "enabled": true,
@@ -1160,7 +1160,11 @@ curl -s -X POST \
 
 ## Reasoning Streams
 
-The Chat Completions endpoint separates the model’s visible answer from its internal reasoning. By default, reasoning is included and delivered alongside normal content so that clients can decide whether to display it. Requests that use the `thinking` model suffix (for example `:thinking` or `-thinking:8192`) are normalized before dispatch, but the response contract remains the same.
+The Chat Completions endpoint separates the model’s visible answer from its internal reasoning. By default, reasoning is included and delivered alongside normal content so that clients can decide whether to display it.
+
+`:thinking` is model-specific and only works when that exact ID (or a documented alias) exists.
+`-thinking` is a legacy alias pattern for some model families only, not universal.
+Do not assume `-thinking` works for arbitrary model IDs. Always check `GET /api/v1/models` for exact valid IDs.
 
 See also: [Extended Thinking (Reasoning)](/api-reference/miscellaneous/extended-thinking).
 
@@ -1204,7 +1208,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "anthropic/claude-opus-4.5",
+    "model": "anthropic/claude-opus-4.6",
     "messages": [{"role": "user", "content": "What is 2+2?"}],
     "reasoning": {"exclude": true}
   }'
@@ -1237,9 +1241,9 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 ### Reasoning Effort
 
-`reasoning_effort` controls reasoning depth and also acts as an explicit reasoning-mode signal.
+`reasoning_effort` (or `reasoning.effort`) controls reasoning depth and also acts as an explicit reasoning-mode signal.
 Any value other than `"none"` is treated as a request to enable reasoning/thinking behavior.
-Use `"none"` to explicitly disable reasoning.
+Use `"none"` to explicitly disable reasoning behavior.
 
 #### Parameter: `reasoning_effort`
 
@@ -1261,7 +1265,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "anthropic/claude-opus-4.5",
+    "model": "anthropic/claude-opus-4.6",
     "messages": [
       {"role": "user", "content": "Explain quantum entanglement step by step"}
     ],
@@ -1274,7 +1278,7 @@ Alternatively, pass it as part of the `reasoning` object:
 
 ```json
 {
-  "model": "anthropic/claude-opus-4.5",
+  "model": "anthropic/claude-opus-4.6",
   "messages": [{"role": "user", "content": "Solve this complex math problem..."}],
   "reasoning": {
     "effort": "high"
@@ -1291,7 +1295,7 @@ If an effort level is set to a non-`none` value, reasoning can still run while h
 
 ```json
 {
-  "model": "anthropic/claude-opus-4.5",
+  "model": "anthropic/claude-opus-4.6",
   "messages": [{"role": "user", "content": "..."}],
   "reasoning": {
     "effort": "high",
@@ -1310,7 +1314,7 @@ You can toggle the filter without altering your JSON body by appending `:reasoni
 
 ```json
 {
-  "model": "anthropic/claude-opus-4.5:reasoning-exclude",
+  "model": "anthropic/claude-opus-4.6:reasoning-exclude",
   "messages": [{ "role": "user", "content": "What is 2+2?" }]
 }
 ```
@@ -1319,15 +1323,15 @@ You can toggle the filter without altering your JSON body by appending `:reasoni
 
 `:reasoning-exclude` composes safely with the other routing suffixes you already use:
 
-- `:thinking` (and variants like `…-thinking:8192`)
+- `:thinking` (when that exact model ID exists). `-thinking` variants are legacy aliases for some families only.
 - `:online` and `:online/linkup-deep`
 - `:memory` and `:memory-<days>`
 
 Examples:
 
-- `anthropic/claude-sonnet-4.5:thinking:8192:reasoning-exclude`
+- `anthropic/claude-sonnet-4.6:thinking:8192:reasoning-exclude`
 - `openai/gpt-5.2:online:reasoning-exclude`
-- `anthropic/claude-opus-4.5:memory-30:online/linkup-deep:reasoning-exclude`
+- `anthropic/claude-opus-4.6:memory-30:online/linkup-deep:reasoning-exclude`
 
 ### Legacy delta field compatibility
 

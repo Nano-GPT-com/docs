@@ -134,15 +134,14 @@ These providers can be used for BYOK on `POST /api/v1/chat/completions`:
 | Z.AI (GLM) | `zai` | API key string |
 | GMICloud | `gmicloud` | API key string |
 | Cerebras | `cerebras` | API key string (`csk-...`) |
-| DeepInfra | `deepinfra` | API key string |
 | MegaNova | `meganova` | API key string |
-| SiliconFlow | `siliconflow` | API key string |
 
 Notes:
 
 - AWS JSON can also include `sessionToken`.
 - Azure-style providers require provider-specific endpoints and identifiers (for example, a deployment name).
 - If you want to force Google AI Studio routing for Gemini models, set `x-byok-provider: google` (or `byok.provider: "google"`).
+- Additional provider options may appear over time in the BYOK UI and provider-discovery endpoints.
 
 ### Web-search-only providers
 
