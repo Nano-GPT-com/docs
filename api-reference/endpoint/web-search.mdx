@@ -328,7 +328,7 @@ if results["metadata"]["outputType"] == "searchResults":
     for result in results["data"]:
         print(f"Title: {result['title']}")
         print(f"URL: {result['url']}")
-        print(f"Snippet: {result.get('snippet', 'N/A')[:200]}...")
+        print(f"Snippet: {result.get('content', 'N/A')[:200]}...")
         print("-" * 50)
     print(f"Search cost: ${results['metadata']['cost']}")
 ```
@@ -601,7 +601,7 @@ The API is rate-limited to 60 requests per minute per IP address for `/api/web`.
 | --- | --- | --- | --- |
 | Linkup | $0.006 | $0.06 | Default provider |
 | Tavily | $0.008 | $0.016 | Good value, free tier available |
-| Exa | $0.005 base | + $0.001/page | For contents retrieval |
+| Exa | $0.005 base | $0.012 base (+ $0.001/page contents) | Neural: $0.010 base, deep-reasoning: $0.015 base |
 | Kagi Web/News | $0.002 | N/A | Cheapest for enrichment |
 | Kagi Search | $0.025 | N/A | Full search mode |
 | Perplexity | $0.005 | N/A | Flat rate |

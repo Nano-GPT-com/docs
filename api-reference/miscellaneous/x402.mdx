@@ -125,9 +125,10 @@ Some responses also include convenience headers such as `X-Payment-Id`, `X-Payme
 ## Example: Polling (Nano)
 
 ```bash
-# 1) Request (no auth)
+# 1) Request (no auth, opt into X-402 challenge mode)
 curl -sS -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "X-X402: true" \
   -d '{
     "model": "gpt-4o-mini",
     "messages": [{"role": "user", "content": "Hello"}],
