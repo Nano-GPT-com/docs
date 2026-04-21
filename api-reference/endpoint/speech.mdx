@@ -10,7 +10,7 @@ Optional chunked streaming is available with `stream: true`. In streaming mode, 
 
 Default behavior is unchanged: omit `stream` (or set `false`) to receive one buffered audio file after generation completes.
 
-When you use a music model (for example `Minimax-Music-02`), the `input` field is treated as a music prompt (not text to speak) and `voice` is ignored. For a dedicated music guide and model list, see `api-reference/music-generation.mdx`.
+When you use a music model (for example `Minimax-Music-02`), the `input` field is treated as a music prompt (not text to speak) and `voice` is ignored. For a dedicated music guide and model list, see [Music Generation](/api-reference/music-generation).
 
 <Note>
   **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
@@ -158,7 +158,7 @@ Browser notes: Safari supports AAC/MP3; Ogg/Opus plays in Chrome/Firefox; WAV is
 
 ## Voices
 
-- Voice IDs vary by model/provider. See model‑specific voices on Text‑to‑Speech: `api-reference/text-to-speech.mdx`.
+- Voice IDs vary by model/provider. See model-specific voices on the [Text-to-Speech overview](/api-reference/text-to-speech).
 - If a voices listing endpoint is available (for example `GET /v1/voices`), it returns available voice IDs and metadata (language coverage, gender/pitch, sample links).
 
 ## Errors & Troubleshooting
@@ -177,7 +177,7 @@ Browser notes: Safari supports AAC/MP3; Ogg/Opus plays in Chrome/Firefox; WAV is
 ## Pricing, Quotas, and Rate Limits
 
 - Billing: per characters/tokens or generated seconds depending on provider/model; minimum billing increments may apply.
-- Rate limits: per‑minute/day caps; contact support to request increases. See `api-reference/miscellaneous/pricing.mdx` and `api-reference/miscellaneous/rate-limits.mdx`.
+- Rate limits: per-minute/day caps; contact support to request increases. See [Pricing](/api-reference/miscellaneous/pricing) and [Rate Limits](/api-reference/miscellaneous/rate-limits).
 
 ## Migration from Job‑based TTS
 
@@ -205,5 +205,5 @@ Note: Streaming availability and formats may vary by model/provider.
 
 ## See Also
 
-- Async/job‑based TTS: `api-reference/endpoint/tts.mdx`
-- TTS Status polling: `api-reference/endpoint/tts-status.mdx`
+- [Async/job-based TTS](/api-reference/endpoint/tts)
+- [TTS Status polling](/api-reference/endpoint/tts-status)
