@@ -149,12 +149,16 @@ Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entri
   "endPublishedDate": "ISO 8601",
   "includeText": ["pattern"],
   "excludeText": ["pattern"],
-  "livecrawl": "never" | "fallback" | "always" | "preferred",
-  "livecrawlTimeout": number,
-  "subpages": number,
-  "subpageTarget": "string" | ["strings"]
+  "contents": {
+    "livecrawl": "never" | "fallback" | "always" | "preferred",
+    "livecrawlTimeout": number,
+    "subpages": number,
+    "subpageTarget": "string" | ["strings"]
+  }
 }
 ```
+
+Exa crawl and subpage extraction controls must be nested under `contents`.
 
 ### Kagi options
 
@@ -550,7 +554,7 @@ filtered_results = search_specific_domains(
 
 ```json 402 Payment Required
 {
-  "error": "Insufficient balance. A minimum balance of $1.00 is required to use web search."
+  "error": "Insufficient balance. A minimum balance of $0.10 (USD equivalent) is required to use web search."
 }
 ```
 
@@ -611,7 +615,7 @@ The API is rate-limited to 60 requests per minute per IP address for `/api/web`.
 
 For standard NanoGPT usage, Brave credentials are handled automatically.
 
-A minimum balance of $1.00 is required to use the web search API. OpenAI native applies to GPT-5/o-series chat completions only and is not used by `/api/web`.
+A minimum balance of $0.10 (USD equivalent) applies to billed `/api/web` searches. BYOK requests skip this balance check. OpenAI native applies to GPT-5/o-series chat completions only and is not used by `/api/web`.
 
 ## Bring your own key (BYOK)
 
