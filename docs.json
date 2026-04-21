@@ -119,8 +119,7 @@
           "integrations/openclaw",
           "integrations/opencode",
           "integrations/janitorai",
-          "integrations/droid",
-          "integrations/clawdbot"
+          "integrations/droid"
         ]
       }
     ],
@@ -183,6 +182,10 @@
     {
       "source": "/llm.txt",
       "destination": "/public/llm.txt"
+    },
+    {
+      "source": "/integrations/clawdbot",
+      "destination": "/integrations/openclaw"
     }
   ]
 }
