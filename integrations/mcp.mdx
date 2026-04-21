@@ -38,12 +38,20 @@ The NanoGPT MCP server provides the following tools:
 The easiest way to use the NanoGPT MCP server is via npx. Add it to your MCP client with:
 
 ```bash
-# For Claude Code
-claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
-  --env NANOGPT_API_KEY=YOUR_API_KEY
+# macOS / Linux
+claude mcp add nanogpt --scope user \
+  --env NANOGPT_API_KEY=YOUR_API_KEY \
+  -- npx -y @nanogpt/mcp
+```
+
+```bash
+# Windows
+claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=YOUR_API_KEY -- cmd /c "C:\Program Files\nodejs\npx.cmd" -y @nanogpt/mcp
 ```
 
 Replace `YOUR_API_KEY` with your actual NanoGPT API key.
+
+On native Windows, `npx` is usually a `.cmd` shim. Launching it through `cmd /c` avoids a bad MCP setup that can look like an API key problem.
 
 ### Option 2: Global Installation
 
@@ -308,9 +316,12 @@ The MCP server provides clear error messages for common issues:
 Make sure you've set your API key when adding the MCP server:
 
 ```bash
-claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
-  --env NANOGPT_API_KEY=your_actual_key_here
+claude mcp add nanogpt --scope user \
+  --env NANOGPT_API_KEY=your_actual_key_here \
+  -- npx -y @nanogpt/mcp
 ```
+
+On native Windows, replace the trailing `-- npx -y @nanogpt/mcp` with `-- cmd /c "C:\Program Files\nodejs\npx.cmd" -y @nanogpt/mcp`.
 
 ### "Invalid API key" errors
 
@@ -323,9 +334,10 @@ claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
 For long-running operations like web search, you can increase the timeout:
 
 ```bash
-claude mcp add nanogpt "npx" "@nanogpt/mcp" --scope user \
+claude mcp add nanogpt --scope user \
   --env NANOGPT_API_KEY=your_key \
-  --env NANOGPT_TIMEOUT_MS=900000
+  --env NANOGPT_TIMEOUT_MS=900000 \
+  -- npx -y @nanogpt/mcp
 ```
 
 ### MCP server not connecting
