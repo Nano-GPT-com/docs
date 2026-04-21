@@ -5,7 +5,7 @@ description: "Welcome to the Nano-GPT.com API"
 
 ## Overview
 
-The NanoGPT API allows you to generate text, images and video using any AI model available. Our implementation for text generation generally matches the OpenAI standards. We also support verifiably private TEE (Trusted Execution Environment) models, allowing for confidential computations. 
+The NanoGPT API allows you to generate text, images and video using any AI model available. Our implementation for text generation generally matches the OpenAI standards. We also support TEE-backed models with attestation/signature verification for stronger integrity and data-in-use isolation. TEE does not by itself guarantee end-to-end confidentiality or zero logging across every network/provider hop; guarantees are provider/path specific. Depending on transport and provider architecture, plaintext may still exist at gateway or proxy layers outside the enclave. For verification details, see [TEE Model Verification](https://docs.nano-gpt.com/api-reference/tee-verification).
 
 <Note>
   All examples in this documentation also work on our alternative domains. Just replace the base URL `https://nano-gpt.com` with your preferred domain: [ai.bitcoin.com](https://ai.bitcoin.com), [bcashgpt.com](https://bcashgpt.com), or [cake.nano-gpt.com](https://cake.nano-gpt.com). Only the base URL changes; endpoints and request formats remain the same.

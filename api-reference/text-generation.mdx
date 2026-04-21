@@ -453,7 +453,7 @@ All three models use the OpenAI-compatible chat completions format: set `model` 
 
 This is separate from the Web Search integration (`:online/*` model suffixes and the `/api/web` endpoint), which returns raw search results to be injected into another model.
 
-Brave also offers an LLM Context API (relevance-ranked smart chunks optimized for LLM consumption). NanoGPT does not currently integrate that API surface.
+Within the Brave provider for that separate Web Search integration (`:online/brave` or `provider: "brave"`), NanoGPT prefers Brave's LLM Context API when available and falls back to legacy Brave Web Search when needed.
 
 For all Brave request parameters, see:
 

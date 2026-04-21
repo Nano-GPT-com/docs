@@ -181,6 +181,14 @@
     {
       "source": "/llm.txt",
       "destination": "/public/llm.txt"
+    },
+    {
+      "source": "/api-reference/miscellaneous/brave",
+      "destination": "/api-reference/endpoint/chat-completion#brave-answers-and-research-models"
+    },
+    {
+      "source": "/integrations/risuai",
+      "destination": "https://nano-gpt.com/blog/risuai"
     }
   ]
 }

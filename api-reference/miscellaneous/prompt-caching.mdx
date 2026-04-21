@@ -1,6 +1,6 @@
 ---
 title: "Prompt Caching"
-description: "Cache large, reusable prompt prefixes for lower latency and cost on supported Claude models."
+description: "Cache large, reusable prompt prefixes for lower latency and cost on supported Claude models, with notes on selected non-Claude caching lanes."
 ---
 
 ## Overview
@@ -12,11 +12,11 @@ Benefits:
 - Up to ~90% cost reduction on cached input tokens (cache hits)
 - Lower latency on requests with large static prefixes
 
-Caching is opt-in and configured per request.
+Explicit cache controls on the routes documented here are configured per request.
 
-## Supported Models
+## Supported Models and Providers
 
-Prompt caching is available on Claude models, including these families (examples):
+Explicit `prompt_caching` / `cache_control` controls are available on Claude models, including these families (examples):
 
 | Model family | Example model IDs |
 | --- | --- |
@@ -32,6 +32,8 @@ Prompt caching is available on Claude models, including these families (examples
 | Claude Opus 4.6 | `claude-opus-4-6` (and `:thinking` variants) |
 
 All of the above are also supported via the `anthropic/` model prefix (for example `anthropic/claude-sonnet-4.5`, `anthropic/claude-opus-4.6:thinking`).
+
+Several non-Claude routes also support prompt-caching helpers or report cache-usage metadata when the upstream provider exposes it. Current examples include selected OpenRouter Gemini lanes and direct/OpenRouter `qwen-3.6-plus` / SpokeAI routes, but those lanes may expose fewer controls than the Claude routes documented below and can clamp TTL back to `5m`. Treat the TTL and cache-creation pricing guidance on this page as the full Claude-style behavior unless a provider-specific route documents broader support.
 
 ### Minimum Cacheable Tokens
 

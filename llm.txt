@@ -231,6 +231,7 @@ console.log(embeddings.data.map((row) => row.embedding.length));
 
 AUDIO SPEECH
 POST /v1/audio/speech mirrors OpenAI’s text-to-speech API.
+Default behavior is buffered audio. Set `stream: true` on supported models/providers to receive chunked audio bytes progressively for lower time-to-first-byte.
 
 ```ts
 import { writeFile } from 'node:fs/promises';
@@ -310,4 +311,3 @@ LINKS
 - docs/v1/models.md
 - memory.md
 - BYOK.md
-- docs/streaming-id-contract.md
