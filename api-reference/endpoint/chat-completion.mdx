@@ -46,7 +46,6 @@ Use the jump list below to navigate the long-form reference quickly.
     - [Web Search](#web-search)
     - [Option A: model suffixes](#option-a-model-suffixes)
     - [Option B: request body configuration](#option-b-request-body-configuration-recommended)
-    - [Brave reference (dedicated page)](/api-reference/miscellaneous/brave)
     - [Provider-specific options](#provider-specific-options-set-inside-websearch)
     - [Examples](#examples)
     - [Pricing by provider](#pricing-by-provider)
@@ -498,12 +497,6 @@ If you need full direct control over the search call itself (`query`, `outputTyp
 | Model should answer with web context in one call | `POST /api/v1/chat/completions` |
 | You need raw/structured web payload control | `POST /api/web` |
 
-<Note>
-  Brave appears in this section in two different ways:
-  1) `:online/brave` / `webSearch.provider = "brave"` uses the Web Search integration (raw results injected into another model).
-  2) `model: "brave"` / `model: "brave-pro"` / `model: "brave-research"` uses Brave's own Answers pipeline (search + generation in one model).
-</Note>
-
 ### Option A: model suffixes
 
 Append one of these to your `model` value:
@@ -560,14 +553,6 @@ Legacy alias example:
   }
 }
 ```
-
-### Brave reference (dedicated page)
-
-Brave documentation has been moved to a dedicated page: [Brave](/api-reference/miscellaneous/brave).
-
-- Use `:online/brave` or `webSearch.provider = "brave"` for raw web results injected into another model.
-- Use `model: "brave"`, `model: "brave-pro"`, or `model: "brave-research"` for Brave Answers models.
-- For Brave-specific parameters (`enable_research`, research tuning fields, `web_search_options`, and examples), see the dedicated Brave reference.
 
 #### Provider-specific options (set inside `webSearch`)
 
@@ -792,7 +777,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 | Brave | $0.005 | $0.005 | Flat rate |
 | OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
 
-For standard NanoGPT usage, Brave credentials are handled automatically.
+For standard NanoGPT usage, provider credentials are handled automatically.
 
 ### Bring your own key (BYOK)
 
@@ -808,8 +793,6 @@ See: [Bring Your Own Key (BYOK)](/api-reference/miscellaneous/byok)
 #### Web search BYOK
 
 Web search BYOK availability is provider-dependent and can change over time. See the BYOK reference for the current support matrix.
-
-Brave-specific terms highlights are documented on [Brave](/api-reference/miscellaneous/brave).
 
 ### Advanced behavior (optional)
 
