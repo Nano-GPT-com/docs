@@ -9,12 +9,13 @@ X-402 is an HTTP-native micropayment flow built around `402 Payment Required`.
 
 With NanoGPT, X-402 lets clients pay for API calls without creating an account or pre-funding a NanoGPT balance:
 
-1. Client requests an API resource.
+1. Client requests an API resource. For gated endpoints such as `/api/v1/chat/completions`, `/api/tts`, `/api/transcribe`, `/api/v1/embeddings`, and `/api/youtube-transcribe`, include `X-X402: true` on this initial request so the endpoint returns an X-402 challenge instead of the normal auth or balance error.
 2. Server replies `402 Payment Required` with payment options.
 3. Client pays using one of the offered schemes.
 4. Client retries the original request with `X-PAYMENT` (exact schemes), or completes the request after an on-chain transfer (polling schemes).
 
 If you send a normal NanoGPT API key with sufficient balance, the request uses standard billing and will not trigger X-402.
+If you are retrying with an `X-PAYMENT` header, that header is enough to continue the payment flow; keeping `X-X402: true` on the retry is also safe.
 
 ## Supported Payment Schemes
 
@@ -29,14 +30,14 @@ NanoGPT can offer multiple schemes in a single 402 response:
 
 ## Flow A: Exact Schemes (`X-PAYMENT` header)
 
-1. Call an API endpoint (no auth).
+1. Call an API endpoint (no auth). Include `X-X402: true` for endpoints that require explicit opt-in to return an X-402 challenge.
 2. Receive `402` with an `accepts` array that includes an `exact` option.
 3. Construct a base64-encoded JSON payment payload and retry the same request with the `X-PAYMENT` header.
 4. On success, the server returns the normal API response and may include `X-PAYMENT-RESPONSE` with settlement metadata.
 
 ## Flow B: Polling Schemes (Ephemeral Address)
 
-1. Call an API endpoint (no auth).
+1. Call an API endpoint (no auth). Include `X-X402: true` for endpoints that require explicit opt-in to return an X-402 challenge.
 2. Receive `402` with an `accepts` entry that includes `payTo` and `paymentId`.
 3. Send funds to `payTo` using a wallet.
 4. Poll `GET /api/x402/status/{paymentId}` until the payment is ready.
