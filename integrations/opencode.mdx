@@ -64,6 +64,22 @@ Create `~/.config/opencode/.opencode.json`:
           "name": "GPT 5.2",
           "limit": { "context": 128000, "output": 128000 }
         },
+        "deepseek/deepseek-v4-pro": {
+          "name": "DeepSeek V4 Pro",
+          "limit": { "context": 1048576, "output": 384000 }
+        },
+        "deepseek/deepseek-v4-pro:thinking": {
+          "name": "DeepSeek V4 Pro Thinking",
+          "limit": { "context": 1048576, "output": 384000 }
+        },
+        "deepseek/deepseek-v4-flash": {
+          "name": "DeepSeek V4 Flash",
+          "limit": { "context": 1048576, "output": 384000 }
+        },
+        "deepseek/deepseek-v4-flash:thinking": {
+          "name": "DeepSeek V4 Flash Thinking",
+          "limit": { "context": 1048576, "output": 384000 }
+        },
         "google/gemini-3-flash-preview": {
           "name": "Gemini 3 Flash (Preview)",
           "limit": { "context": 1048756, "output": 65536 }
@@ -96,7 +112,7 @@ Use the `/model` command inside OpenCode to switch between models, or edit the `
 
 ```json
 {
-  "model": "nano-gpt/claude-opus-4-5-20251101"
+  "model": "nano-gpt/deepseek/deepseek-v4-pro"
 }
 ```
 
@@ -109,6 +125,10 @@ The setup script preconfigures these models:
 | `nano-gpt/claude-sonnet-4-5-20250929` | Claude Sonnet 4.5 (default) |
 | `nano-gpt/claude-opus-4-5-20251101` | Claude 4.5 Opus |
 | `nano-gpt/openai/gpt-5.2` | GPT 5.2 |
+| `nano-gpt/deepseek/deepseek-v4-pro` | DeepSeek V4 Pro |
+| `nano-gpt/deepseek/deepseek-v4-pro:thinking` | DeepSeek V4 Pro Thinking |
+| `nano-gpt/deepseek/deepseek-v4-flash` | DeepSeek V4 Flash |
+| `nano-gpt/deepseek/deepseek-v4-flash:thinking` | DeepSeek V4 Flash Thinking |
 | `nano-gpt/google/gemini-3-flash-preview` | Gemini 3 Flash (Preview) |
 | `nano-gpt/gemini-3-pro-preview` | Gemini 3 Pro |
 | `nano-gpt/zai-org/glm-4.7` | GLM 4.7 |
