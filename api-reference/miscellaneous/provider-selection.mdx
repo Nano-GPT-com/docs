@@ -5,7 +5,9 @@ description: 'Choose the upstream provider for supported open-source models'
 
 # Provider Selection
 
-Provider selection lets pay-as-you-go users choose the upstream provider for supported open-source models. It is optional; if you do nothing, the platform picks the provider. Subscription requests ignore provider preferences unless you force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
+Provider selection chooses the upstream provider for a supported model. It does not change the model ID. For example, to use Kimi K2.6 through Novita, keep the model as `kimi-k2.6` or `moonshotai/kimi-k2.6`, and send the provider separately with `X-Provider`.
+
+Provider selection is optional; if you do nothing, the platform picks the provider. Subscription requests ignore provider preferences unless you force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 
 This page intentionally documents only public provider IDs returned by the provider-discovery endpoints. Internal routing/provider names are never part of the public API contract.
 
@@ -13,6 +15,7 @@ This page intentionally documents only public provider IDs returned by the provi
 
 - Provider selection only applies when a model reports `supportsProviderSelection: true`.
 - Use `GET /api/models/:canonicalId/providers` to discover eligible models and provider IDs.
+- `supportsProviderSelection` is exposed on the model-specific provider endpoint. Do not rely on `/api/v1/models` or `/api/v1/models?detailed=true` to determine provider-selection support.
 - If a model does not support provider selection, the request ignores provider preferences.
 
 ## Discover Providers and Pricing
@@ -23,18 +26,52 @@ Use this endpoint to list available providers and the pricing you will pay when 
 GET /api/models/:canonicalId/providers
 ```
 
-Example response (placeholders):
+This endpoint is not under `/api/v1`. If your base URL is `https://nano-gpt.com/api/v1`, do not append this path to that base URL. Use:
+
+```http
+GET https://nano-gpt.com/api/models/kimi-k2.6/providers
+```
+
+If the model ID contains `/`, URL-encode the slash when placing it in the path:
+
+```http
+GET https://nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
+```
+
+Do not use the unencoded form, because the slash is treated as a path separator:
+
+```http
+GET https://nano-gpt.com/api/models/moonshotai/kimi-k2.6/providers
+```
+
+Here `:canonicalId` means the model ID or one of its supported aliases. For Kimi K2.6, both `kimi-k2.6` and `moonshotai/kimi-k2.6` work.
+
+Example response:
 
 ```json
 {
-  "canonicalId": "model-id",
-  "displayName": "Model Name",
+  "canonicalId": "moonshotai/kimi-k2.6",
+  "displayName": "Kimi K2.6",
   "supportsProviderSelection": true,
-  "defaultPrice": { "inputPer1kTokens": 0.0004, "outputPer1kTokens": 0.00175 },
+  "defaultPrice": {
+    "inputPer1kTokens": 0.0005,
+    "outputPer1kTokens": 0.0026
+  },
   "providers": [
     {
-      "provider": "provider-id",
-      "pricing": { "inputPer1kTokens": 0.00042, "outputPer1kTokens": 0.0018375 },
+      "provider": "moonshot",
+      "available": true
+    },
+    {
+      "provider": "novita",
+      "available": true
+    },
+    {
+      "provider": "cloudflare",
+      "available": true
+    },
+    {
+      "provider": "baseten",
       "available": true
     }
   ]
@@ -44,30 +81,42 @@ Example response (placeholders):
 Notes:
 
 - `defaultPrice` is used when you do not select a provider.
-- `providers[].pricing` is what you pay when you do select a provider (includes the markup).
+- If `providers[].pricing` is present, it is what you pay when you select that provider (includes the markup).
+- Use the exact value from `providers[].provider` in the `X-Provider` header.
 - If a model is unsupported, the response includes `supportsProviderSelection: false`.
 
 ## Per-Request Provider Override
 
 For a single request, send the provider ID in the `X-Provider` header.
 
-```http
-POST /api/v1/chat/completions
-X-Provider: provider-id
-
-{
-  "model": "model-id",
-  "messages": [
-    { "role": "user", "content": "Hello" }
-  ]
-}
+```bash
+curl https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-Provider: novita" \
+  -H "X-Billing-Mode: paygo" \
+  -d '{
+    "model": "kimi-k2.6",
+    "messages": [
+      { "role": "user", "content": "Hello" }
+    ],
+    "billing_mode": "paygo"
+  }'
 ```
 
 Notes:
 
 - `X-Provider` is case-insensitive (`x-provider` also works).
 - The provider ID must be one of the values returned by the providers endpoint.
+- Do not put the provider in the model string. Use `{ "model": "kimi-k2.6" }`, not `{ "model": "kimi-k2.6:novita" }`.
+- To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `novita`, `cloudflare`, `baseten`, or `inceptron`.
 - If the request would otherwise be subscription-covered, set `billing_mode: "paygo"` or `X-Billing-Mode: paygo` to force paid routing.
+
+## Consecutive Prompts and Prompt Caching
+
+When you explicitly select a provider with `X-Provider`, NanoGPT routes that request to the selected provider. For consecutive prompts, using the same `X-Provider` helps keep routing stable, which is the setup you want for provider-side prompt-cache reuse when that provider and model support caching.
+
+Do not rely on automatic routing if provider-side cache affinity is important. Automatic routing may choose different upstream providers across requests. For cache-sensitive workflows, consistently send the same `X-Provider` value, and use the provider-discovery endpoint to confirm that the provider is available for the model.
 
 ## Persistent Provider Preferences
 
@@ -78,6 +127,8 @@ GET /api/user/provider-preferences
 PATCH /api/user/provider-preferences
 DELETE /api/user/provider-preferences
 ```
+
+These endpoints require a logged-in web session. API-key-only requests should use per-request provider selection with `X-Provider`, unless preferences were already saved on the associated user session.
 
 Example `GET` response (placeholders):
 
