@@ -27,7 +27,7 @@
           {
             "name": "X-Provider",
             "in": "header",
-            "description": "Optional provider override for pay-as-you-go requests on supported open-source models (case-insensitive). Subscription requests ignore this header.",
+            "description": "Optional explicit provider override for supported open-source models (case-insensitive). Explicit provider selection is billed pay-as-you-go at the selected provider's price, including provider-selection markup; for subscription users it bypasses subscription coverage for that request.",
             "required": false,
             "schema": {
               "type": "string"
@@ -36,7 +36,7 @@
           {
             "name": "X-Billing-Mode",
             "in": "header",
-            "description": "Optional billing override to force pay-as-you-go (e.g., paygo). Header name is case-insensitive.",
+            "description": "Optional billing override to force pay-as-you-go without an explicit provider, or to apply saved provider preferences to subscription-included traffic (e.g., paygo). Header name is case-insensitive.",
             "required": false,
             "schema": {
               "type": "string"
@@ -90,7 +90,7 @@
           {
             "name": "X-Provider",
             "in": "header",
-            "description": "Optional provider override for pay-as-you-go requests on supported open-source models (case-insensitive). Subscription requests ignore this header.",
+            "description": "Optional explicit provider override for supported open-source models (case-insensitive). Explicit provider selection is billed pay-as-you-go at the selected provider's price, including provider-selection markup; for subscription users it bypasses subscription coverage for that request.",
             "required": false,
             "schema": {
               "type": "string"
@@ -99,7 +99,7 @@
           {
             "name": "X-Billing-Mode",
             "in": "header",
-            "description": "Optional billing override to force pay-as-you-go (e.g., paygo). Header name is case-insensitive.",
+            "description": "Optional billing override to force pay-as-you-go without an explicit provider, or to apply saved provider preferences to subscription-included traffic (e.g., paygo). Header name is case-insensitive.",
             "required": false,
             "schema": {
               "type": "string"
@@ -2715,14 +2715,14 @@
           {
             "name": "X-Provider",
             "in": "header",
-            "description": "Optional provider override for pay-as-you-go requests on supported open-source models (case-insensitive). Subscription requests ignore this header.",
+            "description": "Optional explicit provider override for supported open-source models (case-insensitive). Explicit provider selection is billed pay-as-you-go at the selected provider's price, including provider-selection markup; for subscription users it bypasses subscription coverage for that request.",
             "required": false,
             "schema": { "type": "string" }
           },
           {
             "name": "X-Billing-Mode",
             "in": "header",
-            "description": "Optional billing override to force pay-as-you-go (e.g., paygo). Header name is case-insensitive.",
+            "description": "Optional billing override to force pay-as-you-go without an explicit provider, or to apply saved provider preferences to subscription-included traffic (e.g., paygo). Header name is case-insensitive.",
             "required": false,
             "schema": { "type": "string" }
           },
@@ -2843,7 +2843,7 @@
           },
           "billing_mode": {
             "type": "string",
-            "description": "Billing override to force pay-as-you-go. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
+            "description": "Billing override to force pay-as-you-go without an explicit provider, or to apply saved provider preferences to subscription-included traffic. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
           },
           "billingMode": {
             "type": "string",
@@ -3323,7 +3323,7 @@
           },
           "billing_mode": {
             "type": "string",
-            "description": "Billing override to force pay-as-you-go. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
+            "description": "Billing override to force pay-as-you-go without an explicit provider, or to apply saved provider preferences to subscription-included traffic. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
           },
           "billingMode": {
             "type": "string",
@@ -6508,7 +6508,7 @@
           },
           "billing_mode": {
             "type": "string",
-            "description": "Billing override to force pay-as-you-go. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
+            "description": "Billing override to force pay-as-you-go without an explicit provider, or to apply saved provider preferences to subscription-included traffic. Accepted values (case-insensitive): paygo, pay-as-you-go, pay_as_you_go, paid, payg."
           },
           "billingMode": {
             "type": "string",

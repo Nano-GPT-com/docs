@@ -7,7 +7,9 @@ description: 'Choose the upstream provider for supported open-source models'
 
 Provider selection chooses the upstream provider for a supported model. It does not change the model ID. For example, to use Kimi K2.6 through Novita, keep the model as `kimi-k2.6` or `moonshotai/kimi-k2.6`, and send the provider separately with `X-Provider`.
 
-Provider selection is optional; if you do nothing, the platform picks the provider. Subscription requests ignore provider preferences unless you force paid routing with the pay-as-you-go billing override (`billing_mode: "paygo"` or `X-Billing-Mode: paygo`). See [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
+Provider selection is optional; if you do nothing, the platform picks the provider. `X-Provider` explicitly selects a provider for that request. Explicit provider selection is always pay-as-you-go and is charged at the selected provider's price, including provider-selection markup. For subscription users, sending `X-Provider` bypasses subscription coverage for that request.
+
+`X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go billing without an explicit provider, or when saved provider preferences should apply to subscription-included traffic. See [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 
 This page intentionally documents only public provider IDs returned by the provider-discovery endpoints. Internal routing/provider names are never part of the public API contract.
 
@@ -17,6 +19,7 @@ This page intentionally documents only public provider IDs returned by the provi
 - Use `GET /api/models/:canonicalId/providers` to discover eligible models and provider IDs.
 - `supportsProviderSelection` is exposed on the model-specific provider endpoint. Do not rely on `/api/v1/models` or `/api/v1/models?detailed=true` to determine provider-selection support.
 - If a model does not support provider selection, the request ignores provider preferences.
+- You cannot currently force a provider and have that same request count as subscription-included usage.
 
 ## Discover Providers and Pricing
 
@@ -94,13 +97,11 @@ curl https://nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -H "X-Provider: novita" \
-  -H "X-Billing-Mode: paygo" \
   -d '{
     "model": "kimi-k2.6",
     "messages": [
       { "role": "user", "content": "Hello" }
-    ],
-    "billing_mode": "paygo"
+    ]
   }'
 ```
 
@@ -110,7 +111,7 @@ Notes:
 - The provider ID must be one of the values returned by the providers endpoint.
 - Do not put the provider in the model string. Use `{ "model": "kimi-k2.6" }`, not `{ "model": "kimi-k2.6:novita" }`.
 - To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `novita`, `cloudflare`, `baseten`, or `inceptron`.
-- If the request would otherwise be subscription-covered, set `billing_mode: "paygo"` or `X-Billing-Mode: paygo` to force paid routing.
+- If the request would otherwise be subscription-covered, `X-Provider` still bypasses subscription coverage and bills the request as pay-as-you-go. You do not need to also send `billing_mode: "paygo"` or `X-Billing-Mode: paygo`.
 
 ## Consecutive Prompts and Prompt Caching
 
@@ -129,6 +130,8 @@ DELETE /api/user/provider-preferences
 ```
 
 These endpoints require a logged-in web session. API-key-only requests should use per-request provider selection with `X-Provider`, unless preferences were already saved on the associated user session.
+
+Saved provider preferences apply to pay-as-you-go traffic. For subscription-included traffic, send `X-Billing-Mode: paygo` or `billing_mode: "paygo"` when you want saved provider preferences to apply.
 
 Example `GET` response (placeholders):
 
@@ -182,7 +185,8 @@ When multiple selections exist, the system resolves providers in this order:
 
 ## Billing and Markup
 
-- If you select a provider (via header or preferences), billing uses the provider-specific price plus a 5% markup.
+- If you explicitly select a provider with `X-Provider`, billing uses the provider-specific price plus a 5% markup and the request is treated as pay-as-you-go.
+- If saved preferences select a provider on pay-as-you-go traffic, billing uses the provider-specific price plus a 5% markup.
 - If you do not select a provider, billing uses the model's default price.
 
 ## Error Behavior
