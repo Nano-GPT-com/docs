@@ -79,6 +79,17 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
         print(f"Error: {str(e)}")
     ```
 
+    #### Routing preferences
+
+    For supported open-source models, you can request routing preferences with model suffixes:
+
+    ```json
+    { "model": "zai-org/glm-5:fast", "messages": [{ "role": "user", "content": "Hello" }] }
+    { "model": "zai-org/glm-5:cheap", "messages": [{ "role": "user", "content": "Hello" }] }
+    ```
+
+    Use `:fast` for fastest estimated completion and `:cheap` for lowest provider price. These are pay-as-you-go provider-selection requests. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes) for the full list.
+
     For more detailed examples and other text generation endpoints, check out our [Text Generation Guide](/api-reference/text-generation).
   </Accordion>
 

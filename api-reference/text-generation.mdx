@@ -13,6 +13,16 @@ If you are using a TEE-backed model (e.g., prefixed with `TEE/`), you can also v
 
 Provider selection is available for supported open-source models. `X-Provider` explicitly selects a provider for the request and is always billed pay-as-you-go at the selected provider's price, including provider-selection markup. For subscription users, sending `X-Provider` bypasses subscription coverage for that request; `X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go without an explicit provider or when saved provider preferences should apply to subscription-included traffic. See [Provider Selection](/api-reference/miscellaneous/provider-selection) and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 
+For one-off routing preferences, append a suffix to eligible model IDs:
+
+- `:fast` / `:speed` for fastest estimated completion
+- `:cheap` / `:price` / `:floor` for cheapest provider
+- `:throughput` for highest TPS
+- `:latency` for lowest TTFT
+- `:tools` for tools-capable routing
+
+See [Model Suffixes](/api-reference/miscellaneous/model-suffixes) for the complete suffix list and conflict rules.
+
 ## OpenAI Compatible Endpoints
 
 ### Chat Completions (v1/chat/completions)
@@ -450,6 +460,8 @@ for content in chat_completion_with_web_search(research_messages, search_depth="
 
 - **`:online`** - Standard search with 10 results ($0.006 per request)
 - **`:online/linkup-deep`** - Deep iterative search ($0.06 per request)
+
+For the full provider-specific suffix list, including `:online/exa-instant`, `:online/exa-deep-reasoning`, `:online/brave`, and `:online/valyu-web-deep`, see [Model Suffixes](/api-reference/miscellaneous/model-suffixes#web-search-suffixes).
 
 Web search dramatically improves factuality - Gemini 3 Flash Preview with web access shows a 10x improvement in accuracy, making it twice as accurate as non-web baselines.
 

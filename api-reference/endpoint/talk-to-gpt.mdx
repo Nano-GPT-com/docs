@@ -7,12 +7,16 @@ openapi: 'POST /talk-to-gpt'
 
 The Talk to GPT endpoint is our legacy text generation API that also supports web search capabilities through LinkUp integration.
 
+The legacy endpoint supports the same model suffix parser for web search and provider routing as Chat Completions, but new integrations should use `/api/v1/chat/completions`. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
+
 ## Web Search
 
 Enable web search by appending suffixes to the model name:
 
 - **`:online`** - Standard web search ($0.006 per request)
 - **`:online/linkup-deep`** - Deep web search ($0.06 per request)
+
+Provider routing suffixes such as `:fast` / `:speed`, `:cheap` / `:price` / `:floor`, `:throughput`, `:latency`, and `:tools` are also accepted for eligible models.
 
 If you need direct control over search query, output mode (`searchResults` / `sourcedAnswer` / `structured`), or date/domain filters, use [Direct Web Search API (`POST /api/web`)](/api-reference/endpoint/web-search).
 

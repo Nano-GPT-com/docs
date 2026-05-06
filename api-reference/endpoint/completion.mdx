@@ -6,3 +6,7 @@ openapi: 'POST /v1/completions'
 <Note>
   `POST /api/v1/completions` is available on a best-effort basis for legacy OpenAI compatibility. Performance and behavior may be less consistent than `POST /api/v1/chat/completions` because not all upstream providers support the legacy completions API.
 </Note>
+
+<Note>
+  `POST /api/v1/completions` supports the same model suffix parser for provider routing (`:fast`, `:cheap`, etc.) and `:reasoning-exclude`, but this endpoint remains best-effort legacy compatibility. Prefer Chat Completions for new integrations. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
+</Note>

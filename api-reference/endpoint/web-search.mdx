@@ -8,7 +8,7 @@ description: "Run direct web search requests with explicit query control, Linkup
 
 Use `POST /api/web` when you want direct control over search requests and output formatting.
 
-For chat-first workflows, use `POST /api/v1/chat/completions` with model suffixes like `:online`, `:online/linkup`, or `:online/linkup-deep`.
+For chat-first workflows, use `POST /api/v1/chat/completions` with model suffixes like `:online`, `:online/linkup`, or `:online/linkup-deep`, including provider-specific suffixes such as `:online/exa-instant`, `:online/exa-deep-reasoning`, `:online/brave`, and `:online/valyu-web-deep`. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes#web-search-suffixes).
 
 ## When to use which endpoint
 
@@ -206,3 +206,4 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 - [Chat Completion](/api-reference/endpoint/chat-completion)
 - [Web Search in Text Generation Guide](/api-reference/text-generation)
+- [Model Suffixes](/api-reference/miscellaneous/model-suffixes)

@@ -109,7 +109,7 @@ Notes:
 
 - `X-Provider` is case-insensitive (`x-provider` also works).
 - The provider ID must be one of the values returned by the providers endpoint.
-- Do not put the provider in the model string. Use `{ "model": "kimi-k2.6" }`, not `{ "model": "kimi-k2.6:novita" }`.
+- Recommended: use `X-Provider` for explicit provider overrides. The API also accepts a trailing provider suffix for user-selectable providers, such as `model-id:cerebras`, but `X-Provider` is clearer and easier to validate against provider-discovery responses.
 - To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `novita`, `cloudflare`, `baseten`, or `inceptron`.
 - If the request would otherwise be subscription-covered, `X-Provider` still bypasses subscription coverage and bills the request as pay-as-you-go. You do not need to also send `billing_mode: "paygo"` or `X-Billing-Mode: paygo`.
 
@@ -118,6 +118,35 @@ Notes:
 When you explicitly select a provider with `X-Provider`, NanoGPT routes that request to the selected provider. For consecutive prompts, using the same `X-Provider` helps keep routing stable, which is the setup you want for provider-side prompt-cache reuse when that provider and model support caching.
 
 Do not rely on automatic routing if provider-side cache affinity is important. Automatic routing may choose different upstream providers across requests. For cache-sensitive workflows, consistently send the same `X-Provider` value, and use the provider-discovery endpoint to confirm that the provider is available for the model.
+
+## Per-Request Routing Preference
+
+For provider-selection-capable models, you can append a routing preference suffix to the model ID:
+
+- `:speed` / `:fast`: best estimated completion time using TTFT plus TPS.
+- `:throughput`: highest tokens per second.
+- `:latency`: lowest time to first token.
+- `:price` / `:cheap`: lowest base input-plus-output token price.
+- `:floor`: alias for `:price`.
+- `:tools`: route to a tools-capable provider path when the model supports tools provider selection.
+
+Example:
+
+```json
+{
+  "model": "zai-org/glm-5:fast",
+  "messages": [{ "role": "user", "content": "Hello" }]
+}
+```
+
+Notes:
+
+- Routing preference suffixes are billed like explicit provider-selection requests.
+- They cannot be combined with `X-Provider`, body `provider`, or provider model suffixes.
+- `:tools` cannot be combined with routing preference suffixes or `caching=true`.
+- If the model does not support provider selection, the request returns an invalid request error for these suffixes.
+
+See [Model Suffixes](/api-reference/miscellaneous/model-suffixes) for the complete suffix reference and composition rules.
 
 ## Persistent Provider Preferences
 
@@ -178,10 +207,11 @@ Field details:
 
 When multiple selections exist, the system resolves providers in this order:
 
-1. `X-Provider` header override
-2. Per-model `preferredProviders`
-3. Global `preferredProviders`
-4. Platform default (only if `enableFallback` is true)
+1. Per-request explicit provider selection (`X-Provider`, body `provider`, or provider suffix)
+2. Per-request routing preference suffix (`:fast`, `:cheap`, etc.)
+3. Per-model `preferredProviders`
+4. Global `preferredProviders`
+5. Platform default (only if `enableFallback` is true)
 
 ## Billing and Markup
 

@@ -8,7 +8,7 @@ openapi: 'POST /v1/chat/completions'
 </Note>
 
 <Note>
-  Provider selection is available for supported open-source models. `X-Provider` explicitly selects a provider for the request and is always billed pay-as-you-go at the selected provider's price, including provider-selection markup. For subscription users, sending `X-Provider` bypasses subscription coverage for that request; `X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go without an explicit provider or when saved provider preferences should apply to subscription-included traffic. See [Provider Selection](/api-reference/miscellaneous/provider-selection) and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
+  Provider selection is available for supported open-source models. `X-Provider` explicitly selects a provider for the request and is always billed pay-as-you-go at the selected provider's price, including provider-selection markup. Provider-selection-capable models also support routing preference suffixes such as `:fast` and `:cheap`. For subscription users, sending `X-Provider` bypasses subscription coverage for that request; `X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go without an explicit provider or when saved provider preferences should apply to subscription-included traffic. See [Provider Selection](/api-reference/miscellaneous/provider-selection), [Model Suffixes](/api-reference/miscellaneous/model-suffixes), and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 </Note>
 
 <Note>
@@ -23,6 +23,7 @@ Use the jump list below to navigate the long-form reference quickly.
   <Accordion title="Basics">
     - [Tool calling](#tool-calling)
     - [Overview](#overview)
+    - [Provider Routing Suffixes](#provider-routing-suffixes)
   </Accordion>
   <Accordion title="Sampling & decoding">
     - [Sampling & Decoding Controls](#sampling-decoding-controls)
@@ -157,6 +158,10 @@ Streaming responses emit delta events that mirror OpenAI's `tool_calls` schema, 
 ## Overview
 
 The Chat Completion endpoint provides OpenAI-compatible chat completions.
+
+## Provider Routing Suffixes
+
+Provider-selection-capable models support routing preference suffixes such as `:fast` and `:cheap`. See [Provider Selection > Per-Request Routing Preference](/api-reference/miscellaneous/provider-selection#per-request-routing-preference) for the full list and billing rules, or [Model Suffixes](/api-reference/miscellaneous/model-suffixes) for all suffix composition rules.
 
 ## Sampling & Decoding Controls
 
@@ -512,6 +517,8 @@ Append one of these to your `model` value:
 - `:online/exa-auto` (Exa, auto)
 - `:online/exa-neural` (Exa, neural)
 - `:online/exa-deep` (Exa, deep)
+- `:online/exa-instant` (Exa, instant)
+- `:online/exa-deep-reasoning` (Exa, deep-reasoning)
 - `:online/kagi` (Kagi, standard, search)
 - `:online/kagi-web` (Kagi, standard, web)
 - `:online/kagi-news` (Kagi, standard, news)
@@ -535,7 +542,7 @@ Send a `webSearch` object in the request body. The legacy `linkup` object is acc
 - `provider` (string): `linkup` | `tavily` | `brave` | `exa` | `kagi` | `perplexity` | `valyu`
 - `depth` (string):
   - Linkup/Tavily/Brave/Perplexity/Valyu: `standard` or `deep`
-  - Exa: `fast`, `auto`, `neural`, `deep` (use `standard` if you want `auto`)
+  - Exa: `fast`, `auto`, `neural`, `deep`, `instant`, `deep-reasoning` (use `standard` if you want `auto`)
   - Kagi: `standard` or `deep` (`search` source only)
 - `search_context_size` or `searchContextSize` (string, OpenAI native): `low` | `medium` | `high` (default: `medium`)
 - `user_location` or `userLocation` (object, OpenAI native): `{ type: "approximate", country, city, region }`
@@ -1332,6 +1339,8 @@ Examples:
 - `anthropic/claude-sonnet-4.6:thinking:8192:reasoning-exclude`
 - `openai/gpt-5.2:online:reasoning-exclude`
 - `anthropic/claude-opus-4.6:memory-30:online/linkup-deep:reasoning-exclude`
+- `zai-org/glm-5:fast:reasoning-exclude`
+- `zai-org/glm-5:cheap:reasoning-exclude`
 
 ### Legacy delta field compatibility
 
