@@ -1,0 +1,124 @@
+---
+title: 'Characters'
+openapi: 'GET /v1/characters'
+---
+
+## Overview
+
+Characters are reusable AI personas with a base model, system prompt, optional first message, tags, content rating, and visibility controls.
+
+The website uses these same endpoints for importing, publishing, browsing, rating, and adapting character cards.
+
+## Authentication
+
+Use either header for private writes:
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+Public catalog reads do not require authentication. Private reads and writes require the owning session or API key.
+
+## List Public Characters
+
+```
+GET https://nano-gpt.com/api/v1/characters
+```
+
+Query parameters:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `q` | string | Search name, summary, and description |
+| `tags` | string or repeated string | Filter by one or more tag slugs |
+| `content_rating_max` | string | `sfw`, `suggestive`, `nsfw`, or `explicit` |
+| `sort` | string | `new`, `top_rated`, or `trending_simple` |
+| `cursor` | string | Pagination cursor from the previous response |
+| `limit` | number | Page size |
+
+Only approved public characters are returned.
+
+## Create Character
+
+```
+POST https://nano-gpt.com/api/v1/characters
+```
+
+```json
+{
+  "name": "Helpful Guide",
+  "summary": "A concise assistant for technical writing",
+  "description": "Helps plan, edit, and tighten technical docs.",
+  "base_model_id": "deepseek-ai/DeepSeek-V3-0324",
+  "system_prompt": "You are a concise technical writing assistant.",
+  "first_message": "What are we editing today?",
+  "visibility": "private",
+  "allow_api": false,
+  "creator_content_rating": "sfw",
+  "tags": ["writing", "productivity"]
+}
+```
+
+Visibility values:
+
+| Value | Behavior |
+| --- | --- |
+| `private` | Only the owner can see and use it |
+| `unlisted` | Usable by direct ID or slug when permitted, not listed publicly |
+| `public` | Submitted to moderation before public discovery |
+
+Public submissions are created with `moderation_status: pending` and become discoverable only after approval.
+
+## Manage Your Characters
+
+```
+GET /api/v1/characters/mine
+GET /api/v1/characters/{idOrSlug}
+PATCH /api/v1/characters/{idOrSlug}
+DELETE /api/v1/characters/{idOrSlug}
+```
+
+`DELETE` archives the character instead of hard-deleting it.
+
+`PATCH` accepts the same core fields as create. Editing an approved public character sends it back to pending moderation.
+
+## Reviews And Reports
+
+```
+PUT /api/v1/characters/{idOrSlug}/review
+POST /api/v1/characters/{idOrSlug}/report
+```
+
+Review body:
+
+```json
+{
+  "rating": 5,
+  "review_text": "Optional review text with at least 10 characters."
+}
+```
+
+Reviews require an authenticated account with either an active subscription or more than $1 in account balance. USD balance and Nano balance converted to USD both count toward this threshold.
+
+Report body:
+
+```json
+{
+  "reason": "Policy concern",
+  "details": "Optional extra context."
+}
+```
+
+## Runtime Usage
+
+The Responses API accepts `character_id`:
+
+```json
+{
+  "character_id": "character-uuid-or-slug",
+  "input": "Introduce yourself"
+}
+```
+
+When `character_id` is supplied, NanoGPT applies the character's base model, instructions, and sampler defaults unless explicitly overridden by the request.
+
+For non-owner API usage, the character must be public, approved, and have API access enabled.

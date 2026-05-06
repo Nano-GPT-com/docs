@@ -24,6 +24,8 @@
         "pages": [
           "api-reference/endpoint/models",
           "api-reference/endpoint/personalized-models",
+          "api-reference/endpoint/characters",
+          "api-reference/endpoint/character-models",
           "api-reference/endpoint/chat-completion",
           "api-reference/endpoint/web-search",
           "api-reference/endpoint/responses",
