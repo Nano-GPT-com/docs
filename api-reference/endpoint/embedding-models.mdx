@@ -5,7 +5,9 @@ openapi: 'GET /v1/embedding-models'
 
 ## Overview
 
-The `/api/v1/embedding-models` endpoint provides a comprehensive list of available embedding models with detailed information including dimensions, pricing, and features. This endpoint returns all embedding models in OpenAI-compatible format.
+The `/api/v1/embedding-models` endpoint provides a comprehensive list of available embedding models with detailed information including dimensions, max dimensions, token limits, pricing, and feature support. Use this endpoint instead of hardcoding embedding model capabilities.
+
+This endpoint is cacheable. Refresh it periodically because model availability can change.
 
 ## Authentication
 
@@ -32,6 +34,7 @@ Returns a list of all available embedding models with comprehensive details:
       "name": "Text Embedding 3 Small",
       "description": "Most cost-effective OpenAI embedding model with dimension reduction support",
       "dimensions": 1536,
+      "max_dimensions": 1536,
       "supports_dimensions": true,
       "max_tokens": 8191,
       "pricing": {
@@ -47,6 +50,7 @@ Returns a list of all available embedding models with comprehensive details:
       "name": "Text Embedding 3 Large",
       "description": "Highest performance OpenAI embedding model with dimension reduction support",
       "dimensions": 3072,
+      "max_dimensions": 3072,
       "supports_dimensions": true,
       "max_tokens": 8191,
       "pricing": {
@@ -62,6 +66,7 @@ Returns a list of all available embedding models with comprehensive details:
       "name": "BGE M3",
       "description": "Multilingual embedding model with excellent performance across languages",
       "dimensions": 1024,
+      "max_dimensions": 1024,
       "supports_dimensions": false,
       "max_tokens": 8192,
       "pricing": {
@@ -85,7 +90,8 @@ Returns a list of all available embedding models with comprehensive details:
 | `name` | string | Human-readable model name |
 | `description` | string | Detailed model description and use cases |
 | `dimensions` | number | Default embedding vector dimensions |
-| `supports_dimensions` | boolean | Whether model supports dimension reduction |
+| `max_dimensions` | number | Maximum embedding vector dimensions supported |
+| `supports_dimensions` | boolean | Whether custom dimensions are supported |
 | `max_tokens` | number | Maximum input tokens supported |
 | `pricing` | object | Pricing information object |
 

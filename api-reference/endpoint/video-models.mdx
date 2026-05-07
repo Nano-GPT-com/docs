@@ -1,0 +1,91 @@
+---
+title: "Video Models"
+description: "List available video models with generation capabilities and supported parameters"
+---
+
+## Overview
+
+Use `GET /api/v1/video-models` to discover the currently available video models. Do not hardcode video model capabilities in your client; supported settings and availability can change.
+
+This endpoint is cacheable. Refresh it periodically and treat new fields as additive.
+
+## Endpoint
+
+```text
+GET https://nano-gpt.com/api/v1/video-models
+```
+
+## Authentication
+
+Authentication is optional.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `detailed` | boolean | `true` | Include names, descriptions, pricing, capabilities, and supported parameters. |
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "video-model-id",
+      "object": "model",
+      "name": "Display name",
+      "description": "Model description",
+      "architecture": {
+        "modality": "video",
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["video"]
+      },
+      "pricing": {
+        "currency": "USD"
+      },
+      "capabilities": {
+        "video_generation": true,
+        "text_to_video": true,
+        "image_to_video": true,
+        "audio_generation": false
+      },
+      "supported_parameters": {}
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "generated_at": "2026-05-07T12:00:00.000Z"
+  }
+}
+```
+
+## Supported Parameters
+
+Supported parameters vary by model. Common examples include:
+
+- `duration`
+- `aspect_ratio`
+- `resolution`
+- image input support
+- audio generation support
+- video extension support
+- video recovery support
+- prompt enhancement or safety controls
+
+Use the model's `supported_parameters` and `capabilities` objects to decide which controls to show and which request fields to send.
+
+## Example
+
+```bash
+curl "https://nano-gpt.com/api/v1/video-models?detailed=true"
+```
+
+## Notes
+
+- Use this endpoint instead of hardcoding media model capabilities.
+- The response is cacheable, but model availability can change.
+- Pricing structures vary by model, for example per generation, per second, duration tier, resolution tier, or feature-specific pricing.

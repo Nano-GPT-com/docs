@@ -1,0 +1,114 @@
+---
+title: "Image Edits"
+description: "OpenAI-compatible image editing endpoint with multipart and JSON inputs"
+---
+
+## Overview
+
+Use the image edits endpoint to modify one or more input images with a text prompt. This is an OpenAI-compatible image editing endpoint.
+
+Both paths are supported aliases:
+
+- `POST /api/v1/images/edit`
+- `POST /api/v1/images/edits`
+
+## Authentication
+
+Use either header:
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Multipart Request
+
+Send `multipart/form-data` when uploading files.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `prompt` | string | Yes | Edit instruction. |
+| `image` | file or string | Yes* | Input image file, image URL, or data URL. |
+| `image[]` | repeated file or string | Yes* | Repeated image inputs for multi-image editing. |
+| `mask` | file | No | Optional mask image for inpainting-capable models. |
+| `model` | string | No | Image-edit-capable model. Defaults to an image-edit-capable default when omitted. |
+| `size` | string | No | Requested output size, when supported by the model. |
+| `n` | integer | No | Number of outputs, when supported by the model. |
+
+*Provide `image` or one or more `image[]` fields.
+
+Other image-generation parameters may pass through when supported by the selected model.
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/images/edits \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -F model=gpt-image-1 \
+  -F prompt="Remove the background" \
+  -F image=@product.png \
+  -F size=1024x1024
+```
+
+### Multi-image Multipart
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/images/edit \
+  -H "x-api-key: $NANOGPT_API_KEY" \
+  -F model=gpt-image-1 \
+  -F prompt="Combine these references into one product image" \
+  -F "image[]=@reference-1.png" \
+  -F "image[]=@reference-2.jpg"
+```
+
+## JSON Request
+
+Send JSON when you already have images as data URLs.
+
+```json
+{
+  "model": "gpt-image-1",
+  "prompt": "Remove the background",
+  "imageDataUrl": "data:image/png;base64,...",
+  "maskDataUrl": "data:image/png;base64,..."
+}
+```
+
+### Multi-image JSON
+
+```json
+{
+  "model": "gpt-image-1",
+  "prompt": "Combine these references into one product image",
+  "imageDataUrls": [
+    "data:image/png;base64,...",
+    "data:image/jpeg;base64,..."
+  ]
+}
+```
+
+## Response
+
+Responses follow the same image response conventions as image generation. Depending on request parameters and model support, returned items may contain `url` or `b64_json`.
+
+```json
+{
+  "created": 1778155200,
+  "data": [
+    {
+      "url": "https://..."
+    }
+  ]
+}
+```
+
+## Common Errors
+
+| Code | Description |
+| --- | --- |
+| `missing_image_input` | `image` is required. |
+| `image_input_too_large` | Upload or input image is too large. |
+| `invalid_multipart_body` | Multipart body could not be parsed. |
+| `rate_limit_exceeded` | Too many image edit uploads. |
+
+## Notes
+
+- Multipart uploads have strict size limits.
+- Generated URLs are temporary unless another page explicitly guarantees longer retention.
+- Use `GET /api/v1/image-models` to discover image-edit-capable models and supported parameters.

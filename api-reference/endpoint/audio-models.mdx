@@ -1,0 +1,86 @@
+---
+title: "Audio Models"
+description: "List available text-to-speech and speech-to-text models"
+---
+
+## Overview
+
+Use `GET /api/v1/audio-models` to discover the currently available audio models. The response includes both text-to-speech (TTS) and speech-to-text (STT) models.
+
+This endpoint is cacheable. Refresh it periodically and do not hardcode audio model capabilities in your client.
+
+## Endpoint
+
+```text
+GET https://nano-gpt.com/api/v1/audio-models
+```
+
+## Authentication
+
+Authentication is optional.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `detailed` | boolean | `true` | Include names, descriptions, pricing, capabilities, and supported parameters. |
+| `type` | string | `all` | Filter by audio model type. Allowed values: `all`, `tts`, `stt`. |
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tts-model-id",
+      "object": "model",
+      "name": "Display name",
+      "description": "Model description",
+      "architecture": {
+        "modality": "audio",
+        "input_modalities": ["text"],
+        "output_modalities": ["audio"]
+      },
+      "pricing": {
+        "currency": "USD"
+      },
+      "capabilities": {
+        "text_to_speech": true,
+        "speech_to_text": false
+      },
+      "supported_parameters": {}
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "generated_at": "2026-05-07T12:00:00.000Z"
+  }
+}
+```
+
+When `type` is not `all`, `meta` may include the active filter.
+
+## Model Types
+
+| Type | Description |
+| --- | --- |
+| `tts` | Text-to-speech models for `POST /api/v1/audio/speech` and related TTS endpoints. |
+| `stt` | Speech-to-text models for transcription endpoints. |
+| `all` | Both TTS and STT models. |
+
+## Example
+
+```bash
+curl "https://nano-gpt.com/api/v1/audio-models?type=stt&detailed=true" \
+  -H "x-api-key: $NANOGPT_API_KEY"
+```
+
+## Notes
+
+- Supported parameters vary by model, including voices, formats, streaming support, file formats, language support, diarization, timestamps, and max input size.
+- Use this endpoint instead of hardcoding audio model capabilities.
+- The response is cacheable, but model availability can change.

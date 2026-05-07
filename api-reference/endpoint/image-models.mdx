@@ -1,0 +1,92 @@
+---
+title: "Image Models"
+description: "List available image generation and image editing models with capabilities and supported parameters"
+---
+
+## Overview
+
+Use `GET /api/v1/image-models` to discover the currently available image models and their capabilities. Do not hardcode image model capability tables in your client; model availability and supported parameters can change.
+
+This endpoint is cacheable. Refresh it periodically and handle new fields as additive.
+
+## Endpoint
+
+```text
+GET https://nano-gpt.com/api/v1/image-models
+```
+
+## Authentication
+
+Authentication is optional.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `detailed` | boolean | `true` | Include names, descriptions, pricing, capabilities, and supported parameters. |
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "model-id",
+      "object": "model",
+      "name": "Display name",
+      "description": "Model description",
+      "architecture": {
+        "modality": "image",
+        "input_modalities": ["text"],
+        "output_modalities": ["image"]
+      },
+      "pricing": {
+        "currency": "USD"
+      },
+      "capabilities": {
+        "image_generation": true,
+        "image_to_image": false,
+        "inpainting": false
+      },
+      "supported_parameters": {}
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "generated_at": "2026-05-07T12:00:00.000Z"
+  }
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Model ID to pass to image generation or image editing endpoints. |
+| `object` | string | Always `model`. |
+| `name` | string | Human-readable model name. |
+| `description` | string | Short model description. |
+| `architecture` | object | Modality metadata, including input and output modalities. |
+| `pricing` | object | USD pricing metadata. Shape can vary by model. |
+| `capabilities` | object | Feature flags such as `image_generation`, `image_to_image`, and `inpainting`. |
+| `supported_parameters` | object | Model-specific parameters such as sizes, counts, quality settings, seeds, or image input controls. |
+
+With `detailed=false`, each item may include only basic model identifiers. Use `detailed=true` when building model pickers or validating user controls.
+
+## Example
+
+```bash
+curl "https://nano-gpt.com/api/v1/image-models?detailed=true" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+## Notes
+
+- Supported parameters vary by model.
+- Use this endpoint instead of hardcoding media model capabilities.
+- The response is cacheable, but model availability can change.
+- Pricing values are in USD unless otherwise documented in the response.

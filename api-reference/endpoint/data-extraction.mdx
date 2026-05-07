@@ -1,0 +1,305 @@
+---
+title: "Data Extraction APIs"
+description: "Public data extraction endpoints for web, maps, social, and email/domain intelligence workflows"
+---
+
+## Overview
+
+NanoGPT exposes data extraction APIs for web, maps, social, and email/domain intelligence workflows.
+
+These endpoints require API key authentication. Each request estimates a maximum charge before running. Some endpoints require `maxTotalChargeUsd` when the result count is unbounded.
+
+## Authentication
+
+Use either header:
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Shared Billing and Runtime Behavior
+
+- Responses include returned data plus NanoGPT billing metadata.
+- Partial results may still be billed if the extraction job produced usable data before failing.
+- Result limits exist, commonly up to 5,000 returned items for social and data scrapers.
+- Long-running calls can take up to several minutes.
+- For unbounded searches, set `maxTotalChargeUsd` to cap spend.
+- Use `resultLimit`, `resultsLimit`, or endpoint-specific max-count fields to keep runs bounded.
+
+Typical responses include a data payload and billing metadata:
+
+```json
+{
+  "data": [],
+  "meta": {
+    "nanogpt": {
+      "costUsd": 0.05,
+      "itemsReturned": 25
+    }
+  }
+}
+```
+
+## Endpoints
+
+| Endpoint | Method | Purpose |
+| --- | --- | --- |
+| `/api/v1/firecrawl` | POST | Web page scraping, site maps, and crawls. |
+| `/api/v1/googlemaps` | POST | Google Maps place search and detail extraction. |
+| `/api/v1/googlemaps/reviews` | POST | Google Maps review extraction. |
+| `/api/v1/facebook/ads` | POST | Facebook/Meta ad library extraction. |
+| `/api/v1/instagram/profile` | POST | Instagram profile extraction. |
+| `/api/v1/instagram/posts` | POST | Instagram post extraction. |
+| `/api/v1/reddit` | POST | Reddit post, comment, community, and user extraction. |
+| `/api/v1/tiktok` | POST | TikTok hashtag, profile, search, and post extraction. |
+| `/api/v1/hunter` | GET, POST | Email/domain intelligence pass-through. |
+| `/api/v1/hunter/{path}` | GET, POST | Email/domain intelligence pass-through with path selection. |
+
+## Web Crawling
+
+```text
+POST https://nano-gpt.com/api/v1/firecrawl
+```
+
+### Body
+
+```json
+{
+  "operation": "scrape",
+  "url": "https://example.com",
+  "formats": ["markdown"],
+  "waitForFinishSecs": 120
+}
+```
+
+### Operations
+
+- `scrape`
+- `map`
+- `crawl`
+
+### Important Parameters
+
+| Parameter | Description |
+| --- | --- |
+| `url` | Required target URL. |
+| `operation` | Operation to run. Must be one of `scrape`, `map`, or `crawl` when provided. |
+| `limit` | Page or item limit for `map` and `crawl`. |
+| `search` | Optional search string for `map`. |
+| `maxReturnedPages` | Maximum pages returned for `crawl`. |
+| `waitForFinishSecs` | Wait time, capped at 240 seconds. |
+
+PDF parsing has max page controls when PDF parsing is enabled.
+
+## Google Maps
+
+```text
+POST https://nano-gpt.com/api/v1/googlemaps
+```
+
+### Required Input
+
+Provide at least one of:
+
+- `searchStringsArray`
+- `startUrls`
+- `placeIds`
+- scrape-all-places option, when supported
+
+### Important Parameters
+
+- `maxTotalChargeUsd`
+- `resultLimit`
+- `maxCrawledPlacesPerSearch`
+- `scrapePlaceDetailPage`
+- `scrapeContacts`
+- `scrapeSocialMediaProfiles`
+- `maxReviews`
+- `maxImages`
+- filters such as category, rating, website availability, and closed-place handling when supported
+
+## Google Maps Reviews
+
+```text
+POST https://nano-gpt.com/api/v1/googlemaps/reviews
+```
+
+### Required Input
+
+Provide at least one of:
+
+- `startUrls`
+- `placeIds`
+
+### Important Parameters
+
+- `maxReviews`
+- `reviewsSort`
+- `reviewsStartDate`
+- `maxTotalChargeUsd`
+- `resultLimit`
+
+<Note>
+  If you use `reviewsStartDate`, sort reviews by newest first.
+</Note>
+
+## Facebook Ads
+
+```text
+POST https://nano-gpt.com/api/v1/facebook/ads
+```
+
+### Required Input
+
+- `startUrls`: at least one Facebook Page URL or Meta Ad Library URL.
+
+### Important Parameters
+
+- `resultsLimit`
+- `activeStatus`: `active` or `inactive`
+- `maxTotalChargeUsd`
+- `resultLimit`
+
+## Instagram Profile
+
+```text
+POST https://nano-gpt.com/api/v1/instagram/profile
+```
+
+### Required Input
+
+- `username` or `usernames`: Instagram username, profile URL, or profile ID.
+
+### Important Parameters
+
+- `includeAboutSection`
+- `maxTotalChargeUsd`
+- `resultLimit`
+
+## Instagram Posts
+
+```text
+POST https://nano-gpt.com/api/v1/instagram/posts
+```
+
+### Required Input
+
+- `username`: one or more Instagram usernames, profile URLs, or post URLs.
+
+### Important Parameters
+
+- `resultsLimit`
+- `dataDetailLevel`: `basicData` or `detailedData`
+- `skipPinnedPosts`
+- `maxTotalChargeUsd`
+- `resultLimit`
+
+## Reddit
+
+```text
+POST https://nano-gpt.com/api/v1/reddit
+```
+
+### Required Input
+
+Provide at least one of:
+
+- `startUrls`: Reddit URLs from `reddit.com` or `redd.it`
+- `searches`: search terms
+
+### Important Parameters
+
+- `maxItems`
+- `maxPostCount`
+- `maxComments`
+- `maxCommunities`
+- `maxUsers`
+- `searchPosts`
+- `searchComments`
+- `searchCommunities`
+- `searchUsers`
+- `maxTotalChargeUsd`
+- `resultLimit`
+
+## TikTok
+
+```text
+POST https://nano-gpt.com/api/v1/tiktok
+```
+
+### Required Input
+
+Provide at least one of:
+
+- `hashtags`
+- `profiles`
+- `searchQueries`
+- `postURLs`
+
+### Important Parameters
+
+- `resultsPerPage`
+- `maxProfilesPerQuery`
+- `searchSection`
+- transcription options, if exposed
+- `maxTotalChargeUsd`
+- `resultLimit`
+
+## Hunter
+
+Hunter endpoints provide pass-through style email/domain intelligence with NanoGPT billing. Users authenticate with NanoGPT; do not pass a separate Hunter API key.
+
+Supported examples include:
+
+- `domain-search`
+- `email-finder`
+- `email-verifier`
+- `discover`
+
+### Endpoints
+
+```text
+GET  https://nano-gpt.com/api/v1/hunter/{path}
+POST https://nano-gpt.com/api/v1/hunter/{path}
+GET  https://nano-gpt.com/api/v1/hunter?endpoint=domain-search
+POST https://nano-gpt.com/api/v1/hunter
+```
+
+For `GET`, query params are forwarded except:
+
+- `api_key`
+- `apiKey`
+- `endpoint`
+- `path`
+
+For `POST`, JSON body params are forwarded. Use `endpoint` or `path` to select the target path. A nested `params` object is also supported.
+
+### Response Shape
+
+```json
+{
+  "data": {},
+  "meta": {
+    "nanogpt": {
+      "endpoint": "domain-search",
+      "hunterSearchesBilled": 1,
+      "hunterVerificationsBilled": 0,
+      "hunterEnrichmentsBilled": 0,
+      "costUsd": 0.01
+    }
+  }
+}
+```
+
+## Example
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/googlemaps \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "searchStringsArray": ["coffee shops in Amsterdam"],
+    "resultLimit": 25,
+    "maxTotalChargeUsd": 1.00,
+    "scrapePlaceDetailPage": true
+  }'
+```

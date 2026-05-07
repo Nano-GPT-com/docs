@@ -1,0 +1,92 @@
+---
+title: "AI Detection"
+description: "AI-text and plagiarism detection endpoint"
+---
+
+## Overview
+
+Use `POST /api/v1/ai-detection` to run AI-text detection or plagiarism detection on a text input.
+
+## Endpoint
+
+```text
+POST https://nano-gpt.com/api/v1/ai-detection
+```
+
+## Authentication
+
+An API key is required.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Request Body
+
+```json
+{
+  "text": "Text to analyze...",
+  "mode": "ai"
+}
+```
+
+## Parameters
+
+| Field | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `text` | string | Yes | - | Text to analyze. |
+| `mode` | string | No | `ai` | Detection mode. Allowed values: `ai`, `plagiarism`. |
+
+## Modes
+
+| Mode | Description |
+| --- | --- |
+| `ai` | AI-text detection. |
+| `plagiarism` | Plagiarism detection. |
+
+## Response
+
+```json
+{
+  "object": "ai_detection.result",
+  "mode": "ai",
+  "model": "pangram-ai-detection",
+  "content": "Human-readable summary",
+  "result": {
+    "score": 0.12
+  },
+  "word_count": 250,
+  "usage": {
+    "prompt_tokens": 300,
+    "completion_tokens": 50,
+    "total_tokens": 350
+  },
+  "pricing": {
+    "amount": 0.01,
+    "currency": "USD"
+  }
+}
+```
+
+## Example
+
+```bash
+curl -X POST https://nano-gpt.com/api/v1/ai-detection \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Text to analyze...",
+    "mode": "ai"
+  }'
+```
+
+## Common Errors
+
+| Code | Description |
+| --- | --- |
+| `missing_api_key` | API key is required. |
+| `invalid_json` | Request body is not valid JSON. |
+| `invalid_mode` | `mode` is not `ai` or `plagiarism`. |
+| `missing_text` | `text` is required. |
+| `model_not_allowed` | Detection model is not available for the account or route. |
+| `paid_features_disabled` | Paid API features are disabled for the account. |
+| `insufficient_balance` | Account balance is too low for the request. |
