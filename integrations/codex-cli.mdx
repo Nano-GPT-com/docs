@@ -93,8 +93,10 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
         name = "NanoGPT"
         base_url = "https://nano-gpt.com/api/v1"
         env_key = "NANOGPT_API_KEY"
-        wire_api = "chat"
+        wire_api = "responses"
         ```
+
+        Recent Codex CLI versions require `wire_api = "responses"`. Older examples that use `wire_api = "chat"` will fail on current Codex CLI releases.
 
         **Step 2**: Set your API key as an environment variable:
 
