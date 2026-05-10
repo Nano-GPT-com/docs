@@ -1,0 +1,54 @@
+---
+title: "Tool Calling Diagnostics"
+description: "Opt in to share a failed tool-calling turn with NanoGPT support"
+---
+
+# Tool Calling Diagnostics
+
+If an agent or coding client fails while using tools through NanoGPT, you can opt in to share the failing turn with NanoGPT support for debugging.
+
+This is designed for cases where a model emits malformed tool calls, stops instead of calling a required tool, loops on a tool, or a client shows raw tool markup instead of executing the tool.
+
+## Enable Diagnostics
+
+Tool-calling diagnostics are off by default.
+
+To enable them:
+
+1. Open [Settings](https://nano-gpt.com/settings#privacy--analytics).
+2. Enable tool-calling diagnostics under Privacy & Analytics.
+3. Review and acknowledge what may be stored.
+
+## Capture A Failed Turn
+
+After a tool-calling failure, send this as the next message:
+
+```text
+nanogpt fix this
+```
+
+The text must match exactly after trimming surrounding whitespace. It is case-sensitive and should not include any other words.
+
+If diagnostics are not enabled yet, NanoGPT will respond with a link to the settings page instead of storing a capture.
+
+## What Gets Stored
+
+When enabled, NanoGPT stores only the immediately previous request/response cycle visible in the trigger request history.
+
+The diagnostic capture can include:
+
+- prompts and conversation messages from that cycle
+- tool schemas, tool arguments, and tool outputs
+- file paths or other content your client included
+- model responses and client-visible error details
+- NanoGPT request metadata such as model, endpoint, request IDs, and stream mode
+
+NanoGPT applies best-effort redaction before storing the capture, but you should assume the captured turn may contain sensitive project or conversation data. Only use this feature when you are comfortable sharing that failing turn with NanoGPT support.
+
+## Retention
+
+Diagnostic captures are temporary. The default retention period is 14 days, and captures are stored privately for support investigation.
+
+## Limits
+
+Diagnostics are based on the conversation history your client sends with the `nanogpt fix this` trigger. If a client references earlier state by ID instead of including it in the request, NanoGPT may not be able to reconstruct the full failing turn from the trigger alone.

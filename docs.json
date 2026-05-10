@@ -89,6 +89,7 @@
           "api-reference/miscellaneous/x402",
           "api-reference/miscellaneous/extended-thinking",
           "api-reference/miscellaneous/streaming-protocol",
+          "api-reference/miscellaneous/tool-calling-diagnostics",
           "api-reference/miscellaneous/prompt-caching",
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/billing-override",
