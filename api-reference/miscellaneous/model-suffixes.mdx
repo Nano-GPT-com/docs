@@ -1,6 +1,6 @@
 ---
 title: 'Model Suffixes'
-description: 'Supported suffixes for web search, memory, reasoning visibility, thinking variants, and provider routing preferences.'
+description: 'Supported suffixes for web search, memory, PII redaction, reasoning visibility, thinking variants, and provider routing preferences.'
 ---
 
 # Model Suffixes
@@ -90,6 +90,19 @@ Web search suffixes can compose with memory and reasoning-exclude suffixes. If r
 
 Header `memory_expiration_days` takes precedence over `:memory-<days>`. `memory: false` in the request body explicitly disables memory even if the model has a memory suffix. Memory can compose with web search, for example `openai/gpt-5.2:online:memory-90`.
 
+## PII Redaction Suffixes
+
+| Suffix | Meaning |
+| --- | --- |
+| `:redaction` | Enable PII redaction for this request. |
+| `:redacted` | Alias for `:redaction`. |
+| `:piiredaction` | Alias for `:redaction`. |
+| `:piiredacted` | Alias for `:redaction`. |
+
+Redaction suffixes are stripped before model routing and can compose with other supported NanoGPT suffixes, such as `:online`. If a request explicitly enables redaction with a model suffix, redaction remains enabled even if an account-level or API-key default would otherwise be disabled for that request.
+
+For details, pricing, and limitations, see [PII Redaction](/api-reference/miscellaneous/pii-redaction).
+
 ## Reasoning and Thinking Suffixes
 
 | Suffix | Meaning |
@@ -122,5 +135,6 @@ Do not combine conflicting routing directives:
 { "model": "zai-org/glm-5:cheap", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "zai-org/glm-5:thinking:fast", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "openai/gpt-5.2:online/exa-instant:memory-30", "messages": [{ "role": "user", "content": "Hello" }] }
+{ "model": "openai/gpt-5.2:redaction:online", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "anthropic/claude-opus-4.6:memory-30:online/linkup-deep:reasoning-exclude", "messages": [{ "role": "user", "content": "Hello" }] }
 ```

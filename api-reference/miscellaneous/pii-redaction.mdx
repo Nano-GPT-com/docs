@@ -1,0 +1,284 @@
+---
+title: 'PII Redaction'
+description: 'Optional PII redaction for API and web chat requests.'
+---
+
+# PII Redaction
+
+NanoGPT supports optional PII redaction for API and web chat requests. When redaction is enabled, NanoGPT routes the request through Grepture before it reaches the selected model. Grepture masks supported personal information before the model sees the prompt, then restores masked values in the model response when possible.
+
+This is useful when you want to reduce the amount of personal or sensitive data sent to model providers while still getting a useful final answer.
+
+PII redaction is opt-in and costs **$0.0005 per redacted request**.
+
+## How Redaction Works
+
+When redaction is enabled:
+
+1. The user sends a request to NanoGPT.
+2. NanoGPT routes that request through Grepture.
+3. Grepture detects supported personal information and replaces it with temporary placeholders before the request reaches the model.
+4. The model processes the redacted prompt.
+5. Grepture restores masked personal information in the response where possible.
+6. NanoGPT returns the final response to the user.
+
+Simple flow:
+
+```text
+User -> NanoGPT -> Grepture -> Model -> Grepture -> NanoGPT -> User
+```
+
+Credential-like secrets are handled differently from normal PII. If the redaction layer detects API keys, tokens, private keys, webhooks, passwords, or similar secrets, those values are replaced with safe labels and are not restored into the response. This is intentional: a leaked credential should not be reinserted into model output.
+
+## Supported API Endpoints
+
+PII redaction can be enabled on:
+
+- `POST /v1/chat/completions`
+- `POST /v1/completions`
+- `POST /v1/responses`
+
+## Enable With API Headers
+
+Pass any one of these headers with a truthy value:
+
+| Header | Recommended |
+| --- | --- |
+| `redaction: true` | Yes |
+| `redacted: true` | No |
+| `piiredaction: true` | No |
+| `piiredacted: true` | No |
+
+Truthy values accepted by the API:
+
+- `true`
+- `1`
+- `yes`
+- `on`
+
+Recommended header:
+
+```http
+redaction: true
+```
+
+### Chat Completions Example
+
+```bash
+curl https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "redaction: true" \
+  -d '{
+    "model": "openai/gpt-5.5",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Email jane@example.com and tell her the appointment is tomorrow."
+      }
+    ]
+  }'
+```
+
+### Responses Example
+
+```bash
+curl https://nano-gpt.com/api/v1/responses \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "redaction: true" \
+  -d '{
+    "model": "openai/gpt-5.5",
+    "input": "Summarize this customer note: John Smith called from 555-123-4567."
+  }'
+```
+
+## Disable For One Request
+
+If redaction is enabled by an account-level or API-key default, a request can opt out with any supported redaction header set to a falsy value:
+
+| Header | Recommended |
+| --- | --- |
+| `redaction: false` | Yes |
+| `redacted: false` | No |
+| `piiredaction: false` | No |
+| `piiredacted: false` | No |
+
+Falsy values accepted by the API:
+
+- `false`
+- `0`
+- `no`
+- `off`
+
+Recommended opt-out header:
+
+```http
+redaction: false
+```
+
+If the same request explicitly enables redaction with a model suffix such as `:redaction`, redaction remains enabled.
+
+## Enable With Model Suffixes
+
+You can also enable redaction by appending a redaction suffix to the model name:
+
+| Suffix |
+| --- |
+| `:redaction` |
+| `:redacted` |
+| `:piiredaction` |
+| `:piiredacted` |
+
+Example:
+
+```json
+{
+  "model": "openai/gpt-5.5:redaction",
+  "messages": [
+    {
+      "role": "user",
+      "content": "My phone number is 555-123-4567. Write a short reminder text."
+    }
+  ]
+}
+```
+
+NanoGPT strips the redaction suffix before sending the request onward, so the model is still resolved as the base model. The suffix is only used to turn redaction on for that request.
+
+Redaction suffixes can be combined with other supported NanoGPT model routing suffixes. For example:
+
+```json
+{
+  "model": "openai/gpt-5.5:redaction:online",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Search for updates related to this customer domain: example.com"
+    }
+  ]
+}
+```
+
+For general suffix composition rules, see [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
+
+## Enable In Web Chat
+
+In the NanoGPT web app, users can enable PII redaction from:
+
+```text
+Settings > Privacy > PII redaction for chats
+```
+
+When this setting is enabled, web chat requests are routed through the redaction layer automatically. The same $0.0005 per-request redaction charge applies.
+
+## API Default Settings
+
+Users can enable redaction by default for API requests from:
+
+```text
+Settings > Privacy > PII redaction for API requests
+```
+
+When this account-level API setting is enabled, supported API text requests are routed through the redaction layer by default. Users can still opt out per request with `redaction: false`.
+
+API keys can also be configured individually from the API key settings modal:
+
+| API key setting | Behavior |
+| --- | --- |
+| Inherit account | Use the account-level API default. |
+| Always redact | Redact requests made with this API key unless the request opts out. |
+| Never redact | Do not apply the account-level API redaction default to this API key. |
+
+Explicit per-request headers and model suffixes are still the clearest way to control redaction for a single request.
+
+## What Gets Redacted
+
+The redaction layer is designed to detect and mask common personal information and sensitive credentials.
+
+### Personal Information
+
+Supported PII categories:
+
+| Category | Description |
+| --- | --- |
+| Email | Email addresses |
+| Phone | Phone numbers |
+| SSN | US Social Security numbers |
+| Credit card | Payment card numbers |
+| IP address | IPv4 and IPv6-style network addresses |
+| Address | Physical addresses |
+| Name | Person names |
+| Date of birth | Birth dates and DOB-style values |
+
+For these PII categories, values are temporarily replaced with placeholders before reaching the model. When the response comes back, Grepture restores placeholders to the original values where possible.
+
+### Secrets And Credentials
+
+NanoGPT also replaces common credential-like values with safe labels. These values are not restored.
+
+Examples of secret categories:
+
+| Category | Behavior |
+| --- | --- |
+| API keys and access tokens | Replaced with a safe label |
+| Cloud credentials and session tokens | Replaced with a safe label |
+| Webhook URLs | Replaced with a safe label |
+| Private key material | Replaced with a safe label |
+| Password or secret assignments | Replaced with a safe label |
+| Service account identifiers | Replaced with a safe label |
+| FTP-style embedded credentials | Replaced with a safe label |
+
+PII such as names, emails, and phone numbers is masked and restored. Credentials such as API keys, private keys, webhooks, and passwords are replaced permanently and are not restored into the model response.
+
+## Pricing
+
+PII redaction costs **$0.0005 per redacted request**.
+
+This charge is added only when redaction is enabled for the request. It is shown as a separate PII redaction add-on in usage details.
+
+The redaction charge is per request, not per token.
+
+## Failure Behavior
+
+Redaction is fail-closed. If a request asks for redaction and the redaction layer cannot be used, NanoGPT does not silently retry the request without redaction.
+
+If redaction is enabled but the redaction service is unavailable, the request may fail rather than being sent without redaction. This prevents accidental unredacted fallback behavior.
+
+## Limitations
+
+- Redaction is a privacy and safety layer, not a compliance guarantee.
+- Detection is best-effort and may not catch every possible form of personal information or secret.
+- PII restoration depends on the placeholder appearing in the model response. If the model rewrites, omits, or transforms the placeholder, restoration may not occur exactly as expected.
+- Redaction applies to request content that can be processed as text. It should not be treated as pixel-level image redaction, file sanitization, malware scanning, or document de-identification.
+- Users should still avoid sending unnecessary personal data or credentials to AI systems.
+
+## FAQ
+
+### Does redaction change the model I selected?
+
+No. Redaction changes the route the request takes before it reaches the model. It does not change the selected model.
+
+### Does redaction work with streaming?
+
+Yes. Redaction is intended to work with streaming responses. The request is still routed through the redaction layer before the model sees it.
+
+### Are redacted values restored in the final answer?
+
+For supported personal information categories, yes, where possible. For secrets and credentials, no. Secrets are replaced with safe labels and are not restored.
+
+### Can I enable redaction globally for API requests?
+
+Yes. Users can enable an account-level API redaction default in `Settings > Privacy`. API keys can inherit that default, always redact, or opt out of the account default. Per-request headers and model suffixes are also supported.
+
+### Can I opt out if my account or API key has redaction enabled by default?
+
+Yes. Send `redaction: false` on the request to opt out of account-level or API-key redaction defaults. Model suffixes such as `:redaction` explicitly enable redaction for that request.
+
+### What happens if I use both the header and the model suffix?
+
+Redaction is enabled. There is still only one redaction charge for the request.
+
+### Does this mean NanoGPT never sees the original prompt?
+
+No. The user sends the original request to NanoGPT first. Redaction is designed to reduce what reaches the selected model provider by routing the request through Grepture before provider dispatch.
