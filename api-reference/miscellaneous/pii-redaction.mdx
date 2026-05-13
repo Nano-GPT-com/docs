@@ -278,7 +278,3 @@ Yes. Send `redaction: false` on the request to opt out of account-level or API-k
 ### What happens if I use both the header and the model suffix?
 
 Redaction is enabled. There is still only one redaction charge for the request.
-
-### Does this mean NanoGPT never sees the original prompt?
-
-No. The user sends the original request to NanoGPT first. Redaction is designed to reduce what reaches the selected model provider by routing the request through Grepture before provider dispatch.
