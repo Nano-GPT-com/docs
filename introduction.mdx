@@ -5,7 +5,7 @@ description: "Welcome to the Nano-GPT.com API"
 
 ## Overview
 
-The NanoGPT API allows you to generate text, images and video using any AI model available. Our implementation for text generation generally matches the OpenAI standards. We also support TEE-backed models with attestation/signature verification for stronger integrity and data-in-use protection. TEE does not by itself guarantee end-to-end confidentiality or zero logging across every network/provider hop; guarantees are provider/path specific. Depending on transport and provider architecture, plaintext may still exist at gateway/proxy layers outside the enclave. For verification details, see [TEE Model Verification](https://docs.nano-gpt.com/api-reference/tee-verification).
+The NanoGPT API allows you to generate text, images and video using any AI model available. Our implementation for text generation generally matches the OpenAI standards.
 
 <Note>
   All examples in this documentation also work on our alternative domains. Just replace the base URL `https://nano-gpt.com` with your preferred domain: [ai.bitcoin.com](https://ai.bitcoin.com), [bcashgpt.com](https://bcashgpt.com), or [cake.nano-gpt.com](https://cake.nano-gpt.com). Only the base URL changes; endpoints and request formats remain the same.
@@ -15,10 +15,11 @@ The NanoGPT API allows you to generate text, images and video using any AI model
 
 | Endpoint | Purpose |
 | --- | --- |
-| `POST /api/v1/chat/completions` | OpenAI-compatible chat generation with optional web search via model suffixes like `:online` |
-| `POST /api/web` | Direct Web Search API with explicit query, filters, and output mode control |
-
-For direct search use cases, see [Direct Web Search API](/api-reference/endpoint/web-search).
+| `POST /api/v1/chat/completions` | OpenAI-compatible chat generation |
+| `POST /api/v1/responses` | OpenAI-compatible Responses API |
+| `POST /v1/images/generations` | OpenAI-compatible image generation |
+| `POST /api/generate-video` | Video generation, editing, extension, and upscaling |
+| `POST /api/v1/messages` | Anthropic-compatible Messages API |
 
 ## Chat Completion example
 
@@ -97,8 +98,3 @@ For detailed documentation on each feature, please refer to the following sectio
 - [Text Generation](/api-reference/text-generation) - Complete guide to text generation APIs including OpenAI-compatible endpoints and legacy options
 - [Image Generation](/api-reference/image-generation) - Learn how to generate images using various models like Recraft, Flux, and Stable Diffusion.
 - [Video Generation](/api-reference/video-generation) - Create high-quality videos with our video generation API
-- [TEE Model Verification](/api-reference/tee-verification) - Verify attestation and signatures for TEE-backed models.
-
-## What's New
-
-- Wavespeed video models now accept direct `imageUrl` inputs, so you can reference publicly hosted images without converting them to base64 first.
