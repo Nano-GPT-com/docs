@@ -35,32 +35,58 @@ Authentication is optional.
   "object": "list",
   "data": [
     {
-      "id": "model-id",
+      "id": "pruna-ai/p-image/text-to-image",
       "object": "model",
-      "name": "Display name",
-      "description": "Model description",
+      "created": 1778544000,
+      "owned_by": "prunaai",
+      "name": "P-Image",
+      "description": "Fast text-to-image generation for low-cost drafts, social visuals, and rapid creative iteration.",
       "architecture": {
-        "modality": "image",
+        "modality": "text->image",
         "input_modalities": ["text"],
         "output_modalities": ["image"]
       },
       "pricing": {
+        "per_image": {
+          "1024*1024": 0.005,
+          "1376*768": 0.005
+        },
         "currency": "USD"
       },
       "capabilities": {
         "image_generation": true,
         "image_to_image": false,
-        "inpainting": false
+        "inpainting": false,
+        "nsfw": false
       },
-      "supported_parameters": {}
+      "supported_parameters": {
+        "resolutions": ["1024x1024", "1376x768", "1184x896"],
+        "max_images": 4
+      },
+      "icon_url": "/icons/PrunaAI.svg",
+      "tags": ["text-to-image", "prunaai", "wavespeed"],
+      "category": "image"
     }
   ],
   "meta": {
-    "count": 1,
-    "generated_at": "2026-05-07T12:00:00.000Z"
+    "count": 169,
+    "generated_at": "2026-05-14T00:00:00.000Z"
   }
 }
 ```
+
+## Supported Parameters
+
+Supported parameters vary by model. Common fields include:
+
+- `resolutions`: array of supported resolution values for this model.
+- `max_images`: maximum number of images that can be requested at once.
+- `rendering_speed`: available rendering speed values, when the model exposes speed tiers.
+- `fixed_image_count`: fixed output count for models that do not allow custom `n`.
+
+Use `supported_parameters.resolutions` to populate resolution or size controls. Treat the values as model-specific strings. Most image generation models use pixel dimensions such as `1024x1024`, but some models use values such as `auto`, aspect ratios, quality tiers, or scale factors.
+
+Use the model's `supported_parameters` and `capabilities` objects to decide which controls to show and which request fields to send.
 
 ## Fields
 
@@ -68,14 +94,24 @@ Authentication is optional.
 | --- | --- | --- |
 | `id` | string | Model ID to pass to image generation or image editing endpoints. |
 | `object` | string | Always `model`. |
+| `created` | integer | Unix timestamp derived from the model's added date. |
+| `owned_by` | string | Provider or owner identifier. |
 | `name` | string | Human-readable model name. |
 | `description` | string | Short model description. |
 | `architecture` | object | Modality metadata, including input and output modalities. |
 | `pricing` | object | USD pricing metadata. Shape can vary by model. |
 | `capabilities` | object | Feature flags such as `image_generation`, `image_to_image`, and `inpainting`. |
+| `capabilities.nsfw` | boolean | Whether the model is uncensored / NSFW-capable. |
 | `supported_parameters` | object | Model-specific parameters such as sizes, counts, quality settings, seeds, or image input controls. |
+| `supported_parameters.resolutions` | string[] | Model-specific supported output resolution values. Usually pixel dimensions like `1024x1024`; may also be symbolic values such as `auto` or model-specific scale factors. |
+| `supported_parameters.max_images` | integer | Maximum number of images the model supports per request. |
+| `supported_parameters.rendering_speed` | string[] | Optional list of rendering speed tiers. Present only for models that expose speed choices. |
+| `supported_parameters.fixed_image_count` | integer | Optional fixed output image count. Present when the model always returns a fixed number of images. |
+| `icon_url` | string | Optional provider icon path. |
+| `tags` | string[] | Optional model tags. |
+| `category` | string | Model category. Usually `image`. |
 
-With `detailed=false`, each item may include only basic model identifiers. Use `detailed=true` when building model pickers or validating user controls.
+`supported_parameters`, including `supported_parameters.resolutions`, is included only in detailed responses. `detailed=true` is the default. If you pass `detailed=false`, each item may include only basic identifiers such as `id`, `object`, `created`, and `owned_by`.
 
 ## Example
 

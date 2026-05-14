@@ -18,7 +18,7 @@ Core fields:
 - `prompt` (string, required): Text prompt to generate an image from.
 - `model` (string, optional): Model ID (default `hidream`).
 - `n` (integer, optional): Number of images to generate (default `1`).
-- `size` (string, optional): `256x256`, `512x512`, or `1024x1024`.
+- `size` (string, optional): Requested output size or model-specific resolution value. Use `GET /api/v1/image-models?detailed=true` and read `supported_parameters.resolutions` for the selected model's supported values.
 - `response_format` (string, optional): `b64_json` (default) or `url`.
 - `user` (string, optional): End-user identifier.
 
@@ -101,4 +101,4 @@ result = response.json()
 
 - Input images must be provided as base64 data URLs; download and convert remote images before sending.
 - Uploads should be 4 MB or smaller after encoding. Compress or resize large assets before sending.
-- Use `GET /api/v1/image-models` to discover current image model capabilities.
+- Use `GET /api/v1/image-models?detailed=true` to discover current image model capabilities and supported resolution values.

@@ -4620,8 +4620,8 @@
           },
           "size": {
             "type": "string",
-            "description": "The size of the generated images",
-            "enum": ["256x256", "512x512", "1024x1024"]
+            "description": "Requested output size or model-specific resolution value. Use GET /api/v1/image-models?detailed=true and read supported_parameters.resolutions for the selected model's supported values.",
+            "examples": ["1024x1024", "1376x768", "auto"]
           },
           "response_format": {
             "type": "string",
