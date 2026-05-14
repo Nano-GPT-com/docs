@@ -26,12 +26,12 @@ CORE CONCEPTS
 - Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
 - Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, and combine suffixes as needed.
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
-- Caching and memory: most providers use implicit caching automatically when supported; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
+- Caching and memory: most providers use implicit caching automatically when supported; top-level caching: true routes to a cache-capable provider and defaults to stickyprovider: true; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
 
 GLOSSARY
 - Linkup search: NanoGPT web search triggered by :online suffix; prepends fresh results and bills $0.006 (standard) or $0.06 (deep).
 - Polychat memory: hierarchical compression invoked by :memory suffix or memory header; stores 1-365 day summaries and replaces conversation history.
-- Prompt caching: implicit for providers that support it (including OpenAI, Gemini, and many open-source provider routes); explicit controls via prompt_caching/promptCaching/cache_control are mainly for Claude and support optional cutAfterMessageIndex.
+- Prompt caching: implicit for providers that support it (including OpenAI, Gemini, and many open-source provider routes); top-level caching: true is capability-based provider routing, not cache annotation; explicit controls via prompt_caching/promptCaching/cache_control are mainly for Claude and support optional cutAfterMessageIndex.
 - Reasoning stream: delta.reasoning text emitted by reasoning-enabled models; reasoning_details provides structured metadata when available.
 - x_nanogpt_pricing: billing extension object with stable core fields (amount, currency, sanitized error) plus provider-dependent optional metadata (cost, paymentSource, token counters, team billing flags).
 - BYOK: bring-your-own-key mode activated with x-use-byok: true or byok.enabled: true to forward requests using stored provider credentials.
@@ -190,7 +190,20 @@ console.log(visionReply.choices[0]?.message.content);
 ```
 
 PROMPT CACHING
-NanoGPT uses implicit caching automatically on providers that support it (including OpenAI, Gemini, and many open-source provider routes). Use prompt_caching / promptCaching / cache_control (body-level alias) when you need explicit Claude cache controls.
+NanoGPT uses implicit caching automatically on providers that support it (including OpenAI, Gemini, and many open-source provider routes).
+
+Set top-level caching: true when the request must go to any available provider that supports prompt/input caching. This is provider capability routing, not prompt-cache annotation: it does not add Anthropic cache_control markers or configure TTLs. If no usable cache-capable provider exists for the model, the request fails. caching: true defaults to stickyprovider: true, so later matching requests from the same API key or session prefer the same provider when still usable. Use stickyprovider: false to require a cache-capable provider without stickiness. stickyProvider is also accepted as a camelCase alias.
+
+Use prompt_caching / promptCaching / cache_control (body-level alias) when you need explicit Claude cache controls.
+
+```ts
+await client.chat.completions.create({
+  model: 'model-id',
+  caching: true,
+  stickyprovider: false,
+  messages: [{ role: 'user', content: 'Hello' }],
+});
+```
 
 ```ts
 await client.chat.completions.create({

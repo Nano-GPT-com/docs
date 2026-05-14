@@ -117,7 +117,49 @@ Notes:
 
 When you explicitly select a provider with `X-Provider`, NanoGPT routes that request to the selected provider. For consecutive prompts, using the same `X-Provider` helps keep routing stable, which is the setup you want for provider-side prompt-cache reuse when that provider and model support caching.
 
-Do not rely on automatic routing if provider-side cache affinity is important. Automatic routing may choose different upstream providers across requests. For cache-sensitive workflows, consistently send the same `X-Provider` value, and use the provider-discovery endpoint to confirm that the provider is available for the model.
+For capability-based routing, use top-level `caching: true` instead of choosing a specific provider. NanoGPT will route to any available provider that supports prompt/input caching for the requested provider-selection model, and it defaults to sticky provider routing so later matching requests prefer the same provider.
+
+Do not rely on general automatic routing if provider-side cache affinity is important. Automatic routing may choose different upstream providers across requests. For cache-sensitive workflows, either consistently send the same `X-Provider` value or use `caching: true` when any cache-capable provider is acceptable.
+
+## Cache-Capable Provider Routing
+
+Set `caching: true` when you want NanoGPT to route a chat completion request to any available provider that supports prompt/input caching. This is capability-based provider selection, not explicit provider selection and not prompt-cache annotation. It does not add Anthropic-style `cache_control` markers or configure cache TTLs.
+
+```json
+{
+  "model": "model-id",
+  "caching": true,
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+If no usable cache-capable provider exists for the model, the request fails instead of falling back to a non-cache-capable provider.
+
+By default, `caching: true` is sticky. The first successful matching request records the selected provider by API key or session. Later matching requests prefer that same provider when it is still usable, improving the chance of provider-side cache hits. NanoGPT does not guarantee that the request will be served from cache.
+
+To require a cache-capable provider without stickiness:
+
+```json
+{
+  "model": "model-id",
+  "caching": true,
+  "stickyprovider": false,
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`.
+
+Routing order for `caching: true`:
+
+1. Filter to providers that are available, not excluded by preferences, and marked as prompt-caching capable.
+2. If stickiness is enabled, prefer the previously recorded provider for the same cache-relevant request shape when still usable.
+3. Otherwise choose the cheapest cache-capable provider by base input + output price.
+4. Use cache write/read pricing only as tie-breakers.
 
 ## Per-Request Routing Preference
 
@@ -143,7 +185,7 @@ Notes:
 
 - Routing preference suffixes are billed like explicit provider-selection requests.
 - They cannot be combined with `X-Provider`, body `provider`, or provider model suffixes.
-- `:tools` cannot be combined with routing preference suffixes or `caching=true`.
+- `:tools` cannot be combined with routing preference suffixes or `caching: true`.
 - If the model does not support provider selection, the request returns an invalid request error for these suffixes.
 
 See [Model Suffixes](/api-reference/miscellaneous/model-suffixes) for the complete suffix reference and composition rules.
@@ -205,7 +247,7 @@ Field details:
 
 ## Resolution Order
 
-When multiple selections exist, the system resolves providers in this order:
+When `caching: true` is set, use the routing order in [Cache-Capable Provider Routing](#cache-capable-provider-routing). Otherwise, when multiple selections exist, the system resolves providers in this order:
 
 1. Per-request explicit provider selection (`X-Provider`, body `provider`, or provider suffix)
 2. Per-request routing preference suffix (`:fast`, `:cheap`, etc.)

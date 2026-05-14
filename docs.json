@@ -91,6 +91,7 @@
           "api-reference/miscellaneous/streaming-protocol",
           "api-reference/miscellaneous/tool-calling-diagnostics",
           "api-reference/miscellaneous/prompt-caching",
+          "api-reference/miscellaneous/changelog",
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/billing-override",
           "api-reference/miscellaneous/provider-selection",

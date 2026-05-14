@@ -35,7 +35,7 @@ Rules:
 - Routing preference suffixes only consider user-selectable providers. Internal routing-only providers are excluded.
 - Routing preference suffixes are stripped before model mapping/routing. Non-routing identity suffixes such as `:thinking` are preserved.
 - Do not combine `:speed`, `:fast`, `:throughput`, `:latency`, `:price`, `:cheap`, or `:floor` with `X-Provider`, body `provider`, or a provider model suffix.
-- Do not combine `:tools` with a routing preference suffix, `X-Provider`, body `provider`, a provider model suffix, or `caching=true`.
+- Do not combine `:tools` with a routing preference suffix, `X-Provider`, body `provider`, a provider model suffix, or `caching: true`.
 - Routing preference requests are billed like explicit provider-selection requests.
 - Conflict error codes use the existing `speed_suffix_*` family for API compatibility, even when the suffix is not literally `:speed`.
 

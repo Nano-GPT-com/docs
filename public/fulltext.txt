@@ -108,6 +108,8 @@ OpenAI-compatible endpoint for chat completions.
 
 **Authentication:** Bearer token
 
+**Cache-capable provider routing:** Set top-level `caching: true` when the request must route to any available provider that supports prompt/input caching. If no usable cache-capable provider exists for the model, the request fails instead of using a non-caching provider. `caching: true` defaults to sticky provider routing for later matching requests from the same API key or session; set `stickyprovider: false` to opt out. `stickyProvider` is also accepted as a camelCase alias. This does not add prompt-cache annotations or configure cache TTLs; use `prompt_caching` / `promptCaching` for explicit provider-specific cache controls.
+
 **Example Request:**
 ```json
 POST https://nano-gpt.com/api/v1/chat/completions

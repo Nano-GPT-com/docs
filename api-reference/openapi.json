@@ -2849,6 +2849,19 @@
             "type": "string",
             "description": "Alias for billing_mode."
           },
+          "caching": {
+            "type": "boolean",
+            "description": "When true, route to an available provider that is marked as prompt/input-caching capable for the requested provider-selection model. If no usable cache-capable provider exists, the request fails instead of falling back to a non-cache-capable provider. This is provider capability routing only; it does not add cache_control markers or configure cache TTLs.",
+            "default": false
+          },
+          "stickyprovider": {
+            "type": "boolean",
+            "description": "Top-level routing control for caching: true. When caching is true, defaults to true and prefers the previously recorded provider for later matching requests from the same API key or session when still usable. Set false to require a cache-capable provider without sticky routing."
+          },
+          "stickyProvider": {
+            "type": "boolean",
+            "description": "CamelCase alias for top-level stickyprovider. Distinct from prompt_caching.stickyProvider, which controls explicit prompt-cache failover behavior."
+          },
           "messages": {
             "type": "array",
             "description": "Array of message objects with role and content",

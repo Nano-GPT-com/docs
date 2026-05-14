@@ -17,6 +17,8 @@ NanoGPT supports two caching modes:
 - **Implicit caching (default):** For providers/models that support provider-native prompt reuse (including OpenAI, Gemini, and many open-source provider routes), caching is applied automatically when eligible. No extra request fields are required.
 - **Explicit prompt caching (opt-in):** Claude models use explicit cache controls (`prompt_caching`/`promptCaching`/body-level `cache_control`, or inline `cache_control`) when you want deterministic cache boundaries and TTL control.
 
+NanoGPT also supports **cache-capable provider routing** with top-level `caching: true`. This is not a prompt annotation mode. It only requires routing to a provider that supports prompt/input caching and, by default, tries to keep later matching requests on the same provider.
+
 ## Supported Models
 
 ### Implicit caching (automatic)
@@ -24,6 +26,39 @@ NanoGPT supports two caching modes:
 NanoGPT automatically uses implicit caching on providers/models that support it, including OpenAI and Gemini model families plus many open-source provider/model routes.
 
 No cache-control flags are required for this mode.
+
+### Cache-Capable Provider Routing
+
+Set top-level `caching: true` when you want NanoGPT to route the request to any available provider that supports prompt/input caching. This is capability-based routing: you do not need to choose a provider. If no cache-capable provider is available for the model, the request fails rather than silently using a non-caching provider.
+
+```json
+{
+  "model": "model-id",
+  "caching": true,
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+By default, `caching: true` also enables sticky provider routing. After the first successful matching request, NanoGPT will try to use the same provider for later matching requests from the same API key or session, improving the chance of provider-side cache hits. This does not guarantee a cache hit.
+
+To require a cache-capable provider without stickiness:
+
+```json
+{
+  "model": "model-id",
+  "caching": true,
+  "stickyprovider": false,
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`.
+
+Use `prompt_caching` / `promptCaching` only when you need provider-specific cache-control annotations or TTL behavior. Top-level `caching: true` does not add Anthropic-style `cache_control` markers or configure cache TTLs.
 
 ### Explicit prompt caching controls (Claude)
 

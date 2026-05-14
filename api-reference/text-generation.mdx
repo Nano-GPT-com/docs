@@ -236,9 +236,40 @@ For the full guide (supported models, thresholds, pricing, and usage fields), se
 
 NanoGPT automatically applies implicit caching on providers/models that support it (including OpenAI, Gemini, and many open-source provider/model routes), so most requests do not need caching flags.
 
-Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and body-level `cache_control` alias, plus inline `cache_control`) when you need Claude-specific cache boundaries, TTL selection, or `stickyProvider` consistency control.
+Set top-level `caching: true` when you want NanoGPT to route the request to any available provider that supports prompt/input caching. This is capability-based routing: you do not need to choose a provider. If no cache-capable provider is available for the model, the request fails rather than silently using a non-caching provider.
 
-> **Note:** NanoGPT's automatic failover system ensures high availability but may occasionally cause cache misses. If you're seeing unexpected cache misses in your usage logs, see the "Cache Consistency with `stickyProvider`" section below.
+Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and body-level `cache_control` alias, plus inline `cache_control`) when you need Claude-specific cache boundaries, TTL selection, or `prompt_caching.stickyProvider` consistency control. Top-level `caching: true` does not add Anthropic-style `cache_control` markers or configure cache TTLs.
+
+#### Cache-Capable Provider Routing
+
+```json
+{
+  "model": "model-id",
+  "caching": true,
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+By default, `caching: true` enables sticky provider routing. After the first successful matching request, NanoGPT will try to use the same provider for later matching requests from the same API key or session, improving the chance of provider-side cache hits. This does not guarantee that a request will be served from cache.
+
+To require a cache-capable provider without sticky routing, set `stickyprovider: false`:
+
+```json
+{
+  "model": "model-id",
+  "caching": true,
+  "stickyprovider": false,
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+Top-level `stickyProvider` is also accepted as a camelCase alias for `stickyprovider`.
+
+For `caching: true`, NanoGPT filters to available, non-excluded, prompt-caching-capable providers; prefers the recorded sticky provider when enabled and still usable; otherwise chooses the cheapest cache-capable provider by base input + output price. Cache write/read pricing is used only as a tie-breaker.
 
 The `prompt_caching` / `promptCaching` helper accepts these options:
 
@@ -247,7 +278,7 @@ The `prompt_caching` / `promptCaching` helper accepts these options:
 | `enabled` | boolean | — | Enable prompt caching |
 | `ttl` | string | `"5m"` | Cache time-to-live: `"5m"` or `"1h"` |
 | `cut_after_message_index` / `cutAfterMessageIndex` | integer | — | Zero-based index; cache all messages up to and including this index |
-| `stickyProvider` | boolean | `false` | **New:** When `true`, disable automatic failover to preserve cache consistency. Returns 503 error instead of switching services. |
+| `stickyProvider` | boolean | `false` | When `true`, disable automatic failover to preserve explicit prompt-cache consistency. Returns 503 error instead of switching services. |
 
 #### Explicit `cache_control` markers
 
@@ -342,7 +373,7 @@ requests.post(
 
 `cut_after_message_index` is zero-based and points at the last message in the static prefix. NanoGPT will attach a `cache_control` block with your TTL to each message up to that index before forwarding the request upstream. If you omit `cut_after_message_index`, NanoGPT will select a cache boundary automatically; set it explicitly if you need full control. If you need different cache durations or non-contiguous breakpoints, fall back to explicit `cache_control` markers in your `messages` array.
 
-### Cache Consistency with `stickyProvider`
+### Explicit Prompt Cache Consistency
 
 NanoGPT automatically fails over to backup services when the primary service is temporarily unavailable. While this ensures high availability, it can break your prompt cache because **each backend service maintains its own separate cache**.
 

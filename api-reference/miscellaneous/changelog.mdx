@@ -1,0 +1,10 @@
+---
+title: "Changelog"
+description: "Recent API behavior changes and migration notes."
+---
+
+## Cache-Capable Provider Routing
+
+`caching: true` now defaults to sticky provider routing. Pass `stickyprovider: false` to restore the previous non-sticky routing behavior while still requiring a cache-capable provider.
+
+Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`.
