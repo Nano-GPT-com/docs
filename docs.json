@@ -78,6 +78,7 @@
           "api-reference/text-to-speech",
           "api-reference/music-generation",
           "api-reference/tee-verification",
+          "api-reference/evals",
           "api-reference/teams"
         ]
       },
