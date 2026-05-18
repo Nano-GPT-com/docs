@@ -120,7 +120,7 @@ Authorization: Bearer YOUR_API_KEY
 | `safety_identifier` | string | No | Safety tracking identifier |
 | `prompt_cache_key` | string | No | Key for prompt caching |
 | `background` | boolean | No | Enable background/async processing |
-| `service_tier` | string | No | Service tier. Use `"priority"` where supported. See [Service tiers (priority)](#service-tiers-priority) near the end. |
+| `service_tier` | string | No | Service tier: `"auto"`, `"default"`, `"flex"`, or `"priority"`. See [Service tiers (flex and priority)](#service-tiers-priority) near the end. |
 
 ### Retention Resolution
 
@@ -1173,26 +1173,46 @@ curl https://nano-gpt.com/api/v1/responses/resp_abc123 \
 3. Background mode: Maximum duration is approximately 800 seconds.
 4. Metadata limits: Maximum 16 keys, 64 character key names, 512 character values.
 
-## Service tiers (priority)
+<a id="service-tiers-priority" />
 
-Set `service_tier: "priority"` to request priority processing on providers that support service tiers.
+## Service tiers (flex and priority)
+
+Set `service_tier` to request a non-default capacity tier on providers that support service tiers:
+
+- `auto` or omitted: use NanoGPT's normal routing and the provider default.
+- `default`: request the provider's standard tier where the provider accepts an explicit default value.
+- `flex`: request lower-cost, variable-capacity processing where supported.
+- `priority`: request higher-cost priority processing where supported.
 
 Behavior notes:
 
-- Priority tiers are only applied when the routed provider supports them.
-- Priority tiers are gated on the routed provider, not just the model name.
+- Service tier availability is model- and provider-specific. Model pages show which tiers are supported.
+- Flex and priority tiers are only applied when the routed provider supports them.
 - Header provider overrides (like `X-Provider`) and explicit provider selection are honored for pricing and x402 estimates.
-- Provider-native web search can force routing; priority pricing follows that routing.
+- Provider-native web search can force routing; tier pricing follows that routing.
+- If you explicitly force a provider that does not support service tiers, the requested tier may be ignored by the upstream provider, or routing and pricing may differ from the default route.
 
 Billing note:
 
-- Priority tier billing uses priority pricing when applicable.
+- Flex tier billing uses flex pricing where applicable.
+- Priority tier billing uses priority pricing where applicable.
+- High-context pricing may also apply for models and providers with separate high-context SKUs, such as `es2k` pricing for GPT-5.5/GPT-5.4 where available.
+
+### Example: flex tier
+
+```json
+{
+  "model": "openai/gpt-5.5",
+  "input": "Say hi in one sentence.",
+  "service_tier": "flex"
+}
+```
 
 ### Example: priority tier
 
 ```json
 {
-  "model": "gpt-5.2",
+  "model": "openai/gpt-5.5",
   "input": "Say hi in one sentence.",
   "service_tier": "priority"
 }

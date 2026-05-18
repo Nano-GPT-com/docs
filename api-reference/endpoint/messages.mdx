@@ -63,6 +63,7 @@ Use either header:
 | `disable_parallel_tool_use` | boolean | -- | Disable parallel tool calls |
 | `thinking` | object | -- | Enable extended thinking for supported models |
 | `metadata` | object | -- | Request metadata (`user` or `user_id`) |
+| `service_tier` | string | -- | Service tier: `"auto"`, `"default"`, `"standard"`, `"flex"`, `"priority"`, or `"batch"` |
 
 ### Message Format
 
@@ -670,8 +671,12 @@ To migrate from Anthropic's API to NanoGPT:
 Anthropic-style service tiers are normalized when routing to providers that support service tiers:
 
 - `standard` → `default`
+- `default` → `default`
+- `flex` → `flex`
 - `priority` → `priority`
 - `batch` → ignored for service-tier routing
+
+Flex and priority availability is model- and provider-specific. If you explicitly force a provider that does not support service tiers, the requested tier may be ignored by the upstream provider, or routing and pricing may differ from the default route.
 
 ## Notes
 

@@ -360,7 +360,7 @@ PRICING AND BILLING
     - `billedTeamName?: string | null`
 - Compatibility rule: clients must tolerate additional fields in both `usage` and `x_nanogpt_pricing`; unknown keys should be ignored, not treated as schema errors.
 - Conversation-level transactions are billed in USD with optional auto-conversion to Nano when applicable.
-- Service tiers: pass service_tier: "priority" on /v1/chat/completions, /v1/responses, or /v1/messages. Priority is gated on the routed provider, and routing overrides like X-Provider or provider-native web search affect priority pricing.
+- Service tiers: pass service_tier: "flex" for lower-cost variable-capacity processing or service_tier: "priority" for higher-cost priority processing on /v1/chat/completions, /v1/responses, or /v1/messages. Availability is model- and provider-specific; routing overrides like X-Provider or provider-native web search affect tier pricing, and high-context pricing such as es2k can apply for GPT-5.5/GPT-5.4 where available.
 - Use 429 handling with exponential backoff; subscription-free buckets allow roughly 60 RPM, while premium models may enforce tighter limits.
 
 Streaming final-chunk example (with `stream_options.include_usage: true`):

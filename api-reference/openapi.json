@@ -2908,7 +2908,7 @@
           "service_tier": {
             "type": "string",
             "enum": ["auto", "default", "flex", "priority"],
-            "description": "Optional service tier. Set to \"priority\" to request priority processing when supported by the routed provider"
+            "description": "Optional service tier: \"auto\", \"default\", \"flex\", or \"priority\". Use \"flex\" for lower-cost variable-capacity processing or \"priority\" for higher-cost priority processing where supported by the routed model/provider."
           },
           "temperature": {
             "type": "number",
@@ -6637,7 +6637,7 @@
           "service_tier": {
             "type": "string",
             "enum": ["auto", "default", "flex", "priority"],
-            "description": "Optional service tier. Set to \"priority\" to request priority processing when supported by the routed provider"
+            "description": "Optional service tier: \"auto\", \"default\", \"flex\", or \"priority\". Use \"flex\" for lower-cost variable-capacity processing or \"priority\" for higher-cost priority processing where supported by the routed model/provider."
           }
         }
       },
