@@ -151,12 +151,13 @@ The response includes the linked user's balance and deposit details.
 
 ## Initiate A Top-Up
 
-Partner-authenticated top-ups are not limited to Nano. The same linked NanoGPT account can be funded through the deposit methods NanoGPT supports for that route and deployment, including:
+Partner-authenticated top-ups are not limited to Nano. The same linked NanoGPT account can be funded through enabled NanoGPT deposit methods, including:
 
 - Native Nano direct deposits: read the linked user's `nanoDepositAddress` from the balance response and show that address to the user. See [Check User Balance](#check-user-balance).
-- Crypto invoice or swap deposits: call `POST /api/transaction/create/{ticker}`, for example `btc`, `btc-ln`, `ltc`, `zec`, or other supported tickers.
-- Daimo multi-chain stablecoin deposits: call `POST /api/transaction/create/daimo/{ticker}` where supported.
-- Card deposits: call the card deposit route where enabled for the integration.
+- Crypto invoice or swap deposits: call `POST /api/transaction/create/{ticker}` for supported tickers such as `btc`, `btc-ln`, `ltc`, `ltc-mweb`, `xmr`, `doge`, `dash`, `zec`, `bch`, `kas`, `ton`, `near`, `egld`, `vvv`, `zano`, or `fusd`.
+- Card deposits where enabled for the partner integration.
+
+Available methods can change by region, provider status, amount, and partner configuration. Ask NanoGPT which top-up methods should be enabled for your integration before launch.
 
 For invoice-style payment methods, create the payment request for the linked user with the ticker route:
 
