@@ -5,7 +5,7 @@ description: 'Choose the upstream provider for supported open-source models'
 
 # Provider Selection
 
-Provider selection chooses the upstream provider for a supported model. It does not change the model ID. For example, to use Kimi K2.6 through Novita, keep the model as `kimi-k2.6` or `moonshotai/kimi-k2.6`, and send the provider separately with `X-Provider`.
+Provider selection chooses the upstream provider for a supported model. It does not change the model ID. For example, to use Kimi K2.6 through Novita, keep the model as `moonshotai/kimi-k2.6` or `moonshotai/kimi-k2.6`, and send the provider separately with `X-Provider`.
 
 Provider selection is optional; if you do nothing, the platform picks the provider. `X-Provider` explicitly selects a provider for that request. Explicit provider selection is always pay-as-you-go and is charged at the selected provider's price, including provider-selection markup. For subscription users, sending `X-Provider` bypasses subscription coverage for that request.
 
@@ -32,7 +32,7 @@ GET /api/models/:canonicalId/providers
 This endpoint is not under `/api/v1`. If your base URL is `https://nano-gpt.com/api/v1`, do not append this path to that base URL. Use:
 
 ```http
-GET https://nano-gpt.com/api/models/kimi-k2.6/providers
+GET https://nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
 ```
 
 If the model ID contains `/`, URL-encode the slash when placing it in the path:
@@ -47,7 +47,7 @@ Do not use the unencoded form, because the slash is treated as a path separator:
 GET https://nano-gpt.com/api/models/moonshotai/kimi-k2.6/providers
 ```
 
-Here `:canonicalId` means the model ID or one of its supported aliases. For Kimi K2.6, both `kimi-k2.6` and `moonshotai/kimi-k2.6` work.
+Here `:canonicalId` means the model ID or one of its supported aliases. For Kimi K2.6, both `moonshotai/kimi-k2.6` and `moonshotai/kimi-k2.6` work.
 
 Example response:
 

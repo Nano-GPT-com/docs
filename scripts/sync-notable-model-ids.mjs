@@ -33,8 +33,8 @@ const FAMILY_CONFIG = [
     ],
   },
   {
-    label: 'xAI Grok 4 / 4.1',
-    ids: ['x-ai/grok-4-07-09', 'x-ai/grok-4-fast', 'x-ai/grok-4-fast:thinking', 'x-ai/grok-4.1-fast-reasoning'],
+    label: 'xAI Grok',
+    ids: ['x-ai/grok-4.3', 'x-ai/grok-latest', 'x-ai/grok-4.20', 'x-ai/grok-4.20-multi-agent'],
   },
   {
     label: 'Moonshot Kimi K2.5',
