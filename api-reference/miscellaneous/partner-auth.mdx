@@ -5,7 +5,7 @@ description: "Add NanoGPT-powered AI to your product while keeping your own user
 
 ## Overview
 
-Partner Auth lets your backend authenticate one of your users to NanoGPT without giving you a NanoGPT `sessionUUID` or a NanoGPT API key.
+Partner Auth lets your backend authenticate one of your users to NanoGPT without giving you direct access to NanoGPT account credentials or API keys.
 
 You send a short-lived JWT signed by your backend. NanoGPT verifies it, maps your user ID to a normal NanoGPT account behind the scenes, and runs requests against that linked account.
 
@@ -147,7 +147,7 @@ The JWT must include:
 balance:read
 ```
 
-The response includes the linked user's balance and deposit details. It does not include `sessionUUID`.
+The response includes the linked user's balance and deposit details.
 
 ## Initiate A Top-Up
 
