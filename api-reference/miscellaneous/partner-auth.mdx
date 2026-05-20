@@ -151,9 +151,14 @@ The response includes the linked user's balance and deposit details.
 
 ## Initiate A Top-Up
 
-For native Nano deposits, read the linked user's `nanoDepositAddress` from the balance response and show that address to the user. See [Check User Balance](#check-user-balance).
+Partner-authenticated top-ups are not limited to Nano. The same linked NanoGPT account can be funded through the deposit methods NanoGPT supports for that route and deployment, including:
 
-For invoice-style payment methods, create a deposit for the linked user with the ticker route:
+- Native Nano direct deposits: read the linked user's `nanoDepositAddress` from the balance response and show that address to the user. See [Check User Balance](#check-user-balance).
+- Crypto invoice or swap deposits: call `POST /api/transaction/create/{ticker}`, for example `btc`, `btc-ln`, `ltc`, `zec`, or other supported tickers.
+- Daimo multi-chain stablecoin deposits: call `POST /api/transaction/create/daimo/{ticker}` where supported.
+- Card deposits: call the card deposit route where enabled for the integration.
+
+For invoice-style payment methods, create the payment request for the linked user with the ticker route:
 
 ```bash
 curl -X POST "https://nano-gpt.com/api/transaction/create/btc-ln" \
@@ -168,7 +173,7 @@ The JWT must include:
 deposit:create
 ```
 
-NanoGPT resolves the user from the JWT `sub` and returns deposit details for that linked account. For ticker-specific limits and supported payment methods, see [Crypto Deposits](/api-reference/endpoint/crypto-deposits).
+NanoGPT resolves the user from the JWT `sub` and returns deposit details for that linked account. For ticker-specific limits, request bodies, status polling, and supported payment methods, see [Crypto Deposits](/api-reference/endpoint/crypto-deposits).
 
 ## Browser SSO
 
