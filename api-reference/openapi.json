@@ -210,10 +210,14 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Use `favorites` to order the normally visible model list by the authenticated user's completed model usage from the last 90 days. Models with no recent usage remain after used models in normal catalog order. Invalid values, missing API keys, and accounts with no recent usage fall back to normal ordering.",
+            "description": "Reorders the returned model list without adding or hiding models. `favorites` orders by the authenticated account's recent model usage and requires a valid API key; without one it falls back to normal ordering. `mostused` orders by global completed model usage and does not require authentication. Unused or unranked models remain after ranked models in normal catalog order. Invalid values are ignored.",
             "required": false,
             "schema": {
               "type": "string",
+              "enum": [
+                "favorites",
+                "mostused"
+              ],
               "example": "favorites"
             }
           }

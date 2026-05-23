@@ -14,16 +14,17 @@ OpenAI-compatible endpoint for retrieving available models with optional detaile
 
 **Query Parameters:**
 - `detailed` (boolean, default: false): Returns detailed model information including pricing
-- `sort` (string): Use `favorites` to order models by the authenticated user's recent model usage
+- `sort` (string): Values: `favorites`, `mostused`. Reorders the returned model list. Sorting only affects models that would already be visible to the caller. It does not add or hide models.
 
 **Endpoint Behavior:**
-- `GET /api/v1/models` supports `sort=favorites`.
-- With `sort=favorites`, NanoGPT returns the same model list the caller would normally receive, but ordered by the authenticated user's recent model usage. Models used most often appear first.
-- Sorting is based on completed model usage from the last 90 days.
-- The endpoint does not hide unused models. Models with no recent usage remain in the response after the used models, in the normal catalog order.
-- The same account, subscription, API key allowlist, and visible-model filters still apply before sorting.
-- If no valid API key is provided, or the user has no recent usage, the endpoint falls back to the normal ordering.
+- `GET /api/v1/models` supports `sort=favorites` and `sort=mostused`.
+- `sort=favorites`: Orders models by the authenticated account's recent model usage.
+- `sort=mostused`: Orders models by global completed model usage.
+- Unused or unranked models remain in the response after ranked models, in the normal catalog order.
+- `sort=favorites` requires a valid API key to personalize the order. If no valid API key is provided, it falls back to normal ordering.
+- `sort=mostused` does not require authentication.
 - Invalid `sort` values are ignored.
+- Can be combined with `detailed=true`.
 
 **Favorites-Sorted Request:**
 ```
@@ -31,10 +32,20 @@ GET https://nano-gpt.com/api/v1/models?sort=favorites
 Authorization: Bearer YOUR_API_KEY
 ```
 
+**Most-Used Request:**
+```
+GET https://nano-gpt.com/api/v1/models?sort=mostused
+```
+
 **Favorites-Sorted Detailed Request:**
 ```
 GET https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites
 Authorization: Bearer YOUR_API_KEY
+```
+
+**Most-Used Detailed Request:**
+```
+GET https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused
 ```
 
 **Endpoint Variants:**

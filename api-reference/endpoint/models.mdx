@@ -67,7 +67,7 @@ Provider selection support and provider IDs are discovered via `GET /api/models/
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `detailed` | boolean | `false` | Returns detailed model information including pricing and capabilities |
-| `sort` | string | none | Use `favorites` to order models by the authenticated user's recent model usage |
+| `sort` | string | none | Values: `favorites`, `mostused`. Reorders the returned model list. Sorting only affects models that would already be visible to the caller. It does not add or hide models. |
 
 When `detailed=true`, additional fields may be included per model:
 
@@ -82,33 +82,39 @@ When `detailed=true`, additional fields may be included per model:
 - `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
 - `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
 
-### Sorting by favorites
+### Sorting model lists
 
-`GET /api/v1/models` supports `sort=favorites`.
+`GET /api/v1/models` supports `sort=favorites` and `sort=mostused`.
 
-When this parameter is present, NanoGPT returns the same model list the caller would normally receive, but ordered by the authenticated user's recent model usage. Models used most often appear first.
+When `sort` is present, NanoGPT returns the same model list the caller would normally receive, but reordered by the selected ranking. Sorting only affects models that would already be visible to the caller. It does not add or hide models.
 
-Example:
+- `sort=favorites`: Orders models by the authenticated account's recent model usage.
+- `sort=mostused`: Orders models by global completed model usage.
+- Unused or unranked models remain in the response after ranked models, in the normal catalog order.
+- `sort=favorites` requires a valid API key to personalize the order. If no valid API key is provided, it falls back to normal ordering.
+- `sort=mostused` does not require authentication.
+- Invalid `sort` values are ignored.
+- Can be combined with `detailed=true`.
+
+Examples:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
   "https://nano-gpt.com/api/v1/models?sort=favorites"
 ```
 
-This can be combined with `detailed=true`:
+```bash
+curl "https://nano-gpt.com/api/v1/models?sort=mostused"
+```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
   "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
 ```
 
-Notes:
-
-- Sorting is based on completed model usage from the last 90 days.
-- The endpoint does not hide unused models. Models with no recent usage remain in the response after the used models, in the normal catalog order.
-- The same account, subscription, API key allowlist, and visible-model filters still apply before sorting.
-- If no valid API key is provided, or the user has no recent usage, the endpoint falls back to the normal ordering.
-- Invalid `sort` values are ignored.
+```bash
+curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
+```
 
 ### `capabilities` (detailed mode)
 
@@ -269,6 +275,30 @@ curl "https://nano-gpt.com/api/v1/models"
 
 ```bash
 curl "https://nano-gpt.com/api/v1/models?detailed=true"
+```
+
+### Sort by Favorites
+
+```bash
+curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  "https://nano-gpt.com/api/v1/models?sort=favorites"
+```
+
+### Sort by Most Used
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?sort=mostused"
+```
+
+### Detailed and Sorted
+
+```bash
+curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+```
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
 ```
 
 ### Detailed with Authentication
