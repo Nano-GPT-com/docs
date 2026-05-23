@@ -206,6 +206,16 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Use `favorites` to order the normally visible model list by the authenticated user's completed model usage from the last 90 days. Models with no recent usage remain after used models in normal catalog order. Invalid values, missing API keys, and accounts with no recent usage fall back to normal ordering.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "favorites"
+            }
           }
         ],
         "responses": {

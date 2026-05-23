@@ -67,6 +67,7 @@ Provider selection support and provider IDs are discovered via `GET /api/models/
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `detailed` | boolean | `false` | Returns detailed model information including pricing and capabilities |
+| `sort` | string | none | Use `favorites` to order models by the authenticated user's recent model usage |
 
 When `detailed=true`, additional fields may be included per model:
 
@@ -80,6 +81,34 @@ When `detailed=true`, additional fields may be included per model:
 - `icon_url` — small icon representing the provider
 - `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
 - `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
+
+### Sorting by favorites
+
+`GET /api/v1/models` supports `sort=favorites`.
+
+When this parameter is present, NanoGPT returns the same model list the caller would normally receive, but ordered by the authenticated user's recent model usage. Models used most often appear first.
+
+Example:
+
+```bash
+curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  "https://nano-gpt.com/api/v1/models?sort=favorites"
+```
+
+This can be combined with `detailed=true`:
+
+```bash
+curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+```
+
+Notes:
+
+- Sorting is based on completed model usage from the last 90 days.
+- The endpoint does not hide unused models. Models with no recent usage remain in the response after the used models, in the normal catalog order.
+- The same account, subscription, API key allowlist, and visible-model filters still apply before sorting.
+- If no valid API key is provided, or the user has no recent usage, the endpoint falls back to the normal ordering.
+- Invalid `sort` values are ignored.
 
 ### `capabilities` (detailed mode)
 

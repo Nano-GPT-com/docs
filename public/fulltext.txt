@@ -14,6 +14,28 @@ OpenAI-compatible endpoint for retrieving available models with optional detaile
 
 **Query Parameters:**
 - `detailed` (boolean, default: false): Returns detailed model information including pricing
+- `sort` (string): Use `favorites` to order models by the authenticated user's recent model usage
+
+**Endpoint Behavior:**
+- `GET /api/v1/models` supports `sort=favorites`.
+- With `sort=favorites`, NanoGPT returns the same model list the caller would normally receive, but ordered by the authenticated user's recent model usage. Models used most often appear first.
+- Sorting is based on completed model usage from the last 90 days.
+- The endpoint does not hide unused models. Models with no recent usage remain in the response after the used models, in the normal catalog order.
+- The same account, subscription, API key allowlist, and visible-model filters still apply before sorting.
+- If no valid API key is provided, or the user has no recent usage, the endpoint falls back to the normal ordering.
+- Invalid `sort` values are ignored.
+
+**Favorites-Sorted Request:**
+```
+GET https://nano-gpt.com/api/v1/models?sort=favorites
+Authorization: Bearer YOUR_API_KEY
+```
+
+**Favorites-Sorted Detailed Request:**
+```
+GET https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites
+Authorization: Bearer YOUR_API_KEY
+```
 
 **Endpoint Variants:**
 - `GET /api/v1/models` (canonical): Returns all visible text models. If your account has a subscription and you have not enabled "Also show paid models", this list is automatically restricted to subscription-included models.
