@@ -1,0 +1,79 @@
+---
+title: "Moderation Models"
+openapi: "GET /v1/moderation-models"
+description: "List available content moderation models"
+---
+
+## Overview
+
+Use `GET /api/v1/moderation-models` to list the moderation models currently available to your account. The response includes model capabilities, context limits, and pricing.
+
+Model availability and capabilities can change over time. Use this endpoint as the source of truth before choosing a model for `POST /api/v1/moderations`.
+
+## Endpoint
+
+```text
+GET https://nano-gpt.com/api/v1/moderation-models
+```
+
+## Authentication
+
+An API key is required.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `detailed` | boolean | `true` | When `false`, returns a compact OpenAI-style model list. |
+
+## Examples
+
+```bash
+curl https://nano-gpt.com/api/v1/moderation-models \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+```bash
+curl "https://nano-gpt.com/api/v1/moderation-models?detailed=false" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+## Response
+
+The detailed response returns a model list with capability and pricing metadata. Exact fields can vary by model.
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "moderation-model-id",
+      "object": "model",
+      "created": 1704067200,
+      "owned_by": "model-owner",
+      "context_length": 128000,
+      "capabilities": {
+        "text": true,
+        "image": true,
+        "batch": true
+      },
+      "pricing": {
+        "prompt": 0.10,
+        "completion": 0.00,
+        "currency": "USD",
+        "unit": "per_million_tokens"
+      }
+    }
+  ]
+}
+```
+
+## Notes
+
+- This is a paid API feature.
+- Some moderation models support text only; others support both text and image inputs.
+- Batch support can vary by model.
+- Pricing details are returned by this endpoint and can vary by selected model.

@@ -2679,6 +2679,148 @@
         }
       }
     },
+    "/v1/moderation-models": {
+      "get": {
+        "description": "List available moderation models, capabilities, context limits, and pricing",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "detailed",
+            "in": "query",
+            "description": "When false, returns a compact OpenAI-style model list",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available moderation models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          }
+        }
+      }
+    },
+    "/v1/moderations": {
+      "post": {
+        "description": "Classify text, image, or mixed content for safety",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Parameters for creating a moderation classification",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Moderation classification response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing input, unsupported modality, unsupported batch input, or context length exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "402": {
+            "description": "Payment Required - Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Paid API features are disabled for the account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "503": {
+            "description": "Upstream moderation service unavailable or returned an invalid response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/memory": {
       "post": {
         "description": "Compress a conversation with Context Memory and return compressed messages and usage (no model inference)",
@@ -6301,6 +6443,284 @@
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+      },
+      "ModerationModelsResponse": {
+        "type": "object",
+        "required": ["object", "data"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": "Always 'list'",
+            "example": "list"
+          },
+          "data": {
+            "type": "array",
+            "description": "Array of moderation model objects",
+            "items": {
+              "type": "object",
+              "required": ["id", "object", "created", "owned_by"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique moderation model identifier",
+                  "example": "moderation-model-id"
+                },
+                "object": {
+                  "type": "string",
+                  "description": "Always 'model'",
+                  "example": "model"
+                },
+                "created": {
+                  "type": "integer",
+                  "description": "Unix timestamp",
+                  "example": 1704067200
+                },
+                "owned_by": {
+                  "type": "string",
+                  "description": "Model owner",
+                  "example": "model-owner"
+                },
+                "context_length": {
+                  "type": "integer",
+                  "description": "Maximum input tokens supported by the model",
+                  "example": 128000
+                },
+                "capabilities": {
+                  "type": "object",
+                  "description": "Model-dependent moderation capabilities",
+                  "properties": {
+                    "text": {
+                      "type": "boolean",
+                      "description": "Supports text inputs",
+                      "example": true
+                    },
+                    "image": {
+                      "type": "boolean",
+                      "description": "Supports image inputs",
+                      "example": true
+                    },
+                    "batch": {
+                      "type": "boolean",
+                      "description": "Supports batched inputs",
+                      "example": true
+                    }
+                  },
+                  "additionalProperties": true
+                },
+                "pricing": {
+                  "type": "object",
+                  "description": "Pricing information for the moderation model",
+                  "properties": {
+                    "prompt": {
+                      "type": "number",
+                      "description": "Cost per million input tokens in USD",
+                      "example": 0.1
+                    },
+                    "completion": {
+                      "type": "number",
+                      "description": "Cost per million output tokens in USD, when billable classification output applies",
+                      "example": 0
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "Pricing currency",
+                      "example": "USD"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "description": "Pricing unit",
+                      "example": "per_million_tokens"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "ModerationTextContentPart": {
+        "type": "object",
+        "required": ["type", "text"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text"],
+            "description": "Text content part"
+          },
+          "text": {
+            "type": "string",
+            "description": "Text to classify",
+            "example": "Text to classify."
+          }
+        }
+      },
+      "ModerationImageContentPart": {
+        "type": "object",
+        "required": ["type", "image_url"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["image_url"],
+            "description": "Image URL content part"
+          },
+          "image_url": {
+            "type": "object",
+            "required": ["url"],
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Public image URL to classify",
+                "example": "https://example.com/image.png"
+              }
+            }
+          }
+        }
+      },
+      "ModerationRequest": {
+        "type": "object",
+        "required": ["input"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Moderation model ID. Omit to use the default moderation model.",
+            "example": "moderation-model-id"
+          },
+          "input": {
+            "description": "Content to classify",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Single text string to classify",
+                "example": "Text to classify for safety."
+              },
+              {
+                "type": "array",
+                "description": "Array of text strings or content parts to classify. Batch support and supported modalities depend on the selected model.",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ModerationTextContentPart"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ModerationImageContentPart"
+                    }
+                  ]
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        }
+      },
+      "ModerationResponse": {
+        "type": "object",
+        "required": ["id", "model", "results"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Moderation request identifier",
+            "example": "modr_..."
+          },
+          "model": {
+            "type": "string",
+            "description": "Moderation model used for classification",
+            "example": "moderation-model-id"
+          },
+          "results": {
+            "type": "array",
+            "description": "Moderation results for each classified input",
+            "items": {
+              "type": "object",
+              "required": ["flagged", "categories"],
+              "properties": {
+                "flagged": {
+                  "type": "boolean",
+                  "description": "Whether the selected model classified the content as unsafe",
+                  "example": false
+                },
+                "categories": {
+                  "type": "object",
+                  "description": "Model-dependent category-level boolean results",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "example": {
+                    "category_name": false
+                  }
+                },
+                "category_scores": {
+                  "type": "object",
+                  "description": "Model-dependent category-level confidence scores when available",
+                  "additionalProperties": {
+                    "type": "number"
+                  },
+                  "example": {
+                    "category_name": 0.01
+                  }
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "description": "Token usage used for billing and diagnostics",
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer",
+                "description": "Input tokens billed or recorded",
+                "example": 12
+              },
+              "completion_tokens": {
+                "type": "integer",
+                "description": "Output tokens billed or recorded, when applicable",
+                "example": 100
+              },
+              "total_tokens": {
+                "type": "integer",
+                "description": "Total tokens billed or recorded",
+                "example": 112
+              }
+            }
+          }
+        }
+      },
+      "ModerationErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["message", "type"],
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message",
+                "example": "Invalid request parameters. Please check your input and try again."
+              },
+              "type": {
+                "type": "string",
+                "description": "OpenAI-compatible error type",
+                "example": "invalid_request_error"
+              },
+              "code": {
+                "type": ["string", "null"],
+                "description": "Machine-readable error code",
+                "example": "unsupported_input_modality"
+              },
+              "param": {
+                "type": ["string", "null"],
+                "description": "Request parameter related to the error, when available",
+                "example": "input"
               }
             }
           }

@@ -41,6 +41,8 @@
           "api-reference/endpoint/image-generation-openai",
           "api-reference/endpoint/image-edits",
           "api-reference/endpoint/nsfw-image",
+          "api-reference/endpoint/moderation-models",
+          "api-reference/endpoint/moderations",
           "api-reference/endpoint/ai-detection",
           "api-reference/endpoint/transcribe",
           "api-reference/endpoint/transcribe-status",
