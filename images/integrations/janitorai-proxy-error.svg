@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1058" height="300" viewBox="0 0 1058 300" role="img" aria-labelledby="title desc">
+  <title id="title">JanitorAI proxy error example</title>
+  <desc id="desc">A JanitorAI error banner reading Something went wrong, PROXY ERROR: No response from bot.</desc>
+  <rect width="1058" height="300" rx="34" fill="#4a0000"/>
+  <rect x="1" y="1" width="1056" height="298" rx="33" fill="none" stroke="#7a1010" stroke-width="2"/>
+  <circle cx="96" cy="76" r="26" fill="none" stroke="#ffadad" stroke-width="6"/>
+  <path d="M84 64l24 24M108 64L84 88" stroke="#ffadad" stroke-width="6" stroke-linecap="round"/>
+  <text x="176" y="94" fill="#ffb6b6" font-family="Arial, Helvetica, sans-serif" font-size="43" font-weight="700">Something went wrong</text>
+  <text x="176" y="157" fill="#ffb6b6" font-family="Arial, Helvetica, sans-serif" font-size="43">PROXY ERROR: No response from bot</text>
+  <text x="176" y="219" fill="#ffb6b6" font-family="Arial, Helvetica, sans-serif" font-size="43">(pgshag2)</text>
+</svg>
