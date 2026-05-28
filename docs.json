@@ -116,6 +116,7 @@
       {
         "group": "Integrations",
         "pages": [
+          "integrations",
           "integrations/cli-login",
           "integrations/cline",
           "integrations/codex-cli",
