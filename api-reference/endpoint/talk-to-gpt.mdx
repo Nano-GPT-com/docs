@@ -9,6 +9,8 @@ The Talk to GPT endpoint is our legacy text generation API that also supports we
 
 The legacy endpoint supports the same model suffix parser for web search and provider routing as Chat Completions, but new integrations should use `/api/v1/chat/completions`. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
 
+The body `provider` field accepts either the existing provider ID string or a structured routing object with fields such as `order`, `only`, `ignore`, `sort`, `max_price`, `allow_fallbacks`, and `require_parameters`. See [Provider Selection > Provider Routing Object](/api-reference/miscellaneous/provider-selection#provider-routing-object).
+
 ## Web Search
 
 Enable web search by appending suffixes to the model name:

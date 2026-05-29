@@ -7,7 +7,7 @@ description: 'Choose the upstream provider for supported open-source models'
 
 Provider selection chooses the upstream provider for a supported model. It does not change the model ID. For example, to use Kimi K2.6 through Novita, keep the model as `moonshotai/kimi-k2.6` or `moonshotai/kimi-k2.6`, and send the provider separately with `X-Provider`.
 
-Provider selection is optional; if you do nothing, the platform picks the provider. `X-Provider` explicitly selects a provider for that request. Explicit provider selection is always pay-as-you-go and is charged at the selected provider's price, including provider-selection markup. For subscription users, sending `X-Provider` bypasses subscription coverage for that request.
+Provider selection is optional; if you do nothing, the platform picks the provider. `X-Provider`, a body `provider` string, or a body `provider` object can select or constrain providers for a request. Explicit provider selection is always pay-as-you-go and is charged at the selected provider's price, including provider-selection markup. For subscription users, sending an explicit provider selection bypasses subscription coverage for that request.
 
 `X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go billing without an explicit provider, or when saved provider preferences should apply to subscription-included traffic. See [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 
@@ -109,13 +109,136 @@ Notes:
 
 - `X-Provider` is case-insensitive (`x-provider` also works).
 - The provider ID must be one of the values returned by the providers endpoint.
-- Recommended: use `X-Provider` for explicit provider overrides. The API also accepts a trailing provider suffix for user-selectable providers, such as `model-id:cerebras`, but `X-Provider` is clearer and easier to validate against provider-discovery responses.
+- The body `provider` field also accepts the same provider ID as a string on `POST /api/v1/chat/completions`, `POST /api/v1/completions`, and `POST /api/talk-to-gpt`.
+- Recommended: use `X-Provider` or body `provider` for explicit provider overrides. The API also accepts a trailing provider suffix for user-selectable providers, such as `model-id:cerebras`, but request fields are clearer and easier to validate against provider-discovery responses.
 - To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `novita`, `cloudflare`, `baseten`, or `inceptron`.
-- If the request would otherwise be subscription-covered, `X-Provider` still bypasses subscription coverage and bills the request as pay-as-you-go. You do not need to also send `billing_mode: "paygo"` or `X-Billing-Mode: paygo`.
+- If the request would otherwise be subscription-covered, explicit provider selection still bypasses subscription coverage and bills the request as pay-as-you-go. You do not need to also send `billing_mode: "paygo"` or `X-Billing-Mode: paygo`.
+
+## Provider Routing Object
+
+`POST /api/v1/chat/completions`, `POST /api/v1/completions`, and `POST /api/talk-to-gpt` also accept a structured `provider` object for per-request routing controls.
+
+```json
+{
+  "model": "model-id",
+  "provider": {
+    "order": ["provider-a", "provider-b"],
+    "only": ["provider-b"],
+    "ignore": ["provider-c"],
+    "sort": "throughput",
+    "max_price": {
+      "prompt": 0.5,
+      "completion": 2
+    },
+    "allow_fallbacks": false,
+    "require_parameters": true
+  },
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+Provider entries can use public NanoGPT provider IDs or accepted display names/aliases. Use `GET /api/models/:canonicalId/providers` to discover public provider IDs for a model. Do not rely on internal provider names that are not returned by public provider-discovery responses.
+
+| Field | Type | Behavior |
+| --- | --- | --- |
+| `provider.order` | string[] | Soft preference order. NanoGPT tries these providers first when possible, but may route elsewhere. Unknown providers are ignored. |
+| `provider.only` | string[] | Hard provider pin. NanoGPT restricts routing to these providers and fails instead of routing outside the list. Unknown providers return `400` with `error.code: "provider_unknown_provider"`. |
+| `provider.ignore` | string[] | Excludes providers from routing. Unknown providers are ignored. |
+| `provider.sort` | string | Routing preference. Supported values are `speed`, `throughput`, `latency`, `price`, `auto`, `none`, and `default`. `auto`, `none`, and `default` suppress stored/default routing preferences without requesting a sort. |
+| `provider.max_price` | object | Optional `prompt` and/or `completion` price caps in USD per 1 million tokens. Pricing checks are best-effort when provider pricing is unknown. |
+| `provider.allow_fallbacks` | boolean | When `false`, disables cross-provider fallback for this request. |
+| `provider.require_parameters` | boolean | When `true`, requires the selected provider to support the requested parameters on routes that support parameter-level capability checks. |
+
+Examples:
+
+```json
+{
+  "provider": {
+    "order": ["provider-a", "provider-b"]
+  }
+}
+```
+
+```json
+{
+  "provider": {
+    "only": ["provider-b"]
+  }
+}
+```
+
+```json
+{
+  "provider": {
+    "ignore": ["provider-c"]
+  }
+}
+```
+
+```json
+{
+  "provider": {
+    "max_price": {
+      "prompt": 0.5,
+      "completion": 2
+    }
+  }
+}
+```
+
+```json
+{
+  "provider": {
+    "require_parameters": true
+  }
+}
+```
+
+```json
+{
+  "provider": {
+    "order": ["provider-b"],
+    "allow_fallbacks": false
+  }
+}
+```
+
+### Routing Semantics
+
+- `order` is soft. Use `only` when the request must fail instead of using any provider outside the list.
+- `only` is hard. It restricts routing to the listed providers and disables internal fallback outside the pinned set.
+- `ignore` and `max_price` can resolve to a concrete provider. For direct provider routing, NanoGPT cannot represent "any provider except X" as a multi-provider pool. If filters like `ignore` or `max_price` are provided without `order` or `only`, NanoGPT resolves to one cheapest concrete provider that satisfies those filters. That is treated as explicit provider selection for billing and routing because the request changed the provider candidate set.
+- If `max_price` is provided without `order` or an explicit `sort`, NanoGPT treats it as a request for price-aware routing among providers that satisfy the cap.
+- Per-request `provider` object controls take precedence over saved provider preferences for that request. They are not merged with saved preferences.
+
+### Validation
+
+Invalid object shapes return a structured `400` error:
+
+- `provider.order`, `provider.only`, and `provider.ignore` must be arrays of strings.
+- Unknown providers in `only` return `provider_unknown_provider`.
+- Unknown providers in `order` and `ignore` are ignored.
+- `provider.max_price.prompt` and `provider.max_price.completion` must be non-negative numbers.
+- `provider.allow_fallbacks` and `provider.require_parameters` must be booleans.
+
+Example error:
+
+```json
+{
+  "error": {
+    "message": "Unknown or unavailable provider id in provider.only: not-a-provider",
+    "type": "invalid_request_error",
+    "param": "provider.only",
+    "code": "provider_unknown_provider"
+  }
+}
+```
 
 ## Consecutive Prompts and Prompt Caching
 
-When you explicitly select a provider with `X-Provider`, NanoGPT routes that request to the selected provider. For consecutive prompts, using the same `X-Provider` helps keep routing stable, which is the setup you want for provider-side prompt-cache reuse when that provider and model support caching.
+When you explicitly select a provider with `X-Provider` or body `provider`, NanoGPT routes that request to the selected provider. For consecutive prompts, using the same provider helps keep routing stable, which is the setup you want for provider-side prompt-cache reuse when that provider and model support caching.
 
 For capability-based routing, use top-level `caching: true` instead of choosing a specific provider. NanoGPT will route to any available provider that supports prompt/input caching for the requested provider-selection model, and it defaults to sticky provider routing so later matching requests prefer the same provider.
 
@@ -249,7 +372,7 @@ Field details:
 
 When `caching: true` is set, use the routing order in [Cache-Capable Provider Routing](#cache-capable-provider-routing). Otherwise, when multiple selections exist, the system resolves providers in this order:
 
-1. Per-request explicit provider selection (`X-Provider`, body `provider`, or provider suffix)
+1. Per-request explicit provider selection (`X-Provider`, body `provider` string/object, or provider suffix)
 2. Per-request routing preference suffix (`:fast`, `:cheap`, etc.)
 3. Per-model `preferredProviders`
 4. Global `preferredProviders`
@@ -257,13 +380,14 @@ When `caching: true` is set, use the routing order in [Cache-Capable Provider Ro
 
 ## Billing and Markup
 
-- If you explicitly select a provider with `X-Provider`, billing uses the provider-specific price plus a 5% markup and the request is treated as pay-as-you-go.
+- If you explicitly select or constrain providers with `X-Provider` or body `provider`, billing uses the resolved provider-specific price plus a 5% markup and the request is treated as pay-as-you-go.
 - If saved preferences select a provider on pay-as-you-go traffic, billing uses the provider-specific price plus a 5% markup.
 - If you do not select a provider, billing uses the model's default price.
 
 ## Error Behavior
 
 - If `enableFallback` is `false` and no preferred provider is available, `/api/v1/chat/completions` returns `400` with `error.code: "no_fallback_available"`.
+- Invalid body `provider` objects return `400` with `error.type: "invalid_request_error"`.
 - `PATCH /api/user/provider-preferences` validates provider IDs and returns:
   - `422 INVALID_INPUT` for malformed payloads.
   - `400 INVALID_EXCLUSIONS` if exclusions would leave a model with no usable provider.

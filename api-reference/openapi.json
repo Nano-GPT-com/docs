@@ -3005,6 +3005,18 @@
             "type": "string",
             "description": "Alias for billing_mode."
           },
+          "provider": {
+            "description": "Optional provider override or structured provider routing controls for provider-selection-capable models. A string explicitly selects one provider. An object can set soft order, hard pins, exclusions, sort preference, price caps, fallback behavior, and parameter-capability requirements.",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Provider ID or accepted provider display name/alias."
+              },
+              {
+                "$ref": "#/components/schemas/ProviderRoutingObject"
+              }
+            ]
+          },
           "caching": {
             "type": "boolean",
             "description": "When true, route to an available provider that is marked as prompt/input-caching capable for the requested provider-selection model. If no usable cache-capable provider exists, the request fails instead of falling back to a non-cache-capable provider. This is provider capability routing only; it does not add cache_control markers or configure cache TTLs.",
@@ -3498,6 +3510,18 @@
             "type": "string",
             "description": "Alias for billing_mode."
           },
+          "provider": {
+            "description": "Optional provider override or structured provider routing controls for provider-selection-capable models. A string explicitly selects one provider. An object can set soft order, hard pins, exclusions, sort preference, price caps, fallback behavior, and parameter-capability requirements.",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Provider ID or accepted provider display name/alias."
+              },
+              {
+                "$ref": "#/components/schemas/ProviderRoutingObject"
+              }
+            ]
+          },
           "prompt": {
             "type": "string",
             "description": "The text prompt to complete"
@@ -3855,6 +3879,18 @@
             "description": "The model to use for generation. The legacy endpoint supports the same model suffix parser for web search and provider routing as Chat Completions.",
             "default": "minimax/minimax-m2.7",
             "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.2:online/exa-instant"]
+          },
+          "provider": {
+            "description": "Optional provider override or structured provider routing controls for provider-selection-capable models. A string explicitly selects one provider. An object can set soft order, hard pins, exclusions, sort preference, price caps, fallback behavior, and parameter-capability requirements.",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Provider ID or accepted provider display name/alias."
+              },
+              {
+                "$ref": "#/components/schemas/ProviderRoutingObject"
+              }
+            ]
           },
           "messages": {
             "type": "array",
@@ -6785,6 +6821,62 @@
                 }
               }
             }
+          }
+        }
+      },
+      "ProviderRoutingObject": {
+        "type": "object",
+        "description": "Structured per-request provider routing controls. Per-request controls take precedence over saved provider preferences and are not merged with them.",
+        "properties": {
+          "order": {
+            "type": "array",
+            "description": "Soft provider preference order. NanoGPT tries these providers first when possible, but this does not hard-pin routing to only these providers. Unknown providers are ignored.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "only": {
+            "type": "array",
+            "description": "Hard provider pin. NanoGPT restricts routing to these providers and fails instead of silently routing elsewhere. Unknown providers return a structured 400 error with code provider_unknown_provider.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ignore": {
+            "type": "array",
+            "description": "Providers to exclude from routing. Unknown providers are ignored.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sort": {
+            "type": "string",
+            "description": "Routing preference. speed, throughput, latency, and price actively request that strategy. auto, none, and default are accepted to suppress stored/default routing preferences without requesting a provider sort.",
+            "enum": ["speed", "throughput", "latency", "price", "auto", "none", "default"]
+          },
+          "max_price": {
+            "type": "object",
+            "description": "Optional provider price caps in USD per 1 million tokens. Pricing checks are best-effort when provider pricing is unknown.",
+            "properties": {
+              "prompt": {
+                "type": "number",
+                "description": "Maximum prompt/input price in USD per 1 million tokens.",
+                "minimum": 0
+              },
+              "completion": {
+                "type": "number",
+                "description": "Maximum completion/output price in USD per 1 million tokens.",
+                "minimum": 0
+              }
+            }
+          },
+          "allow_fallbacks": {
+            "type": "boolean",
+            "description": "When false, disables cross-provider fallback for this request."
+          },
+          "require_parameters": {
+            "type": "boolean",
+            "description": "When true, requires the selected provider to support the requested parameters on routes that support parameter-level capability checks."
           }
         }
       },

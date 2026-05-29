@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2025-03-14
+Last updated: 2026-05-29
 
 GOAL
 Equip developers to call the NanoGPT API for chat, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -25,6 +25,7 @@ CORE CONCEPTS
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
 - Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
 - Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, and combine suffixes as needed.
+- Provider routing: on /v1/chat/completions, /v1/completions, and /talk-to-gpt, body provider can be a string provider ID or an object with order, only, ignore, sort, max_price, allow_fallbacks, and require_parameters. order is a soft preference; only is a hard pin; unknown providers in only return provider_unknown_provider, while unknown providers in order/ignore are ignored.
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
 - Caching and memory: most providers use implicit caching automatically when supported; top-level caching: true routes to a cache-capable provider and defaults to stickyprovider: true; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
 
@@ -39,6 +40,7 @@ GLOSSARY
 HARD RULES AND GOTCHAS
 - Always set baseURL to https://nano-gpt.com/api (or https://nano-gpt.com for /v1/messages) and include Authorization or x-api-key on every call.
 - Do not hardcode model support; call GET /api/v1/models?detailed=true to confirm vision, context length, and subscription status.
+- Do not guess provider IDs. Use GET /api/models/:canonicalId/providers for public provider IDs and pricing. Avoid internal provider names that are not returned by public discovery.
 - Handle streaming as SSE: group chunks by id, concatenate delta.content, capture delta.reasoning separately, stop on [DONE], and read usage/x_nanogpt_pricing on the final chunk.
 - Never rely on <think> tags; reasoning text lives in reasoning/reasoning_details and may be omitted when reasoning.exclude is true.
 - Memory replaces the entire history with a compressed summary; send the up-to-date messages each turn and avoid mixing original transcripts with memory output.

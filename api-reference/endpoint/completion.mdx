@@ -10,3 +10,7 @@ openapi: 'POST /v1/completions'
 <Note>
   `POST /api/v1/completions` supports the same model suffix parser for provider routing (`:fast`, `:cheap`, etc.) and `:reasoning-exclude`, but this endpoint remains best-effort legacy compatibility. Prefer Chat Completions for new integrations. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
 </Note>
+
+<Note>
+  The body `provider` field accepts either the existing provider ID string or a structured routing object with fields such as `order`, `only`, `ignore`, `sort`, `max_price`, `allow_fallbacks`, and `require_parameters`. See [Provider Selection > Provider Routing Object](/api-reference/miscellaneous/provider-selection#provider-routing-object).
+</Note>
