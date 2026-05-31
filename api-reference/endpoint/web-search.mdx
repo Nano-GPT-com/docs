@@ -8,6 +8,8 @@ description: "Run direct web search requests with explicit query control, Linkup
 
 Use `POST /api/web` when you want direct control over search requests and output formatting.
 
+You can also call this tool through the unified [Data API](/api-reference/endpoint/data-api) at `POST /api/v1/data/web/search`. The Data API preserves this endpoint's request body, response body, billing, and provider behavior while adding discovery and dispatch metadata.
+
 For chat-first workflows, use `POST /api/v1/chat/completions` with model suffixes like `:online`, `:online/linkup`, or `:online/linkup-deep`, including provider-specific suffixes such as `:online/exa-instant`, `:online/exa-deep-reasoning`, `:online/brave`, and `:online/valyu-web-deep`. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes#web-search-suffixes).
 
 ## When to use which endpoint
@@ -15,6 +17,7 @@ For chat-first workflows, use `POST /api/v1/chat/completions` with model suffixe
 | Use case | Endpoint |
 | --- | --- |
 | You want the model to answer with web context in one call | `POST /api/v1/chat/completions` + `:online...` |
+| You want one discoverable endpoint family for data tools | `POST /api/v1/data/web/search` |
 | You need explicit control over `query`, `outputType`, domain/date filters, or structured schema output | `POST /api/web` |
 | You need OpenAI-native web search | `POST /api/v1/chat/completions` only |
 
@@ -205,5 +208,6 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 ## Related docs
 
 - [Chat Completion](/api-reference/endpoint/chat-completion)
+- [Data API](/api-reference/endpoint/data-api)
 - [Web Search in Text Generation Guide](/api-reference/text-generation)
 - [Model Suffixes](/api-reference/miscellaneous/model-suffixes)

@@ -1,0 +1,410 @@
+---
+title: "Data API"
+api: "GET https://nano-gpt.com/api/v1/data"
+description: "Discover and call NanoGPT data tools through one stable endpoint family"
+---
+
+## Overview
+
+NanoGPT exposes a unified Data API under `/api/v1/data`. It gives customers one discoverable entry point for web search, URL scraping, maps data, social data, and business enrichment.
+
+The Data API is a wrapper around the existing direct endpoints. It does not change the underlying response bodies, validation rules, billing, rate limits, async behavior, provider options, authentication, or x402 behavior unless noted here. Direct endpoints remain available for compatibility.
+
+## Base URL
+
+```text
+https://nano-gpt.com/api/v1/data
+```
+
+Local development:
+
+```text
+http://localhost:3000/api/v1/data
+```
+
+## Authentication
+
+Use the same NanoGPT API key authentication as existing API routes:
+
+```http
+Authorization: Bearer YOUR_API_KEY
+```
+
+Some underlying endpoints may also support x402 payment flows or browser-session flows. The Data API forwards authentication and payment-related headers to the underlying route.
+
+## Discovery
+
+List available Data API endpoints:
+
+```http
+GET /api/v1/data
+```
+
+Alias:
+
+```http
+GET /api/v1/data/endpoints
+```
+
+The catalog response is cacheable:
+
+```http
+Cache-Control: public, max-age=300, stale-while-revalidate=3600
+```
+
+### Example catalog response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "web.search",
+      "object": "data.endpoint",
+      "name": "Web Search",
+      "description": "Search the web through NanoGPT search providers.",
+      "category": "search",
+      "provider": "NanoGPT",
+      "methods": ["POST"],
+      "endpoint": "/api/v1/data/web/search",
+      "url": "https://nano-gpt.com/api/v1/data/web/search",
+      "direct_endpoint": "/api/web",
+      "pricing": "Usage-based; estimated from provider, depth, and partner markup.",
+      "status": "available"
+    }
+  ],
+  "meta": {
+    "count": 20,
+    "providers": ["Apify", "Firecrawl", "Hunter", "NanoGPT"],
+    "categories": ["business", "maps", "scraping", "search", "social"],
+    "dispatch": {
+      "endpoint": "/api/v1/data",
+      "body": {
+        "endpoint": "web.search",
+        "input": {
+          "query": "latest AI news"
+        }
+      }
+    }
+  }
+}
+```
+
+## Endpoint Metadata
+
+For endpoints that do not support `GET`, calling their Data API path with `GET` returns the public metadata object instead of dispatching the tool.
+
+```http
+GET /api/v1/data/web/search
+```
+
+For endpoints that do support `GET`, the request is forwarded to the underlying endpoint.
+
+## Calling Endpoints
+
+The Data API supports path-style dispatch and body-style dispatch.
+
+### Path-style dispatch
+
+Use a stable Data API path and send the underlying endpoint's normal input body.
+
+```bash
+curl https://nano-gpt.com/api/v1/data/web/search \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "latest AI model releases",
+    "depth": "standard"
+  }'
+```
+
+Path-style dispatch is the simplest format for fixed integrations because each tool has a URL.
+
+### Body-style dispatch
+
+Use `POST /api/v1/data` and specify the target endpoint in the request body.
+
+```bash
+curl https://nano-gpt.com/api/v1/data \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint": "web.search",
+    "input": {
+      "query": "latest AI model releases",
+      "depth": "standard"
+    }
+  }'
+```
+
+The dispatch key can be `endpoint`, `id`, or `type`.
+
+Endpoint input can be provided in an `input` object:
+
+```json
+{
+  "endpoint": "web.search",
+  "input": {
+    "query": "latest AI model releases"
+  }
+}
+```
+
+It can also be provided directly in the dispatch body:
+
+```json
+{
+  "endpoint": "web.search",
+  "query": "latest AI model releases"
+}
+```
+
+If `input` is present, it is forwarded. If `data` is present and `input` is absent, `data` is forwarded. Otherwise, all fields except `endpoint`, `id`, `type`, `input`, and `data` are forwarded as the endpoint input.
+
+## Request Forwarding Behavior
+
+The Data API:
+
+- Preserves request query parameters.
+- Preserves request headers except hop-by-hop headers such as `connection`, `content-length`, `host`, `keep-alive`, `transfer-encoding`, and `upgrade`.
+- Forces `Content-Type: application/json` when it forwards a JSON body.
+- Forwards JSON request bodies to `POST` routes.
+- Allows empty-body path-style `POST` requests and forwards `{}`.
+- Requires a valid JSON body for body-style `POST /api/v1/data`.
+- Adds tracking headers to dispatched responses.
+
+## Response Headers
+
+Dispatched responses include:
+
+```http
+x-nanogpt-data-endpoint: web.search
+x-nanogpt-direct-endpoint: /api/web
+```
+
+These headers are exposed to browser clients through:
+
+```http
+Access-Control-Expose-Headers: x-nanogpt-data-endpoint, x-nanogpt-direct-endpoint
+```
+
+Use these headers for client-side observability, debugging, analytics, and support traces.
+
+## Error Format
+
+Errors generated by the Data API wrapper use this shape:
+
+```json
+{
+  "error": {
+    "message": "Unknown data endpoint: not.real",
+    "type": "invalid_request_error",
+    "code": "unknown_endpoint"
+  }
+}
+```
+
+Common wrapper-level errors:
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| `400` | `invalid_json` | Request body is missing or invalid JSON where JSON is required. |
+| `400` | `invalid_body` | Body-style dispatch body is not an object. |
+| `400` | `missing_endpoint` | Body-style dispatch did not include `endpoint`, `id`, or `type`. |
+| `404` | `unknown_endpoint` | Endpoint id or path is not recognized. |
+| `405` | `method_not_allowed` | Endpoint exists but does not support the requested method. |
+| `500` | `unsupported_data_endpoint` | Catalog entry exists but no dispatcher implementation matched it. |
+
+Once a request is forwarded, the underlying endpoint may return its own existing error format.
+
+## Endpoint Catalog
+
+| Endpoint ID | Data API Path | Direct Endpoint | Methods | Category | Provider | Pricing Note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `web.search` | `/api/v1/data/web/search` | `/api/web` | `POST` | search | NanoGPT | Usage-based; estimated from provider, depth, and partner markup. |
+| `url.scrape` | `/api/v1/data/url/scrape` | `/api/scrape-urls` | `POST` | scraping | NanoGPT | Per URL, with higher pricing for stealth mode. |
+| `firecrawl` | `/api/v1/data/firecrawl` | `/api/v1/firecrawl` | `POST` | scraping | Firecrawl | Credit-based Firecrawl pricing with NanoGPT markup. |
+| `google_maps.search` | `/api/v1/data/google-maps/search` | `/api/v1/googlemaps` | `GET`, `POST` | maps | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `google_maps.reviews` | `/api/v1/data/google-maps/reviews` | `/api/v1/googlemaps/reviews` | `POST` | maps | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `reddit.scrape` | `/api/v1/data/reddit` | `/api/v1/reddit` | `POST` | social | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `linkedin.profile` | `/api/v1/data/linkedin/profile` | `/api/v1/linkedin/profile` | `POST` | business | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `instagram.profile` | `/api/v1/data/instagram/profile` | `/api/v1/instagram/profile` | `POST` | social | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `instagram.posts` | `/api/v1/data/instagram/posts` | `/api/v1/instagram/posts` | `POST` | social | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `instagram.reels` | `/api/v1/data/instagram/reels` | `/api/v1/instagram/reels` | `POST` | social | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `tiktok.scrape` | `/api/v1/data/tiktok` | `/api/v1/tiktok` | `POST` | social | Apify | Apify charged-event pricing with NanoGPT markup. |
+| `x.read` | `/api/v1/data/x` | `/api/v1/x` | `GET`, `POST` | social | NanoGPT | Endpoint-specific usage pricing. |
+| `hunter.discover` | `/api/v1/data/hunter/discover` | `/api/v1/hunter/discover` | `POST` | business | Hunter | Free. |
+| `hunter.domain_search` | `/api/v1/data/hunter/domain-search` | `/api/v1/hunter/domain-search` | `GET`, `POST` | business | Hunter | Hunter search-credit pricing with NanoGPT markup. |
+| `hunter.email_finder` | `/api/v1/data/hunter/email-finder` | `/api/v1/hunter/email-finder` | `GET`, `POST` | business | Hunter | Hunter search-credit pricing with NanoGPT markup. |
+| `hunter.email_verifier` | `/api/v1/data/hunter/email-verifier` | `/api/v1/hunter/email-verifier` | `GET`, `POST` | business | Hunter | Hunter verification-credit pricing with NanoGPT markup. |
+| `hunter.person_enrichment` | `/api/v1/data/hunter/people/find` | `/api/v1/hunter/people/find` | `GET`, `POST` | business | Hunter | Hunter enrichment-credit pricing with NanoGPT markup. |
+| `hunter.company_enrichment` | `/api/v1/data/hunter/companies/find` | `/api/v1/hunter/companies/find` | `GET`, `POST` | business | Hunter | Hunter enrichment-credit pricing with NanoGPT markup. |
+| `hunter.combined_enrichment` | `/api/v1/data/hunter/combined/find` | `/api/v1/hunter/combined/find` | `GET`, `POST` | business | Hunter | Hunter enrichment-credit pricing with NanoGPT markup. |
+| `hunter.email_count` | `/api/v1/data/hunter/email-count` | `/api/v1/hunter/email-count` | `GET`, `POST` | business | Hunter | Free. |
+
+## Endpoint Aliases
+
+Body-style dispatch accepts canonical endpoint IDs and these aliases:
+
+| Alias | Resolves To |
+| --- | --- |
+| `googlemaps` | `google_maps.search` |
+| `googlemaps.search` | `google_maps.search` |
+| `google-maps.search` | `google_maps.search` |
+| `maps.search` | `google_maps.search` |
+| `maps.reviews` | `google_maps.reviews` |
+| `linkedin` | `linkedin.profile` |
+| `linked-in.profile` | `linkedin.profile` |
+| `ig.profile` | `instagram.profile` |
+| `ig.posts` | `instagram.posts` |
+| `ig.reels` | `instagram.reels` |
+| `twitter.read` | `x.read` |
+| `twitter` | `x.read` |
+| `x` | `x.read` |
+| `search` | `web.search` |
+| `web` | `web.search` |
+| `scrape` | `url.scrape` |
+| `urls.scrape` | `url.scrape` |
+| `url_scrape` | `url.scrape` |
+| `hunter.domain-search` | `hunter.domain_search` |
+| `hunter.email-finder` | `hunter.email_finder` |
+| `hunter.email-verifier` | `hunter.email_verifier` |
+| `hunter.people.find` | `hunter.person_enrichment` |
+| `hunter.person` | `hunter.person_enrichment` |
+| `hunter.company` | `hunter.company_enrichment` |
+| `hunter.companies.find` | `hunter.company_enrichment` |
+| `hunter.combined.find` | `hunter.combined_enrichment` |
+| `hunter.email-count` | `hunter.email_count` |
+
+The resolver also normalizes endpoint IDs by trimming slashes, accepting `api/v1/data/...`-style strings, converting path slashes to dots, and converting hyphens to underscores.
+
+## X/Twitter Subpaths
+
+`x.read` is special. The catalog lists the base X endpoint:
+
+```text
+/api/v1/data/x
+```
+
+The dispatcher also supports dynamic X subpaths and forwards them to `/api/v1/x/...`.
+
+Examples:
+
+```http
+GET /api/v1/data/x/search?query=nanogpt
+POST /api/v1/data/x/search?query=nanogpt
+GET /api/v1/data/x/user?username=nanogpt
+GET /api/v1/data/x/tweet?id=1234567890
+```
+
+For path-style `POST` requests with no body, the wrapper forwards `{}` and preserves the query string. This supports query-only X calls.
+
+## Examples
+
+### Web Search
+
+```bash
+curl https://nano-gpt.com/api/v1/data/web/search \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "NanoGPT API data endpoints",
+    "provider": "linkup",
+    "depth": "standard",
+    "outputType": "searchResults"
+  }'
+```
+
+Body-style dispatch:
+
+```bash
+curl https://nano-gpt.com/api/v1/data \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint": "web.search",
+    "input": {
+      "query": "NanoGPT API data endpoints",
+      "provider": "linkup",
+      "depth": "standard",
+      "outputType": "searchResults"
+    }
+  }'
+```
+
+### Scrape URLs
+
+```bash
+curl https://nano-gpt.com/api/v1/data/url/scrape \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "urls": ["https://nano-gpt.com"],
+    "stealthMode": false
+  }'
+```
+
+### Google Maps Search
+
+```bash
+curl https://nano-gpt.com/api/v1/data/google-maps/search \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "searchStringsArray": ["coffee shops in Amsterdam"],
+    "maxCrawledPlacesPerSearch": 10
+  }'
+```
+
+Google Maps search also supports `GET` for the same behavior exposed by the direct `/api/v1/googlemaps` endpoint, including polling async runs when applicable.
+
+### Hunter Domain Search
+
+```bash
+curl "https://nano-gpt.com/api/v1/data/hunter/domain-search?domain=example.com" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+```bash
+curl https://nano-gpt.com/api/v1/data/hunter/domain-search \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "example.com"
+  }'
+```
+
+Body-style dispatch:
+
+```bash
+curl https://nano-gpt.com/api/v1/data \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint": "hunter.domain_search",
+    "input": {
+      "domain": "example.com"
+    }
+  }'
+```
+
+### X Search With Query Parameters
+
+```bash
+curl "https://nano-gpt.com/api/v1/data/x/search?query=nanogpt" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+Path-style `POST` also works for query-only X calls:
+
+```bash
+curl -X POST "https://nano-gpt.com/api/v1/data/x/search?query=nanogpt" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+## Related Docs
+
+- [Direct Web Search API](/api-reference/endpoint/web-search)
+- [Web Scraping](/api-reference/endpoint/scrape-urls)
+- [Data Extraction APIs](/api-reference/endpoint/data-extraction)
+- [x402 Payments](/api-reference/miscellaneous/x402)

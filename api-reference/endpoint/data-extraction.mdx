@@ -8,6 +8,8 @@ description: "Public data extraction endpoints for web, maps, social, and email/
 
 NanoGPT exposes data extraction APIs for web, maps, social, and email/domain intelligence workflows.
 
+For new integrations that need a stable, discoverable entry point across these tools, use the unified [Data API](/api-reference/endpoint/data-api) under `/api/v1/data`. It wraps the direct endpoints documented here without changing their response bodies, billing, validation rules, async behavior, or provider-specific options.
+
 These endpoints require API key authentication. Each request estimates a maximum charge before running. Some endpoints require `maxTotalChargeUsd` when the result count is unbounded.
 
 ## Authentication
@@ -42,18 +44,23 @@ Typical responses include a data payload and billing metadata:
 
 ## Endpoints
 
-| Endpoint | Method | Purpose |
-| --- | --- | --- |
-| `/api/v1/firecrawl` | POST | Web page scraping, site maps, and crawls. |
-| `/api/v1/googlemaps` | POST | Google Maps place search and detail extraction. |
-| `/api/v1/googlemaps/reviews` | POST | Google Maps review extraction. |
-| `/api/v1/facebook/ads` | POST | Facebook/Meta ad library extraction. |
-| `/api/v1/instagram/profile` | POST | Instagram profile extraction. |
-| `/api/v1/instagram/posts` | POST | Instagram post extraction. |
-| `/api/v1/reddit` | POST | Reddit post, comment, community, and user extraction. |
-| `/api/v1/tiktok` | POST | TikTok hashtag, profile, search, and post extraction. |
-| `/api/v1/hunter` | GET, POST | Email/domain intelligence pass-through. |
-| `/api/v1/hunter/{path}` | GET, POST | Email/domain intelligence pass-through with path selection. |
+| Data API Path | Direct Endpoint | Method | Purpose |
+| --- | --- | --- | --- |
+| `/api/v1/data/firecrawl` | `/api/v1/firecrawl` | POST | Web page scraping, site maps, and crawls. |
+| `/api/v1/data/google-maps/search` | `/api/v1/googlemaps` | GET, POST | Google Maps place search and detail extraction. |
+| `/api/v1/data/google-maps/reviews` | `/api/v1/googlemaps/reviews` | POST | Google Maps review extraction. |
+| `/api/v1/data/instagram/profile` | `/api/v1/instagram/profile` | POST | Instagram profile extraction. |
+| `/api/v1/data/instagram/posts` | `/api/v1/instagram/posts` | POST | Instagram post extraction. |
+| `/api/v1/data/instagram/reels` | `/api/v1/instagram/reels` | POST | Instagram Reels extraction. |
+| `/api/v1/data/reddit` | `/api/v1/reddit` | POST | Reddit post, comment, community, and user extraction. |
+| `/api/v1/data/tiktok` | `/api/v1/tiktok` | POST | TikTok hashtag, profile, search, and post extraction. |
+| `/api/v1/data/linkedin/profile` | `/api/v1/linkedin/profile` | POST | LinkedIn profile enrichment. |
+| `/api/v1/data/hunter/{path}` | `/api/v1/hunter/{path}` | GET, POST | Email/domain intelligence pass-through with path selection. |
+| Not in Data API catalog | `/api/v1/facebook/ads` | POST | Facebook/Meta ad library extraction. |
+
+<Note>
+  The direct endpoints remain available. Use the Data API paths when you want endpoint discovery, stable public tool IDs, body-style dispatch for dynamic clients, or response headers identifying both the Data API endpoint and direct endpoint.
+</Note>
 
 ## Web Crawling
 

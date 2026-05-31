@@ -7,6 +7,8 @@ openapi: 'POST /scrape-urls'
 
 The NanoGPT Web Scraping API allows you to extract clean, formatted content from web pages. It uses the Firecrawl service to scrape URLs and returns both raw HTML content and formatted markdown.
 
+You can also call this tool through the unified [Data API](/api-reference/endpoint/data-api) at `POST /api/v1/data/url/scrape`. The Data API preserves this endpoint's request body, response body, billing, and validation behavior while adding discovery and dispatch metadata.
+
 ## Authentication
 
 The API supports two authentication methods:

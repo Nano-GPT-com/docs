@@ -6,6 +6,36 @@ The NanoGPT API allows you to generate text, images and video using any AI model
 
 ## Endpoints
 
+### Data API (GET/POST /v1/data)
+
+Unified discovery and dispatch layer for NanoGPT data tools. Use `GET /api/v1/data` to list available tools, `POST /api/v1/data/{path}` for path-style dispatch, or `POST /api/v1/data` with an `endpoint`/`id`/`type` field for body-style dispatch.
+
+The Data API wraps existing direct endpoints for web search, URL scraping, Firecrawl, Google Maps, Reddit, LinkedIn, Instagram, TikTok, X/Twitter, and Hunter enrichment. It preserves underlying response bodies, validation, billing, rate limits, async behavior, provider options, authentication, and x402 behavior. Direct endpoints remain available.
+
+**Examples:**
+```
+GET https://nano-gpt.com/api/v1/data
+Authorization: Bearer YOUR_API_KEY
+```
+
+```
+POST https://nano-gpt.com/api/v1/data/web/search
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{"query":"latest AI model releases","depth":"standard"}
+```
+
+```
+POST https://nano-gpt.com/api/v1/data
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{"endpoint":"web.search","input":{"query":"latest AI model releases","depth":"standard"}}
+```
+
+Dispatched responses include `x-nanogpt-data-endpoint` and `x-nanogpt-direct-endpoint`.
+
 ### Models (GET /v1/models)
 
 OpenAI-compatible endpoint for retrieving available models with optional detailed information including pricing.
