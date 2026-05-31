@@ -29,6 +29,8 @@ Use this endpoint to list available providers and the pricing you will pay when 
 GET /api/models/:canonicalId/providers
 ```
 
+Provider rows may also include `distillationPolicy`, which indicates whether that specific hosted provider route is allowed for output-based model training or distillation under NanoGPT's recorded provider-terms and model-license rules. See [Distillation Policy](/api-reference/miscellaneous/distillation-policy).
+
 This endpoint is not under `/api/v1`. If your base URL is `https://nano-gpt.com/api/v1`, do not append this path to that base URL. Use:
 
 ```http
@@ -67,7 +69,14 @@ Example response:
     },
     {
       "provider": "novita",
-      "available": true
+      "available": true,
+      "distillationPolicy": {
+        "status": "allowed",
+        "label": "License permits distillation",
+        "basis": "permissive-open-weights",
+        "sourceUrl": "https://example.com/license-or-terms",
+        "note": "Provider terms do not record an output-training restriction, and the model-level policy allows distillation."
+      }
     },
     {
       "provider": "cloudflare",
@@ -86,6 +95,7 @@ Notes:
 - `defaultPrice` is used when you do not select a provider.
 - If `providers[].pricing` is present, it is what you pay when you select that provider (includes the markup).
 - Use the exact value from `providers[].provider` in the `X-Provider` header.
+- Provider-specific `distillationPolicy` can differ from the model-level policy. Explicit provider restrictions override model-level allowances.
 - If a model is unsupported, the response includes `supportsProviderSelection: false`.
 
 ## Per-Request Provider Override

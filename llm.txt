@@ -27,6 +27,7 @@ CORE CONCEPTS
 - Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, and combine suffixes as needed.
 - Data API: /api/v1/data is the stable discovery and dispatch layer for web search, URL scraping, Firecrawl, Google Maps, Reddit, LinkedIn, Instagram, TikTok, X/Twitter, and Hunter enrichment. It wraps existing direct endpoints without changing their response schemas or billing.
 - Provider routing: on /v1/chat/completions, /v1/completions, and /talk-to-gpt, body provider can be a string provider ID or an object with order, only, ignore, sort, max_price, allow_fallbacks, and require_parameters. order is a soft preference; only is a hard pin; unknown providers in only return provider_unknown_provider, while unknown providers in order/ignore are ignored.
+- Distillation policy: text model records and provider rows may include distillationPolicy with status, label, basis, sourceUrl, and note. Use /api/explore/text-models?distillation=allowed or /api/explore/search?type=text&q=...&distillation=allowed to filter model-level allowed text models. This is API-only; the text models browser UI does not show a distillation filter or badge.
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
 - Caching and memory: most providers use implicit caching automatically when supported; top-level caching: true routes to a cache-capable provider and defaults to stickyprovider: true; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
 
@@ -35,6 +36,7 @@ GLOSSARY
 - Data API endpoint IDs: stable tool IDs such as web.search, url.scrape, google_maps.search, reddit.scrape, x.read, and hunter.domain_search for dynamic clients that choose data tools at runtime.
 - Polychat memory: hierarchical compression invoked by :memory suffix or memory header; stores 1-365 day summaries and replaces conversation history.
 - Prompt caching: implicit for providers that support it (including OpenAI, Gemini, and many open-source provider routes); top-level caching: true is capability-based provider routing, not cache annotation; explicit controls via prompt_caching/promptCaching/cache_control are mainly for Claude and support optional cutAfterMessageIndex.
+- Distillation policy: API-only metadata indicating whether model or provider-route outputs may be used for output-based model training or distillation under NanoGPT's recorded model-license and provider-terms rules. Status values are allowed, disallowed, and unknown.
 - Reasoning stream: delta.reasoning text emitted by reasoning-enabled models; reasoning_details provides structured metadata when available.
 - x_nanogpt_pricing: billing extension object with stable core fields (amount, currency, sanitized error) plus provider-dependent optional metadata (cost, paymentSource, token counters, team billing flags).
 - BYOK: bring-your-own-key mode activated with x-use-byok: true or byok.enabled: true to forward requests using stored provider credentials.
@@ -43,6 +45,7 @@ HARD RULES AND GOTCHAS
 - Always set baseURL to https://nano-gpt.com/api (or https://nano-gpt.com for /v1/messages) and include Authorization or x-api-key on every call.
 - Do not hardcode model support; call GET /api/v1/models?detailed=true to confirm vision, context length, and subscription status.
 - Do not guess provider IDs. Use GET /api/models/:canonicalId/providers for public provider IDs and pricing. Avoid internal provider names that are not returned by public discovery.
+- For distillation workflows, inspect distillationPolicy.sourceUrl and distillationPolicy.note on both the model and selected provider route. Provider-specific restrictions override model-level allowances, and unknown model/license status remains unknown when a provider is silent.
 - Handle streaming as SSE: group chunks by id, concatenate delta.content, capture delta.reasoning separately, stop on [DONE], and read usage/x_nanogpt_pricing on the final chunk.
 - Never rely on <think> tags; reasoning text lives in reasoning/reasoning_details and may be omitted when reasoning.exclude is true.
 - Memory replaces the entire history with a compressed summary; send the up-to-date messages each turn and avoid mixing original transcripts with memory output.

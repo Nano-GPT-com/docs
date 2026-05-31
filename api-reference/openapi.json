@@ -246,6 +246,126 @@
         }
       }
     },
+    "/explore/text-models": {
+      "get": {
+        "description": "Explore text model records. Supports filtering to models whose model-level distillation policy is allowed.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distillation",
+            "in": "query",
+            "description": "When set to `allowed`, returns only text models whose model-level distillation policy is allowed. Without this filter, text model responses report `meta.distillation` as `all`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "allowed"
+              ],
+              "example": "allowed"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Explore text model results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreTextModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/explore/search": {
+      "get": {
+        "description": "Search explore records. The distillation filter applies only when searching text models.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Explore result type. Use `text` with `distillation=allowed` to search distillation-allowed text models.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "text"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search query.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "qwen"
+            }
+          },
+          {
+            "name": "distillation",
+            "in": "query",
+            "description": "When set to `allowed` with `type=text`, returns only text models whose model-level distillation policy is allowed.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "allowed"
+              ],
+              "example": "allowed"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Explore search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreTextModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/models": {
       "get": {
         "description": "Legacy endpoint to list available models",
@@ -3995,9 +4115,94 @@
                       "default": "per_million_tokens"
                     }
                   }
+                },
+                "distillationPolicy": {
+                  "$ref": "#/components/schemas/DistillationPolicy"
                 }
               }
             }
+          }
+        }
+      },
+      "ExploreTextModelsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Text model records returned by explore.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Text model identifier",
+                  "example": "qwen/qwen3-coder-plus"
+                },
+                "distillationPolicy": {
+                  "$ref": "#/components/schemas/DistillationPolicy"
+                }
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "distillation": {
+                "type": "string",
+                "description": "Distillation filter state. `allowed` when the filter is active, otherwise `all` for text model responses.",
+                "enum": [
+                  "allowed",
+                  "all"
+                ],
+                "example": "allowed"
+              }
+            }
+          }
+        }
+      },
+      "DistillationPolicy": {
+        "type": "object",
+        "description": "API-only policy metadata indicating whether model or provider-route outputs may be used for model training, fine-tuning, distillation, or similar model-improvement workflows under NanoGPT's recorded model-license and provider-terms rules.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Whether distillation is allowed under the current recorded rule set.",
+            "enum": [
+              "allowed",
+              "disallowed",
+              "unknown"
+            ],
+            "example": "allowed"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable policy summary.",
+            "example": "License permits distillation"
+          },
+          "basis": {
+            "type": "string",
+            "description": "Rule basis used to derive the policy status.",
+            "enum": [
+              "deepseek-api-terms",
+              "permissive-open-weights",
+              "provider-output-use-terms",
+              "provider-output-use-restriction",
+              "closed-provider-restriction",
+              "provider-terms-unknown"
+            ],
+            "example": "permissive-open-weights"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "description": "License or provider terms URL used as the policy source, when recorded.",
+            "format": "uri",
+            "example": "https://example.com/license-or-terms"
+          },
+          "note": {
+            "type": "string",
+            "description": "Short explanation and caveats for the policy signal.",
+            "example": "Short explanation of the policy signal."
           }
         }
       },
@@ -6912,6 +7117,9 @@
             "type": "boolean",
             "description": "Whether the provider is currently available",
             "example": true
+          },
+          "distillationPolicy": {
+            "$ref": "#/components/schemas/DistillationPolicy"
           }
         }
       },

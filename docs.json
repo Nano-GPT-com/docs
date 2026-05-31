@@ -99,6 +99,7 @@
           "api-reference/miscellaneous/pricing",
           "api-reference/miscellaneous/billing-override",
           "api-reference/miscellaneous/provider-selection",
+          "api-reference/miscellaneous/distillation-policy",
           "api-reference/miscellaneous/model-suffixes",
           "api-reference/miscellaneous/pii-redaction",
           "api-reference/miscellaneous/partner-auth",

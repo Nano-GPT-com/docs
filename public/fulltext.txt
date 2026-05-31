@@ -83,6 +83,17 @@ GET https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused
 - `GET /api/subscription/v1/models` (subscription-only): Always returns only models included in the NanoGPT subscription; ignores the "Also show paid models" preference. Supports `?detailed=true`.
 - `GET /api/paid/v1/models` (paid/extras): Returns only models not included in the subscription. Supports `?detailed=true`.
 
+**Distillation Policy:**
+Text model records and provider rows may include `distillationPolicy`, an API-only object with `status`, `label`, `basis`, `sourceUrl`, and `note`. It indicates whether model or provider-route outputs may be used for output-based model training or distillation under NanoGPT's recorded model-license and provider-terms rules.
+
+The explore text model endpoints support `distillation=allowed`:
+```
+GET https://nano-gpt.com/api/explore/text-models?distillation=allowed
+GET https://nano-gpt.com/api/explore/search?type=text&q=qwen&distillation=allowed
+```
+
+The filter applies only to text models. Responses include `meta.distillation: "allowed"` when the filter is used and `meta.distillation: "all"` otherwise. Provider-specific restrictions override model-level allowances, so inspect each selected provider route's `distillationPolicy.sourceUrl` and `distillationPolicy.note` before relying on it.
+
 **Example Basic Request:**
 ```
 GET https://nano-gpt.com/api/v1/models

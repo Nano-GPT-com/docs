@@ -14,6 +14,8 @@ For non-text model catalogs, use the dedicated catalog endpoints:
 - [Audio models](/api-reference/endpoint/audio-models)
 - [Embedding models](/api-reference/endpoint/embedding-models)
 
+For API-only distillation metadata and filtering, see [Distillation Policy](/api-reference/miscellaneous/distillation-policy).
+
 ## Notable Model IDs (Examples)
 
 Model availability changes frequently. Use `GET /api/v1/models` as the authoritative source of callable IDs.
@@ -81,6 +83,7 @@ When `detailed=true`, additional fields may be included per model:
 - `icon_url` — small icon representing the provider
 - `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
 - `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
+- `distillationPolicy` — optional policy metadata indicating whether model outputs may be used for distillation or output-based training under NanoGPT's recorded model-license rules
 
 ### Sorting model lists
 
@@ -252,6 +255,7 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `icon_url` | string | Path/URL for a small provider icon |
 | `cost_estimate` | string or object | Internal hints (for example `"$"` / `"$$"` or `{ cheap: true }`) |
 | `category` | string | Optional category (e.g., `"flagship"`, `"mini"`, `"reasoning"`) |
+| `distillationPolicy` | object | Optional API-only distillation metadata. See [Distillation Policy](/api-reference/miscellaneous/distillation-policy). |
 
 ### Pricing Object Structure
 
@@ -261,6 +265,38 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `completion` | number | Cost per million output tokens in USD |
 | `currency` | string | Always "USD" |
 | `unit` | string | Always "per_million_tokens" |
+
+### Distillation Policy
+
+Where available, text model records include a `distillationPolicy` object with `status`, `label`, `basis`, `sourceUrl`, and `note`. This indicates whether model outputs may be used for model training, fine-tuning, distillation, or similar model-improvement workflows under NanoGPT's recorded interpretation of model licenses and provider terms.
+
+```json
+{
+  "distillationPolicy": {
+    "status": "allowed",
+    "label": "License permits distillation",
+    "basis": "permissive-open-weights",
+    "sourceUrl": "https://example.com/license-or-terms",
+    "note": "Short explanation of the policy signal."
+  }
+}
+```
+
+Use the explore endpoints when you need to filter for distillation-allowed text models:
+
+```http
+GET /api/explore/text-models?distillation=allowed
+```
+
+```http
+GET /api/explore/search?type=text&q=qwen&distillation=allowed
+```
+
+The filter applies only to text models. Responses include `meta.distillation: "allowed"` when the filter is used and `meta.distillation: "all"` otherwise.
+
+Provider route policy can differ from model-level policy. Use `GET /api/models/:canonicalId/providers` and inspect each provider row's `distillationPolicy` before relying on a specific route for distillation.
+
+This metadata is informational and is not legal advice. Provider terms and model licenses can change, and licenses may impose attribution, naming, acceptable-use, or derivative-model restrictions even when distillation is allowed.
 
 
 ## Usage Examples

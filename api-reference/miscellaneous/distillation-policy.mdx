@@ -1,0 +1,151 @@
+---
+title: 'Distillation Policy'
+description: 'Identify text models and provider routes whose outputs may be used for model distillation or training'
+---
+
+# Distillation Policy
+
+NanoGPT exposes a `distillationPolicy` field that indicates whether a model or provider route is allowed for output-based model training or distillation under NanoGPT's recorded model-license and provider-terms rules.
+
+This metadata is currently API-only. The text models browser UI does not show a distillation filter or badge.
+
+Distillation policy metadata is based on NanoGPT's current interpretation of published model licenses and provider terms. Users are responsible for ensuring their use complies with all applicable terms and laws.
+
+## Policy Object
+
+Text model records and provider rows may include:
+
+```json
+{
+  "distillationPolicy": {
+    "status": "allowed",
+    "label": "License permits distillation",
+    "basis": "permissive-open-weights",
+    "sourceUrl": "https://example.com/license-or-terms",
+    "note": "Short explanation of the policy signal."
+  }
+}
+```
+
+All fields are additive and optional for backwards compatibility. New API responses include `distillationPolicy` where NanoGPT has recorded policy metadata.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `status` | string | One of `allowed`, `disallowed`, or `unknown`. |
+| `label` | string | Human-readable policy summary. |
+| `basis` | string | Rule basis used to derive the status. |
+| `sourceUrl` | string | License or provider terms URL used as the policy source, when recorded. |
+| `note` | string | Short explanation and caveats for the policy signal. |
+
+## Statuses
+
+| Status | Meaning |
+| --- | --- |
+| `allowed` | Distillation is allowed under the current recorded rule set. |
+| `disallowed` | Distillation is restricted by model or provider terms. |
+| `unknown` | NanoGPT does not have a clear enough signal. |
+
+## Bases
+
+| Basis | Meaning |
+| --- | --- |
+| `deepseek-api-terms` | DeepSeek explicitly allows use of inputs and outputs for training other models, including distillation. |
+| `permissive-open-weights` | The underlying model or license permits distillation or derivative model use. |
+| `provider-output-use-terms` | The provider terms explicitly permit output use. |
+| `provider-output-use-restriction` | The provider terms restrict output-based training, distillation, model development, or competing model/service creation. |
+| `closed-provider-restriction` | The model is from a closed provider family that commonly restricts using outputs for competing model training. |
+| `provider-terms-unknown` | No clear provider or model policy is recorded. |
+
+## Model Policy vs Provider Policy
+
+There are two policy layers:
+
+| Layer | Question it answers |
+| --- | --- |
+| Model/license policy | Does the underlying model or model family allow distillation? |
+| Provider/API policy | Does the specific hosted provider route allow users to use API outputs for distillation? |
+
+A provider can restrict output use even when the underlying model license is permissive. Provider-specific restrictions override model-level allowances.
+
+Provider rows are evaluated with these rules:
+
+- Explicit provider restrictions return `disallowed`.
+- Explicit provider permission returns `allowed`.
+- If provider terms do not mention output-based training or distillation, and the underlying model/license allows it, NanoGPT treats the provider route as `allowed`.
+- If the underlying model policy is `unknown` or `disallowed`, provider silence does not make it allowed.
+
+Example provider row:
+
+```json
+{
+  "provider": "fireworks",
+  "distillationPolicy": {
+    "status": "allowed",
+    "label": "Provider terms permit output use",
+    "basis": "provider-output-use-terms",
+    "sourceUrl": "https://fireworks.ai/terms-of-service",
+    "note": "Fireworks permits use of outputs for any lawful purpose, subject to model-provider license and usage restrictions. Model-level signal: license permits distillation."
+  }
+}
+```
+
+## Filtering Text Models
+
+The explore text model endpoints support `distillation=allowed`.
+
+```http
+GET /api/explore/text-models?distillation=allowed
+```
+
+This returns only text models whose model-level distillation policy is `allowed`.
+
+Search supports the same parameter for text search:
+
+```http
+GET /api/explore/search?type=text&q=qwen&distillation=allowed
+```
+
+The filter applies only to text models.
+
+## Response Metadata
+
+When the filter is used, responses include:
+
+```json
+{
+  "meta": {
+    "distillation": "allowed"
+  }
+}
+```
+
+Without the filter, text model responses include:
+
+```json
+{
+  "meta": {
+    "distillation": "all"
+  }
+}
+```
+
+## Provider-Level Behavior
+
+Provider route policy can differ from model-level policy:
+
+- DeepSeek models served by DeepSeek are `allowed`.
+- Fireworks, Together, Nebius, and ArliAI routes on a model whose license permits distillation are `allowed`.
+- Providers with explicit competing-model or output-training restrictions are `disallowed`.
+- Providers with no recorded restriction on an allowed open-weight model are `allowed`.
+- Providers with no recorded restriction on an unknown model or license are `unknown`.
+
+For a representative open Qwen model across user-selectable providers, the current provider-level split is `35 allowed`, `21 disallowed`, and `0 unknown`.
+
+## Caveats
+
+- This metadata is informational and is not legal advice.
+- Provider terms and model licenses can change.
+- Model licenses can impose attribution, naming, acceptable-use, or derivative-model restrictions even when distillation is allowed.
+- Provider-specific restrictions override model-level allowances.
+- Unknown model/license status remains unknown even if a provider is silent.
+- Inspect `sourceUrl` and `note` before relying on a model or route for distillation.
