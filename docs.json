@@ -128,6 +128,7 @@
           "integrations/roocode",
           "integrations/kilocode",
           "integrations/cursor",
+          "integrations/fluent",
           "integrations/mcp",
           "integrations/n8n",
           "integrations/sillytavern",
