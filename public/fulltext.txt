@@ -446,6 +446,73 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
+### Usage (GET /v1/usage)
+
+Retrieve aggregate spend, refund, request, and token usage for the authenticated API key.
+
+**Authentication:** Bearer token
+
+**Default behavior:** If no date range is provided, returns the current API key's last 30 UTC days grouped by both day and model.
+
+**Query Parameters:**
+- `from` (string, YYYY-MM-DD): UTC start date. Must be provided with `to`.
+- `to` (string, YYYY-MM-DD): UTC end date, inclusive. Must be on or after `from`, cannot be in the future, and ranges are capped at 366 days.
+- `group_by` (string, default: `day,model`): Values: `day`, `model`, `day,model`. `model,day` is accepted as an alias.
+- `scope` (string, default: `current_key`): `current_key` and `api_key` both return the authenticated API key's usage.
+- `api_key_id` (integer): Optional current API key ID. Requests for another API key are rejected.
+
+The endpoint returns aggregates only. It does not return raw transaction rows, prompts, responses, provider routing details, or account-wide usage across multiple API keys.
+
+**Example Request:**
+```
+GET https://nano-gpt.com/api/v1/usage?from=2026-05-01&to=2026-05-31&group_by=model
+Authorization: Bearer YOUR_API_KEY
+```
+
+**Example Response:**
+```json
+{
+  "object": "usage",
+  "scope": "current_key",
+  "apiKey": { "id": 123 },
+  "from": "2026-05-01",
+  "to": "2026-05-31",
+  "timezone": "UTC",
+  "groupBy": "model",
+  "asOf": "2026-05-31T12:00:00.000Z",
+  "source": {
+    "rollupDays": ["2026-05-01"],
+    "liveDays": ["2026-05-31"],
+    "missingRollupDays": []
+  },
+  "totals": {
+    "requests": 1284,
+    "costUsd": 42.18,
+    "refundedUsd": 1.25,
+    "netCostUsd": 40.93,
+    "inputTokens": 1234567,
+    "outputTokens": 456789,
+    "reasoningTokens": 12000,
+    "totalTokens": 1691356
+  },
+  "byModel": [
+    {
+      "model": "GPT-4.1 mini",
+      "requests": 812,
+      "costUsd": 18.92,
+      "refundedUsd": 0.5,
+      "netCostUsd": 18.42,
+      "inputTokens": 900000,
+      "outputTokens": 220000,
+      "reasoningTokens": 0,
+      "totalTokens": 1120000
+    }
+  ]
+}
+```
+
+`totalTokens` is `inputTokens + outputTokens`; reasoning tokens are reported separately. `netCostUsd` is `max(0, costUsd - refundedUsd)` per aggregate bucket, so row sums can differ slightly from `totals.netCostUsd` when refunds cross buckets.
+
 ### Receive Nano (POST /receive-nano)
 
 Process pending Nano transactions for the account.

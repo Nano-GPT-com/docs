@@ -246,6 +246,146 @@
         }
       }
     },
+    "/v1/usage": {
+      "get": {
+        "description": "Retrieve aggregate spend, request, and token usage for the authenticated API key, grouped by UTC day, model, or both.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "UTC start date in YYYY-MM-DD format. Must be provided together with `to`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-05-01"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "UTC end date in YYYY-MM-DD format, inclusive. Must be on or after `from` and cannot be in the future.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-05-31"
+            }
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "description": "Controls which aggregate arrays are returned. `model,day` is accepted as an alias for `day,model`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "model",
+                "day,model",
+                "model,day"
+              ],
+              "default": "day,model",
+              "example": "day,model"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "Usage scope. `current_key` and `api_key` both return usage for the authenticated API key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "current_key",
+                "api_key"
+              ],
+              "default": "current_key"
+            }
+          },
+          {
+            "name": "api_key_id",
+            "in": "query",
+            "description": "Optional current API key ID. Requests for another API key are rejected.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 123
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregate usage for the authenticated API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range, unsupported parameter, invalid grouping, or request for a different API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many usage requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usage API temporarily unavailable or requested rollup data is not ready yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected usage retrieval failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/explore/text-models": {
       "get": {
         "description": "Explore text model records. Supports filtering to models whose model-level distillation policy is allowed.",
@@ -3979,6 +4119,219 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "UsageError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["message", "type"],
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "from and to must use YYYY-MM-DD UTC dates."
+              },
+              "type": {
+                "type": "string",
+                "example": "invalid_request_error"
+              }
+            }
+          }
+        }
+      },
+      "UsageCounterBucket": {
+        "type": "object",
+        "required": [
+          "requests",
+          "costUsd",
+          "refundedUsd",
+          "netCostUsd",
+          "inputTokens",
+          "outputTokens",
+          "reasoningTokens",
+          "totalTokens"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "UTC date for day-grouped buckets.",
+            "example": "2026-05-01"
+          },
+          "model": {
+            "type": "string",
+            "description": "Public model label for model-grouped buckets.",
+            "example": "GPT-4.1 mini"
+          },
+          "requests": {
+            "type": "integer",
+            "description": "Number of billable usage requests in the aggregate bucket.",
+            "example": 1284
+          },
+          "costUsd": {
+            "type": "number",
+            "description": "Gross USD usage cost before refunds.",
+            "example": 42.18
+          },
+          "refundedUsd": {
+            "type": "number",
+            "description": "USD amount refunded in the aggregate bucket.",
+            "example": 1.25
+          },
+          "netCostUsd": {
+            "type": "number",
+            "description": "max(0, costUsd - refundedUsd) for the aggregate bucket.",
+            "example": 40.93
+          },
+          "inputTokens": {
+            "type": "integer",
+            "description": "Input tokens counted for the bucket.",
+            "example": 1234567
+          },
+          "outputTokens": {
+            "type": "integer",
+            "description": "Output tokens counted for the bucket.",
+            "example": 456789
+          },
+          "reasoningTokens": {
+            "type": "integer",
+            "description": "Reasoning tokens counted separately when available.",
+            "example": 12000
+          },
+          "totalTokens": {
+            "type": "integer",
+            "description": "inputTokens + outputTokens. Reasoning tokens are reported separately and are not added to totalTokens.",
+            "example": 1691356
+          }
+        }
+      },
+      "UsageSource": {
+        "type": "object",
+        "required": ["rollupDays", "liveDays", "missingRollupDays"],
+        "properties": {
+          "rollupDays": {
+            "type": "array",
+            "description": "Days served from precomputed daily rollups.",
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": ["2026-05-01"]
+          },
+          "liveDays": {
+            "type": "array",
+            "description": "Days served from live aggregation, usually today or days not rolled up yet.",
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": ["2026-05-31"]
+          },
+          "missingRollupDays": {
+            "type": "array",
+            "description": "Closed UTC days that were not available in the rollup table and had to be served live.",
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": []
+          }
+        }
+      },
+      "UsageResponse": {
+        "type": "object",
+        "required": [
+          "object",
+          "scope",
+          "apiKey",
+          "from",
+          "to",
+          "timezone",
+          "groupBy",
+          "asOf",
+          "source",
+          "totals"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["usage"],
+            "description": "Always usage."
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["current_key", "api_key"],
+            "description": "Echoes the requested usage scope."
+          },
+          "apiKey": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "Numeric ID of the authenticated API key.",
+                "example": 123
+              }
+            }
+          },
+          "from": {
+            "type": "string",
+            "format": "date",
+            "description": "UTC start date.",
+            "example": "2026-05-01"
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "description": "UTC end date, inclusive.",
+            "example": "2026-05-31"
+          },
+          "timezone": {
+            "type": "string",
+            "enum": ["UTC"],
+            "description": "Always UTC."
+          },
+          "groupBy": {
+            "type": "string",
+            "enum": ["day", "model", "day,model"],
+            "description": "The effective grouping mode.",
+            "example": "day,model"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the aggregate response was generated. Cached responses can be up to 60 seconds old.",
+            "example": "2026-05-31T12:00:00.000Z"
+          },
+          "source": {
+            "$ref": "#/components/schemas/UsageSource"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/UsageCounterBucket"
+          },
+          "byDay": {
+            "type": "array",
+            "description": "Returned when grouped by day.",
+            "items": {
+              "$ref": "#/components/schemas/UsageCounterBucket"
+            }
+          },
+          "byModel": {
+            "type": "array",
+            "description": "Returned when grouped by model.",
+            "items": {
+              "$ref": "#/components/schemas/UsageCounterBucket"
+            }
+          },
+          "byDayModel": {
+            "type": "array",
+            "description": "Returned when grouped by both day and model.",
+            "items": {
+              "$ref": "#/components/schemas/UsageCounterBucket"
+            }
           }
         }
       },

@@ -6,8 +6,8 @@ import path from 'node:path';
 
 const MODELS_URL = 'https://nano-gpt.com/api/v1/models';
 const MODELS_DOC_PATH = path.join('api-reference', 'endpoint', 'models.mdx');
-const START_MARKER = '<!-- AUTO-GENERATED: notable-model-ids:start -->';
-const END_MARKER = '<!-- AUTO-GENERATED: notable-model-ids:end -->';
+const START_MARKER = '{/* AUTO-GENERATED: notable-model-ids:start */}';
+const END_MARKER = '{/* AUTO-GENERATED: notable-model-ids:end */}';
 
 const FAMILY_CONFIG = [
   {
@@ -106,13 +106,17 @@ function buildGeneratedLines(liveIds) {
 
 function replaceGeneratedBlock(docText, rows) {
   const block = `${START_MARKER}\n${rows.join('\n')}\n${END_MARKER}`;
-  const pattern = new RegExp(`${START_MARKER}[\\s\\S]*?${END_MARKER}`);
+  const pattern = new RegExp(`${escapeRegExp(START_MARKER)}[\\s\\S]*?${escapeRegExp(END_MARKER)}`);
 
   if (!pattern.test(docText)) {
     throw new Error(`Missing generated block markers in ${MODELS_DOC_PATH}`);
   }
 
   return docText.replace(pattern, block);
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 async function main() {
