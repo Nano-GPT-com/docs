@@ -1,0 +1,329 @@
+---
+title: 'Batch API'
+description: 'Run high-volume, asynchronous chat completion jobs'
+---
+
+## Overview
+
+The NanoGPT Batch API is an OpenAI-compatible way to run large numbers of chat completion requests asynchronously. It is best for offline workloads where latency is not important, such as classification, summarization, evals, synthetic data generation, document processing, and GPT image analysis.
+
+Batch jobs upload a JSONL file, create a batch, poll the batch, and download the output file after completion.
+
+## Base URL
+
+Use the dedicated NanoGPT API host for Batch API requests:
+
+```text
+https://api.nano-gpt.com/api/v1
+```
+
+All requests require an API key:
+
+```http
+Authorization: Bearer $NANOGPT_API_KEY
+```
+
+## Supported Endpoints
+
+### Files
+
+- `POST /files`
+- `GET /files/{file_id}`
+- `GET /files/{file_id}/content`
+
+### Batches
+
+- `POST /batches`
+- `GET /batches/{batch_id}`
+- `GET /batches`
+- `POST /batches/{batch_id}/cancel`
+
+## Supported Batch Request Endpoint
+
+Only this endpoint is supported inside batch JSONL rows:
+
+```text
+/v1/chat/completions
+```
+
+These endpoints are not supported in this first version:
+
+- `/v1/responses`
+- `/v1/completions`
+- `/v1/embeddings`
+- Image generation, audio, video, transcription, TTS, moderation, and other non-chat endpoints
+
+## Supported Models
+
+Batch jobs currently support supported OpenAI/GPT chat model IDs and the Claude model IDs listed below.
+
+### GPT Models
+
+Users can use supported direct GPT/OpenAI chat model IDs such as:
+
+- `gpt-5.4`
+- `gpt-5.4-mini`
+- `gpt-5.4-nano`
+- `gpt-5.4-pro`
+- `gpt-5.3-chat`
+- `gpt-5.3-chat-latest`
+- `gpt-5.3-codex`
+- `gpt-5.2`
+- `gpt-5.2-chat-latest`
+- `gpt-5.2-pro`
+- `gpt-5.1`
+- `gpt-5.1-chat`
+- `gpt-5.1-chat-latest`
+- `gpt-5.1-codex`
+- `gpt-5.1-codex-max`
+- `gpt-5`
+- `gpt-5-chat-latest`
+- `gpt-5-mini`
+- `gpt-5-nano`
+- `gpt-4.1`
+- `gpt-4.1-mini`
+- `gpt-4.1-nano`
+- `gpt-4o`
+- `gpt-4o-mini`
+- `chatgpt-4o-latest`
+- `o1`
+- `o1-mini`
+- `o1-preview`
+- `o3`
+- `o3-mini`
+- `o4-mini`
+
+The `openai/` prefix is also accepted for supported OpenAI models. For example, `openai/gpt-4.1` is normalized to `gpt-4.1`.
+
+### Claude Models
+
+Supported Claude batch models:
+
+- `anthropic/claude-sonnet-4.5`
+- `anthropic/claude-sonnet-4`
+- `anthropic/claude-haiku-4.5`
+- `anthropic/claude-opus-4.5`
+- `anthropic/claude-opus-4.1`
+- `anthropic/claude-opus-4`
+
+Equivalent Claude model IDs without the `anthropic/` prefix may also work when they map to the same supported model. The `anthropic/` prefixed form is recommended for documentation examples.
+
+Claude thinking aliases are supported for compatible Claude models by adding a thinking suffix such as:
+
+- `anthropic/claude-sonnet-4.5:thinking:low`
+- `anthropic/claude-sonnet-4.5:thinking:medium`
+- `anthropic/claude-sonnet-4.5:thinking:high`
+- `anthropic/claude-sonnet-4.5:thinking:16000`
+
+For thinking requests, the thinking budget must be lower than `max_tokens`.
+
+## Request Rules
+
+Each batch file must follow these rules:
+
+- File format must be JSONL: one JSON object per line.
+- File upload must use `purpose=batch`.
+- Every row must include a unique non-empty `custom_id`.
+- Every row must use `method: "POST"`.
+- Every row must use `url: "/v1/chat/completions"`.
+- Every row must include a `body` object.
+- Every row must include `body.messages`.
+- Every row must include `body.model`.
+- Every row must include `body.max_tokens` or `body.max_completion_tokens`.
+- All rows in one file must use the same model.
+- All rows in one file must use the same model family. Do not mix GPT and Claude rows in one batch.
+- Streaming is not supported. `stream: true` is rejected.
+- GPT batch jobs support text and image-input chat messages.
+- Claude batch jobs currently support text messages only.
+- GPT image inputs must use OpenAI-compatible `image_url` content parts.
+- Image inputs must be placed in `user` messages.
+- Image URLs may be `http://`, `https://`, or base64 `data:image/...;base64,...` URLs.
+- Supported image media types are PNG, JPEG, GIF, and WebP.
+- Tools, functions, `response_format`, audio, and multimodal request bodies are not supported in this first version.
+
+For Claude batch rows, these additional request fields are not supported:
+
+- `n` greater than `1`
+- `frequency_penalty`
+- `presence_penalty`
+- `logit_bias`
+- `logprobs`
+- `top_logprobs`
+- `seed`
+- `user`
+- `service_tier`
+- `store`
+
+## Billing
+
+Batch jobs use NanoGPT account balance. Subscription included-token logic is not applied to batch jobs.
+
+At batch creation time, NanoGPT checks the account balance against a conservative maximum liability estimate. This is based on the uploaded requests and each row's `max_tokens` or `max_completion_tokens`.
+
+The final charge is created after the batch reaches a terminal status and actual usage is available. Completed usage is billed once, idempotently. If a job produces no billable usage, no usage charge is created.
+
+Batch jobs are discounted versus normal synchronous API usage. Use the model pricing page or API pricing endpoint as the source of truth for current prices.
+
+## Example Input File
+
+Create `batch.jsonl`:
+
+```jsonl
+{"custom_id":"request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"Summarize this in one sentence: Batch APIs are useful for offline jobs."}],"max_tokens":64}}
+{"custom_id":"request-2","method":"POST","url":"/v1/chat/completions","body":{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"Classify this review as positive or negative: I loved the product."}],"max_tokens":16}}
+```
+
+Claude example:
+
+```jsonl
+{"custom_id":"claude-request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"anthropic/claude-sonnet-4.5","messages":[{"role":"user","content":"Reply with exactly: ok"}],"max_tokens":8}}
+```
+
+GPT image input example:
+
+```jsonl
+{"custom_id":"image-request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"gpt-4o-mini","messages":[{"role":"user","content":[{"type":"text","text":"Describe this image in one sentence."},{"type":"image_url","image_url":{"url":"https://example.com/image.png"}}]}],"max_tokens":80}}
+```
+
+## Upload The File
+
+```bash
+curl https://api.nano-gpt.com/api/v1/files \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -F purpose=batch \
+  -F file=@batch.jsonl
+```
+
+Example response:
+
+```json
+{
+  "id": "file_abc123",
+  "object": "file",
+  "bytes": 342,
+  "created_at": 1779995236,
+  "filename": "batch.jsonl",
+  "purpose": "batch",
+  "status": "processed"
+}
+```
+
+## Create The Batch
+
+```bash
+curl https://api.nano-gpt.com/api/v1/batches \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_file_id": "file_abc123",
+    "endpoint": "/v1/chat/completions",
+    "completion_window": "24h"
+  }'
+```
+
+Example response:
+
+```json
+{
+  "id": "batch_abc123",
+  "object": "batch",
+  "endpoint": "/v1/chat/completions",
+  "input_file_id": "file_abc123",
+  "completion_window": "24h",
+  "status": "validating",
+  "output_file_id": null,
+  "error_file_id": null,
+  "request_counts": {
+    "total": 2,
+    "completed": 0,
+    "failed": 0
+  },
+  "usage": null
+}
+```
+
+## Poll The Batch
+
+```bash
+curl https://api.nano-gpt.com/api/v1/batches/batch_abc123 \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+Possible statuses:
+
+- `validating`
+- `in_progress`
+- `finalizing`
+- `completed`
+- `failed`
+- `expired`
+- `cancelling`
+- `cancelled`
+
+When `status` is `completed`, `output_file_id` should be present. If individual rows failed, `error_file_id` may also be present.
+
+## Download Output
+
+```bash
+curl https://api.nano-gpt.com/api/v1/files/file_output123/content \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+Output is JSONL. Each line corresponds to one input row and includes the original `custom_id`.
+
+Example output line:
+
+```json
+{"custom_id":"request-1","response":{"status_code":200,"body":{"id":"chatcmpl_abc123","object":"chat.completion","choices":[{"index":0,"message":{"role":"assistant","content":"Batch APIs let you process offline jobs asynchronously at scale."},"finish_reason":"stop"}],"usage":{"prompt_tokens":18,"completion_tokens":13,"total_tokens":31}}},"error":null}
+```
+
+## List Batches
+
+```bash
+curl https://api.nano-gpt.com/api/v1/batches \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+Optional query parameters:
+
+- `limit`
+- `after`
+
+## Cancel A Batch
+
+```bash
+curl -X POST https://api.nano-gpt.com/api/v1/batches/batch_abc123/cancel \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+Cancellation is best-effort. Jobs that already reached a terminal status cannot be cancelled.
+
+## Common Errors
+
+### Unsupported endpoint
+
+The first version only supports `/v1/chat/completions`.
+
+### Missing max output cap
+
+Every row must include `max_tokens` or `max_completion_tokens`. This is required so NanoGPT can estimate the maximum possible liability before submitting the job.
+
+### Mixed model
+
+All rows in one batch file must use the same model.
+
+### Mixed model family
+
+Do not mix GPT and Claude requests in one batch file.
+
+### Streaming unsupported
+
+Batch jobs are asynchronous and do not stream. Remove `stream: true`.
+
+### Invalid image input
+
+GPT image inputs must use `image_url` parts with an `http://`, `https://`, or supported base64 `data:image/...;base64,...` URL. Local file paths, `file://` URLs, unsupported media types, and malformed data URLs are rejected. Claude batch image inputs are not supported yet.
+
+### Unsupported request field
+
+Tools, functions, structured output, audio, video, non-image multimodal request bodies, and some Claude-incompatible chat fields are not supported in this first version.

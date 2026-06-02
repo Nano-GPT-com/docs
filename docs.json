@@ -30,6 +30,7 @@
           "api-reference/endpoint/characters",
           "api-reference/endpoint/character-models",
           "api-reference/endpoint/chat-completion",
+          "api-reference/endpoint/batches",
           "api-reference/endpoint/web-search",
           "api-reference/endpoint/data-api",
           "api-reference/endpoint/responses",
