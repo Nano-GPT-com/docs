@@ -12,7 +12,7 @@ openapi: 'POST /v1/chat/completions'
 </Note>
 
 <Note>
-  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+  **Accountless x402 payments**: Non-streaming `POST /api/v1/chat/completions` requests can be quoted without an account or API key on supported deployments. Streaming accountless x402 is beta. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) and `GET /api/v1/x402/endpoints`.
 </Note>
 
 ## Page map

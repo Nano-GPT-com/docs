@@ -33,6 +33,23 @@ Either auth header is supported:
   `YOUR_API_KEY`
 </ParamField>
 
+## Accountless x402 Payment
+
+For accountless payment, prefer the public Data API path:
+
+```bash
+curl -i https://nano-gpt.com/api/v1/data/web/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What happened in AI this week?",
+    "provider": "linkup",
+    "depth": "standard",
+    "outputType": "sourcedAnswer"
+  }'
+```
+
+Supported deployments return `402 Payment Required` with a top-level `payment` quote when the request is unauthenticated and can be quoted. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) and `GET /api/v1/x402/endpoints` for the current endpoint matrix.
+
 ## Request body
 
 <ParamField body="query" type="string" required>

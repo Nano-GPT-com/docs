@@ -20,6 +20,22 @@ Use either header:
 - `Authorization: Bearer YOUR_API_KEY`
 - `x-api-key: YOUR_API_KEY`
 
+## Accountless x402 Payment
+
+JSON image edit requests can be quoted without an account or API key on supported deployments:
+
+```bash
+curl -i https://nano-gpt.com/api/v1/images/edits \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-image-1",
+    "prompt": "Remove the background",
+    "imageDataUrl": "data:image/png;base64,..."
+  }'
+```
+
+Multipart uploads require normal authentication before conversion. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) and `GET /api/v1/x402/endpoints` for the current matrix.
+
 ## Multipart Request
 
 Send `multipart/form-data` when uploading files.

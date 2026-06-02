@@ -15,7 +15,7 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
 - Multimodal inputs (images, files) for supported models
 
 <Note>
-  **X-402 Micropayments**: To enable anonymous pay-per-request access with cryptocurrency when you have insufficient balance, include the `X-X402: true` header. See [X-402 Micropayments](/api-reference/miscellaneous/x402) for details.
+  **Accountless x402 payments**: Non-streaming `POST /api/v1/responses` requests can be quoted without an account or API key on supported deployments. Streaming and background accountless x402 are beta. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) and `GET /api/v1/x402/endpoints`.
 </Note>
 
 <Note>
@@ -24,7 +24,7 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
 
 ## Authentication
 
-All requests require authentication via API key:
+Use an API key for normal authenticated billing:
 
 ```
 Authorization: Bearer YOUR_API_KEY
@@ -37,6 +37,8 @@ x-api-key: YOUR_API_KEY
 ```
 
 For API-key requests, you can optionally pass `x-team-id` to choose team context when team defaults are evaluated (for example, retention defaults).
+
+For supported accountless x402 requests, omit `Authorization` and `x-api-key` to receive a payment quote.
 
 ## Endpoints
 

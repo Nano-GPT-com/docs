@@ -24,6 +24,21 @@ x-api-key: YOUR_API_KEY
 Authorization: Bearer YOUR_API_KEY
 ```
 
+## Accountless x402 Payment
+
+For accountless payment, prefer the public Data API path:
+
+```bash
+curl -i https://nano-gpt.com/api/v1/data/url/scrape \
+  -H "Content-Type: application/json" \
+  -d '{
+    "urls": ["https://nano-gpt.com"],
+    "stealthMode": false
+  }'
+```
+
+Supported deployments return `402 Payment Required` with a top-level `payment` quote when the request is unauthenticated and can be quoted. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) and `GET /api/v1/x402/endpoints` for the current endpoint matrix.
+
 ## Request Format
 
 ### Headers

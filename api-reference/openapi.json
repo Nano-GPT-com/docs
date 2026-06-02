@@ -21,7 +21,8 @@
         "security": [
           {
             "bearerAuth": []
-          }
+          },
+          {}
         ],
         "parameters": [
           {
@@ -71,6 +72,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote for supported non-streaming requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/Error" },
+                    { "$ref": "#/components/schemas/X402PaymentRequiredResponse" }
+                  ]
                 }
               }
             }
@@ -1406,7 +1420,8 @@
       "post": {
         "description": "Creates an image generation for the provided prompt (OpenAI-compatible)",
         "security": [
-          { "bearerAuth": [] }
+          { "bearerAuth": [] },
+          {}
         ],
         "requestBody": {
           "description": "Parameters for image generation",
@@ -1457,6 +1472,88 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/Error" },
+                    { "$ref": "#/components/schemas/X402PaymentRequiredResponse" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/images/edits": {
+      "post": {
+        "description": "Edit images with JSON inputs. Multipart uploads require normal authentication before conversion; accountless x402 applies to JSON edit requests only.",
+        "security": [
+          { "bearerAuth": [] },
+          { "apiKeyAuth": [] },
+          {}
+        ],
+        "requestBody": {
+          "description": "JSON image edit parameters. Provide imageDataUrl or imageDataUrls for accountless x402 requests.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "model": { "type": "string" },
+                  "prompt": { "type": "string" },
+                  "imageDataUrl": { "type": "string" },
+                  "imageDataUrls": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "maskDataUrl": { "type": "string" },
+                  "size": { "type": "string" },
+                  "n": { "type": "integer" }
+                },
+                "required": ["prompt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image edit response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpenAIImageGenerationsResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - invalid image edit request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          },
+          "402": {
+            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote for JSON edit requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/Error" },
+                    { "$ref": "#/components/schemas/X402PaymentRequiredResponse" }
+                  ]
+                }
               }
             }
           }
@@ -1890,6 +1987,167 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/data/web/search": {
+      "post": {
+        "description": "Public Data API facade for web search. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key.",
+        "security": [
+          { "apiKeyAuth": [] },
+          { "bearerAuth": [] },
+          {}
+        ],
+        "requestBody": {
+          "description": "Web search parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Web search response with results based on output type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Query parameter is required and must be a string",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or API key"
+          },
+          "402": {
+            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/Error" },
+                    { "$ref": "#/components/schemas/X402PaymentRequiredResponse" }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable - Provider key missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout - Search failed or timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/data/url/scrape": {
+      "post": {
+        "description": "Public Data API facade for URL scraping. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key. The request body uses urls: [...].",
+        "security": [
+          { "apiKeyAuth": [] },
+          { "bearerAuth": [] },
+          {}
+        ],
+        "requestBody": {
+          "description": "Web scraping parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeUrlsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Web scraping response with results for each URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeUrlsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Please provide an array of URLs to scrape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or API key"
+          },
+          "402": {
+            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/Error" },
+                    { "$ref": "#/components/schemas/X402PaymentRequiredResponse" }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An error occurred while processing your request"
           }
         }
       }
@@ -2729,6 +2987,33 @@
         }
       }
     },
+    "/v1/x402/endpoints": {
+      "get": {
+        "description": "List endpoints supported by accountless x402 in the running deployment. By default only supported endpoints are returned; pass supported=all to include deferred or unsupported entries.",
+        "parameters": [
+          {
+            "name": "supported",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true", "all"]
+            },
+            "description": "Use supported=all to include unsupported and deferred endpoint entries."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accountless x402 endpoint support matrix for this deployment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/X402EndpointSupportListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/x402/status/{paymentId}": {
       "get": {
         "description": "Poll the status of an X-402 payment by paymentId.",
@@ -3125,7 +3410,8 @@
         "description": "Create a response with the OpenAI-compatible Responses API",
         "security": [
           { "bearerAuth": [] },
-          { "apiKeyAuth": [] }
+          { "apiKeyAuth": [] },
+          {}
         ],
         "parameters": [
           {
@@ -3171,6 +3457,19 @@
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
           },
           "401": { "description": "Unauthorized - Invalid or missing API key" },
+          "402": {
+            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote for supported non-streaming requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/Error" },
+                    { "$ref": "#/components/schemas/X402PaymentRequiredResponse" }
+                  ]
+                }
+              }
+            }
+          },
           "429": {
             "description": "Too Many Requests - Rate limit exceeded",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
@@ -6240,7 +6539,7 @@
       },
       "X402AcceptOption": {
         "type": "object",
-        "description": "One payment option offered in an X-402 402 response.",
+        "description": "Legacy lower-level payment option offered in an x402 402 response.",
         "additionalProperties": true,
         "properties": {
           "scheme": { "type": "string" },
@@ -6260,9 +6559,49 @@
           "extra": { "type": "object", "additionalProperties": true }
         }
       },
+      "X402PaymentAcceptedOption": {
+        "type": "object",
+        "description": "Normalized public accountless x402 payment option.",
+        "additionalProperties": true,
+        "properties": {
+          "scheme": {
+            "type": "string",
+            "enum": ["nano", "nano-exact", "x402-exact", "base-usdc"]
+          },
+          "protocolScheme": { "type": "string" },
+          "network": { "type": "string" },
+          "asset": { "type": "string" },
+          "amount": { "type": "string" },
+          "amountFormatted": { "type": "string" },
+          "amountUsd": { "type": "string" },
+          "payTo": { "type": "string" },
+          "paymentId": { "type": "string" },
+          "statusUrl": { "type": "string", "format": "uri" },
+          "completeUrl": { "type": "string", "format": "uri" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "X402PaymentQuote": {
+        "type": "object",
+        "description": "Canonical accountless x402 payment quote.",
+        "additionalProperties": true,
+        "properties": {
+          "version": { "type": "integer", "example": 1 },
+          "paymentId": { "type": "string", "example": "pay_abc123" },
+          "requestHash": { "type": "string", "example": "sha256:..." },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "amountUsd": { "type": "string", "example": "0.0714" },
+          "statusUrl": { "type": "string", "format": "uri" },
+          "completeUrl": { "type": "string", "format": "uri" },
+          "accepted": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/X402PaymentAcceptedOption" }
+          }
+        }
+      },
       "X402PaymentRequiredResponse": {
         "type": "object",
-        "description": "402 Payment Required body with X-402 payment options.",
+        "description": "402 Payment Required body for accountless x402. New clients should key off the top-level payment object; accepts is retained for backwards compatibility.",
         "additionalProperties": true,
         "properties": {
           "error": {
@@ -6274,12 +6613,66 @@
               "code": { "type": "string" }
             }
           },
+          "payment": { "$ref": "#/components/schemas/X402PaymentQuote" },
           "x402Version": { "type": "integer", "example": 1 },
           "accepts": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/X402AcceptOption" }
           },
           "requestHash": { "type": "string" }
+        }
+      },
+      "X402EndpointSupport": {
+        "type": "object",
+        "required": ["endpoint", "method", "supported", "schemes", "streaming", "async", "quoteType"],
+        "properties": {
+          "endpoint": { "type": "string", "example": "/api/v1/images/generations" },
+          "method": { "type": "string", "example": "POST" },
+          "supported": { "type": "boolean" },
+          "schemes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["nano", "nano-exact", "base-usdc", "x402-exact"]
+            }
+          },
+          "streaming": {
+            "type": "string",
+            "enum": ["unsupported", "beta", "stable"]
+          },
+          "async": { "type": "boolean" },
+          "quoteType": {
+            "type": "string",
+            "enum": ["deterministic", "estimated with reconciliation"]
+          },
+          "notes": { "type": "string" }
+        }
+      },
+      "X402EndpointSupportListResponse": {
+        "type": "object",
+        "required": ["object", "version", "data", "meta"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "x402.endpoint_support.list"
+          },
+          "version": {
+            "type": "string",
+            "example": "2026-06-02"
+          },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/X402EndpointSupport" }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "count": { "type": "integer", "example": 6 },
+              "totalCount": { "type": "integer", "example": 7 },
+              "unsupportedIncluded": { "type": "boolean", "example": false }
+            },
+            "additionalProperties": true
+          }
         }
       },
       "X402StatusResponse": {

@@ -30,7 +30,16 @@ Use the same NanoGPT API key authentication as existing API routes:
 Authorization: Bearer YOUR_API_KEY
 ```
 
-Some underlying endpoints may also support x402 payment flows or browser-session flows. The Data API forwards authentication and payment-related headers to the underlying route.
+The public accountless x402 contract is available on selected Data API paths. Send a normal supported request without `Authorization` or `x-api-key` to receive a `402 Payment Required` quote when x402 is enabled for that endpoint.
+
+Currently documented accountless Data API paths:
+
+- `POST /api/v1/data/web/search`
+- `POST /api/v1/data/url/scrape`
+
+Use `GET /api/v1/x402/endpoints` as the deployment source of truth, and see [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for completion and polling behavior. Direct legacy routes remain available, but accountless docs prefer the public v1 data paths.
+
+Some underlying endpoints may also support browser-session flows. The Data API forwards authentication and payment-related headers to the underlying route.
 
 ## Discovery
 
@@ -343,6 +352,30 @@ curl https://nano-gpt.com/api/v1/data/url/scrape \
     "stealthMode": false
   }'
 ```
+
+### Accountless x402 Data Request
+
+```bash
+curl -i https://nano-gpt.com/api/v1/data/web/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "NanoGPT API data endpoints",
+    "provider": "linkup",
+    "depth": "standard",
+    "outputType": "searchResults"
+  }'
+```
+
+```bash
+curl -i https://nano-gpt.com/api/v1/data/url/scrape \
+  -H "Content-Type: application/json" \
+  -d '{
+    "urls": ["https://nano-gpt.com"],
+    "stealthMode": false
+  }'
+```
+
+Both examples return `402 Payment Required` with a `payment` object when accountless x402 is enabled and the request can be quoted.
 
 ### Google Maps Search
 
