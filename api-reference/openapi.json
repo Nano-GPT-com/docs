@@ -2989,7 +2989,7 @@
     },
     "/v1/x402/endpoints": {
       "get": {
-        "description": "List endpoints supported by accountless x402 in the running deployment. By default only supported endpoints are returned; pass supported=all to include deferred or unsupported entries.",
+        "description": "List endpoints supported by accountless x402 in the running deployment. By default only supported endpoints are returned; pass supported=all to include beta and deferred entries. If x402 is disabled, payment storage is unavailable, or completion replay is not configured, the default supported list is empty.",
         "parameters": [
           {
             "name": "supported",
@@ -2999,7 +2999,7 @@
               "type": "string",
               "enum": ["true", "all"]
             },
-            "description": "Use supported=all to include unsupported and deferred endpoint entries."
+            "description": "Use supported=all to include beta and deferred endpoint entries."
           }
         ],
         "responses": {
