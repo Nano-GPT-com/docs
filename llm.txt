@@ -1,9 +1,9 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-06-03
+Last updated: 2026-06-04
 
 GOAL
-Equip developers to call the NanoGPT API for chat, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
+Equip developers to call the NanoGPT API for chat, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
 
 STYLE FOR ANSWERS
 - Prefer TypeScript (Node 18+) with openai@^5.8.0 and baseURL set to https://nano-gpt.com/api.
@@ -22,6 +22,7 @@ REQUIRED PACKAGES AND VERSIONS
 
 CORE CONCEPTS
 - API base https://nano-gpt.com/api hosts OpenAI-style chat/completions/embeddings plus /v1/audio/speech; Anthropic /v1/messages lives at https://nano-gpt.com/v1/messages.
+- Batch API base https://api.nano-gpt.com/api/v1 hosts /files and /batches for asynchronous OpenAI-compatible chat completion jobs. Use api.nano-gpt.com for file upload, batch creation, polling, cancellation, and output downloads; do not use nano-gpt.com for batch uploads.
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
 - Accountless x402: selected endpoints can be called without Authorization or x-api-key to receive 402 Payment Required with a top-level payment quote. Check GET /api/v1/x402/endpoints for the supported matrix; stable public endpoints include non-streaming chat completions, non-streaming responses, image generations, JSON image edits, /api/v1/data/web/search, and /api/v1/data/url/scrape.
 - Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
@@ -54,6 +55,7 @@ HARD RULES AND GOTCHAS
 - Never rely on <think> tags; reasoning text lives in reasoning/reasoning_details and may be omitted when reasoning.exclude is true.
 - Memory replaces the entire history with a compressed summary; send the up-to-date messages each turn and avoid mixing original transcripts with memory output.
 - BYOK requests skip fallback providers; warn developers that misconfigured downstream keys return provider errors directly without NanoGPT failover.
+- Batch API JSONL rows must use method POST, url /v1/chat/completions, unique custom_id values, body.messages, body.model, and body.max_tokens or body.max_completion_tokens. All rows in one batch must use the same model and model family; do not mix GPT, Claude, and Gemini rows. Streaming, tools/functions, response_format, audio, and non-image multimodal bodies are not supported.
 
 QUICKSTART MINIMAL
 Set up the OpenAI SDK once and call the chat completions endpoint with familiar parameters.
@@ -83,6 +85,25 @@ async function run() {
 run().catch((err) => {
   console.error('NanoGPT error:', err.response?.data ?? err);
 });
+```
+
+BATCH API MINIMAL
+Use asynchronous batches for high-volume offline chat completion jobs where latency is not important. Supported rows target /v1/chat/completions for supported GPT, Claude, and Gemini models, including text and image_url inputs.
+
+```bash
+cat > batch.jsonl <<'JSONL'
+{"custom_id":"request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"Summarize this in one sentence."}],"max_tokens":64}}
+JSONL
+
+curl https://api.nano-gpt.com/api/v1/files \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -F purpose=batch \
+  -F file=@batch.jsonl
+
+curl https://api.nano-gpt.com/api/v1/batches \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input_file_id":"file_abc123","endpoint":"/v1/chat/completions","completion_window":"24h"}'
 ```
 
 STREAMING WITH REASONING
@@ -483,6 +504,7 @@ ERROR HANDLING AND OBSERVABILITY
 LINKS
 - https://nano-gpt.com/api
 - api-reference/endpoint/usage
+- api-reference/endpoint/batches
 - api-reference/endpoint/data-api
 - docs/reasoning.md
 - docs/v1/models.md

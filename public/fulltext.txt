@@ -176,6 +176,57 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
+### Batch API (POST /v1/batches)
+
+OpenAI-compatible asynchronous batch jobs for high-volume chat completion workloads where latency is not important.
+
+**Base URL:** `https://api.nano-gpt.com/api/v1`
+
+Use `api.nano-gpt.com` for file upload, batch creation, polling, cancellation, and output downloads. Do not use `nano-gpt.com` for batch uploads, because larger multipart uploads can be rejected before they reach the Batch API.
+
+**Authentication:** Bearer token
+
+**Supported endpoints:**
+- Files: `POST /files`, `GET /files/{file_id}`, `GET /files/{file_id}/content`
+- Batches: `POST /batches`, `GET /batches/{batch_id}`, `GET /batches`, `POST /batches/{batch_id}/cancel`
+
+**Supported JSONL row endpoint:** `/v1/chat/completions`
+
+Batch rows support the listed GPT/OpenAI, Claude, and Gemini chat models. GPT, Claude, and Gemini batch jobs support text prompts and OpenAI-compatible `image_url` image inputs in user messages. Image URLs may be `http://`, `https://`, or base64 `data:image/...;base64,...` URLs for PNG, JPEG, GIF, and WebP.
+
+**Request rules:**
+- Upload files with `purpose=batch`.
+- Each JSONL row must include a unique non-empty `custom_id`.
+- Each row must use `method: "POST"` and `url: "/v1/chat/completions"`.
+- Each row must include `body.messages`, `body.model`, and `body.max_tokens` or `body.max_completion_tokens`.
+- All rows in one batch must use the same model and model family. Do not mix GPT, Claude, and Gemini rows.
+- Streaming, tools/functions, `response_format`, audio, and non-image multimodal request bodies are not supported.
+
+**Example JSONL row:**
+```jsonl
+{"custom_id":"request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"Summarize this in one sentence."}],"max_tokens":64}}
+```
+
+**Upload:**
+```bash
+curl https://api.nano-gpt.com/api/v1/files \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -F purpose=batch \
+  -F file=@batch.jsonl
+```
+
+**Create batch:**
+```bash
+curl https://api.nano-gpt.com/api/v1/batches \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input_file_id":"file_abc123","endpoint":"/v1/chat/completions","completion_window":"24h"}'
+```
+
+**Statuses:** `validating`, `in_progress`, `finalizing`, `completed`, `failed`, `expired`, `cancelling`, `cancelled`
+
+Batch jobs use NanoGPT account balance. Subscription included-token logic is not applied. NanoGPT checks account balance against a conservative maximum liability estimate at batch creation, then bills completed usage once after the batch reaches a terminal status.
+
 ### Chat Completion (POST /v1/chat/completions)
 
 OpenAI-compatible endpoint for chat completions.

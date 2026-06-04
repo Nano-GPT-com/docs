@@ -5,17 +5,21 @@ description: 'Run high-volume, asynchronous chat completion jobs'
 
 ## Overview
 
-The NanoGPT Batch API is an OpenAI-compatible way to run large numbers of chat completion requests asynchronously. It is best for offline workloads where latency is not important, such as classification, summarization, evals, synthetic data generation, document processing, and GPT image analysis.
+The NanoGPT Batch API is an OpenAI-compatible way to run large numbers of chat completion requests asynchronously. The first version supports `/v1/chat/completions` requests for supported GPT, Claude, and Gemini models, including text prompts and image inputs.
+
+Batch jobs are best for offline workloads where latency is not important, such as classification, summarization, evals, synthetic data generation, document processing, and image analysis.
 
 Batch jobs upload a JSONL file, create a batch, poll the batch, and download the output file after completion.
 
 ## Base URL
 
-Use the dedicated NanoGPT API host for Batch API requests:
+Use the dedicated NanoGPT OpenAI-compatible API host for all Batch API requests:
 
 ```text
 https://api.nano-gpt.com/api/v1
 ```
+
+Use `api.nano-gpt.com` for file upload, batch creation, polling, cancellation, and output downloads. Do not use `nano-gpt.com` for batch uploads, because larger multipart uploads can be rejected by the website host before they reach the Batch API.
 
 All requests require an API key:
 
@@ -55,11 +59,11 @@ These endpoints are not supported in this first version:
 
 ## Supported Models
 
-Batch jobs currently support supported OpenAI/GPT chat model IDs and the Claude model IDs listed below.
+Batch jobs support the OpenAI/GPT chat model IDs below, plus the listed Claude and Gemini model IDs.
 
 ### GPT Models
 
-Users can use supported direct GPT/OpenAI chat model IDs such as:
+Supported direct GPT/OpenAI chat model IDs include:
 
 - `gpt-5.4`
 - `gpt-5.4-mini`
@@ -106,8 +110,6 @@ Supported Claude batch models:
 - `anthropic/claude-opus-4.1`
 - `anthropic/claude-opus-4`
 
-Equivalent Claude model IDs without the `anthropic/` prefix may also work when they map to the same supported model. The `anthropic/` prefixed form is recommended for documentation examples.
-
 Claude thinking aliases are supported for compatible Claude models by adding a thinking suffix such as:
 
 - `anthropic/claude-sonnet-4.5:thinking:low`
@@ -116,6 +118,19 @@ Claude thinking aliases are supported for compatible Claude models by adding a t
 - `anthropic/claude-sonnet-4.5:thinking:16000`
 
 For thinking requests, the thinking budget must be lower than `max_tokens`.
+
+### Gemini Models
+
+Supported Gemini batch models:
+
+- `google/gemini-3.5-flash`
+- `google/gemini-3.1-pro-preview`
+- `google/gemini-3-flash-preview`
+- `google/gemini-3.1-flash-lite`
+- `google/gemini-3.1-flash-lite-preview`
+- `google/gemini-2.5-pro`
+- `google/gemini-2.5-flash`
+- `google/gemini-2.5-flash-lite`
 
 ## Request Rules
 
@@ -131,28 +146,15 @@ Each batch file must follow these rules:
 - Every row must include `body.model`.
 - Every row must include `body.max_tokens` or `body.max_completion_tokens`.
 - All rows in one file must use the same model.
-- All rows in one file must use the same model family. Do not mix GPT and Claude rows in one batch.
+- All rows in one file must use the same model family.
+- Do not mix GPT, Claude, and Gemini rows in one batch.
 - Streaming is not supported. `stream: true` is rejected.
-- GPT batch jobs support text and image-input chat messages.
-- Claude batch jobs currently support text messages only.
-- GPT image inputs must use OpenAI-compatible `image_url` content parts.
+- GPT, Claude, and Gemini batch jobs support text and image-input chat messages.
+- Image inputs must use OpenAI-compatible `image_url` content parts.
 - Image inputs must be placed in `user` messages.
 - Image URLs may be `http://`, `https://`, or base64 `data:image/...;base64,...` URLs.
 - Supported image media types are PNG, JPEG, GIF, and WebP.
-- Tools, functions, `response_format`, audio, and multimodal request bodies are not supported in this first version.
-
-For Claude batch rows, these additional request fields are not supported:
-
-- `n` greater than `1`
-- `frequency_penalty`
-- `presence_penalty`
-- `logit_bias`
-- `logprobs`
-- `top_logprobs`
-- `seed`
-- `user`
-- `service_tier`
-- `store`
+- Tools, functions, `response_format`, audio, and non-image multimodal request bodies are not supported in this first version.
 
 ## Billing
 
@@ -179,7 +181,13 @@ Claude example:
 {"custom_id":"claude-request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"anthropic/claude-sonnet-4.5","messages":[{"role":"user","content":"Reply with exactly: ok"}],"max_tokens":8}}
 ```
 
-GPT image input example:
+Gemini example:
+
+```jsonl
+{"custom_id":"gemini-request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"google/gemini-2.5-flash","messages":[{"role":"user","content":"Extract three keywords from this sentence: Batch APIs process independent prompts asynchronously."}],"max_tokens":32}}
+```
+
+Image input example:
 
 ```jsonl
 {"custom_id":"image-request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"gpt-4o-mini","messages":[{"role":"user","content":[{"type":"text","text":"Describe this image in one sentence."},{"type":"image_url","image_url":{"url":"https://example.com/image.png"}}]}],"max_tokens":80}}
@@ -314,7 +322,7 @@ All rows in one batch file must use the same model.
 
 ### Mixed model family
 
-Do not mix GPT and Claude requests in one batch file.
+Do not mix GPT, Claude, and Gemini requests in one batch file.
 
 ### Streaming unsupported
 
@@ -322,8 +330,8 @@ Batch jobs are asynchronous and do not stream. Remove `stream: true`.
 
 ### Invalid image input
 
-GPT image inputs must use `image_url` parts with an `http://`, `https://`, or supported base64 `data:image/...;base64,...` URL. Local file paths, `file://` URLs, unsupported media types, and malformed data URLs are rejected. Claude batch image inputs are not supported yet.
+Image inputs must use `image_url` parts with an `http://`, `https://`, or supported base64 `data:image/...;base64,...` URL. Local file paths, `file://` URLs, unsupported media types, and malformed data URLs are rejected.
 
 ### Unsupported request field
 
-Tools, functions, structured output, audio, video, non-image multimodal request bodies, and some Claude-incompatible chat fields are not supported in this first version.
+Tools, functions, structured output, audio, video, and non-image multimodal request bodies are not supported in this first version.

@@ -29,6 +29,8 @@ See [Model Suffixes](/api-reference/miscellaneous/model-suffixes) for the comple
 
 This endpoint mimics OpenAI's chat completions API:
 
+For high-volume offline workloads where latency is not important, use the [Batch API](/api-reference/endpoint/batches) to upload JSONL chat completion requests and process them asynchronously.
+
 ```python
 import requests
 import json
