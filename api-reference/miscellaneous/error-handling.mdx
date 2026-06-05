@@ -113,6 +113,12 @@ Common codes include:
 - `invalid_json_schema`
 - `tool_choice_unsupported`
 - `image_input_not_supported`
+- `conflicting_moderation_model`
+- `inline_moderation_requires_api_key`
+- `empty_moderation_input`
+- `unsupported_moderation_input`
+- `unsupported_input_modality`
+- `unsupported_batch_input`
 
 ### Content and context
 
@@ -247,7 +253,7 @@ Feature-specific variants may include a structured error `code` such as `memory_
 
 ## Content Policy and Empty Responses
 
-- If a request is blocked by safety checks (`content_policy_violation`), the API will return a `400` error and is intended to avoid charging for the blocked request.
+- If a request is blocked by safety checks (`content_policy_violation`), the API will return a `400` error and is intended to avoid charging for the blocked generation request. If [Inline Moderation](/api-reference/miscellaneous/inline-moderation) blocked the request, the separate moderation preflight is still charged.
 - If the API returns `empty_response`, the request is intended to avoid charging (common causes: stop sequences, very low `max_tokens`, or filtering).
 
 ## BYOK Notes

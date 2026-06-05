@@ -7,6 +7,8 @@ description: "Guide to the OpenAI-compatible image generation endpoint"
 
 The NanoGPT API provides image generation through the OpenAI-compatible endpoint. This guide covers text-to-image and image-to-image flows, response formats, and best practices.
 
+For authenticated API-key requests, you can opt in to a paid input safety preflight by sending the `moderation` header. See [Inline Moderation](/api-reference/miscellaneous/inline-moderation) for supported image routes, inspectable image inputs, billing behavior, and error codes.
+
 ## OpenAI-Compatible Endpoint (v1/images/generations)
 
 This endpoint follows the OpenAI specification for image generation and returns a list of base64-encoded images by default (or hosted URLs when `response_format: "url"`).

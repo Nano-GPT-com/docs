@@ -1,0 +1,311 @@
+---
+title: "Inline Moderation"
+description: "Run a paid input safety preflight before selected generation requests"
+---
+
+## Overview
+
+Inline moderation lets authenticated API-key callers ask NanoGPT to run a paid input safety check before a text, image, or video generation request is dispatched to the target model provider.
+
+It is opt-in per request and configured with HTTP headers. If the submitted input is flagged, NanoGPT charges only the moderation check, skips generation, and returns a content policy error. If the input passes, NanoGPT charges the moderation check, then continues with the normal generation request and normal generation billing.
+
+Inline moderation is an input preflight only. It does not moderate generated outputs.
+
+## Supported Routes
+
+Inline moderation is supported on authenticated API-key requests to:
+
+- `POST /api/v1/chat/completions`
+- `POST /api/v1/responses`
+- `POST /api/v1/completions`
+- `POST /api/v1/messages`
+- `POST /api/v1/images/generations`
+- `POST /api/v1/images/edits`
+- NanoGPT image generation compatibility routes that flow through the canonical image handler
+- NanoGPT video generation requests that flow through the canonical video handler
+
+Accountless x402/exact-payment requests are not supported for inline moderation in this version.
+
+## Enabling Inline Moderation
+
+Use the `moderation` header.
+
+To enable moderation with the default moderation model:
+
+```http
+moderation: true
+```
+
+Truthy values all enable the default moderation model:
+
+- `true`
+- `1`
+- `yes`
+- `on`
+
+Falsy values disable inline moderation:
+
+- `false`
+- `0`
+- `no`
+- `off`
+
+## Selecting a Moderation Model
+
+Supported moderation model IDs are listed by:
+
+```http
+GET /api/v1/moderation-models
+```
+
+There are two ways to choose a moderation model.
+
+Pass the model ID directly in the `moderation` header:
+
+```http
+moderation: meta-llama/llama-guard-4-12b
+```
+
+Or enable moderation with `moderation: true` and select the model with `moderation-model`:
+
+```http
+moderation: true
+moderation-model: meta-llama/llama-guard-4-12b
+```
+
+`moderation-model` only selects the model when the `moderation` header is also present. A request with only `moderation-model` does not enable inline moderation.
+
+If both headers specify model IDs and they differ, the request fails:
+
+```json
+{
+  "error": {
+    "message": "Conflicting moderation headers.",
+    "type": "invalid_request_error",
+    "code": "conflicting_moderation_model",
+    "param": "moderation"
+  }
+}
+```
+
+Unknown moderation model IDs use the normal `model_not_found` behavior.
+
+## What Gets Moderated
+
+Inline moderation checks user-facing request input before generation.
+
+For text APIs, NanoGPT moderates:
+
+- chat messages
+- Responses API instructions
+- Responses API input, including merged `conversation.messages` and `previous_response_id` history when applicable
+- Responses API text content parts such as `input_text`, `output_text`, and tool output text
+- completions prompts, including prompt arrays
+- image content parts when they are provided as HTTP(S) image URLs or `data:image/...` URLs
+
+For image and video APIs, NanoGPT moderates:
+
+- `prompt`
+- multi-prompt text fields
+- submitted images
+- reference images
+- start/end/first/last frame images when those fields are used
+
+For image and video requests, submitted images must be inspectable as HTTP(S) image URLs or `data:image/...` URLs. If a request includes an image input that cannot be inspected, such as a bare base64 string or a provider-specific file/asset reference, inline moderation fails closed with `unsupported_moderation_input`.
+
+NanoGPT does not moderate:
+
+- generated outputs
+- raw video inputs
+- provider configuration fields
+- `negative_prompt`
+- arbitrary non-user-facing model configuration
+
+If moderation is requested but NanoGPT cannot extract any text or image input to moderate, the request fails with `empty_moderation_input`.
+
+## Billing Behavior
+
+Inline moderation is a separate paid preflight.
+
+If the moderation check passes:
+
+- NanoGPT charges the moderation request.
+- NanoGPT continues with normal generation.
+- Normal generation billing still applies.
+
+If the moderation check flags the input:
+
+- NanoGPT charges the moderation request.
+- NanoGPT does not dispatch the generation request to the target provider.
+- NanoGPT does not charge generation.
+- The response is `400 content_policy_violation`.
+
+If the moderation provider is unavailable or returns malformed output:
+
+- NanoGPT fails closed with `503`.
+- NanoGPT does not charge moderation.
+- NanoGPT does not dispatch generation.
+- NanoGPT does not charge generation.
+
+Inline moderation is currently supported only for authenticated API-key billing. Accountless x402/exact-payment requests return:
+
+```json
+{
+  "error": {
+    "message": "Inline moderation is currently supported for authenticated API-key requests only.",
+    "type": "invalid_request_error",
+    "code": "inline_moderation_requires_api_key",
+    "param": "moderation"
+  }
+}
+```
+
+## Response Headers
+
+When inline moderation runs and the request is not blocked, successful moderated generation responses include moderation metadata headers:
+
+```http
+x-nanogpt-inline-moderation-model: omni-moderation-latest
+x-nanogpt-inline-moderation-flagged: false
+x-nanogpt-inline-moderation-cost-usd: 0.00000123
+```
+
+When inline moderation blocks a request, the blocked response also includes:
+
+```http
+x-nanogpt-inline-moderation-model: omni-moderation-latest
+x-nanogpt-inline-moderation-flagged: true
+x-nanogpt-inline-moderation-cost-usd: 0.00000123
+```
+
+Whitelabel responses scrub NanoGPT-specific response headers.
+
+## Blocked Response Shape
+
+When moderation flags the input, NanoGPT returns `400` with a standard error object and moderation metadata. The original input content is not echoed.
+
+```json
+{
+  "error": {
+    "message": "Your request was blocked by content moderation.",
+    "type": "invalid_request_error",
+    "code": "content_policy_violation"
+  },
+  "moderation": {
+    "id": "modr_abc123",
+    "model": "omni-moderation-latest",
+    "results": [
+      {
+        "flagged": true,
+        "categories": {
+          "sexual": true
+        },
+        "category_scores": {
+          "sexual": 0.98
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 120,
+      "completion_tokens": 0,
+      "total_tokens": 120
+    }
+  }
+}
+```
+
+Exact category names and score shapes depend on the moderation model.
+
+## Common Errors
+
+| Code | Meaning |
+| --- | --- |
+| `conflicting_moderation_model` | Both `moderation` and `moderation-model` specify different moderation model IDs. |
+| `model_not_found` | The selected moderation model ID is not supported. |
+| `inline_moderation_requires_api_key` | Inline moderation was requested without a supported authenticated API-key billing context. |
+| `empty_moderation_input` | Moderation was requested but no text or image input could be extracted. |
+| `unsupported_moderation_input` | The request contains input that inline moderation cannot inspect safely, such as an unsupported image file reference or non-URL image payload. |
+| `unsupported_input_modality` | The selected moderation model cannot moderate one of the submitted modalities, for example image input with a text-only moderation model. |
+| `unsupported_batch_input` | The selected moderation model does not support batched moderation input. |
+| `context_length_exceeded` | The moderation input exceeds the selected moderation model's input limit. |
+| `content_policy_violation` | Moderation flagged the input. |
+
+## Examples
+
+### Chat Completions
+
+```bash
+curl https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "moderation: true" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "messages": [
+      { "role": "user", "content": "Write a short product description for a hiking backpack." }
+    ]
+  }'
+```
+
+### Responses API with a Specific Moderation Model
+
+```bash
+curl https://nano-gpt.com/api/v1/responses \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "moderation: true" \
+  -H "moderation-model: meta-llama/llama-guard-4-12b" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "instructions": "Answer clearly and briefly.",
+    "input": "Summarize what inline moderation does."
+  }'
+```
+
+### Image Generation
+
+```bash
+curl https://nano-gpt.com/api/v1/images/generations \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "moderation: true" \
+  -d '{
+    "model": "openai/gpt-image-1",
+    "prompt": "A clean product photo of a ceramic coffee mug on a kitchen counter"
+  }'
+```
+
+### Image or Video Request with Reference Images
+
+Reference images are moderated when they are provided as inspectable URLs:
+
+```json
+{
+  "model": "some-image-or-video-model",
+  "prompt": "Use this product photo as a style reference.",
+  "referenceImages": [
+    { "url": "https://example.com/reference.png" }
+  ]
+}
+```
+
+Unsupported image payloads fail closed:
+
+```json
+{
+  "error": {
+    "message": "Inline moderation does not support one or more submitted image inputs. Use an HTTP(S) image URL or data:image URL instead.",
+    "type": "invalid_request_error",
+    "code": "unsupported_moderation_input",
+    "param": "moderation"
+  }
+}
+```
+
+## Notes for Integrators
+
+Inline moderation is best for callers who want NanoGPT to enforce a paid input safety preflight before generation. It is not a substitute for output moderation, downstream user reporting, or product-specific policy controls.
+
+Because moderation is charged separately, clients should treat inline moderation as an additional paid feature. If a request is blocked, the caller still pays for moderation, but not for generation.
+
+To avoid accidental no-op configuration, always send `moderation: true` or `moderation: <model-id>` when you want inline moderation enabled.

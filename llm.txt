@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-06-04
+Last updated: 2026-06-05
 
 GOAL
 Equip developers to call the NanoGPT API for chat, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -33,6 +33,7 @@ CORE CONCEPTS
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
 - Usage API: GET /api/v1/usage returns aggregate spend, refund, request, and token usage for the authenticated API key by UTC day, public model label, or both. It does not expose prompts, responses, raw transaction rows, provider routing, or account-wide usage across multiple keys.
 - Caching and memory: most providers use implicit caching automatically when supported; top-level caching: true routes to a cache-capable provider and defaults to stickyprovider: true; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
+- Inline moderation: authenticated API-key callers can send moderation: true or moderation: <model-id> on supported text, image, and video generation routes to run a paid input safety preflight before provider dispatch. It charges separately, blocks flagged input with content_policy_violation, and does not moderate generated outputs.
 
 GLOSSARY
 - Linkup search: NanoGPT web search triggered by :online suffix; prepends fresh results and bills $0.006 (standard) or $0.06 (deep).
@@ -44,6 +45,7 @@ GLOSSARY
 - x_nanogpt_pricing: billing extension object with stable core fields (amount, currency, sanitized error) plus provider-dependent optional metadata (cost, paymentSource, token counters, team billing flags).
 - BYOK: bring-your-own-key mode activated with x-use-byok: true or byok.enabled: true to forward requests using stored provider credentials.
 - x402 payment rails: production 402 quotes may advertise nano, nano-exact, x402-exact, and base-usdc. Lightning/L402 is not currently advertised by NanoGPT 402 responses.
+- Inline moderation headers: moderation enables the default moderation model when truthy; moderation-model only selects a model when moderation is also present. Differing model IDs in both headers return conflicting_moderation_model.
 
 HARD RULES AND GOTCHAS
 - Always set baseURL to https://nano-gpt.com/api (or https://nano-gpt.com for /v1/messages) and include Authorization or x-api-key on every call.
@@ -55,6 +57,7 @@ HARD RULES AND GOTCHAS
 - Never rely on <think> tags; reasoning text lives in reasoning/reasoning_details and may be omitted when reasoning.exclude is true.
 - Memory replaces the entire history with a compressed summary; send the up-to-date messages each turn and avoid mixing original transcripts with memory output.
 - BYOK requests skip fallback providers; warn developers that misconfigured downstream keys return provider errors directly without NanoGPT failover.
+- Inline moderation is input-only and API-key-only. Accountless x402/exact-payment requests with moderation return inline_moderation_requires_api_key. Unsupported or uninspectable image inputs fail closed with unsupported_moderation_input.
 - Batch API JSONL rows must use method POST, url /v1/chat/completions, unique custom_id values, body.messages, body.model, and body.max_tokens or body.max_completion_tokens. All rows in one batch must use the same model and model family; do not mix GPT, Claude, and Gemini rows. Streaming, tools/functions, response_format, audio, and non-image multimodal bodies are not supported.
 
 QUICKSTART MINIMAL

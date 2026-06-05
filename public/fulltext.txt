@@ -663,6 +663,18 @@ TypingMind is a powerful alternative web UI for ChatGPT with advanced features.
 
 ## Miscellaneous Information
 
+### Inline Moderation
+
+Inline moderation lets authenticated API-key callers send `moderation: true` or `moderation: <model-id>` to run a paid input safety preflight before selected text, image, and video generation requests are dispatched to providers. It is input-only and does not moderate generated outputs.
+
+Supported authenticated routes include `POST /api/v1/chat/completions`, `POST /api/v1/responses`, `POST /api/v1/completions`, `POST /api/v1/messages`, `POST /api/v1/images/generations`, `POST /api/v1/images/edits`, image generation compatibility routes that use the canonical image handler, and video generation requests that use the canonical video handler.
+
+Use `GET /api/v1/moderation-models` to list moderation model IDs. `moderation-model` only selects a model when the `moderation` header is also present; conflicting model IDs return `conflicting_moderation_model`.
+
+If input passes, NanoGPT charges the moderation check and continues with normal generation billing. If input is flagged, NanoGPT charges the moderation check, skips generation, does not charge generation, and returns `400 content_policy_violation`. Accountless x402/exact-payment requests are not supported and return `inline_moderation_requires_api_key`.
+
+Image inputs must be inspectable HTTP(S) URLs or `data:image/...` URLs. Unsupported image/file references fail closed with `unsupported_moderation_input`.
+
 ### Client Libraries
 
 #### JavaScript - NanoGPTJS

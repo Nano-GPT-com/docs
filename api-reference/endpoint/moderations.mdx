@@ -8,6 +8,8 @@ description: "Classify text and image content for safety"
 
 Use `POST /api/v1/moderations` to classify text, image, or mixed content for safety before you store, display, or send user-generated content to another model endpoint.
 
+If you want NanoGPT to run a paid input safety preflight automatically before supported generation requests, use [Inline Moderation](/api-reference/miscellaneous/inline-moderation) instead.
+
 The endpoint is synchronous and returns an OpenAI-compatible moderation response shape where practical. It is a paid API feature and bills proportionally to usage with no separate minimum charge.
 
 ## Endpoint
