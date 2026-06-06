@@ -945,7 +945,7 @@ For the full guide (supported models, thresholds, pricing, and usage fields), se
 
 NanoGPT automatically applies implicit caching on providers/models that support it (including OpenAI, Gemini, and many open-source provider/model routes), so most requests do not need caching flags.
 
-Set top-level `caching: true` when you want NanoGPT to route the request to any available provider that supports prompt/input caching. This is capability-based routing: you do not need to choose a provider. If no cache-capable provider is available for the model, the request fails rather than silently using a non-caching provider.
+Set top-level `caching: true` or append `:caching` / `:cache` / `:cached` to the model when you want NanoGPT to route the request to any available provider that supports prompt/input caching. This is capability-based routing: you do not need to choose a provider. If no cache-capable provider is available for the model, the request fails rather than silently using a non-caching provider.
 
 Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and body-level `cache_control` alias, plus inline `cache_control`) when you need Claude-specific cache boundaries, TTL selection, or `prompt_caching.stickyProvider` consistency control. Top-level `caching: true` does not add Anthropic-style `cache_control` markers or configure cache TTLs.
 
@@ -985,6 +985,17 @@ Top-level fields:
 | `caching` | boolean | `false` | Require a cache-capable provider for this request. If none is usable for the model, the request fails. |
 | `stickyprovider` | boolean | `true` when `caching: true` | Prefer the previously recorded provider for later matching cache-capable requests. Set `false` to restore non-sticky cache-capable routing. |
 | `stickyProvider` | boolean | Alias | CamelCase alias for top-level `stickyprovider`. Use `stickyprovider` in examples. |
+
+Equivalent model suffix:
+
+```json
+{
+  "model": "moonshotai/kimi-k2.6:thinking:caching",
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
 
 For `caching: true`, routing works as follows:
 

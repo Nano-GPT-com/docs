@@ -1,6 +1,6 @@
 ---
 title: 'Model Suffixes'
-description: 'Supported suffixes for web search, memory, PII redaction, reasoning visibility, thinking variants, and provider routing preferences.'
+description: 'Supported suffixes for web search, memory, PII redaction, caching, reasoning visibility, thinking variants, and provider routing preferences.'
 ---
 
 # Model Suffixes
@@ -23,10 +23,14 @@ These apply only to provider-selection-capable models.
 | `:cheap` | Alias for `:price`. |
 | `:floor` | Alias for `:price`. |
 | `:tools` | Route to a tools-capable provider path for models that support tools provider selection. |
+| `:caching` | Require routing to a cache-capable provider, equivalent to top-level `caching: true`. |
+| `:cache` | Alias for `:caching`. |
+| `:cached` | Alias for `:caching`. |
 
 ```json
 { "model": "zai-org/glm-5:fast", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "zai-org/glm-5:cheap", "messages": [{ "role": "user", "content": "Hello" }] }
+{ "model": "moonshotai/kimi-k2.6:thinking:caching", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "moonshotai/kimi-k2.6:tools", "messages": [{ "role": "user", "content": "Hello" }], "tools": [{ "type": "function", "function": { "name": "lookup", "parameters": { "type": "object", "properties": {} } } }] }
 ```
 
@@ -36,8 +40,11 @@ Rules:
 - Routing preference suffixes are stripped before model mapping/routing. Non-routing identity suffixes such as `:thinking` are preserved.
 - Do not combine `:speed`, `:fast`, `:throughput`, `:latency`, `:price`, `:cheap`, or `:floor` with `X-Provider`, body `provider`, or a provider model suffix.
 - Do not combine `:tools` with a routing preference suffix, `X-Provider`, body `provider`, a provider model suffix, or `caching: true`.
+- Do not combine `:caching`, `:cache`, or `:cached` with `:tools`, `X-Provider`, body `provider`, a provider model suffix, or another routing preference suffix.
 - Routing preference requests are billed like explicit provider-selection requests.
 - Conflict error codes use the existing `speed_suffix_*` family for API compatibility, even when the suffix is not literally `:speed`.
+
+The caching suffixes are provider-capability routing, not prompt-cache annotation. They do not add Anthropic-style `cache_control` markers, configure cache TTLs, or force a cache write. For details, see [Prompt Caching](/api-reference/miscellaneous/prompt-caching#cache-capable-provider-routing).
 
 ## Provider Suffixes
 
@@ -134,6 +141,7 @@ Do not combine conflicting routing directives:
 { "model": "zai-org/glm-5:fast", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "zai-org/glm-5:cheap", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "zai-org/glm-5:thinking:fast", "messages": [{ "role": "user", "content": "Hello" }] }
+{ "model": "moonshotai/kimi-k2.6:thinking:caching", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "openai/gpt-5.2:online/exa-instant:memory-30", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "openai/gpt-5.2:redaction:online", "messages": [{ "role": "user", "content": "Hello" }] }
 { "model": "anthropic/claude-opus-4.6:memory-30:online/linkup-deep:reasoning-exclude", "messages": [{ "role": "user", "content": "Hello" }] }

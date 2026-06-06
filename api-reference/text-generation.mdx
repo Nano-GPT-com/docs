@@ -240,7 +240,7 @@ For the full guide (supported models, thresholds, pricing, and usage fields), se
 
 NanoGPT automatically applies implicit caching on providers/models that support it (including OpenAI, Gemini, and many open-source provider/model routes), so most requests do not need caching flags.
 
-Set top-level `caching: true` when you want NanoGPT to route the request to any available provider that supports prompt/input caching. This is capability-based routing: you do not need to choose a provider. If no cache-capable provider is available for the model, the request fails rather than silently using a non-caching provider.
+Set top-level `caching: true` or append `:caching` / `:cache` / `:cached` to the model when you want NanoGPT to route the request to any available provider that supports prompt/input caching. This is capability-based routing: you do not need to choose a provider. If no cache-capable provider is available for the model, the request fails rather than silently using a non-caching provider.
 
 Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and body-level `cache_control` alias, plus inline `cache_control`) when you need Claude-specific cache boundaries, TTL selection, or `prompt_caching.stickyProvider` consistency control. Top-level `caching: true` does not add Anthropic-style `cache_control` markers or configure cache TTLs.
 
@@ -272,6 +272,17 @@ To require a cache-capable provider without sticky routing, set `stickyprovider:
 ```
 
 Top-level `stickyProvider` is also accepted as a camelCase alias for `stickyprovider`.
+
+Equivalent model suffix:
+
+```json
+{
+  "model": "moonshotai/kimi-k2.6:thinking:caching",
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
 
 For `caching: true`, NanoGPT filters to available, non-excluded, prompt-caching-capable providers; prefers the recorded sticky provider when enabled and still usable; otherwise chooses the cheapest cache-capable provider by base input + output price. Cache write/read pricing is used only as a tie-breaker.
 

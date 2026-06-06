@@ -250,9 +250,9 @@ Example error:
 
 When you explicitly select a provider with `X-Provider` or body `provider`, NanoGPT routes that request to the selected provider. For consecutive prompts, using the same provider helps keep routing stable, which is the setup you want for provider-side prompt-cache reuse when that provider and model support caching.
 
-For capability-based routing, use top-level `caching: true` instead of choosing a specific provider. NanoGPT will route to any available provider that supports prompt/input caching for the requested provider-selection model, and it defaults to sticky provider routing so later matching requests prefer the same provider.
+For capability-based routing, use top-level `caching: true` or the `:caching` model suffix instead of choosing a specific provider. NanoGPT will route to any available provider that supports prompt/input caching for the requested provider-selection model, and it defaults to sticky provider routing so later matching requests prefer the same provider.
 
-Do not rely on general automatic routing if provider-side cache affinity is important. Automatic routing may choose different upstream providers across requests. For cache-sensitive workflows, either consistently send the same `X-Provider` value or use `caching: true` when any cache-capable provider is acceptable.
+General automatic routing may use cache-affinity routing for eligible cache-capable providers, but it does not require a cache-capable provider and may still choose different upstream providers when request shape, provider availability, or routing constraints change. For cache-sensitive workflows, either consistently send the same `X-Provider` value or use `caching: true` / `:caching` when any cache-capable provider is acceptable.
 
 ## Cache-Capable Provider Routing
 
@@ -286,6 +286,17 @@ To require a cache-capable provider without stickiness:
 ```
 
 Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`.
+
+The model suffixes `:caching`, `:cache`, and `:cached` request the same cache-capable provider routing:
+
+```json
+{
+  "model": "moonshotai/kimi-k2.6:thinking:caching",
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
 
 Routing order for `caching: true`:
 
