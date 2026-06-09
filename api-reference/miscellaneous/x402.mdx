@@ -21,6 +21,8 @@ The supported endpoint matrix is machine-readable. Its `schemes` list reflects t
 curl https://nano-gpt.com/api/v1/x402/endpoints
 ```
 
+As of 2026-06-09, production advertises `x402-solana-usdc` on the public endpoints listed below. Continue to use `GET /api/v1/x402/endpoints` as the source of truth because enabled rails can be deployment-gated.
+
 Use `?supported=all` to include beta and deferred routes:
 
 ```bash
@@ -52,10 +54,11 @@ Production 402 quotes currently advertise these schemes when enabled:
 | --- | --- | --- | --- |
 | `nano` | `nano-mainnet` | XNO | Send XNO to a unique Nano address, then call `completeUrl`. |
 | `nano-exact` | Nano mainnet exact settlement | XNO | Sign an exact payment payload and replay the original request with `X-PAYMENT`. |
-| `x402-exact` | Base | USDC | Use an EIP-3009 authorization in `X-PAYMENT`, then replay the original request. |
 | `base-usdc` | Base | USDC | Send USDC on Base to a unique address, then call `completeUrl`. |
+| `x402-exact` | Base | USDC | Use an EIP-3009 authorization in `X-PAYMENT`, then replay the original request. |
+| `x402-solana-usdc` | Solana/SVM | USDC | Use a Solana/SVM exact payment in `X-PAYMENT`, then replay the original request. |
 
-Lightning/L402 is not currently advertised by NanoGPT 402 responses and should not be documented as supported.
+Lightning/L402 and Solana USDT are not currently advertised by NanoGPT 402 responses. Native SOL is not a documented x402 exact rail. Do not list any of them as supported accountless x402 schemes.
 
 ## Working Quote Examples
 
@@ -135,7 +138,7 @@ For accountless payment challenges, key off the stable top-level `payment` objec
     "version": 1,
     "paymentId": "pay_...",
     "requestHash": "sha256:...",
-    "expiresAt": "2026-06-02T16:30:00.000Z",
+    "expiresAt": "2026-06-09T12:00:00.000Z",
     "amountUsd": "0.0714",
     "statusUrl": "https://nano-gpt.com/api/x402/status/pay_...",
     "completeUrl": "https://nano-gpt.com/api/x402/complete/pay_...",
@@ -151,6 +154,19 @@ For accountless payment challenges, key off the stable top-level `payment` objec
         "paymentId": "pay_...",
         "statusUrl": "https://nano-gpt.com/api/x402/status/pay_...",
         "completeUrl": "https://nano-gpt.com/api/x402/complete/pay_..."
+      },
+      {
+        "scheme": "x402-solana-usdc",
+        "protocolScheme": "exact",
+        "network": "solana",
+        "amount": "1500",
+        "amountFormatted": "0.0015 USDC",
+        "amountUsd": "0.0015",
+        "payTo": "<solana treasury address from quote>",
+        "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "feePayer": "<solana facilitator fee payer from quote>",
+        "paymentId": "pay_...",
+        "expiresAt": "2026-06-09T12:00:00.000Z"
       }
     ]
   },
@@ -161,7 +177,7 @@ For accountless payment challenges, key off the stable top-level `payment` objec
 
 Treat the presence of `payment` as the accountless payment signal; do not depend on a single legacy `error.code` value.
 
-Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary advertised payment option. When choosing a specific payment scheme, prefer the URL fields inside that option in `payment.accepted[]`. `x402-exact` Base replay options do not include a status URL because successful replay settles through the `X-PAYMENT` response path rather than updating the original quote record.
+Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary advertised payment option when that option is a polling-style rail. When choosing a specific payment scheme, prefer the fields inside that option in `payment.accepted[]`. Exact replay options such as `nano-exact`, `x402-exact`, and `x402-solana-usdc` do not include `statusUrl` or `completeUrl`; successful replay settles through the `X-PAYMENT` response path rather than updating the original quote record.
 
 After paying a `nano` or `base-usdc` quote, call:
 
@@ -175,7 +191,7 @@ Nano quote-and-complete rails use `scheme: "nano"` and a unique `payTo` Nano add
 
 ## Flow 2: x402 Exact Replay
 
-For `nano-exact` and `x402-exact`, sign the advertised exact payment requirement and replay the original endpoint with:
+For `nano-exact`, `x402-exact`, and `x402-solana-usdc`, sign the advertised exact payment requirement and replay the original endpoint with:
 
 ```bash
 curl -i https://nano-gpt.com/api/v1/chat/completions \
@@ -188,6 +204,25 @@ curl -i https://nano-gpt.com/api/v1/chat/completions \
 ```
 
 Successful exact-settlement responses include `X-PAYMENT-RESPONSE` when a settlement hash is available.
+
+For Solana USDC, select the `x402-solana-usdc` option from `payment.accepted[]` and use an x402 Solana/SVM-compatible client, such as `@x402/svm`, to create and sign the exact payment from the quote requirements. `amount` is in USDC atomic units with 6 decimals. `asset` is the Solana USDC mint, `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`. Copy `payTo` and `feePayer` from the quote; do not hardcode either value.
+
+Lower-level x402 clients can also read the top-level `accepts[]` protocol object. For Solana USDC exact payments, it uses the official exact shape:
+
+```json
+{
+  "scheme": "exact",
+  "network": "solana",
+  "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "maxAmountRequired": "1500",
+  "payTo": "<solana treasury address from quote>",
+  "extra": {
+    "feePayer": "<solana facilitator fee payer from quote>",
+    "tokenSymbol": "USDC",
+    "tokenDecimals": 6
+  }
+}
+```
 
 The exact replay request must use the same method, path, and JSON body that produced the quote:
 
@@ -203,6 +238,33 @@ curl -i https://nano-gpt.com/api/v1/chat/completions \
 ```
 
 NanoGPT validates exact `X-PAYMENT` replay against the quoted resource, amount, and expiration. Clients should replay the same request they quoted unless endpoint docs state otherwise.
+
+Example Solana USDC replay:
+
+```bash
+curl -i https://nano-gpt.com/api/v1/data/url/scrape \
+  -H "Content-Type: application/json" \
+  -H "X-PAYMENT: $BASE64_SOLANA_X402_PAYMENT" \
+  -d '{
+    "urls": ["https://nano-gpt.com"]
+  }'
+```
+
+Successful Solana exact-settlement responses include a base64 JSON `X-PAYMENT-RESPONSE` header. After decoding, the shape is:
+
+```json
+{
+  "success": true,
+  "hash": "<solana transaction signature>",
+  "network": "solana"
+}
+```
+
+The full live Solana USDC x402 flow was tested successfully on 2026-06-09 against `POST https://nano-gpt.com/api/v1/data/url/scrape`. The request paid 1500 atomic USDC, or $0.0015, via `x402-solana-usdc` and returned 200 with an `X-PAYMENT-RESPONSE` header for `network: "solana"`. On-chain Solana signature:
+
+```text
+5yqd8zJCNMqJBShKboJkDr4fDyFiWe8cawC6gGCuYD2zwqrbSUhQYws3w5YdEMeCL2cpyhuWG5en7zMYabjZyJRx
+```
 
 ## Status Polling
 

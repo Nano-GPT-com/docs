@@ -6566,7 +6566,7 @@
         "properties": {
           "scheme": {
             "type": "string",
-            "enum": ["nano", "nano-exact", "x402-exact", "base-usdc"]
+            "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc"]
           },
           "protocolScheme": { "type": "string" },
           "network": { "type": "string" },
@@ -6575,6 +6575,10 @@
           "amountFormatted": { "type": "string" },
           "amountUsd": { "type": "string" },
           "payTo": { "type": "string" },
+          "feePayer": {
+            "type": "string",
+            "description": "Solana facilitator fee payer for x402-solana-usdc quotes. Copy from the quote; do not hardcode."
+          },
           "paymentId": { "type": "string" },
           "statusUrl": { "type": "string", "format": "uri" },
           "completeUrl": { "type": "string", "format": "uri" },
@@ -6633,7 +6637,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["nano", "nano-exact", "base-usdc", "x402-exact"]
+              "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc"]
             }
           },
           "streaming": {
@@ -6658,7 +6662,7 @@
           },
           "version": {
             "type": "string",
-            "example": "2026-06-02"
+            "example": "2026-06-09"
           },
           "data": {
             "type": "array",
