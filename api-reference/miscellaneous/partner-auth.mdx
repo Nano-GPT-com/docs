@@ -153,9 +153,12 @@ The response includes the linked user's balance and deposit details.
 
 Partner-authenticated top-ups are not limited to Nano. The same linked NanoGPT account can be funded through enabled NanoGPT deposit methods, including:
 
-- Native Nano direct deposits: read the linked user's `nanoDepositAddress` from the balance response and show that address to the user. See [Check User Balance](#check-user-balance).
-- Crypto invoice or swap deposits: call `POST /api/transaction/create/{ticker}` for supported tickers such as `btc`, `btc-ln`, `ltc`, `ltc-mweb`, `xmr`, `doge`, `dash`, `zec`, `bch`, `kas`, `ton`, `near`, `egld`, `vvv`, `zano`, or `fusd`.
+- Native Nano direct deposits: read the linked user's `nanoDepositAddress` from the balance response and show that address to the user. No deposit call is needed; incoming Nano credits automatically. See [Check User Balance](#check-user-balance).
+- Stablecoins and major chains (`usdc`, `usdt`, `sol`, `eth`, `base`, `arbitrum`, `polygon`, `bnb`, `trx`): call `POST /api/transaction/create/boomfi/{ticker}` to create a hosted payment for the linked user.
+- Crypto invoice or swap deposits (`btc`, `btc-ln`, `ltc`, `ltc-mweb`, `xmr`, `doge`, `dash`, `zec`): call `POST /api/transaction/create/{ticker}`.
 - Card deposits where enabled for the partner integration.
+
+Deposit creation, status polling, and cancellation all require the `deposit:create` scope on the partner JWT.
 
 Available methods can change by region, provider status, amount, and partner configuration. Ask NanoGPT which top-up methods should be enabled for your integration before launch.
 
@@ -280,9 +283,9 @@ Common responses:
 
 | Status | Meaning |
 | --- | --- |
-| `401` | Missing, invalid, expired, replayed, or unauthorized partner JWT |
+| `401` | Missing, invalid, expired, replayed, or unauthorized partner JWT, including a JWT missing the required scope |
 | `402` | Linked user needs balance before the request can run |
-| `403` | JWT is valid but missing the required scope |
+| `403` | Reading another user's usage with `subject` without the `usage:read:any` scope |
 | `429` | Too many requests or too many auth failures |
 | `500` | NanoGPT could not complete the server-side operation |
 
