@@ -48,6 +48,18 @@ If you're building a CLI, use **device login** so users can approve access in a 
 
 See: [CLI Device Login](/integrations/cli-login)
 
+## OAuth PKCE (Sign in with NanoGPT)
+
+If you're building a third-party app, local tool, coding agent, or generic OAuth client, use **OAuth PKCE** so users can approve access in NanoGPT instead of manually creating and pasting an API key.
+
+OAuth returns an app-specific NanoGPT API key (`sk-nano-...`) that your app sends as:
+
+```http
+Authorization: Bearer sk-nano-...
+```
+
+See: [OAuth PKCE](/api-reference/miscellaneous/oauth-pkce)
+
 ## Web App Sign-In (Browser)
 
 If you are using the NanoGPT web app, sign-in is handled via browser sessions. Supported sign-in methods include:

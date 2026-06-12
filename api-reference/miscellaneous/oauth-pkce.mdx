@@ -1,0 +1,575 @@
+---
+title: "OAuth PKCE"
+description: "Let users sign in with NanoGPT and receive an app-specific API key through authorization-code PKCE."
+---
+
+## Overview
+
+NanoGPT supports authorization-code OAuth with PKCE for public clients. The returned credential is a dedicated NanoGPT API key in `sk-nano-...` format, scoped to the approved app/user grant.
+
+Use the returned key as a bearer token against the OpenAI-compatible API:
+
+```http
+Authorization: Bearer sk-nano-...
+```
+
+API base URL:
+
+```text
+https://nano-gpt.com/api/v1
+```
+
+OAuth-created keys can spend from the user's NanoGPT balance, subject to account balance, subscriptions, API key settings, optional OAuth spend caps, expiration, allowed origins, and model/provider limits.
+
+<Warning>
+Treat the returned `access_token` like a password. Do not log it, embed it in browser-visible HTML, or expose it to other users.
+</Warning>
+
+## Choose a Flow
+
+| Flow | Use when |
+| --- | --- |
+| Shortcut key handoff | Local apps, coding agents, chat frontends, and tools that want the shortest browser sign-in path |
+| Standard OAuth PKCE | Generic OAuth clients, persistent `client_id` registrations, and clients that rely on authorization server metadata |
+| Authenticated downstream key code | An already authenticated app needs to create a one-time authorization code for a downstream local app |
+
+All three flows return the same kind of credential: a dedicated NanoGPT API key.
+
+## Discovery
+
+Authorization server metadata:
+
+```http
+GET /.well-known/oauth-authorization-server HTTP/1.1
+Host: nano-gpt.com
+```
+
+Example response:
+
+```json
+{
+  "issuer": "https://nano-gpt.com",
+  "authorization_endpoint": "https://nano-gpt.com/oauth/authorize",
+  "token_endpoint": "https://nano-gpt.com/oauth/token",
+  "registration_endpoint": "https://nano-gpt.com/oauth/register",
+  "response_types_supported": ["code"],
+  "grant_types_supported": ["authorization_code"],
+  "code_challenge_methods_supported": ["S256"],
+  "token_endpoint_auth_methods_supported": ["none"],
+  "scopes_supported": ["models.read", "api.use"],
+  "service_documentation": "https://nano-gpt.com/auth.md",
+  "resource_documentation": "https://nano-gpt.com/api",
+  "x-nanogpt-token-format": "sk-nano-api-key",
+  "x-nanogpt-oauth-shortcut-authorization_endpoint": "https://nano-gpt.com/auth",
+  "x-nanogpt-oauth-shortcut-token_endpoint": "https://nano-gpt.com/api/v1/auth/keys",
+  "x-nanogpt-oauth-shortcut-code_endpoint": "https://nano-gpt.com/api/v1/auth/keys/code"
+}
+```
+
+Additional machine-facing metadata:
+
+| URL | Purpose |
+| --- | --- |
+| `GET /auth.md` | Machine-facing auth guide |
+| `GET /.well-known/oauth-protected-resource` | Protected resource metadata |
+
+## Scopes
+
+| Scope | Meaning |
+| --- | --- |
+| `models.read` | Read public NanoGPT model catalogs and pricing metadata |
+| `api.use` | Use NanoGPT API endpoints with a user-approved API key, bounded by account balance and per-key settings |
+
+For this MVP, OAuth requests must include `api.use` because the returned access token is a spend-capable API key.
+
+Recommended scope:
+
+```text
+api.use models.read
+```
+
+NanoGPT normalizes returned scopes to its supported scope order:
+
+```text
+models.read api.use
+```
+
+## PKCE Requirements
+
+NanoGPT requires S256 PKCE.
+
+- `code_challenge_method` must be `S256`.
+- `plain` is rejected.
+- `code_verifier` must use RFC 7636 characters: `A-Z`, `a-z`, `0-9`, `-`, `.`, `_`, `~`.
+- `code_verifier` length must be 43 to 128 characters.
+- `code_challenge` must be base64url-encoded SHA-256 of the verifier.
+- Authorization codes expire quickly and are one-time use.
+
+JavaScript helper:
+
+```js
+import { createHash, randomBytes } from "node:crypto";
+
+const codeVerifier = randomBytes(64).toString("base64url");
+const codeChallenge = createHash("sha256")
+  .update(codeVerifier, "utf8")
+  .digest("base64url");
+```
+
+## Redirect URI Rules
+
+Allowed redirect URIs:
+
+- HTTPS redirect URIs.
+- Loopback HTTP redirect URIs with an explicit port, such as `http://127.0.0.1:8787/callback`, `http://localhost:8787/callback`, or `http://[::1]:8787/callback`.
+
+Rejected redirect URIs:
+
+- Wildcards.
+- URL fragments.
+- Credentials in URLs.
+- Non-HTTPS web redirects.
+- Loopback HTTP without an explicit port.
+- Redirect URIs that do not exactly match the registered or callback URI.
+
+Loopback redirects are canonicalized to `127.0.0.1` internally.
+
+## Shortcut Key Handoff
+
+Use this flow for local apps and clients that want the shortest browser sign-in integration.
+
+### 1. Generate PKCE
+
+Generate:
+
+- `code_verifier`
+- `code_challenge = base64url(sha256(code_verifier))`
+- `state`
+
+### 2. Redirect to NanoGPT
+
+Send the user to:
+
+```http
+GET https://nano-gpt.com/auth
+```
+
+Query parameters:
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `callback_url` | Yes | Callback URL. `redirect_uri` is accepted as an alias |
+| `code_challenge` | Yes | S256 PKCE challenge |
+| `code_challenge_method` | No | Must be `S256` if provided. Defaults to `S256` |
+| `scope` | No | Defaults to `api.use models.read`. Must include `api.use` |
+| `state` | Recommended | Opaque client state. NanoGPT passes it back unchanged |
+| `client_name` | No | Display name shown on the consent screen |
+| `app_name` | No | Alias for `client_name` |
+| `name` | No | Alias for `client_name` |
+| `title` | No | Alias for `client_name` |
+
+Example:
+
+```text
+https://nano-gpt.com/auth?callback_url=http%3A%2F%2F127.0.0.1%3A8787%2Fcallback&code_challenge=...&code_challenge_method=S256&scope=api.use%20models.read&state=...&client_name=My%20Local%20App
+```
+
+NanoGPT creates or reuses an internal callback client, then redirects the user into the consent flow.
+
+### 3. Handle the Callback
+
+On approval:
+
+```text
+http://127.0.0.1:8787/callback?code=...&state=...
+```
+
+On denial or safe OAuth error:
+
+```text
+http://127.0.0.1:8787/callback?error=access_denied&state=...
+```
+
+If the callback URL is invalid, NanoGPT does not redirect to it and shows the error on NanoGPT instead.
+
+### 4. Exchange the Code
+
+```http
+POST /api/v1/auth/keys HTTP/1.1
+Host: nano-gpt.com
+Content-Type: application/json
+```
+
+JSON body:
+
+```json
+{
+  "grant_type": "authorization_code",
+  "code": "...",
+  "code_verifier": "..."
+}
+```
+
+`grant_type` is optional. If present, it must be `authorization_code`. Form-encoded bodies are also accepted.
+
+Success response:
+
+```json
+{
+  "key": "sk-nano-...",
+  "access_token": "sk-nano-...",
+  "token_type": "Bearer",
+  "scope": "models.read api.use",
+  "user_id": "..."
+}
+```
+
+Use either `key` or `access_token`; they contain the same value.
+
+## Standard OAuth PKCE
+
+Use this flow for generic OAuth clients that want explicit dynamic registration and standard OAuth endpoint names.
+
+### 1. Register the Client
+
+```http
+POST /oauth/register HTTP/1.1
+Host: nano-gpt.com
+Content-Type: application/json
+```
+
+Request:
+
+```json
+{
+  "client_name": "My Local App",
+  "redirect_uris": ["http://127.0.0.1:8787/callback"],
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "client_uri": "https://example.com",
+  "logo_uri": "https://example.com/logo.png"
+}
+```
+
+Required fields:
+
+- `client_name`
+- `redirect_uris`
+
+Optional fields:
+
+- `grant_types`, defaults to `["authorization_code"]`
+- `response_types`, defaults to `["code"]`
+- `token_endpoint_auth_method`, defaults to `none`
+- `client_uri`, must be HTTPS and have no fragment
+- `logo_uri`, must be HTTPS and have no fragment
+
+Only public PKCE clients are supported. NanoGPT does not issue client secrets.
+
+Success response:
+
+```json
+{
+  "client_id": "ngpt_...",
+  "client_name": "My Local App",
+  "client_uri": "https://example.com/",
+  "logo_uri": "https://example.com/logo.png",
+  "redirect_uris": ["http://127.0.0.1:8787/callback"],
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none"
+}
+```
+
+### 2. Redirect to the Authorization Endpoint
+
+```http
+GET https://nano-gpt.com/oauth/authorize
+```
+
+Query parameters:
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `response_type` | Yes | Must be `code` |
+| `client_id` | Yes | Client ID from registration or a manually provisioned client |
+| `redirect_uri` | Yes | Exact registered redirect URI |
+| `scope` | Yes | Must include `api.use`. Recommended: `api.use models.read` |
+| `state` | Yes | Opaque client state |
+| `code_challenge` | Yes | S256 PKCE challenge |
+| `code_challenge_method` | Yes | Must be `S256` |
+| `prompt` | No | `consent` forces the consent screen |
+
+Example:
+
+```text
+https://nano-gpt.com/oauth/authorize?response_type=code&client_id=ngpt_...&redirect_uri=http%3A%2F%2F127.0.0.1%3A8787%2Fcallback&scope=api.use%20models.read&state=...&code_challenge=...&code_challenge_method=S256
+```
+
+The user signs in to NanoGPT if needed and sees a consent screen showing the app name, redirect host, NanoGPT account, balance, requested scopes, spend warning, and optional daily, weekly, or monthly spend cap.
+
+For normal registered web clients, NanoGPT may auto-approve an unchanged active grant. For loopback and callback shortcut clients, the consent screen is shown again.
+
+### 3. Handle the Callback
+
+On approval:
+
+```text
+https://app.example/callback?code=...&state=...
+```
+
+On denial:
+
+```text
+https://app.example/callback?error=access_denied&state=...
+```
+
+OAuth parameter validation errors are redirected only after the client and redirect URI have been validated. Invalid redirect URIs are shown as errors on NanoGPT and are not redirected.
+
+### 4. Exchange the Code
+
+```http
+POST /oauth/token HTTP/1.1
+Host: nano-gpt.com
+Content-Type: application/x-www-form-urlencoded
+```
+
+Form body:
+
+```text
+grant_type=authorization_code&client_id=ngpt_...&redirect_uri=http%3A%2F%2F127.0.0.1%3A8787%2Fcallback&code=...&code_verifier=...
+```
+
+Required fields:
+
+- `grant_type=authorization_code`
+- `client_id`
+- `redirect_uri`
+- `code`
+- `code_verifier`
+
+JSON bodies are also accepted.
+
+Success response:
+
+```json
+{
+  "access_token": "sk-nano-...",
+  "token_type": "Bearer",
+  "scope": "models.read api.use"
+}
+```
+
+NanoGPT does not issue refresh tokens in this MVP.
+
+## Authenticated Downstream Key Code
+
+An already authenticated app can create a one-time authorization code for a downstream local app.
+
+```http
+POST /api/v1/auth/keys/code HTTP/1.1
+Host: nano-gpt.com
+Authorization: Bearer sk-nano-...
+Content-Type: application/json
+```
+
+Request:
+
+```json
+{
+  "redirect_uri": "http://127.0.0.1:8787/callback",
+  "code_challenge": "...",
+  "code_challenge_method": "S256",
+  "scope": "api.use models.read",
+  "key_label": "Local coding agent",
+  "limit": 20,
+  "usage_limit_type": "monthly",
+  "expires_at": "2026-12-31T23:59:59.000Z",
+  "client_name": "Local coding agent"
+}
+```
+
+Required:
+
+- `redirect_uri` or `callback_url`
+- `code_challenge`
+- Authenticated source API key in the `Authorization` header
+
+Optional:
+
+- `code_challenge_method`, defaults to `S256`
+- `scope`, defaults to `api.use models.read`
+- `key_label` or `key_name`
+- `limit`
+- `usage_limit_type`: `daily`, `weekly`, or `monthly`; defaults to `monthly` when `limit` is present
+- `expires_at`
+- `client_name`, `app_name`, or `name`
+- `x-title` or `x-app-name` headers as fallback app names
+
+Success response:
+
+```json
+{
+  "id": "...",
+  "code": "...",
+  "app_id": "ngpt_callback_...",
+  "user_id": "...",
+  "expires_at": "...",
+  "data": {
+    "id": "...",
+    "code": "...",
+    "app_id": "ngpt_callback_...",
+    "user_id": "...",
+    "expires_at": "..."
+  }
+}
+```
+
+The downstream app exchanges this code at:
+
+```http
+POST /api/v1/auth/keys
+```
+
+Restrictions:
+
+- The source API key must be active.
+- The source API key must be linked to a signed-in NanoGPT account.
+- OAuth-issued API keys cannot create further OAuth key codes.
+- Source keys with existing spend, request, model, provider, origin, or redaction restrictions are rejected for this flow.
+- If the source key has an expiration, the downstream key cannot outlive it.
+
+## Use the Returned Credential
+
+List models:
+
+```bash
+curl "https://nano-gpt.com/api/v1/models" \
+  -H "Authorization: Bearer sk-nano-..."
+```
+
+OpenAI-compatible chat:
+
+```bash
+curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
+  -H "Authorization: Bearer sk-nano-..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4.1-nano",
+    "messages": [
+      { "role": "user", "content": "Say hello from NanoGPT OAuth." }
+    ]
+  }'
+```
+
+Common API surfaces:
+
+- `GET /api/v1/models`
+- `GET /api/v1/image-models`
+- `GET /api/v1/video-models`
+- `GET /api/v1/audio-models`
+- `POST /api/v1/chat/completions`
+- `POST /api/v1/responses`
+- `POST /api/v1/messages`
+
+## Token and Key Behavior
+
+The OAuth `access_token` is a dedicated NanoGPT API key in this MVP.
+
+Implications:
+
+- It is long-lived unless an expiration is set.
+- It can spend from the user's NanoGPT balance.
+- It should be stored like a password.
+- It should not be logged or exposed in browser-visible HTML.
+- It can be revoked by deleting or disabling the API key in NanoGPT settings.
+- The same active grant can reuse the same key when settings are unchanged.
+- New app-specific limits or expiration can force a new dedicated key.
+
+OAuth-created keys are visible as API keys and are named:
+
+```text
+OAuth: <client_name>
+```
+
+Consent screens can let users set an optional daily, weekly, or monthly USD spend cap. A `$0` cap blocks paid spend for that app. Leaving the cap empty means no app-specific cap.
+
+Browser/web OAuth keys are tied to origins derived from the redirect URI when applicable. Loopback keys allow common loopback origins for the chosen callback port.
+
+## Revocation
+
+NanoGPT does not expose an OAuth revocation endpoint in this MVP.
+
+Users revoke access by deleting, disabling, expiring, or limiting the generated API key in NanoGPT settings.
+
+Client behavior:
+
+- If a stored key starts returning `401`, discard it.
+- Ask the user to sign in again.
+- Do not keep retrying a revoked key.
+
+## Errors
+
+OAuth JSON errors use this shape:
+
+```json
+{
+  "error": "invalid_grant",
+  "error_description": "authorization code expired"
+}
+```
+
+Common errors:
+
+| Endpoint | Error | Meaning | Recommended action |
+| --- | --- | --- | --- |
+| `/auth` | `invalid_request` | Callback URL or PKCE challenge is invalid | Rebuild the authorization URL |
+| `/oauth/register` | `invalid_request` | Client metadata or redirect URI is invalid | Fix registration request |
+| `/oauth/authorize` | `unsupported_response_type` | `response_type` is not `code` | Use authorization-code flow |
+| `/oauth/authorize` | `invalid_scope` | Scope is missing, unknown, or lacks `api.use` | Request `api.use models.read` |
+| `/oauth/token` | `invalid_grant` | Code is expired, already used, wrong client, wrong redirect URI, or PKCE failed | Restart OAuth |
+| `/api/v1/auth/keys` | `invalid_grant` | Code is invalid for this endpoint, expired, already used, or PKCE failed | Restart OAuth |
+| `/api/v1/auth/keys/code` | `invalid_request` | Source key or requested key policy is not eligible | Use an unrestricted user-created API key or normal OAuth |
+| API endpoints | `missing_api_key` | No bearer credential was sent | Ask user to sign in |
+| API endpoints | `invalid_api_key` | Key is invalid, inactive, expired, or blocked | Drop key and restart OAuth |
+| API endpoints | `api_key_origin_not_allowed` | Browser Origin is not allowed for that key | Ask user to update key settings or restart OAuth with the correct redirect origin |
+
+## Rate Limits and Abuse Controls
+
+OAuth endpoints are rate-limited.
+
+Developers should:
+
+- Avoid repeated failed token exchanges.
+- Restart the flow after an `invalid_grant`.
+- Never reuse authorization codes.
+- Never log raw authorization codes, code verifiers, or API keys.
+
+## Local App Example
+
+Example source:
+
+```text
+examples/oauth-local-app
+```
+
+Repository URL:
+
+```text
+https://github.com/Nano-GPT-com/nanogpt/tree/main/examples/oauth-local-app
+```
+
+Run:
+
+```bash
+node examples/oauth-local-app/oauth-local-app.mjs
+```
+
+Local development:
+
+```bash
+NANOGPT_BASE_URL=http://localhost:3000 node examples/oauth-local-app/oauth-local-app.mjs
+```
+
+The example starts a localhost callback server, generates PKCE, sends the user to `/auth`, exchanges the code at `/api/v1/auth/keys`, calls `/api/v1/models`, and masks the key in terminal output.
