@@ -34,7 +34,7 @@ curl -i https://nano-gpt.com/api/v1/images/edits \
   }'
 ```
 
-Multipart uploads require normal authentication before conversion. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) and `GET /api/v1/x402/endpoints` for the current matrix.
+This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. Multipart uploads require normal authentication before conversion. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
 
 ## Multipart Request
 

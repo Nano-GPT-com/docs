@@ -15,7 +15,7 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
 - Multimodal inputs (images, files) for supported models
 
 <Note>
-  **Accountless x402 payments**: Non-streaming `POST /api/v1/responses` requests can be quoted without an account or API key on supported deployments. Streaming and background Responses have implementation coverage but are not part of the stable public accountless contract. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) and `GET /api/v1/x402/endpoints`.
+  **Accountless x402 payments**: Non-streaming `POST /api/v1/responses` requests can be quoted without an account or API key on supported deployments. Streaming and background Responses have implementation coverage but are not part of the stable public accountless contract. This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
 </Note>
 
 <Note>
@@ -38,7 +38,7 @@ x-api-key: YOUR_API_KEY
 
 For API-key requests, you can optionally pass `x-team-id` to choose team context when team defaults are evaluated (for example, retention defaults).
 
-For supported accountless x402 requests, omit `Authorization` and `x-api-key` to receive a payment quote.
+For supported accountless x402 requests, omit `Authorization` and `x-api-key` to receive a payment quote. The advertised schemes, including Lightning L402 when enabled, are listed by `GET /api/v1/x402/endpoints`.
 
 ## Endpoints
 

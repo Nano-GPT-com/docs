@@ -252,6 +252,18 @@ Detect accountless x402 by checking for the top-level `payment` object, not a si
         "feePayer": "<solana facilitator fee payer from quote>",
         "paymentId": "pay_...",
         "expiresAt": "2026-06-09T12:00:00.000Z"
+      },
+      {
+        "scheme": "lightning-l402",
+        "protocolScheme": "lightning-l402",
+        "network": "bitcoin-lightning",
+        "amount": "9",
+        "amountFormatted": "9 sats",
+        "amountUsd": "0.0054",
+        "payTo": "lnbc...",
+        "invoice": "lnbc...",
+        "paymentHash": "...",
+        "l402Token": "..."
       }
     ]
   },
@@ -260,7 +272,7 @@ Detect accountless x402 by checking for the top-level `payment` object, not a si
 }
 ```
 
-The legacy `accepts` array may still appear for backwards-compatible and lower-level protocol clients, but new clients should use `payment.accepted[]`. Exact rails such as `nano-exact`, `x402-exact`, and `x402-solana-usdc` replay the original request with `X-PAYMENT`; polling-style rails such as `nano` and `base-usdc` use `statusUrl` and `completeUrl`. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the complete flow and supported endpoint matrix.
+The legacy `accepts` array may still appear for backwards-compatible and lower-level protocol clients, but new clients should use `payment.accepted[]`. Exact rails such as `nano-exact`, `x402-exact`, and `x402-solana-usdc` replay the original request with `X-PAYMENT`; polling-style rails such as `nano` and `base-usdc` use `statusUrl` and `completeUrl`; Lightning L402 replays the exact original request with `Authorization: L402 <token>:<preimage>` and does not use `X-PAYMENT` or `completeUrl`. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the complete flow and supported endpoint matrix.
 
 Feature-specific variants may include a structured error `code` such as `memory_balance_required` or `webSearch_balance_required`.
 

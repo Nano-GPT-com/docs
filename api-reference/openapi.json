@@ -6566,7 +6566,7 @@
         "properties": {
           "scheme": {
             "type": "string",
-            "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc"]
+            "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc", "lightning-l402"]
           },
           "protocolScheme": { "type": "string" },
           "network": { "type": "string" },
@@ -6575,6 +6575,26 @@
           "amountFormatted": { "type": "string" },
           "amountUsd": { "type": "string" },
           "payTo": { "type": "string" },
+          "invoice": {
+            "type": "string",
+            "description": "Lightning invoice for lightning-l402 quotes. Same value as payTo for most clients."
+          },
+          "paymentHash": {
+            "type": "string",
+            "description": "Lightning payment hash for lightning-l402 quotes."
+          },
+          "l402Token": {
+            "type": "string",
+            "description": "L402 token to pair with the Lightning payment preimage in Authorization: L402 <token>:<preimage>."
+          },
+          "discountRate": {
+            "type": "number",
+            "description": "Discount rate applied to this payment option when present."
+          },
+          "undiscountedAmountUsd": {
+            "type": "string",
+            "description": "Undiscounted USD quote amount when a discount is applied."
+          },
           "feePayer": {
             "type": "string",
             "description": "Solana facilitator fee payer for x402-solana-usdc quotes. Copy from the quote; do not hardcode."
@@ -6637,7 +6657,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc"]
+              "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc", "lightning-l402"]
             }
           },
           "streaming": {
@@ -6662,7 +6682,7 @@
           },
           "version": {
             "type": "string",
-            "example": "2026-06-09"
+            "example": "2026-06-03"
           },
           "data": {
             "type": "array",

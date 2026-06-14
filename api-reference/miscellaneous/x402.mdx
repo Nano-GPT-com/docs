@@ -1,11 +1,11 @@
 ---
 title: "Accountless x402 API Payments"
-description: "Call supported NanoGPT API endpoints without an account or API key, receive a 402 payment quote, pay with a supported crypto rail, and complete the original request."
+description: "Call supported NanoGPT API endpoints without an account or API key, receive a 402 payment quote, pay with a supported crypto rail, and complete or replay the original request."
 ---
 
 ## Overview
 
-NanoGPT supports accountless API calls for selected endpoints. A client can send a normal request without `Authorization` or `x-api-key`, receive `402 Payment Required`, pay through one of the advertised rails, then either replay the original endpoint with `X-PAYMENT` or call the quoted `completeUrl`.
+NanoGPT supports accountless API calls for selected endpoints. A client can send a normal request without `Authorization` or `x-api-key`, receive `402 Payment Required`, pay through one of the advertised rails, then call the quoted `completeUrl`, replay the original endpoint with `X-PAYMENT`, or replay the original endpoint with `Authorization: L402 <token>:<preimage>` for Lightning L402.
 
 Live demo: [https://nano-gpt.com/x402](https://nano-gpt.com/x402)
 
@@ -21,7 +21,7 @@ The supported endpoint matrix is machine-readable. Its `schemes` list reflects t
 curl https://nano-gpt.com/api/v1/x402/endpoints
 ```
 
-As of 2026-06-09, production advertises `x402-solana-usdc` on the public endpoints listed below. Continue to use `GET /api/v1/x402/endpoints` as the source of truth because enabled rails can be deployment-gated.
+As of 2026-06-14, production advertises `lightning-l402` on the public endpoints listed below. Continue to use `GET /api/v1/x402/endpoints` as the source of truth because enabled rails can be deployment-gated.
 
 Use `?supported=all` to include beta and deferred routes:
 
@@ -57,8 +57,9 @@ Production 402 quotes currently advertise these schemes when enabled:
 | `base-usdc` | Base | USDC | Send USDC on Base to a unique address, then call `completeUrl`. |
 | `x402-exact` | Base | USDC | Use an EIP-3009 authorization in `X-PAYMENT`, then replay the original request. |
 | `x402-solana-usdc` | Solana/SVM | USDC | Use a Solana/SVM exact payment in `X-PAYMENT`, then replay the original request. |
+| `lightning-l402` | `bitcoin-lightning` | sats | Pay the Lightning invoice, then replay the original request with `Authorization: L402 <token>:<preimage>`. |
 
-Lightning/L402 and Solana USDT are not currently advertised by NanoGPT 402 responses. Native SOL is not a documented x402 exact rail. Do not list any of them as supported accountless x402 schemes.
+Solana USDT and native SOL are not documented x402 exact rails. Do not list either as a supported accountless x402 scheme until it appears in `GET /api/v1/x402/endpoints`.
 
 ## Working Quote Examples
 
@@ -167,6 +168,20 @@ For accountless payment challenges, key off the stable top-level `payment` objec
         "feePayer": "<solana facilitator fee payer from quote>",
         "paymentId": "pay_...",
         "expiresAt": "2026-06-09T12:00:00.000Z"
+      },
+      {
+        "scheme": "lightning-l402",
+        "protocolScheme": "lightning-l402",
+        "network": "bitcoin-lightning",
+        "amount": "9",
+        "amountFormatted": "9 sats",
+        "amountUsd": "0.0054",
+        "payTo": "lnbc...",
+        "invoice": "lnbc...",
+        "paymentHash": "...",
+        "l402Token": "...",
+        "discountRate": 0.1,
+        "undiscountedAmountUsd": "0.006"
       }
     ]
   },
@@ -177,7 +192,7 @@ For accountless payment challenges, key off the stable top-level `payment` objec
 
 Treat the presence of `payment` as the accountless payment signal; do not depend on a single legacy `error.code` value.
 
-Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary advertised payment option when that option is a polling-style rail. When choosing a specific payment scheme, prefer the fields inside that option in `payment.accepted[]`. Exact replay options such as `nano-exact`, `x402-exact`, and `x402-solana-usdc` do not include `statusUrl` or `completeUrl`; successful replay settles through the `X-PAYMENT` response path rather than updating the original quote record.
+Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary advertised payment option when that option is a polling-style rail. When choosing a specific payment scheme, prefer the fields inside that option in `payment.accepted[]`. Exact replay options such as `nano-exact`, `x402-exact`, and `x402-solana-usdc` do not include `statusUrl` or `completeUrl`; successful replay settles through the `X-PAYMENT` response path rather than updating the original quote record. Lightning L402 options also do not use `completeUrl`; successful completion is the replay of the original endpoint with the `Authorization: L402 <token>:<preimage>` header.
 
 After paying a `nano` or `base-usdc` quote, call:
 
@@ -266,6 +281,141 @@ The full live Solana USDC x402 flow was tested successfully on 2026-06-09 agains
 5yqd8zJCNMqJBShKboJkDr4fDyFiWe8cawC6gGCuYD2zwqrbSUhQYws3w5YdEMeCL2cpyhuWG5en7zMYabjZyJRx
 ```
 
+## Flow 3: Lightning L402 Replay
+
+NanoGPT also supports Lightning L402 for accountless API payments. Instead of signing an `X-PAYMENT` payload, the client pays a Lightning invoice and proves payment by replaying the original request with the invoice preimage.
+
+Send the original request without `Authorization` or `x-api-key`:
+
+```bash
+curl -i https://nano-gpt.com/api/v1/data/web/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "latest AI agent payment protocols",
+    "max_results": 3
+  }'
+```
+
+When `lightning-l402` is enabled, the `402 Payment Required` response includes a Lightning option in `payment.accepted[]` and a `WWW-Authenticate: Payment ...` challenge header. For most API clients, the easiest path is to read `payment.accepted[].invoice` or `payment.accepted[].payTo`, then read `payment.accepted[].l402Token` for the replay token. The challenge header is useful for clients that already implement L402 or HTTP auth challenge handling.
+
+Example Lightning option:
+
+```json
+{
+  "scheme": "lightning-l402",
+  "protocolScheme": "lightning-l402",
+  "network": "bitcoin-lightning",
+  "amount": "9",
+  "amountFormatted": "9 sats",
+  "amountUsd": "0.0054",
+  "payTo": "lnbc...",
+  "invoice": "lnbc...",
+  "paymentHash": "...",
+  "l402Token": "...",
+  "discountRate": 0.1,
+  "undiscountedAmountUsd": "0.006"
+}
+```
+
+The `WWW-Authenticate` challenge includes the same token in `id="<token>"` and a base64-encoded request value:
+
+```http
+WWW-Authenticate: Payment id="<token>", realm="https://nano-gpt.com", method="lightning", intent="charge", request="<base64-json>", description="...", expires="..."
+```
+
+After decoding the `request` value, the JSON contains the Lightning invoice:
+
+```json
+{
+  "amount": "9",
+  "currency": "sat",
+  "methodDetails": {
+    "invoice": "lnbc...",
+    "network": "mainnet",
+    "paymentHash": "..."
+  }
+}
+```
+
+Pay the advertised invoice with a Lightning wallet, node, or payment API that returns the payment preimage. Some consumer Lightning wallets do not expose the payment preimage; L402 clients need a wallet, node, or payment API that returns it after payment.
+
+Replay the exact original request with the same method, path, and JSON body, adding:
+
+```http
+Authorization: L402 <token>:<preimage>
+```
+
+```bash
+curl -i https://nano-gpt.com/api/v1/data/web/search \
+  -H "Content-Type: application/json" \
+  -H "Authorization: L402 $L402_TOKEN:$PAYMENT_PREIMAGE" \
+  -d '{
+    "query": "latest AI agent payment protocols",
+    "max_results": 3
+  }'
+```
+
+For chat completions, keep accountless L402 requests non-streaming:
+
+```bash
+curl -i https://nano-gpt.com/api/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: L402 $L402_TOKEN:$PAYMENT_PREIMAGE" \
+  -d '{
+    "model": "gpt-4.1-nano",
+    "messages": [{"role": "user", "content": "Say ok"}],
+    "stream": false
+  }'
+```
+
+The L402 token is bound to the original method, path, request body hash, amount, and expiration. The token/preimage pair is single-use and expires with the quote. Lightning L402 quotes currently receive a 10% discount versus the normal accountless quote; when present, the Lightning option exposes `discountRate` and `undiscountedAmountUsd`.
+
+Minimal client logic:
+
+```ts
+const original = {
+  path: '/api/v1/data/web/search',
+  body: {
+    query: 'latest AI agent payment protocols',
+    max_results: 3,
+  },
+};
+
+const quoteResponse = await fetch(`https://nano-gpt.com${original.path}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(original.body),
+});
+
+if (quoteResponse.status !== 402) {
+  throw new Error(`Expected 402, got ${quoteResponse.status}`);
+}
+
+const quote = await quoteResponse.json();
+const lightning = quote.payment.accepted.find(
+  (option: any) => option.scheme === 'lightning-l402'
+);
+
+if (!lightning) {
+  throw new Error('Lightning L402 is not advertised for this endpoint');
+}
+
+// Pay lightning.invoice with a Lightning client that returns the preimage.
+const preimage = await payLightningInvoiceAndReturnPreimage(lightning.invoice);
+
+const paidResponse = await fetch(`https://nano-gpt.com${original.path}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `L402 ${lightning.l402Token}:${preimage}`,
+  },
+  body: JSON.stringify(original.body),
+});
+
+const result = await paidResponse.json();
+console.log(result);
+```
+
 ## Status Polling
 
 For quote-and-complete rails such as `nano` and `base-usdc`, use the quoted `statusUrl` to watch payment state:
@@ -295,7 +445,7 @@ Image and data endpoint quotes are deterministic for the submitted request param
 
 Chat Completions and Responses quotes are estimates and are reconciled after the provider returns usage. If provider execution fails after direct x402 settlement, the endpoint-specific failure path attempts the documented refund or failed-fee reconciliation.
 
-For `completeUrl`, NanoGPT replays the stored original request, so the completed request is bound to the quoted method, path, and body. For exact `X-PAYMENT` replay, NanoGPT validates the payment against the quoted resource, amount, and expiration; clients should replay the same request they quoted unless endpoint docs state otherwise. Tool follow-up replay is separately constrained to trusted tool-call continuations.
+For `completeUrl`, NanoGPT replays the stored original request, so the completed request is bound to the quoted method, path, and body. For exact `X-PAYMENT` replay, NanoGPT validates the payment against the quoted resource, amount, and expiration. For Lightning L402 replay, NanoGPT validates the token and preimage against the quoted method, path, request body hash, amount, and expiration. Clients should replay the same request they quoted unless endpoint docs state otherwise. Tool follow-up replay is separately constrained to trusted tool-call continuations.
 
 Do not assume every accountless x402 payment is an exact final charge.
 
@@ -308,6 +458,7 @@ Helper examples live in `examples/x402`. They cover:
 - status polling
 - `completeUrl`
 - exact replay with `X-PAYMENT`
+- Lightning L402 replay with `Authorization: L402 <token>:<preimage>`
 - expired, underpaid, and failed completion handling via status/complete responses
 
 Run the smoke tests against localhost or production:
@@ -328,6 +479,8 @@ X402_COMPLETE_URL="https://nano-gpt.com/api/x402/complete/pay_..." pnpm x402:smo
 
 - `completeUrl` payments are bound to the original request method, path, body hash, quote amount, and expiration.
 - Exact `X-PAYMENT` replay is validated against the quoted resource, amount, and expiration.
+- Lightning L402 replay is validated against the quoted method, path, request body hash, amount, and expiration.
+- `Authorization: L402 <token>:<preimage>` is bearer payment proof. Do not log full L402 authorization headers.
 - Expired payments cannot be completed.
 - Underpaid payments cannot be completed.
 - Completed or processing payments cannot be completed twice.

@@ -37,7 +37,7 @@ Currently documented accountless Data API paths:
 - `POST /api/v1/data/web/search`
 - `POST /api/v1/data/url/scrape`
 
-Use `GET /api/v1/x402/endpoints` as the deployment source of truth, and see [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for completion and polling behavior. Direct legacy routes remain available, but accountless docs prefer the public v1 data paths.
+Use `GET /api/v1/x402/endpoints` as the deployment source of truth, including Lightning L402 availability when advertised. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for completion, replay, and polling behavior. Direct legacy routes remain available, but accountless docs prefer the public v1 data paths.
 
 Some underlying endpoints may also support browser-session flows. The Data API forwards authentication and payment-related headers to the underlying route.
 
