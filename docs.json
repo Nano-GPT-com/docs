@@ -106,7 +106,6 @@
           "api-reference/miscellaneous/model-suffixes",
           "api-reference/miscellaneous/pii-redaction",
           "api-reference/miscellaneous/oauth-pkce",
-          "api-reference/miscellaneous/partner-auth",
           "api-reference/miscellaneous/brave",
           "api-reference/miscellaneous/byok",
           "api-reference/miscellaneous/for-providers",
@@ -117,6 +116,13 @@
           "api-reference/miscellaneous/context-memory",
           "api-reference/miscellaneous/typescript",
           "api-reference/miscellaneous/mcp-server"
+        ]
+      },
+      {
+        "group": "Partner",
+        "pages": [
+          "partner/overview",
+          "api-reference/miscellaneous/partner-auth"
         ]
       },
       {
@@ -174,6 +180,10 @@
   },
   "navbar": {
     "links": [
+      {
+        "label": "Partner",
+        "href": "/partner/overview"
+      },
       {
         "label": "Support",
         "href": "mailto:support@nano-gpt.com"

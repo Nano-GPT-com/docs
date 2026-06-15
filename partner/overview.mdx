@@ -1,0 +1,63 @@
+---
+title: "Partner Program"
+description: "Add NanoGPT-powered AI to your product while keeping your own users, brand, and UI — then apply to join."
+---
+
+## Overview
+
+The NanoGPT Partner Program lets you add AI — chat, image, video, and audio — inside your own product while NanoGPT runs the models, balances, and billing behind the scenes. Your app stays the customer-facing experience; your users never need a NanoGPT account or API key.
+
+Authentication is a short-lived JWT your backend signs and NanoGPT verifies against your public key. There is no OAuth dance, no SDK to install, and no NanoGPT credentials to manage. Most partners make their first successful call the same day they apply.
+
+<Note>
+  Already approved and ready to integrate? See the [Partner Auth](/api-reference/miscellaneous/partner-auth) reference for the full JWT spec, scopes, and endpoints.
+</Note>
+
+## What You Get
+
+- **Keep your users in your product.** Your app remains the brand and UI. NanoGPT sits behind it as the AI, model, balance, and billing layer.
+- **User-funded balances.** Each linked user has their own NanoGPT balance and can top up with Nano, stablecoins (USDC/USDT), major chains (SOL, ETH, and more), or other supported crypto.
+- **No model or billing infrastructure to build.** Access the full NanoGPT model catalog through one integration; we handle routing, billing, and usage records.
+- **Optional referral revenue.** Earn a configurable share of your users' top-ups.
+- **Optional partner tiers.** Offer tiered usage discounts to your users once tiers are enabled for your integration.
+- **Demo mode to test free.** We activate you in demo mode first, so you can build and test the entire flow against a free model before anything involves money.
+
+## Apply to Become a Partner
+
+Applying takes about 15 minutes on your side. You will need three things:
+
+<Steps>
+  <Step title="Pick a partner ID">
+    A short, lowercase identifier, for example `acme`. This becomes your JWT issuer and the slug we configure for you.
+  </Step>
+  <Step title="Generate a signing keypair">
+    Create an ECDSA P-256 keypair and keep the private key in your own secret manager:
+
+    ```bash
+    openssl ecparam -name prime256v1 -genkey -noout -out nanogpt-partner.pem
+    openssl pkey -in nanogpt-partner.pem -pubout
+    ```
+
+    Send us the output of the second command (the **public** key) plus a key ID such as `acme-2026-06`.
+
+    <Note>
+      Your public key is safe to share — it can only *verify* tokens, never sign them. The private key never leaves your infrastructure. We confirm the key's fingerprint with you before activation, so it cannot be tampered with in transit. Never send a private key to anyone.
+    </Note>
+  </Step>
+  <Step title="Tell us what you need at launch">
+    Any combination of: AI requests, user balances, top-ups, and signed-in web access (SSO). This determines your scopes and browser redirect allowlist.
+  </Step>
+</Steps>
+
+Email these three items to **[partner@nano-gpt.com](mailto:partner@nano-gpt.com?subject=NanoGPT%20Partner%20Program%20application)** and we'll take it from there.
+
+## What Happens Next
+
+1. We register your public key and activate you in **demo mode** — usually the same day.
+2. Your backend signs a JWT and calls NanoGPT with it as a Bearer token. Your first request works against a free model with zero balance, so you can validate the full integration before money is involved.
+3. When you're ready to launch, we switch off demo mode and confirm your commercial settings — referral revenue share, any partner tiers, and your redirect allowlist.
+4. Your users fund their own usage, and you can surface balance and top-up options directly in your product.
+
+## Build the Integration
+
+Once you're approved, the [Partner Auth](/api-reference/miscellaneous/partner-auth) reference covers everything you need: the JWT header and claims, the available scopes, sending AI requests, checking balances, creating top-ups, browser SSO login links, reading usage, and error handling.
