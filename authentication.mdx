@@ -34,6 +34,7 @@ curl "https://nano-gpt.com/api/v1/models" \
 ### Common errors
 
 - `401 Unauthorized`: Missing/invalid/revoked API key (or your key is inactive/expired, if your account has expiration enabled)
+- `403 Forbidden`: API key browser-origin restriction failed (`api_key_origin_not_allowed`)
 - `429 Too Many Requests`: Rate limit exceeded (per-second throughput, or a per-key daily cap if configured)
 
 For rate-limit details, see [Rate Limits](/api-reference/miscellaneous/rate-limits).
@@ -76,5 +77,6 @@ If you are calling the API from a backend service, prefer API keys instead of re
 - Store keys in environment variables (for example: `NANOGPT_API_KEY`).
 - Never commit keys to git or ship them in client-side code.
 - Prefer `Authorization: Bearer ...` over putting keys in URLs.
+- For browser-based apps, set **Allowed browser origins** when creating the API key so the key is only accepted from your app's origin. Prefer backend calls or OAuth PKCE when possible; do not embed unrestricted API keys in client-side code.
 - Use separate keys per app/environment so you can revoke access without breaking everything.
 - Set spending and request limits (if available for your account) to cap blast radius.
