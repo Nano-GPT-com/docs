@@ -8085,18 +8085,18 @@
           },
           "store": {
             "type": "boolean",
-            "description": "Store response for later retrieval",
+            "description": "Store the response locally for later retrieval/threading/background processing. Set false to disable stored Responses API data for the request.",
             "default": false
           },
           "retention_days": {
-            "description": "Per-request retention override in days. Use null to disable request-level override.",
+            "description": "Per-request retention override in days (0..365). Use 0 to disable retention for the request; use null to fall back to configured defaults.",
             "oneOf": [
               { "type": "integer", "minimum": 0, "maximum": 365 },
               { "type": "null" }
             ]
           },
           "retentionDays": {
-            "description": "Alias for retention_days. If both are provided, values must match.",
+            "description": "Alias for retention_days (0..365). If both are provided, values must match.",
             "oneOf": [
               { "type": "integer", "minimum": 0, "maximum": 365 },
               { "type": "null" }

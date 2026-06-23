@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-06-09
+Last updated: 2026-06-23
 
 GOAL
 Equip developers to call the NanoGPT API for chat, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -32,6 +32,7 @@ CORE CONCEPTS
 - Distillation policy: text model records and provider rows may include distillationPolicy with status, label, basis, sourceUrl, and note. Use /api/explore/text-models?distillation=allowed or /api/explore/search?type=text&q=...&distillation=allowed to filter model-level allowed text models. This is API-only; the text models browser UI does not show a distillation filter or badge.
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
 - Usage API: GET /api/v1/usage returns aggregate spend, refund, request, and token usage for the authenticated API key by UTC day, public model label, or both. It does not expose prompts, responses, raw transaction rows, provider routing, or account-wide usage across multiple keys.
+- Responses API retention: stored /v1/responses records are retained up to 7 days by default when storage is enabled. Set store: false to disable stored Responses API data for a request. For stored requests, override retention with retentionDays or retention_days (integer 0..365); 0 means do not retain stored response data. User/team defaults exist via API endpoints, not the main web Settings UI.
 - Caching and memory: most providers use implicit caching automatically when supported; top-level caching: true or model suffix :caching/:cache/:cached routes to a cache-capable provider and defaults to stickyprovider: true; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
 - Inline moderation: authenticated API-key callers can send moderation: true or moderation: <model-id> on supported text, image, and video generation routes to run a paid input safety preflight before provider dispatch. It charges separately, blocks flagged input with content_policy_violation, and does not moderate generated outputs.
 
