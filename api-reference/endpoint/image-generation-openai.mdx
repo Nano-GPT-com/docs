@@ -6,6 +6,8 @@ openapi: 'POST /v1/images/generations'
 
 Generate images from text prompts or base64 image inputs using the OpenAI-compatible endpoint. Responses include base64 bytes (`b64_json`) by default or signed URLs (`url`) when `response_format: "url"`.
 
+For new integrations that do not need OpenAI-compatible request shapes, use the dedicated [Image API](/api-reference/image-generation). It supports image model discovery, endpoint metadata, public pricing metadata, and normalized generation through `POST /api/v1/images`.
+
 ## Endpoint
 
 - Method/Path: `POST https://nano-gpt.com/v1/images/generations`

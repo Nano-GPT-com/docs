@@ -1,0 +1,122 @@
+---
+title: "Generate Images"
+api: "POST https://nano-gpt.com/api/v1/images"
+description: "Generate text-to-image and image-to-image outputs through NanoGPT's normalized Image API endpoint"
+---
+
+## Overview
+
+Use `POST /api/v1/images` to generate images through NanoGPT's normalized Image API. The endpoint accepts JSON only and supports text-to-image and image-to-image requests for models that expose those capabilities.
+
+Discover model-specific parameters first with:
+
+- `GET /api/v1/images/models`
+- `GET /api/v1/images/models/{modelId}/endpoints`
+
+## Authentication
+
+Use either header:
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Request
+
+```http
+POST /api/v1/images
+Content-Type: application/json
+```
+
+## Text-To-Image Example
+
+```bash
+curl https://nano-gpt.com/api/v1/images \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: $NANOGPT_API_KEY" \
+  -d '{
+    "model": "gpt-image-2",
+    "prompt": "A clean product photo of a matte black espresso machine on a white counter",
+    "resolution": "1024x1024",
+    "quality": "medium",
+    "n": 1
+  }'
+```
+
+## Image-To-Image Example
+
+```json
+{
+  "model": "gpt-image-2",
+  "prompt": "Make this look like a polished studio product photo",
+  "input_references": [
+    {
+      "type": "image_url",
+      "image_url": {
+        "url": "https://example.com/reference.png"
+      }
+    }
+  ],
+  "resolution": "1024x1024",
+  "quality": "medium",
+  "n": 1
+}
+```
+
+## Request Fields
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `model` | string | Yes | Image model ID from `GET /api/v1/images/models`. |
+| `prompt` | string | Usually | Text prompt or edit instruction. Model requirements can vary. |
+| `n` | integer | No | Number of output images. Internally normalized to `nImages`; if both are supplied, `nImages` takes precedence. |
+| `resolution` | string | No | Output resolution when supported by the model. |
+| `aspect_ratio` | string | No | Output aspect ratio when supported by the model. |
+| `quality` | string | No | Quality tier when supported by the model. |
+| `output_format` | string | No | Output format when supported by the model. |
+| `seed` | integer | No | Seed when supported by the model. |
+| `input_references` | array | No | Image references for image-to-image models. |
+
+NanoGPT exposes many model-specific parameters. Treat parameter support as discoverable through `supported_parameters`, not globally available.
+
+## Input References
+
+`input_references` accepts an array of image references.
+
+Supported entries:
+
+```json
+[
+  "https://example.com/image.png",
+  "data:image/png;base64,...",
+  {
+    "type": "image_url",
+    "image_url": {
+      "url": "https://example.com/image.png"
+    }
+  }
+]
+```
+
+Do not mix `input_references` with legacy image aliases such as `imageDataUrl`, `imageDataUrls`, `image_url`, or `images` in the same request. The route returns `conflicting_image_inputs` if both styles are supplied.
+
+## Unsupported Features
+
+`stream: true` is not supported yet.
+
+Provider selection and provider passthrough are not supported yet. Non-empty `provider` objects return `unsupported_provider_options`.
+
+## Common Errors
+
+| Code | Description |
+| --- | --- |
+| `missing_model` | `model` is required. |
+| `invalid_content_type` | `POST /api/v1/images` accepts `application/json` requests only. |
+| `invalid_input_references` | `input_references` must be an array of image URL strings, data URLs, or `image_url` objects. |
+| `conflicting_image_inputs` | Use `input_references` or legacy image input aliases, not both. |
+| `unsupported_stream` | `stream: true` is not supported yet. |
+| `unsupported_provider_options` | Provider selection and passthrough options are not supported yet. |
+
+## Notes
+
+- Use `n` for output count. If your request also sends `nImages`, `nImages` takes precedence.
+- Use [Image API](/api-reference/image-generation) for the full guide and error response examples.

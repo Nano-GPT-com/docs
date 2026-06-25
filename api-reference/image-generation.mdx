@@ -1,322 +1,418 @@
 ---
-title: "Image Generation"
-description: "Guide to the OpenAI-compatible image generation endpoint"
+title: "Image API"
+description: "Discover image models, inspect endpoint metadata and pricing, and generate images through NanoGPT's normalized Image API."
 ---
 
 ## Overview
 
-The NanoGPT API provides image generation through the OpenAI-compatible endpoint. This guide covers text-to-image and image-to-image flows, response formats, and best practices.
+NanoGPT provides a dedicated Image API for discovering image models, inspecting supported parameters and pricing, and generating images through a normalized endpoint.
 
-For authenticated API-key requests, you can opt in to a paid input safety preflight by sending the `moderation` header. See [Inline Moderation](/api-reference/miscellaneous/inline-moderation) for supported image routes, inspectable image inputs, billing behavior, and error codes.
+Use this API when you want one image workflow:
 
-## OpenAI-Compatible Endpoint (v1/images/generations)
+- Discover available image models with machine-readable capabilities.
+- Inspect a model's public endpoint metadata, supported parameters, pricing, and image-input constraints.
+- Generate text-to-image and image-to-image outputs through `POST /api/v1/images`.
 
-This endpoint follows the OpenAI specification for image generation and returns a list of base64-encoded images by default (or hosted URLs when `response_format: "url"`).
+Existing image routes remain supported for compatibility:
 
-### Basic Image Generation
+- `POST /api/v1/images/generations`
+- `POST /api/v1/images/edits`
+- `POST /api/v1/images/edit`
+- `GET /api/v1/image-models`
 
-```bash
-curl https://nano-gpt.com/v1/images/generations \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "hidream",
-    "prompt": "A sunset over a mountain range",
-    "n": 1,
-    "size": "1024x1024"
-  }'
+The dedicated Image API is additive. New integrations should prefer the normalized routes below.
+
+## Authentication
+
+Use the same NanoGPT API key authentication as other API routes:
+
+```http
+Authorization: Bearer YOUR_API_KEY
 ```
 
-### Accountless x402 Payment
+or:
 
-`POST /api/v1/images/generations` supports accountless x402 payments. Send the same JSON request without `Authorization` or `x-api-key`; supported deployments return `402 Payment Required` with a machine-readable `payment` quote.
+```http
+x-api-key: YOUR_API_KEY
+```
+
+Model discovery routes can be called without authentication. Generation requests require an API key.
+
+## Quickstart
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/images/generations \
+curl https://nano-gpt.com/api/v1/images/models
+```
+
+```bash
+curl https://nano-gpt.com/api/v1/images/models/gpt-image-2/endpoints
+```
+
+```bash
+curl https://nano-gpt.com/api/v1/images \
   -H "Content-Type: application/json" \
+  -H "x-api-key: $NANOGPT_API_KEY" \
   -d '{
-    "model": "gpt-image-1",
-    "prompt": "a product photo of a brushed steel desk lamp",
-    "size": "1024x1024",
+    "model": "gpt-image-2",
+    "prompt": "A clean product photo of a matte black espresso machine",
+    "resolution": "1024x1024",
+    "quality": "medium",
     "n": 1
   }'
 ```
 
-This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. After paying with one of the returned `payment.accepted[]` options, either call the selected option's `completeUrl`, replay the same request with `X-PAYMENT`, or replay with `Authorization: L402 <token>:<preimage>`, depending on the scheme. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
+## Discover Image Models
 
-### Return Hosted URLs (response_format: "url")
+List image models:
 
-By default, responses include base64 strings. Ask for hosted URLs instead:
-
-```json
-{
-  "response_format": "url"
-}
+```http
+GET /api/v1/images/models
 ```
 
-Note on response_format: "url"
-The returned data[i].url is a time-limited, signed download URL (presigned URL) to the generated image.
-It will expire after a short period (currently ~1 hour). If you need long-term access, download the image and store it yourself.
-
-- Output: `data` will usually contain `{ url: "https://..." }` entries instead of `b64_json` (each `data[i]` is one or the other, never both).
-- Fallback: if URL generation (upload/presign) fails, the API may return `b64_json` even when you requested `response_format: "url"`.
-- Inputs: `imageDataUrl` accepts data URLs; download and convert remote images before sending.
-- Retention: the returned `data[i].url` is a signed, expiring URL (~1 hour). Generated files are kept for 24 hours, then permanently deleted. Download and store elsewhere if you need longer retention.
-
-Example response (response_format: "url")
+Response:
 
 ```json
 {
-  "created": 123,
+  "object": "list",
   "data": [
-    { "url": "https://...signed-url..." }
+    {
+      "id": "gpt-image-2",
+      "name": "GPT Image 2",
+      "description": "Model description...",
+      "created": 1760000000,
+      "owned_by": "openai",
+      "architecture": {
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["image"]
+      },
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": ["1024x1024", "1024x768"],
+          "default": "1024x1024"
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 4,
+          "default": 1
+        },
+        "quality": {
+          "type": "enum",
+          "values": ["low", "medium", "high"],
+          "default": "medium"
+        },
+        "input_references": {
+          "type": "range",
+          "min": 0,
+          "max": 4
+        }
+      },
+      "supports_streaming": false,
+      "endpoints": "/api/v1/images/models/gpt-image-2/endpoints",
+      "capabilities": {
+        "image_generation": true,
+        "image_to_image": true,
+        "inpainting": false,
+        "nsfw": false
+      },
+      "category": "image"
+    }
   ],
-  "cost": 123,
-  "paymentSource": "<string>",
-  "remainingBalance": 123
+  "meta": {
+    "count": 201,
+    "generated_at": "2026-06-25T00:00:00.000Z"
+  }
 }
 ```
 
-Example response (response_format: "b64_json")
+Notes:
+
+- `id` is the model ID to use in `POST /api/v1/images`.
+- `endpoints` is the URL for endpoint and pricing metadata for that model.
+- `supported_parameters` is machine-readable and varies by model.
+- `supports_streaming` is currently always `false`.
+- Model IDs may contain slashes. Prefer using the returned `endpoints` URL directly.
+
+See [List Image Models](/api-reference/endpoint/image-api-models) for the endpoint reference.
+
+## Inspect Endpoint Metadata And Pricing
+
+Get public endpoint metadata for a model:
+
+```http
+GET /api/v1/images/models/{modelId}/endpoints
+```
+
+Example:
+
+```http
+GET /api/v1/images/models/gpt-image-2/endpoints
+```
+
+For model IDs that contain slashes, use the `endpoints` path returned by `GET /api/v1/images/models`.
+
+Response:
 
 ```json
 {
-  "created": 123,
-  "data": [
-    { "b64_json": "<base64-encoded-image-bytes>" }
+  "id": "gpt-image-2",
+  "endpoints": [
+    {
+      "provider_name": "OpenAI",
+      "provider_slug": "openai",
+      "provider_tag": null,
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": ["1024x1024", "1024x768"],
+          "default": "1024x1024"
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 4,
+          "default": 1
+        }
+      },
+      "allowed_passthrough_parameters": [],
+      "supports_streaming": false,
+      "pricing": [
+        {
+          "billable": "output_image",
+          "unit": "image",
+          "cost_usd": 0.06551,
+          "resolution": "1024x1024"
+        }
+      ],
+      "input_reference_constraints": {
+        "max_items": 4,
+        "route": {
+          "min_width": 8,
+          "min_height": 8,
+          "max_bytes": 31457280,
+          "formats": ["png", "jpeg", "webp"],
+          "source": "route-preflight"
+        }
+      }
+    }
+  ]
+}
+```
+
+Notes:
+
+- NanoGPT currently returns one public endpoint per model.
+- `provider_tag` is `null` because provider selection is not exposed yet.
+- `allowed_passthrough_parameters` is an empty array for now.
+- `pricing` uses public NanoGPT pricing, not provider at-cost rates.
+- `input_reference_constraints` is included when the model supports image inputs.
+
+See [Get Image Model Endpoints](/api-reference/endpoint/image-api-model-endpoints) for the endpoint reference.
+
+## Generate Images
+
+Generate images with:
+
+```http
+POST /api/v1/images
+Content-Type: application/json
+```
+
+Text-to-image request:
+
+```json
+{
+  "model": "gpt-image-2",
+  "prompt": "A clean product photo of a matte black espresso machine on a white counter",
+  "resolution": "1024x1024",
+  "quality": "medium",
+  "n": 1
+}
+```
+
+Image-to-image request:
+
+```json
+{
+  "model": "gpt-image-2",
+  "prompt": "Make this look like a polished studio product photo",
+  "input_references": [
+    {
+      "type": "image_url",
+      "image_url": {
+        "url": "https://example.com/reference.png"
+      }
+    }
   ],
-  "cost": 123,
-  "paymentSource": "<string>",
-  "remainingBalance": 123
+  "resolution": "1024x1024",
+  "quality": "medium",
+  "n": 1
 }
 ```
 
-### Downloading the image
+Use `n` to request the number of output images. Internally, `n` is normalized to NanoGPT's existing `nImages` parameter. If both are supplied, `nImages` takes precedence.
 
-If you requested response_format: "url", download the image by performing a normal HTTP GET to data[i].url.
-Because the URL is signed and expiring, you should download it soon after generation.
+See [Generate Images](/api-reference/endpoint/image-api-generate) for the endpoint reference.
 
-### Image-to-Image with OpenAI Endpoint
+## Image References
 
-The OpenAI-compatible endpoint also supports img2img generation using the `imageDataUrl` parameter. Here are the different ways to provide input images:
+`input_references` accepts an array of image references.
 
-> Uploads sent via the API must be 4 MB or smaller. Compress or resize larger files before converting to a data URL.
+Supported entries:
 
-#### Method 1: Upload from Local File
-
-```python
-import requests
-import base64
-
-API_KEY = "YOUR_API_KEY"
-
-# Read and encode your input image
-with open("input_image.jpg", "rb") as image_file:
-    encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-    image_data_url = f"data:image/jpeg;base64,{encoded_image}"
-
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json"
-}
-
-response = requests.post(
-    "https://nano-gpt.com/v1/images/generations",
-    headers=headers,
-    json={
-        "model": "flux-kontext",
-        "prompt": "Transform this image into a watercolor painting",
-        "n": 1,
-        "size": "1024x1024",
-        "imageDataUrl": image_data_url
+```json
+[
+  "https://example.com/image.png",
+  "data:image/png;base64,...",
+  {
+    "type": "image_url",
+    "image_url": {
+      "url": "https://example.com/image.png"
     }
-)
-
-result = response.json()
-# The response includes base64-encoded images in result["data"]
-```
-
-#### Method 2: Upload from Image URL
-
-```python
-import requests
-import base64
-from urllib.request import urlopen
-
-API_KEY = "YOUR_API_KEY"
-
-# Download and encode image from URL
-image_url = "https://example.com/your-image.jpg"
-with urlopen(image_url) as response:
-    image_data = response.read()
-    encoded_image = base64.b64encode(image_data).decode('utf-8')
-    # Detect image type from URL or response headers
-    image_type = "jpeg"  # or detect from URL/headers
-    image_data_url = f"data:image/{image_type};base64,{encoded_image}"
-
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json"
-}
-
-response = requests.post(
-    "https://nano-gpt.com/v1/images/generations",
-    headers=headers,
-    json={
-        "model": "flux-kontext",
-        "prompt": "Transform this image into a watercolor painting",
-        "n": 1,
-        "size": "1024x1024",
-        "imageDataUrl": image_data_url
-    }
-)
-
-result = response.json()
-```
-
-#### Method 3: Multiple Images (for supported models)
-
-Some models like `gpt-4o-image`, `flux-kontext`, and `gpt-image-1` support multiple input images:
-
-```python
-import requests
-import base64
-
-API_KEY = "YOUR_API_KEY"
-
-def image_to_data_url(image_path):
-    """Convert image file to base64 data URL"""
-    with open(image_path, "rb") as f:
-        encoded = base64.b64encode(f.read()).decode('utf-8')
-        ext = image_path.lower().split('.')[-1]
-        mime_type = "jpeg" if ext == "jpg" else ext
-        return f"data:image/{mime_type};base64,{encoded}"
-
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json"
-}
-
-# Prepare multiple images
-image_data_urls = [
-    image_to_data_url("image1.jpg"),
-    image_to_data_url("image2.png"),
-    image_to_data_url("image3.jpg")
+  }
 ]
-
-response = requests.post(
-    "https://nano-gpt.com/v1/images/generations",
-    headers=headers,
-    json={
-        "model": "gpt-4o-image",
-        "prompt": "Combine these images into a creative collage",
-        "n": 1,
-        "size": "1024x1024",
-        "imageDataUrls": image_data_urls  # Note: plural form for multiple images
-    }
-)
-
-result = response.json()
 ```
 
-#### Supported Image-to-Image Models
+Do not mix `input_references` with legacy image aliases such as `imageDataUrl`, `imageDataUrls`, `image_url`, or `images` in the same request. The route returns `conflicting_image_inputs` if both styles are supplied.
 
-The following models support image input via the OpenAI endpoint:
+## Supported Parameter Discovery
 
-**Single Image Input:**
-- `flux-dev-image-to-image` - Image-to-image only
-- `ghiblify` - Transform images to Studio Ghibli style
-- `gemini-flash-edit` - Edit images with prompts
-- `hidream-edit` - Advanced image editing
-- `bagel` - Both text-to-image and image-to-image
-- `SDXL-ArliMix-v1` - Artistic transformations
-- `Upscaler` - Upscale images to higher resolution
+Parameter support varies by model. Always check `supported_parameters` from:
 
-**Multiple Image Input:**
-- `flux-kontext` - Advanced context-aware generation
-- `flux-kontext/dev` - Development version (image-to-image only)
-- `gpt-4o-image` - GPT-4 powered image generation
-- `gpt-image-1` - Advanced multi-image processing
-
-**Special Cases:**
-- `flux-lora/inpainting` - Requires both `imageDataUrl` (base image) and `maskDataUrl` (mask)
-
-#### Image Data URL Format
-
-All images must be provided as base64-encoded data URLs:
-```
-data:image/[format];base64,[base64-encoded-data]
+```http
+GET /api/v1/images/models
 ```
 
-Supported formats:
-- `image/jpeg` or `image/jpg`
-- `image/png`
-- `image/webp`
-- `image/gif` (first frame only)
+Common fields include:
 
-#### Additional Parameters for Image-to-Image
+- `model`
+- `prompt`
+- `n`
+- `resolution`
+- `aspect_ratio`
+- `quality`
+- `output_format`
+- `seed`
+- `input_references`
 
-When using image-to-image models, you can include these additional parameters:
+NanoGPT exposes many model-specific parameters. Treat them as discoverable via `supported_parameters`, not as globally supported fields.
+
+## Unsupported Features For Now
+
+### Streaming
+
+`stream: true` is not supported yet.
 
 ```json
 {
-  "model": "flux-kontext",
-  "prompt": "Transform to cyberpunk style",
-  "imageDataUrl": "data:image/jpeg;base64,...",
-  "size": "1024x1024",
-  "n": 1,
-  
-  // Optional parameters (model-specific)
-  "strength": 0.8,              // How much to transform (0.0-1.0)
-  "guidance_scale": 7.5,        // Prompt adherence
-  "num_inference_steps": 30,    // Quality vs speed
-  "seed": 42,                   // For reproducible results
-  "kontext_max_mode": true      // Enhanced context (flux-kontext only)
+  "error": {
+    "message": "stream is not supported for /api/v1/images yet. Use non-streaming requests or /api/v1/images/generations.",
+    "type": "invalid_request_error",
+    "code": "unsupported_stream",
+    "parameter": "stream"
+  },
+  "code": "unsupported_stream"
 }
 ```
 
-## Best Practices
+### Provider Selection
 
-1. **Prompt Engineering**
-   - Be specific and detailed in your prompts
-   - Include style references when needed
-   - Use the negative prompt to avoid unwanted elements
-   - For img2img, describe the changes you want relative to the input image
+Provider selection and provider passthrough are not supported yet on `POST /api/v1/images`.
 
-2. **Image Quality**
-   - Higher resolution settings produce better quality but take longer
-   - More steps generally mean better quality but slower generation
-   - Adjust the guidance scale based on how closely you want to follow the prompt
-   - For img2img, ensure your input image has good quality for best results
+Do not send provider routing or provider passthrough options:
 
-3. **Cost Optimization**
-   - Start with lower resolution for testing
-   - Use fewer steps during development
-   - Generate one image at a time unless multiple variations are needed
-   - Compress input images appropriately to reduce upload size
+```json
+{
+  "provider": {
+    "only": ["openai"]
+  }
+}
+```
 
-## Error Handling
+Non-empty provider objects return:
 
-The API may return various error codes:
+```json
+{
+  "error": {
+    "message": "Provider selection and provider passthrough options are not supported for /api/v1/images yet.",
+    "type": "invalid_request_error",
+    "code": "unsupported_provider_options",
+    "parameter": "provider"
+  },
+  "code": "unsupported_provider_options"
+}
+```
 
-- 400: Bad Request (invalid parameters)
-- 401: Unauthorized (invalid API key)
-- 429: Too Many Requests (rate limit exceeded)
-- 500: Internal Server Error
+Empty provider objects are ignored, but clients should not rely on that behavior.
 
-Always implement proper error handling in your applications:
+## Migration Notes
 
-```python
-try:
-    result = generate_image(prompt)
-except requests.exceptions.RequestException as e:
-    if e.response:
-        if e.response.status_code == 401:
-            print("Invalid API key. Please check your credentials.")
-        elif e.response.status_code == 429:
-            print("Rate limit exceeded. Please wait before trying again.")
-        else:
-            print(f"API Error: {e.response.status_code}")
-    else:
-        print(f"Network Error: {str(e)}")
-``` 
+Use the dedicated Image API when building new image integrations. It provides model discovery, endpoint metadata, public pricing metadata, image-input constraints, and normalized JSON generation in one workflow.
+
+Use the legacy routes when you need their existing compatibility behavior:
+
+- Use `POST /api/v1/images/generations` or `POST /v1/images/generations` for OpenAI-compatible image generation request shapes.
+- Use `POST /api/v1/images/edits` or `POST /api/v1/images/edit` for OpenAI-compatible image editing.
+- Use `GET /api/v1/image-models` if your integration already depends on the older image model list format.
+
+Do not assume field names are interchangeable between the normalized Image API and legacy endpoints. For example, `POST /api/v1/images` uses `input_references`; older routes support aliases such as `imageDataUrl` and `imageDataUrls`.
+
+## Error Reference
+
+### Missing Model
+
+```json
+{
+  "error": {
+    "message": "model is required for /api/v1/images.",
+    "type": "invalid_request_error",
+    "code": "missing_model",
+    "parameter": "model"
+  },
+  "code": "missing_model"
+}
+```
+
+### Invalid Content Type
+
+`POST /api/v1/images` accepts JSON only.
+
+```json
+{
+  "error": {
+    "message": "/api/v1/images accepts application/json requests.",
+    "type": "invalid_request_error",
+    "code": "invalid_content_type"
+  },
+  "code": "invalid_content_type"
+}
+```
+
+### Invalid Input References
+
+```json
+{
+  "error": {
+    "message": "input_references must be an array of image URL strings or image_url objects.",
+    "type": "invalid_request_error",
+    "code": "invalid_input_references",
+    "parameter": "input_references"
+  },
+  "code": "invalid_input_references"
+}
+```
+
+### Conflicting Image Inputs
+
+```json
+{
+  "error": {
+    "message": "Use input_references or image input aliases, not both.",
+    "type": "invalid_request_error",
+    "code": "conflicting_image_inputs",
+    "parameter": "input_references"
+  },
+  "code": "conflicting_image_inputs"
+}
+```

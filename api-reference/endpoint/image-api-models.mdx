@@ -1,0 +1,94 @@
+---
+title: "List Image Models"
+api: "GET https://nano-gpt.com/api/v1/images/models"
+description: "List image models for NanoGPT's dedicated Image API"
+---
+
+## Overview
+
+Use `GET /api/v1/images/models` to discover image models for the dedicated Image API. The response includes model IDs, capabilities, supported parameters, streaming support, and a model-specific endpoint metadata URL.
+
+Model availability and supported parameters can change. Build clients from the returned metadata instead of hardcoding model capability tables.
+
+## Authentication
+
+Authentication is optional.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gpt-image-2",
+      "name": "GPT Image 2",
+      "description": "Model description...",
+      "created": 1760000000,
+      "owned_by": "openai",
+      "architecture": {
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["image"]
+      },
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": ["1024x1024", "1024x768"],
+          "default": "1024x1024"
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 4,
+          "default": 1
+        }
+      },
+      "supports_streaming": false,
+      "endpoints": "/api/v1/images/models/gpt-image-2/endpoints",
+      "capabilities": {
+        "image_generation": true,
+        "image_to_image": true,
+        "inpainting": false,
+        "nsfw": false
+      },
+      "category": "image"
+    }
+  ],
+  "meta": {
+    "count": 201,
+    "generated_at": "2026-06-25T00:00:00.000Z"
+  }
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Model ID to use in `POST /api/v1/images`. |
+| `name` | string | Human-readable model name. |
+| `description` | string | Model description. |
+| `created` | integer | Unix timestamp for when the model was added. |
+| `owned_by` | string | Public owner or provider label. |
+| `architecture.input_modalities` | string[] | Supported input modalities, such as `text` or `image`. |
+| `architecture.output_modalities` | string[] | Supported output modalities. |
+| `supported_parameters` | object | Machine-readable model-specific parameter metadata. |
+| `supports_streaming` | boolean | Currently always `false`. |
+| `endpoints` | string | URL for endpoint metadata and pricing for this model. |
+| `capabilities` | object | Feature flags such as `image_generation`, `image_to_image`, `inpainting`, and `nsfw`. |
+| `category` | string | Usually `image`. |
+
+## Example
+
+```bash
+curl https://nano-gpt.com/api/v1/images/models
+```
+
+## Notes
+
+- `supported_parameters` varies by model.
+- Model IDs may contain slashes. Prefer the returned `endpoints` URL when fetching endpoint metadata.
+- Use this endpoint with [Get Image Model Endpoints](/api-reference/endpoint/image-api-model-endpoints) before sending generation requests.

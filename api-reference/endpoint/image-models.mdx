@@ -8,6 +8,8 @@ description: "List available image generation and image editing models with capa
 
 Use `GET /api/v1/image-models` to discover the currently available image models and their capabilities. Do not hardcode image model capability tables in your client; model availability and supported parameters can change.
 
+For new integrations using the normalized Image API, prefer [`GET /api/v1/images/models`](/api-reference/endpoint/image-api-models). That newer route returns model-specific `supported_parameters`, endpoint metadata links, and input-reference capabilities for use with [`POST /api/v1/images`](/api-reference/endpoint/image-api-generate).
+
 This endpoint is cacheable. Refresh it periodically and handle new fields as additive.
 
 ## Endpoint

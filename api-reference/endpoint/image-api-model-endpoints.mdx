@@ -1,0 +1,99 @@
+---
+title: "Get Image Model Endpoints"
+api: "GET https://nano-gpt.com/api/v1/images/models/{modelId}/endpoints"
+description: "Inspect endpoint metadata, pricing, and image-input constraints for an image model"
+---
+
+## Overview
+
+Use `GET /api/v1/images/models/{modelId}/endpoints` to inspect public endpoint metadata for a specific image model. The response includes supported parameters, public NanoGPT pricing, streaming support, and image reference constraints when the model supports image inputs.
+
+For model IDs that contain slashes, use the `endpoints` URL returned by `GET /api/v1/images/models`.
+
+## Authentication
+
+Authentication is optional.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Request
+
+```http
+GET /api/v1/images/models/gpt-image-2/endpoints
+```
+
+## Response
+
+```json
+{
+  "id": "gpt-image-2",
+  "endpoints": [
+    {
+      "provider_name": "OpenAI",
+      "provider_slug": "openai",
+      "provider_tag": null,
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": ["1024x1024", "1024x768"],
+          "default": "1024x1024"
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 4,
+          "default": 1
+        }
+      },
+      "allowed_passthrough_parameters": [],
+      "supports_streaming": false,
+      "pricing": [
+        {
+          "billable": "output_image",
+          "unit": "image",
+          "cost_usd": 0.06551,
+          "resolution": "1024x1024"
+        }
+      ],
+      "input_reference_constraints": {
+        "max_items": 4,
+        "route": {
+          "min_width": 8,
+          "min_height": 8,
+          "max_bytes": 31457280,
+          "formats": ["png", "jpeg", "webp"],
+          "source": "route-preflight"
+        }
+      }
+    }
+  ]
+}
+```
+
+## Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Image model ID. |
+| `endpoints` | array | Public endpoint metadata for the model. Currently one public endpoint is returned per model. |
+| `provider_name` | string | Public provider display name. |
+| `provider_slug` | string | Public provider slug. |
+| `provider_tag` | string or null | Currently `null`; provider selection is not exposed on this API surface. |
+| `supported_parameters` | object | Machine-readable parameter metadata for this model endpoint. |
+| `allowed_passthrough_parameters` | array | Empty for now; provider passthrough is not supported. |
+| `supports_streaming` | boolean | Currently `false`. |
+| `pricing` | array | Public NanoGPT pricing metadata. This is not provider at-cost pricing. |
+| `input_reference_constraints` | object | Included when the model supports image inputs. |
+
+## Example
+
+```bash
+curl https://nano-gpt.com/api/v1/images/models/gpt-image-2/endpoints
+```
+
+## Notes
+
+- Provider selection, provider passthrough options, and provider-specific endpoint choice are not supported yet.
+- `pricing` uses public NanoGPT pricing.
+- Check `supported_parameters` before deciding which request controls to show.

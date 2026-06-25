@@ -1,9 +1,9 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-06-23
+Last updated: 2026-06-25
 
 GOAL
-Equip developers to call the NanoGPT API for chat, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
+Equip developers to call the NanoGPT API for chat, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
 
 STYLE FOR ANSWERS
 - Prefer TypeScript (Node 18+) with openai@^5.8.0 and baseURL set to https://nano-gpt.com/api.
@@ -28,6 +28,7 @@ CORE CONCEPTS
 - Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
 - Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, :caching/:cache/:cached to require a cache-capable provider, and combine suffixes as needed.
 - Data API: /api/v1/data is the stable discovery and dispatch layer for web search, URL scraping, Firecrawl, Google Maps, Reddit, LinkedIn, Instagram, TikTok, X/Twitter, and Hunter enrichment. It wraps existing direct endpoints without changing their response schemas or billing.
+- Image API: /api/v1/images is the normalized image generation endpoint. Discover image models with GET /api/v1/images/models, inspect model endpoint metadata and public pricing with GET /api/v1/images/models/{modelId}/endpoints, then POST JSON to /api/v1/images with model, prompt, n, and model-specific fields such as resolution, quality, aspect_ratio, output_format, seed, and input_references.
 - Provider routing: on /v1/chat/completions, /v1/completions, and /talk-to-gpt, body provider can be a string provider ID or an object with order, only, ignore, sort, max_price, allow_fallbacks, and require_parameters. order is a soft preference; only is a hard pin; unknown providers in only return provider_unknown_provider, while unknown providers in order/ignore are ignored.
 - Distillation policy: text model records and provider rows may include distillationPolicy with status, label, basis, sourceUrl, and note. Use /api/explore/text-models?distillation=allowed or /api/explore/search?type=text&q=...&distillation=allowed to filter model-level allowed text models. This is API-only; the text models browser UI does not show a distillation filter or badge.
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
@@ -52,7 +53,9 @@ HARD RULES AND GOTCHAS
 - Always set baseURL to https://nano-gpt.com/api (or https://nano-gpt.com for /v1/messages) and include Authorization or x-api-key on every call.
 - Exception to auth: for accountless x402 on supported endpoints, intentionally omit Authorization and x-api-key, key off the top-level payment object in the 402 response, then call completeUrl for nano/base-usdc, replay the same request with X-PAYMENT for exact schemes including nano-exact, x402-exact, and x402-solana-usdc, or replay the same request with Authorization: L402 <token>:<preimage> for lightning-l402.
 - Do not hardcode model support; call GET /api/v1/models?detailed=true to confirm vision, context length, and subscription status.
+- Do not hardcode image model support; call GET /api/v1/images/models and follow the returned endpoints URL for model-specific supported_parameters, public pricing, and image-input constraints.
 - Do not guess provider IDs. Use GET /api/models/:canonicalId/providers for public provider IDs and pricing. Avoid internal provider names that are not returned by public discovery.
+- Do not document provider selection, provider passthrough, provider-specific endpoint choice, or stream: true as supported on POST /api/v1/images. Non-empty provider objects return unsupported_provider_options, and stream: true returns unsupported_stream.
 - For distillation workflows, inspect distillationPolicy.sourceUrl and distillationPolicy.note on both the model and selected provider route. Provider-specific restrictions override model-level allowances, and unknown model/license status remains unknown when a provider is silent.
 - Handle streaming as SSE: group chunks by id, concatenate delta.content, capture delta.reasoning separately, stop on [DONE], and read usage/x_nanogpt_pricing on the final chunk.
 - Never rely on <think> tags; reasoning text lives in reasoning/reasoning_details and may be omitted when reasoning.exclude is true.
