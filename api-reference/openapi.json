@@ -7829,6 +7829,20 @@
             "description": "Routing preference. speed, throughput, latency, and price actively request that strategy. auto, none, and default are accepted to suppress stored/default routing preferences without requesting a provider sort.",
             "enum": ["speed", "throughput", "latency", "price", "auto", "none", "default"]
           },
+          "quantizations": {
+            "type": "array",
+            "description": "Hard allowlist of model weight quantization levels. Providers without matching known quantization metadata are excluded unless unknown is included explicitly.",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": ["int4", "fp4", "fp6", "int8", "fp8", "fp16", "bf16", "fp32", "unknown"]
+            }
+          },
+          "min_quantization": {
+            "type": "string",
+            "description": "Minimum model weight quantization precision floor. Quantizations are ordered by bit width; integer and floating-point formats with the same bit width are treated as equivalent. unknown is not valid because it cannot be compared to a precision floor.",
+            "enum": ["int4", "fp4", "fp6", "int8", "fp8", "fp16", "bf16", "fp32"]
+          },
           "max_price": {
             "type": "object",
             "description": "Optional provider price caps in USD per 1 million tokens. Pricing checks are best-effort when provider pricing is unknown.",

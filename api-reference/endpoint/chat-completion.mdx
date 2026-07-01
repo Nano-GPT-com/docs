@@ -8,7 +8,7 @@ openapi: 'POST /v1/chat/completions'
 </Note>
 
 <Note>
-  Provider selection is available for supported open-source models. `X-Provider` or body `provider` explicitly selects or constrains providers for the request and is always billed pay-as-you-go at the selected provider's price, including provider-selection markup. The body `provider` field accepts either the existing string form or a structured routing object with `order`, `only`, `ignore`, `sort`, `max_price`, `allow_fallbacks`, and `require_parameters`. Provider-selection-capable models also support routing preference suffixes such as `:fast` and `:cheap`. For subscription users, explicit provider selection bypasses subscription coverage for that request; `X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go without an explicit provider or when saved provider preferences should apply to subscription-included traffic. See [Provider Selection](/api-reference/miscellaneous/provider-selection), [Model Suffixes](/api-reference/miscellaneous/model-suffixes), and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
+  Provider selection is available for supported open-source models. `X-Provider` or body `provider` explicitly selects or constrains providers for the request and is always billed pay-as-you-go at the selected provider's price, including provider-selection markup. The body `provider` field accepts either the existing string form or a structured routing object with `order`, `only`, `ignore`, `sort`, `quantizations`, `min_quantization`, `max_price`, `allow_fallbacks`, and `require_parameters`. Provider-selection-capable models also support routing preference suffixes such as `:fast` and `:cheap`. For subscription users, explicit provider selection bypasses subscription coverage for that request; `X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go without an explicit provider or when saved provider preferences should apply to subscription-included traffic. See [Provider Selection](/api-reference/miscellaneous/provider-selection), [Model Suffixes](/api-reference/miscellaneous/model-suffixes), and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 </Note>
 
 <Note>
@@ -177,6 +177,8 @@ The `provider` request body field accepts either a provider ID string or a struc
     "only": ["provider-b"],
     "ignore": ["provider-c"],
     "sort": "price",
+    "quantizations": ["fp8", "fp16"],
+    "min_quantization": "fp8",
     "max_price": {
       "prompt": 0.5,
       "completion": 2

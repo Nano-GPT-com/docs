@@ -235,7 +235,7 @@ OpenAI-compatible endpoint for chat completions.
 
 **Cache-capable provider routing:** Set top-level `caching: true`, or append `:caching` / `:cache` / `:cached` to the model, when the request must route to any available provider that supports prompt/input caching. If no usable cache-capable provider exists for the model, the request fails instead of using a non-caching provider. `caching: true` defaults to sticky provider routing for later matching requests from the same API key or session; set `stickyprovider: false` to opt out. `stickyProvider` is also accepted as a camelCase alias. This does not add prompt-cache annotations, configure cache TTLs, or force a cache write; use `prompt_caching` / `promptCaching` for explicit provider-specific cache controls.
 
-**Provider routing object:** The body `provider` field accepts either a provider ID string or an object with `order`, `only`, `ignore`, `sort`, `max_price`, `allow_fallbacks`, and `require_parameters`. `order` is a soft preference, `only` is a hard pin, and `max_price` uses USD per 1 million tokens.
+**Provider routing object:** The body `provider` field accepts either a provider ID string or an object with `order`, `only`, `ignore`, `sort`, `quantizations`, `min_quantization`, `max_price`, `allow_fallbacks`, and `require_parameters`. `order` is a soft preference, `only` is a hard pin, `max_price` uses USD per 1 million tokens, and quantization filters are hard routing constraints.
 
 **Example Request:**
 ```json
@@ -294,7 +294,7 @@ OpenAI-compatible endpoint for text completions.
 
 **Authentication:** Bearer token
 
-**Provider routing object:** The body `provider` field accepts either a provider ID string or an object with `order`, `only`, `ignore`, `sort`, `max_price`, `allow_fallbacks`, and `require_parameters`.
+**Provider routing object:** The body `provider` field accepts either a provider ID string or an object with `order`, `only`, `ignore`, `sort`, `quantizations`, `min_quantization`, `max_price`, `allow_fallbacks`, and `require_parameters`.
 
 **Example Request:**
 ```json
@@ -453,7 +453,7 @@ Legacy endpoint for chat interactions with the GPT model.
 
 **Authentication:** API Key (x-api-key header)
 
-**Provider routing object:** The body `provider` field accepts either a provider ID string or an object with `order`, `only`, `ignore`, `sort`, `max_price`, `allow_fallbacks`, and `require_parameters`.
+**Provider routing object:** The body `provider` field accepts either a provider ID string or an object with `order`, `only`, `ignore`, `sort`, `quantizations`, `min_quantization`, `max_price`, `allow_fallbacks`, and `require_parameters`.
 
 **Example Request:**
 ```json
