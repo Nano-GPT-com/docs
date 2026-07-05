@@ -208,7 +208,9 @@ This is the ordinary insufficient-balance response for authenticated requests.
 
 ### Accountless x402 Payment Challenge
 
-Supported endpoints can also be called without `Authorization` or `x-api-key`. If the request can be quoted, NanoGPT returns a 402 response with a stable top-level `payment` object plus legacy OpenAI-compatible error fields.
+Supported endpoints can also be called without `Authorization` or `x-api-key` when the client explicitly opts in to accountless x402 quote generation. To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options and a stable top-level `payment` object plus legacy OpenAI-compatible error fields.
+
+If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the x402 quote flow.
 
 Detect accountless x402 by checking for the top-level `payment` object, not a single `error.code` value.
 

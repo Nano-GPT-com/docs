@@ -30,7 +30,9 @@ Use the same NanoGPT API key authentication as existing API routes:
 Authorization: Bearer YOUR_API_KEY
 ```
 
-The public accountless x402 contract is available on selected Data API paths. Send a normal supported request without `Authorization` or `x-api-key` to receive a `402 Payment Required` quote when x402 is enabled for that endpoint.
+The public accountless x402 contract is available on selected Data API paths. To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options.
+
+An unauthenticated request without `x-x402: true` is treated as a normal unauthenticated request and returns `401 missing_api_key`.
 
 Currently documented accountless Data API paths:
 
@@ -358,6 +360,7 @@ curl https://nano-gpt.com/api/v1/data/url/scrape \
 ```bash
 curl -i https://nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "query": "NanoGPT API data endpoints",
     "provider": "linkup",
@@ -369,13 +372,14 @@ curl -i https://nano-gpt.com/api/v1/data/web/search \
 ```bash
 curl -i https://nano-gpt.com/api/v1/data/url/scrape \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "urls": ["https://nano-gpt.com"],
     "stealthMode": false
   }'
 ```
 
-Both examples return `402 Payment Required` with a `payment` object when accountless x402 is enabled and the request can be quoted.
+Both examples return `402 Payment Required` with a `payment` object when accountless x402 is enabled and the request can be quoted. If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the x402 quote flow.
 
 ### Google Maps Search
 

@@ -1,11 +1,13 @@
 ---
 title: "Accountless x402 API Payments"
-description: "Call supported NanoGPT API endpoints without an account or API key, receive a 402 payment quote, pay with a supported crypto rail, and complete or replay the original request."
+description: "Opt in to accountless payment quotes for supported NanoGPT API endpoints, pay with a supported crypto rail, and complete or replay the original request."
 ---
 
 ## Overview
 
-NanoGPT supports accountless API calls for selected endpoints. A client can send a normal request without `Authorization` or `x-api-key`, receive `402 Payment Required`, pay through one of the advertised rails, then call the quoted `completeUrl`, replay the original endpoint with `X-PAYMENT`, or replay the original endpoint with `Authorization: L402 <token>:<preimage>` for Lightning L402.
+NanoGPT supports accountless API calls for selected endpoints. To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options. After paying, call the quoted `completeUrl`, replay the original endpoint with `X-PAYMENT`, or replay the original endpoint with `Authorization: L402 <token>:<preimage>` for Lightning L402.
+
+An unauthenticated API request without `x-x402: true` is treated as a normal unauthenticated request and returns `401 missing_api_key`. NanoGPT does not generate x402 quotes for every unauthenticated request.
 
 Live demo: [https://nano-gpt.com/x402](https://nano-gpt.com/x402)
 
@@ -63,13 +65,14 @@ Solana USDT and native SOL are not documented x402 exact rails. Do not list eith
 
 ## Working Quote Examples
 
-All examples below intentionally omit `Authorization` and `x-api-key`.
+All initial quote examples below intentionally omit `Authorization` and `x-api-key` and include `x-x402: true`.
 
 ### Text Chat
 
 ```bash
 curl -i https://nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "model": "gpt-4.1-nano",
     "messages": [{"role": "user", "content": "Say ok"}],
@@ -82,6 +85,7 @@ curl -i https://nano-gpt.com/api/v1/chat/completions \
 ```bash
 curl -i https://nano-gpt.com/api/v1/images/generations \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "model": "gpt-image-1",
     "prompt": "a product photo of a brushed steel desk lamp",
@@ -95,6 +99,7 @@ curl -i https://nano-gpt.com/api/v1/images/generations \
 ```bash
 curl -i https://nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "query": "NanoGPT x402 accountless payments",
     "max_results": 3
@@ -106,6 +111,7 @@ curl -i https://nano-gpt.com/api/v1/data/web/search \
 ```bash
 curl -i https://nano-gpt.com/api/v1/data/url/scrape \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "urls": ["https://nano-gpt.com"]
   }'
@@ -113,11 +119,12 @@ curl -i https://nano-gpt.com/api/v1/data/url/scrape \
 
 ## Flow 1: Quote, Pay, Complete
 
-Send a normal unauthenticated request:
+To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options.
 
 ```bash
 curl -i https://nano-gpt.com/api/v1/images/generations \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "model": "gpt-image-1",
     "prompt": "a product photo of a brushed steel desk lamp",
@@ -285,11 +292,12 @@ The full live Solana USDC x402 flow was tested successfully on 2026-06-09 agains
 
 NanoGPT also supports Lightning L402 for accountless API payments. Instead of signing an `X-PAYMENT` payload, the client pays a Lightning invoice and proves payment by replaying the original request with the invoice preimage.
 
-Send the original request without `Authorization` or `x-api-key`:
+To request an accountless Lightning L402 quote, send the original request without `Authorization` or `x-api-key`, and include `x-x402: true`:
 
 ```bash
 curl -i https://nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "query": "latest AI agent payment protocols",
     "max_results": 3
@@ -383,7 +391,10 @@ const original = {
 
 const quoteResponse = await fetch(`https://nano-gpt.com${original.path}`, {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    'x-x402': 'true',
+  },
   body: JSON.stringify(original.body),
 });
 
@@ -438,6 +449,10 @@ Known statuses:
 Status responses include `pollAfterSeconds`, plus `Retry-After` and `X-Poll-After` headers.
 
 Async media status URLs are not documented as stable accountless x402 behavior until signed unauthenticated status and media URL behavior is smoke-tested and expiration is explicitly documented.
+
+## Troubleshooting
+
+If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the x402 quote flow.
 
 ## Reconciliation
 

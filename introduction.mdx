@@ -22,7 +22,7 @@ The NanoGPT API allows you to generate text, images and video using any AI model
 | `POST /api/generate-video` | Video generation, editing, extension, and upscaling |
 | `POST /api/v1/messages` | Anthropic-compatible Messages API |
 
-For selected endpoints, you can also use [Accountless x402 API Payments](/api-reference/miscellaneous/x402) to receive a payment quote without an account or API key. Check `GET /api/v1/x402/endpoints` for the current supported matrix.
+For selected endpoints, you can also use [Accountless x402 API Payments](/api-reference/miscellaneous/x402) to receive a payment quote without an account or API key by including `x-x402: true` on the initial unauthenticated quote request. Check `GET /api/v1/x402/endpoints` for the current supported matrix.
 
 ## Chat Completion example
 

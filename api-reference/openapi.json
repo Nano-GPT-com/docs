@@ -42,6 +42,16 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "x-x402",
+            "in": "header",
+            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true"]
+            }
           }
         ],
         "requestBody": {
@@ -77,7 +87,7 @@
             }
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote for supported non-streaming requests",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote for supported non-streaming requests",
             "content": {
               "application/json": {
                 "schema": {
@@ -1418,10 +1428,22 @@
         }
       ],
       "post": {
-        "description": "Creates an image generation for the provided prompt (OpenAI-compatible)",
+        "description": "Creates an image generation for the provided prompt (OpenAI-compatible). For unauthenticated accountless x402 quote requests, include x-x402: true.",
         "security": [
           { "bearerAuth": [] },
           {}
+        ],
+        "parameters": [
+          {
+            "name": "x-x402",
+            "in": "header",
+            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true"]
+            }
+          }
         ],
         "requestBody": {
           "description": "Parameters for image generation",
@@ -1476,7 +1498,7 @@
             }
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote",
             "content": {
               "application/json": {
                 "schema": {
@@ -1493,14 +1515,26 @@
     },
     "/v1/images/edits": {
       "post": {
-        "description": "Edit images with JSON inputs. Multipart uploads require normal authentication before conversion; accountless x402 applies to JSON edit requests only.",
+        "description": "Edit images with JSON inputs. Multipart uploads require normal authentication before conversion; accountless x402 applies to JSON edit requests only when the unauthenticated quote request includes x-x402: true.",
         "security": [
           { "bearerAuth": [] },
           { "apiKeyAuth": [] },
           {}
         ],
+        "parameters": [
+          {
+            "name": "x-x402",
+            "in": "header",
+            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true"]
+            }
+          }
+        ],
         "requestBody": {
-          "description": "JSON image edit parameters. Provide imageDataUrl or imageDataUrls for accountless x402 requests.",
+          "description": "JSON image edit parameters. Provide imageDataUrl or imageDataUrls for accountless x402 quote requests.",
           "required": true,
           "content": {
             "application/json": {
@@ -1545,7 +1579,7 @@
             "description": "Unauthorized - Invalid or missing API key"
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote for JSON edit requests",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote for JSON edit requests",
             "content": {
               "application/json": {
                 "schema": {
@@ -1993,11 +2027,23 @@
     },
     "/v1/data/web/search": {
       "post": {
-        "description": "Public Data API facade for web search. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key.",
+        "description": "Public Data API facade for web search. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key and with x-x402: true.",
         "security": [
           { "apiKeyAuth": [] },
           { "bearerAuth": [] },
           {}
+        ],
+        "parameters": [
+          {
+            "name": "x-x402",
+            "in": "header",
+            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true"]
+            }
+          }
         ],
         "requestBody": {
           "description": "Web search parameters",
@@ -2035,7 +2081,7 @@
             "description": "Unauthorized - Invalid session or API key"
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote",
             "content": {
               "application/json": {
                 "schema": {
@@ -2082,11 +2128,23 @@
     },
     "/v1/data/url/scrape": {
       "post": {
-        "description": "Public Data API facade for URL scraping. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key. The request body uses urls: [...].",
+        "description": "Public Data API facade for URL scraping. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key and with x-x402: true. The request body uses urls: [...].",
         "security": [
           { "apiKeyAuth": [] },
           { "bearerAuth": [] },
           {}
+        ],
+        "parameters": [
+          {
+            "name": "x-x402",
+            "in": "header",
+            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true"]
+            }
+          }
         ],
         "requestBody": {
           "description": "Web scraping parameters",
@@ -2124,7 +2182,7 @@
             "description": "Unauthorized - Invalid session or API key"
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote",
             "content": {
               "application/json": {
                 "schema": {
@@ -3434,6 +3492,16 @@
             "description": "Optional team context override for API-key requests. If provided, it must reference a team the caller belongs to.",
             "required": false,
             "schema": { "type": "string" }
+          },
+          {
+            "name": "x-x402",
+            "in": "header",
+            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true"]
+            }
           }
         ],
         "requestBody": {
@@ -3458,7 +3526,7 @@
           },
           "401": { "description": "Unauthorized - Invalid or missing API key" },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or accountless x402 quote for supported non-streaming requests",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote for supported non-streaming requests",
             "content": {
               "application/json": {
                 "schema": {

@@ -24,11 +24,12 @@ Use either header:
 
 ## Accountless x402 Payment
 
-JSON image edit requests can be quoted without an account or API key on supported deployments:
+JSON image edit requests can be quoted without an account or API key on supported deployments when you explicitly opt in to the quote flow:
 
 ```bash
 curl -i https://nano-gpt.com/api/v1/images/edits \
   -H "Content-Type: application/json" \
+  -H "x-x402: true" \
   -d '{
     "model": "gpt-image-1",
     "prompt": "Remove the background",
@@ -36,7 +37,9 @@ curl -i https://nano-gpt.com/api/v1/images/edits \
   }'
 ```
 
-This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. Multipart uploads require normal authentication before conversion. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
+To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options. This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. Multipart uploads require normal authentication before conversion. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
+
+If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the x402 quote flow.
 
 ## Multipart Request
 
