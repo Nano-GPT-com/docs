@@ -22,6 +22,10 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
   Provider selection is available for supported open-source models. `X-Provider` explicitly selects a provider for the request and is always billed pay-as-you-go at the selected provider's price, including provider-selection markup. For provider-selection-capable models, `model` may include routing preference suffixes such as `:fast` (alias for `:speed`) and `:cheap` (alias for `:price`). These are billed like explicit provider selection and follow the same conflict rules. For subscription users, sending `X-Provider` bypasses subscription coverage for that request; `X-Billing-Mode: paygo` is only needed when forcing pay-as-you-go without an explicit provider or when saved provider preferences should apply to subscription-included traffic. See [Provider Selection](/api-reference/miscellaneous/provider-selection), [Model Suffixes](/api-reference/miscellaneous/model-suffixes), and [Pay-As-You-Go Billing Override](/api-reference/miscellaneous/billing-override).
 </Note>
 
+<Note>
+  **Advisor extension:** Non-streaming pay-as-you-go API-key requests can include an `advisor` object so the executor model can consult one different model before returning its final answer. Use `mode: "auto"` to let the executor decide or `mode: "required"` to require a consultation attempt. Each completed model phase is billed separately. Advisor is a NanoGPT extension, not part of the standard OpenAI request schema. See [Advisor](/api-reference/miscellaneous/advisor).
+</Note>
+
 ## Authentication
 
 Use an API key for normal authenticated billing:
@@ -96,6 +100,7 @@ Authorization: Bearer YOUR_API_KEY
 | --- | --- | --- | --- |
 | `model` | string | Yes | Model ID to use for the response. Provider-selection-capable models may include routing preference suffixes such as `:fast`, `:speed`, `:cheap`, `:price`, `:latency`, `:throughput`, `:floor`, `:tools`, `:caching`, `:cache`, or `:cached`. |
 | `input` | string or array | Yes | The input prompt or array of input items |
+| `advisor` | object | No | NanoGPT extension that lets the executor consult one different, client-selected model. Initially limited to non-streaming, pay-as-you-go API-key requests. See [Advisor](/api-reference/miscellaneous/advisor). |
 | `instructions` | string | No | System instructions for the model |
 | `max_output_tokens` | integer | No | Maximum tokens in the response (minimum: 16) |
 | `max_tool_calls` | integer | No | Maximum number of tool calls allowed |

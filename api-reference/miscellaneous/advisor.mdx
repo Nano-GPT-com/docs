@@ -1,0 +1,184 @@
+---
+title: "Advisor"
+description: "Let one model consult a different second model before producing its final answer."
+---
+
+## Overview
+
+Advisor lets the model handling a [Chat Completion](/api-reference/endpoint/chat-completion) or [Responses](/api-reference/endpoint/responses) request consult one client-selected second model before returning its final answer.
+
+- The top-level `model` is the executor.
+- `advisor.model` is the model it may consult.
+- In `auto` mode, the executor decides whether advice is useful.
+- In `required` mode, NanoGPT requires one valid consultation attempt before the executor can return its final answer.
+- The executor and advisor must resolve to different model IDs.
+
+Advisor is a NanoGPT request extension. It is not a model ID and does not use OpenRouter's `openrouter:advisor` tool shape.
+
+## Chat Completions example
+
+```bash
+curl https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Review this database migration plan and identify the riskiest assumption."
+      }
+    ],
+    "stream": false,
+    "advisor": {
+      "model": "anthropic/claude-opus-4.8",
+      "mode": "auto"
+    }
+  }'
+```
+
+The returned object remains a normal non-streaming Chat Completions response from the executor, with additional top-level `advisor` metadata.
+
+## Responses API example
+
+```bash
+curl https://nano-gpt.com/api/v1/responses \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "input": "Review this database migration plan and identify the riskiest assumption.",
+    "stream": false,
+    "advisor": {
+      "model": "anthropic/claude-opus-4.8",
+      "mode": "required"
+    }
+  }'
+```
+
+The returned object remains a native non-streaming Responses API object. Responses Advisor supports normal response storage and conversation history, including `store`, `previous_response_id`, and `conversation`.
+
+## Advisor request object
+
+| Field | Type | Required | Behavior |
+| --- | --- | ---: | --- |
+| `model` | string | Yes | The single model the executor may consult. It must resolve differently from the executor model. Model arrays and automatic advisor-model selection are not supported. |
+| `instructions` | string | No | Additional instructions for the advisor, limited to 16,000 characters. The executor still supplies the focused consultation question. |
+| `mode` | string | No | `"auto"` is the default and lets the executor decide whether to consult. `"required"` requires one valid consultation attempt before the final answer. |
+| `max_uses` | integer | No | Only `1` is accepted, and `1` is the default. |
+| `max_completion_tokens` | integer | No | Optional maximum advisor output tokens. When omitted, NanoGPT does not impose an Advisor-specific output cap and the selected model/provider defaults apply. When supplied, it must be a positive integer. |
+| `forward_transcript` | boolean | No | Only `false` is accepted, and `false` is the default. The original conversation is not automatically copied into the advisor request. |
+
+Unknown Advisor fields are rejected.
+
+Top-level `provider` and `X-Provider` routing controls apply to the executor's initial and continuation calls. The advisor model uses its own normal routing. Use a provider-specific advisor model ID or supported routing suffix if provider control is required for that phase. See [Provider Selection](/api-reference/miscellaneous/provider-selection).
+
+## Mode semantics
+
+### Auto
+
+`mode: "auto"` allows the executor to answer directly or make one consultation. If it answers directly, there is no advisor or continuation call.
+
+### Required
+
+`mode: "required"` explicitly forces the internal consultation tool choice. If the executor provider ignores that requirement or returns a missing or malformed consultation request, NanoGPT fails closed instead of presenting the result as consulted.
+
+Required mode guarantees a valid consultation attempt, not successful advice. After the executor makes a valid consultation request, an advisor-provider failure can still be reported to the executor so it can produce a final continuation marked with failed Advisor metadata.
+
+Relevant error codes include:
+
+- `advisor_required_consultation_missing`
+- `advisor_required_consultation_invalid`
+- `advisor_phase_timeout`
+- `advisor_failed`
+
+See [Error Handling](/api-reference/miscellaneous/error-handling) for the standard error envelope and retry guidance.
+
+## Billing
+
+Advisor is initially available only to platform-billed, pay-as-you-go API-key requests.
+
+- If no consultation occurs in `auto` mode, only the executor call is billed normally.
+- If consultation occurs, the initial executor turn, advisor turn, and final executor continuation are separate model calls.
+- Every completed model call is billed at its applicable platform model rate.
+- Completed earlier phases remain billable if a later phase fails.
+- Advisor therefore usually increases both total cost and latency when consultation occurs.
+
+Advisor is not a fixed-price add-on. There is no separate flat Advisor charge; cost comes from the individual model calls. See [Pricing](/api-reference/miscellaneous/pricing).
+
+## Privacy
+
+`forward_transcript: false` means NanoGPT does not automatically copy the original conversation into the advisor request. It does not mean the advisor receives no information from the conversation.
+
+The executor creates the focused consultation question and can include details it considers necessary. That question is sent to the selected advisor model's provider. Choose an advisor model and provider whose data-handling policy is acceptable for the request.
+
+Saved memory is disabled on every internal call. Requests that include memory or server-side content enhancements are rejected instead of silently changing their behavior.
+
+Advisor is not available through Private Mode. Enabling Advisor on the standard API does not make either model call Private/TEE.
+
+## Initial limitations
+
+Advisor requests must:
+
+- Use `POST /api/v1/chat/completions` or `POST /api/v1/responses`.
+- Be non-streaming (`stream` omitted or `false`).
+- Use an executor model with function tool-calling support.
+- Select one explicit advisor model that resolves differently from the executor.
+- Use a platform-billed pay-as-you-go API key.
+
+Advisor requests cannot currently use:
+
+- Client `tools`, `tool_choice`, `parallel_tool_calls`, legacy `functions`/`function_call`, or `max_tool_calls`, even when empty or disabled.
+- Structured output through Chat Completions `response_format`/`structured_outputs` or a non-text Responses `text.format`.
+- Fusion.
+- Context Memory or memory model suffixes.
+- Server-side web search, URL scraping, or YouTube transcript enhancements.
+- BYOK headers or body configuration.
+- Paid inline moderation headers.
+- Subscriptions.
+- Accountless x402 or L402 payment.
+- Private Mode.
+- Responses `background: true`.
+
+Conflicting requests return a `400` error rather than silently dropping the unsupported option.
+
+## Response metadata
+
+Successful responses contain a top-level `advisor` object with fields including:
+
+- `id`
+- `mode`
+- `executor_model`
+- `advisor_model`
+- `requested`
+- `consulted`
+- `successful`
+- `consultation_count`
+- `max_uses`
+- `status`
+- Per-phase `usage`
+- Per-phase `pricing` when available
+
+Status meanings:
+
+- `not_used`: an `auto` executor answered without consultation.
+- `completed`: consultation returned usable advice and the executor produced its continuation.
+- `failed`: consultation was attempted but did not return usable advice; the executor could still produce a final continuation.
+
+`requested` means the executor emitted the internal consultation request. `consulted` means the advisor child call was attempted, while `successful` records whether it returned usable advice.
+
+Top-level numeric `usage` and `x_nanogpt_pricing` aggregate billable phases that returned those fields. Per-phase reconciliation data is available under `advisor.usage` and `advisor.pricing`, using `executor`, `advisor`, `continuation`, and `total` breakdowns. If a billable phase does not expose pricing metadata, NanoGPT omits aggregate pricing instead of showing a misleading partial total.
+
+Standard NanoGPT responses also include `x-nanogpt-advisor-id` for billing and support correlation. Whitelabel responses intentionally omit this NanoGPT-branded header and should use `X-Request-ID` for support correlation.
+
+## Timeouts and failure behavior
+
+Each internal model phase has a 10-minute deadline.
+
+- An advisor-phase timeout fails open after a valid consultation request and gives the executor a tool result explaining that advice was unavailable.
+- An initial-executor or final-continuation timeout terminates the request with `advisor_phase_timeout`.
+- A failed consultation is not retried automatically.
+
+## TypeScript SDK
+
+The first-party TypeScript SDK exposes Advisor request and response types on both Chat Completions and Responses request helpers. The standard OpenAI SDK can still call Advisor by passing the NanoGPT extension through its extra-body or custom-typing escape hatch, but upstream OpenAI SDK types do not know about the NanoGPT-specific `advisor` field.

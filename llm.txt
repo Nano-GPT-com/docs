@@ -1,9 +1,9 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-06-25
+Last updated: 2026-07-15
 
 GOAL
-Equip developers to call the NanoGPT API for chat, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
+Equip developers to call the NanoGPT API for chat, Advisor consultations, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
 
 STYLE FOR ANSWERS
 - Prefer TypeScript (Node 18+) with openai@^5.8.0 and baseURL set to https://nano-gpt.com/api.
@@ -36,6 +36,7 @@ CORE CONCEPTS
 - Responses API retention: stored /v1/responses records are retained up to 7 days by default when storage is enabled. Set store: false to disable stored Responses API data for a request. For stored requests, override retention with retentionDays or retention_days (integer 0..365); 0 means do not retain stored response data. User/team defaults exist via API endpoints, not the main web Settings UI.
 - Caching and memory: most providers use implicit caching automatically when supported; top-level caching: true or model suffix :caching/:cache/:cached routes to a cache-capable provider and defaults to stickyprovider: true; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
 - Inline moderation: authenticated API-key callers can send moderation: true or moderation: <model-id> on supported text, image, and video generation routes to run a paid input safety preflight before provider dispatch. It charges separately, blocks flagged input with content_policy_violation, and does not moderate generated outputs.
+- Advisor: set a top-level advisor object on POST /api/v1/chat/completions or POST /api/v1/responses to let the executor consult one different, client-selected model before its final answer. This is a NanoGPT request extension, not a model ID or OpenRouter's openrouter:advisor tool shape.
 
 GLOSSARY
 - Linkup search: NanoGPT web search triggered by :online suffix; prepends fresh results and bills $0.006 (standard) or $0.06 (deep).
@@ -63,6 +64,8 @@ HARD RULES AND GOTCHAS
 - BYOK requests skip fallback providers; warn developers that misconfigured downstream keys return provider errors directly without NanoGPT failover.
 - Inline moderation is input-only and API-key-only. Accountless x402/exact-payment requests with moderation return inline_moderation_requires_api_key. Unsupported or uninspectable image inputs fail closed with unsupported_moderation_input.
 - Batch API JSONL rows must use method POST, url /v1/chat/completions, unique custom_id values, body.messages, body.model, and body.max_tokens or body.max_completion_tokens. All rows in one batch must use the same model and model family; do not mix GPT, Claude, and Gemini rows. Streaming, tools/functions, response_format, audio, and non-image multimodal bodies are not supported.
+- Advisor is initially non-streaming and restricted to platform-billed pay-as-you-go API-key requests. auto mode permits zero or one consultation; required mode requires one valid consultation attempt, not guaranteed successful advice. Each completed executor, advisor, and continuation phase is billed separately.
+- Do not combine Advisor with client tools, structured output, Fusion, BYOK, subscriptions, Private Mode, x402/L402, inline moderation, Context Memory, server-side web search, URL scraping, YouTube transcript enhancements, or Responses background mode.
 
 QUICKSTART MINIMAL
 Set up the OpenAI SDK once and call the chat completions endpoint with familiar parameters.
@@ -112,6 +115,25 @@ curl https://api.nano-gpt.com/api/v1/batches \
   -H "Content-Type: application/json" \
   -d '{"input_file_id":"file_abc123","endpoint":"/v1/chat/completions","completion_window":"24h"}'
 ```
+
+ADVISOR CONSULTATION
+Advisor is configured with a top-level advisor object on non-streaming POST /api/v1/chat/completions and POST /api/v1/responses requests. The top-level model is the executor; advisor.model is the one different model it may consult. auto allows zero or one consultation. required requires one valid attempt but advice can still fail. All completed model phases are billed separately.
+
+```ts
+const completion = await client.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [
+    { role: 'user', content: 'Review this migration plan and identify its riskiest assumption.' },
+  ],
+  stream: false,
+  advisor: {
+    model: 'anthropic/claude-opus-4.8',
+    mode: 'auto',
+  },
+} as any);
+```
+
+The standard OpenAI SDK does not type NanoGPT's advisor extension, so use its extra-body/custom typing escape hatch or the first-party NanoGPT TypeScript SDK. The initial version rejects client tools, structured output, Fusion, BYOK, subscriptions, Private Mode, x402/L402, inline moderation, Context Memory, server-side content enhancements, and Responses background mode. See https://docs.nano-gpt.com/api-reference/miscellaneous/advisor for the full contract, billing, privacy, metadata, and limitations.
 
 STREAMING WITH REASONING
 Use stream: true to read delta.content and delta.reasoning while capturing final-chunk pricing metadata.
@@ -522,6 +544,7 @@ LINKS
 - api-reference/endpoint/usage
 - api-reference/endpoint/batches
 - api-reference/endpoint/data-api
+- [Advisor](https://docs.nano-gpt.com/api-reference/miscellaneous/advisor.md): Let one model consult a different second model before producing its final answer.
 - docs/reasoning.md
 - docs/v1/models.md
 - memory.md

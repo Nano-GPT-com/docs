@@ -17,7 +17,7 @@
   "paths": {
     "/v1/chat/completions": {
       "post": {
-        "description": "Creates a chat completion for the provided messages",
+        "description": "Creates a chat completion for the provided messages. The NanoGPT Advisor extension is available for non-streaming, platform-billed pay-as-you-go API-key requests that do not use client tools, structured output, inline moderation, BYOK, accountless payment, memory, or server-side content enhancements.",
         "security": [
           {
             "bearerAuth": []
@@ -3465,7 +3465,7 @@
     },
     "/v1/responses": {
       "post": {
-        "description": "Create a response with the OpenAI-compatible Responses API",
+        "description": "Create a response with the OpenAI-compatible Responses API. The NanoGPT Advisor extension is available for non-streaming, foreground, platform-billed pay-as-you-go API-key requests that do not use client tools, structured output, inline moderation, BYOK, accountless payment, memory, or server-side content enhancements.",
         "security": [
           { "bearerAuth": [] },
           { "apiKeyAuth": [] },
@@ -3926,8 +3926,154 @@
           "reasoning_content_compat": {
             "type": "boolean",
             "description": "Shorthand to force legacy reasoning_content fields in the response"
+          },
+          "advisor": {
+            "$ref": "#/components/schemas/AdvisorConfig"
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "advisor": {}
+              },
+              "required": ["advisor"]
+            },
+            "then": {
+              "properties": {
+                "stream": {
+                  "enum": [false]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AdvisorConfig": {
+        "type": "object",
+        "description": "Allows the executor model to consult one different advisor model. Auto mode lets the executor decide whether to consult; required mode forces one consultation request. Advisor is non-streaming and available only for platform-billed pay-as-you-go API-key requests. Subscriptions, BYOK, accountless x402, Private Mode, inline moderation, client tools, structured outputs, memory, and server-side content enhancements are rejected before orchestration. Each completed executor, advisor, and continuation phase is billed separately.",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Explicit advisor model ID. Automatic model selection and the executor's resolved model are not allowed."
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 16000
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["auto", "required"],
+            "default": "auto",
+            "description": "Auto lets the executor decide whether to consult. Required forces exactly one internal consultation request before the final answer."
+          },
+          "max_uses": {
+            "type": "integer",
+            "enum": [1],
+            "default": 1
+          },
+          "max_completion_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optional advisor output-token limit. When omitted, NanoGPT does not impose an Advisor-specific output cap and the selected model/provider defaults apply."
+          },
+          "forward_transcript": {
+            "type": "boolean",
+            "enum": [false],
+            "default": false
+          }
+        },
+        "required": ["model"],
+        "additionalProperties": false
+      },
+      "AdvisorResponseMetadata": {
+        "type": "object",
+        "description": "Advisor orchestration outcome. Top-level usage and pricing aggregate billable phases that returned usage, including an HTTP-success advisor phase whose output was unusable; the optional per-phase objects provide reconciliation detail.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["auto", "required"]
+          },
+          "executor_model": {
+            "type": "string"
+          },
+          "advisor_model": {
+            "type": "string"
+          },
+          "requested": {
+            "type": "boolean",
+            "description": "Whether the executor emitted the internal consultation request."
+          },
+          "consulted": {
+            "type": "boolean",
+            "description": "Whether an advisor child call was attempted."
+          },
+          "successful": {
+            "type": "boolean",
+            "description": "Whether the advisor returned usable advice."
+          },
+          "consultation_count": {
+            "type": "integer",
+            "enum": [0, 1]
+          },
+          "max_uses": {
+            "type": "integer",
+            "enum": [1]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["not_used", "completed", "failed"]
+          },
+          "error": {
+            "type": "string",
+            "description": "Present when consultation failed but the executor could continue."
+          },
+          "usage": {
+            "$ref": "#/components/schemas/AdvisorPhaseBreakdown"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/AdvisorPhaseBreakdown"
+          }
+        },
+        "required": [
+          "id",
+          "mode",
+          "executor_model",
+          "advisor_model",
+          "requested",
+          "consulted",
+          "successful",
+          "consultation_count",
+          "max_uses",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "AdvisorPhaseBreakdown": {
+        "type": "object",
+        "properties": {
+          "executor": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "advisor": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "continuation": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "total": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
       },
       "MessageContentPart": {
         "type": "object",
@@ -4113,6 +4259,10 @@
           "service_tier": {
             "type": "string",
             "description": "Service tier used (echoed when provided on the request)"
+          },
+          "advisor": {
+            "description": "Advisor orchestration status and per-phase usage. Present on responses to requests that use the Advisor extension.",
+            "$ref": "#/components/schemas/AdvisorResponseMetadata"
           }
         }
       },
@@ -8224,8 +8374,31 @@
             "type": "string",
             "enum": ["auto", "default", "flex", "priority"],
             "description": "Optional service tier: \"auto\", \"default\", \"flex\", or \"priority\". Use \"flex\" for lower-cost variable-capacity processing or \"priority\" for higher-cost priority processing where supported by the routed model/provider."
+          },
+          "advisor": {
+            "$ref": "#/components/schemas/AdvisorConfig"
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "advisor": {}
+              },
+              "required": ["advisor"]
+            },
+            "then": {
+              "properties": {
+                "stream": {
+                  "enum": [false]
+                },
+                "background": {
+                  "enum": [false]
+                }
+              }
+            }
+          }
+        ]
       },
       "ResponsesInfoResponse": {
         "type": "object",
@@ -8254,7 +8427,11 @@
           "error": { "type": "object", "additionalProperties": true },
           "incomplete_details": { "type": "object", "additionalProperties": true },
           "metadata": { "type": "object", "additionalProperties": true },
-          "service_tier": { "type": "string" }
+          "service_tier": { "type": "string" },
+          "advisor": {
+            "description": "Advisor orchestration status and per-phase usage. Present on responses to requests that use the Advisor extension.",
+            "$ref": "#/components/schemas/AdvisorResponseMetadata"
+          }
         }
       },
       "ResponsesDeleteResponse": {

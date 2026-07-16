@@ -15,12 +15,17 @@ openapi: 'POST /v1/chat/completions'
   **Accountless x402 payments**: Non-streaming `POST /api/v1/chat/completions` requests can be quoted without an account or API key on supported deployments when the initial quote request includes `x-x402: true`. Streaming chat has implementation coverage but is not part of the stable public accountless contract. This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
 </Note>
 
+<Note>
+  **Advisor extension:** Non-streaming pay-as-you-go API-key requests can include an `advisor` object so the executor model can consult one different model before returning its final answer. Use `mode: "auto"` to let the executor decide or `mode: "required"` to require a consultation attempt. Each completed model phase is billed separately. Advisor is a NanoGPT extension, not part of the standard OpenAI request schema. See [Advisor](/api-reference/miscellaneous/advisor).
+</Note>
+
 ## Page map
 
 Use the jump list below to navigate the long-form reference quickly.
 
 <AccordionGroup>
   <Accordion title="Basics">
+    - [Advisor extension](#advisor-extension)
     - [Tool calling](#tool-calling)
     - [Overview](#overview)
     - [Provider Routing Suffixes](#provider-routing-suffixes)
@@ -83,6 +88,10 @@ Use the jump list below to navigate the long-form reference quickly.
     - [Important Notes](#important-notes)
   </Accordion>
 </AccordionGroup>
+
+## Advisor extension
+
+- `advisor` (optional object): Configures one different, client-selected model that the executor may consult. The initial version is limited to non-streaming, pay-as-you-go API-key requests and cannot be combined with client tools or structured output. See [Advisor](/api-reference/miscellaneous/advisor) for the full request contract, billing, privacy, response metadata, and limitations.
 
 ## Tool calling
 
