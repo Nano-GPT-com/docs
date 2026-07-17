@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-07-15
+Last updated: 2026-07-17
 
 GOAL
 Equip developers to call the NanoGPT API for chat, Advisor consultations, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -25,7 +25,8 @@ CORE CONCEPTS
 - Batch API base https://api.nano-gpt.com/api/v1 hosts /files and /batches for asynchronous OpenAI-compatible chat completion jobs. Use api.nano-gpt.com for file upload, batch creation, polling, cancellation, and output downloads; do not use nano-gpt.com for batch uploads.
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
 - Accountless x402: selected endpoints can be quoted by sending the initial API request without Authorization or x-api-key and with x-x402: true. NanoGPT returns 402 Payment Required with available payment options and a top-level payment quote. Unauthenticated requests without x-x402: true are normal unauthenticated requests and return 401 missing_api_key. Check GET /api/v1/x402/endpoints for the supported matrix; stable public endpoints include non-streaming chat completions, non-streaming responses, image generations, JSON image edits, /api/v1/data/web/search, and /api/v1/data/url/scrape.
-- Compatibility: standard OpenAI schema (messages, tools, response_format, seed, reasoning, parallel_tool_calls) is preserved for sync and streaming calls.
+- Compatibility: NanoGPT accepts many standard OpenAI request fields, including seed, for sync and streaming calls, but parameter support and behavior vary by model and provider route. Unsupported fields may be ignored by the upstream provider.
+- Seed and reproducibility: seed is an optional, best-effort generation hint and does not guarantee identical output. Keep the exact model, messages, tools, and sampling settings unchanged; select a specific provider and disable automatic fallbacks where supported when route consistency matters; use a low or zero temperature where supported; and record reliable route or system-fingerprint metadata when available.
 - Model suffixes: append :online or :online/linkup-deep for Linkup search, :memory or :memory-<days> for Polychat memory, :caching/:cache/:cached to require a cache-capable provider, and combine suffixes as needed.
 - Data API: /api/v1/data is the stable discovery and dispatch layer for web search, URL scraping, Firecrawl, Google Maps, Reddit, LinkedIn, Instagram, TikTok, X/Twitter, and Hunter enrichment. It wraps existing direct endpoints without changing their response schemas or billing.
 - Image API: /api/v1/images is the normalized image generation endpoint. Discover image models with GET /api/v1/images/models, inspect model endpoint metadata and public pricing with GET /api/v1/images/models/{modelId}/endpoints, then POST JSON to /api/v1/images with model, prompt, n, and model-specific fields such as resolution, quality, aspect_ratio, output_format, seed, and input_references.

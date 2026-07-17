@@ -36,7 +36,7 @@ Use the jump list below to navigate the long-form reference quickly.
     - [Temperature & Nucleus](#temperature-nucleus)
     - [Length & Stopping](#length-stopping)
     - [Penalties & Repetition Guards](#penalties-repetition-guards)
-    - [Logit Shaping & Determinism](#logit-shaping-determinism)
+    - [Logit Shaping & Reproducibility](#logit-shaping-reproducibility)
     - [Sampling example request](#example-request-1)
   </Accordion>
   <Accordion title="Structured outputs">
@@ -243,14 +243,26 @@ The `/api/v1/chat/completions` endpoint accepts a full set of sampling and decod
 | `no_repeat_ngram_size` | 0+ | Forbid repeating n-grams of the given size (limited support). |
 | `custom_token_bans` | int[] | Fully block listed token IDs. |
 
-### Logit Shaping & Determinism
+### Logit Shaping & Reproducibility
 
 | Parameter | Range/Default | Description |
 | --- | --- | --- |
 | `logit_bias` | object | Map token IDs to additive logits (OpenAI-compatible). |
 | `logprobs` | boolean or int | Return token-level logprobs where supported. |
 | `prompt_logprobs` | boolean | Request logprobs on the prompt when available. |
-| `seed` | integer | Make completions repeatable where the provider allows it. |
+| `seed` | integer | Optional integer forwarded on model/provider routes that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different automatic or fallback route, or if the provider changes its backend. |
+
+#### Reproducibility guidance
+
+Seeded generation is best-effort. To reduce avoidable variation:
+
+- Keep the exact model, messages, tools, and sampling settings unchanged.
+- Select a specific provider where possible.
+- Disable automatic fallbacks where supported when route consistency matters.
+- Use a low or zero `temperature` where supported.
+- Do not treat seeded output as byte-identical. Record provider, route, and system-fingerprint metadata when NanoGPT exposes reliable values.
+
+NanoGPT will publish a seed-support matrix when reliable route-level capability data is available. Until then, do not infer seed support from endpoint compatibility alone.
 
 ### Usage notes
 

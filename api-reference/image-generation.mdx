@@ -298,6 +298,8 @@ Common fields include:
 
 NanoGPT exposes many model-specific parameters. Treat them as discoverable via `supported_parameters`, not as globally supported fields.
 
+`seed` is an optional model-specific hint that may improve reproducibility where supported by the model/provider route. Identical results are not guaranteed. Check the selected model's `supported_parameters` before using it. Any stronger reproducibility guarantee belongs in documentation for the specific model/provider route, not this generic endpoint guide.
+
 ## Unsupported Features For Now
 
 ### Streaming

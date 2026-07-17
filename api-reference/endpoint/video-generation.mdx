@@ -46,7 +46,7 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | `enable_prompt_expansion` | boolean | no | Prompt booster for Wan/Seedance/Minimax variants. Disabled by default. |
 | `enable_safety_checker` | boolean | no | Optional safety checker toggle (supported by select models). |
 | `camera_fix` / `camera_fixed` / `cameraFixed` | boolean | no | Locks the virtual camera for Seedance and Wan variants. |
-| `seed` | number or string | no | Deterministic seed when supported (Veo, Wan, Pixverse). |
+| `seed` | number or string | no | Optional seed forwarded on model/provider routes that support it. This may improve reproducibility but does not guarantee identical output. |
 | `voiceId` | string | conditional | Alternate voice selector for lipsync models. |
 | `voice_id` | string | conditional | Required by `kling-lipsync-t2v`. |
 | `voice_language` | string | conditional | `en` or `zh` for `kling-lipsync-t2v`. |

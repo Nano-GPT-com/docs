@@ -73,7 +73,7 @@ curl https://nano-gpt.com/api/v1/images \
 | `aspect_ratio` | string | No | Output aspect ratio when supported by the model. |
 | `quality` | string | No | Quality tier when supported by the model. |
 | `output_format` | string | No | Output format when supported by the model. |
-| `seed` | integer | No | Seed when supported by the model. |
+| `seed` | integer | No | Optional model-specific seed that may improve reproducibility where supported by the model/provider route. Identical results are not guaranteed. Check the selected model's `supported_parameters` metadata before using this field. |
 | `input_references` | array | No | Image references for image-to-image models. |
 
 NanoGPT exposes many model-specific parameters. Treat parameter support as discoverable through `supported_parameters`, not globally available.

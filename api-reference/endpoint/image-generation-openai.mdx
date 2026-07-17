@@ -29,8 +29,11 @@ Image inputs (img2img/inpainting):
 - `imageDataUrls` (array, optional): Multiple base64 data URLs for supported models.
 - `maskDataUrl` (string, optional): Base64 mask data URL for inpainting.
 
-Image-to-image controls (model-specific):
-- `strength`, `guidance_scale`, `num_inference_steps`, `seed`, `kontext_max_mode`.
+Generation controls (model-specific):
+- `strength`, `guidance_scale`, `num_inference_steps`, `kontext_max_mode`.
+- `seed` is an optional model-specific hint that may improve reproducibility where supported. Identical results are not guaranteed. Check the selected model's `supported_parameters` metadata before using this field.
+
+See [Supported Parameter Discovery](/api-reference/image-generation#supported-parameter-discovery) for the discovery workflow. If a model/provider route offers a stronger reproducibility guarantee, rely only on documentation for that specific route.
 
 For OpenAI-compatible image editing, use [Image Edits](/api-reference/endpoint/image-edits).
 
@@ -103,4 +106,4 @@ result = response.json()
 
 - Input images must be provided as base64 data URLs; download and convert remote images before sending.
 - Uploads should be 4 MB or smaller after encoding. Compress or resize large assets before sending.
-- Use `GET /api/v1/image-models?detailed=true` to discover current image model capabilities and supported resolution values.
+- Use `GET /api/v1/image-models?detailed=true` to discover current image model capabilities and supported resolution values. For seed and other model-specific fields, also consult the [Image API supported-parameter guidance](/api-reference/image-generation#supported-parameter-discovery).

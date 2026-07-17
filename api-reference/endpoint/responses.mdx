@@ -123,13 +123,25 @@ Authorization: Bearer YOUR_API_KEY
 | `metadata` | object | No | Custom metadata (max 16 keys, 64 char keys, 512 char values) |
 | `truncation` | string | No | Truncation strategy: `auto` or `disabled` |
 | `user` | string | No | Unique user identifier |
-| `seed` | integer | No | Random seed for reproducibility |
+| `seed` | integer | No | Optional integer forwarded on model/provider routes that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different automatic or fallback route, or if the provider changes its backend. |
 | `conversation` | object | No | Conversation context: `{ id?: string, messages?: InputItem[] }` |
 | `include` | string[] | No | Additional fields to include in response |
 | `safety_identifier` | string | No | Safety tracking identifier |
 | `prompt_cache_key` | string | No | Key for prompt caching |
 | `background` | boolean | No | Enable background/async processing |
 | `service_tier` | string | No | Service tier: `"auto"`, `"default"`, `"flex"`, or `"priority"`. See [Service tiers (flex and priority)](#service-tiers-priority) near the end. |
+
+### Reproducibility guidance
+
+Seeded generation is best-effort. To reduce avoidable variation:
+
+- Keep the exact model, input, instructions, tools, and sampling settings unchanged.
+- Select a specific provider where possible.
+- Disable automatic fallbacks where supported when route consistency matters.
+- Use a low or zero `temperature` where supported.
+- Do not treat seeded output as byte-identical. Record provider, route, and system-fingerprint metadata when NanoGPT exposes reliable values.
+
+NanoGPT will publish a seed-support matrix when reliable route-level capability data is available. Until then, do not infer seed support from endpoint compatibility alone.
 
 ### Response Storage And Retention
 

@@ -3863,7 +3863,7 @@
           },
           "seed": {
             "type": "integer",
-            "description": "Numeric seed. Wherever supported, passes the value to make completions repeatable"
+            "description": "Optional integer forwarded on model/provider routes that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different automatic or fallback route, or if the provider changes its backend."
           },
           "prompt_caching": {
             "type": "object",
@@ -4466,7 +4466,7 @@
           },
           "seed": {
             "type": "integer",
-            "description": "Numeric seed. Wherever supported, passes the value to make completions repeatable"
+            "description": "Optional integer forwarded on model/provider routes that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different automatic or fallback route, or if the provider changes its backend."
           }
         }
       },
@@ -5643,7 +5643,7 @@
           },
           "seed": {
             "type": "integer",
-            "description": "Random seed for reproducible results"
+            "description": "Optional seed forwarded on model/provider routes that support it. This may improve reproducibility but does not guarantee identical output."
           },
           "enable_safety_checker": {
             "type": "boolean",
@@ -5958,7 +5958,7 @@
           },
           "seed": {
             "type": "integer",
-            "description": "Random seed for reproducible generation. Use the same seed with the same parameters to get identical results.",
+            "description": "Optional model-specific seed that may improve reproducibility where supported by the model/provider route. Identical results are not guaranteed. Check the selected model's supported_parameters metadata before using this field.",
             "example": 42
           },
           "kontext_max_mode": {
@@ -8364,7 +8364,7 @@
           },
           "seed": {
             "type": "integer",
-            "description": "Random seed for reproducibility"
+            "description": "Optional integer forwarded on model/provider routes that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different automatic or fallback route, or if the provider changes its backend."
           },
           "background": {
             "type": "boolean",
