@@ -36,7 +36,7 @@ Use the jump list below to navigate the long-form reference quickly.
     - [Temperature & Nucleus](#temperature-nucleus)
     - [Length & Stopping](#length-stopping)
     - [Penalties & Repetition Guards](#penalties-repetition-guards)
-    - [Logit Shaping & Determinism](#logit-shaping-determinism)
+    - [Logit Shaping & Seed Reproducibility](#logit-shaping-seed-reproducibility)
     - [Sampling example request](#example-request-1)
   </Accordion>
   <Accordion title="Structured outputs">
@@ -243,20 +243,32 @@ The `/api/v1/chat/completions` endpoint accepts a full set of sampling and decod
 | `no_repeat_ngram_size` | 0+ | Forbid repeating n-grams of the given size (limited support). |
 | `custom_token_bans` | int[] | Fully block listed token IDs. |
 
-### Logit Shaping & Determinism
+### Logit Shaping & Seed Reproducibility
 
 | Parameter | Range/Default | Description |
 | --- | --- | --- |
 | `logit_bias` | object | Map token IDs to additive logits (OpenAI-compatible). |
 | `logprobs` | boolean or int | Return token-level logprobs where supported. |
 | `prompt_logprobs` | boolean | Request logprobs on the prompt when available. |
-| `seed` | integer | Make completions repeatable where the provider allows it. |
+| `seed` | integer | Optional integer forwarded to providers that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different route, uses a fallback, or the provider changes its backend. |
 
 ### Usage notes
 
 - Parameters can be combined (e.g., `temperature` + `top_p` + `top_k`), but overly narrow settings may lead to early stops.
 - Invalid ranges yield a 400 before reaching the provider.
 - Provider defaults apply to any omitted field.
+
+### Reproducibility guidance
+
+Seeded generation is best-effort and is not a byte-identical output guarantee. To reduce variability across requests:
+
+- Keep the exact model, messages, tools, and sampling settings unchanged.
+- Select a specific provider where provider selection is supported.
+- Disable automatic fallbacks where routing controls expose that option.
+- Use a low or zero `temperature` where the selected model and provider support it.
+- Record provider and system-fingerprint metadata if NanoGPT exposes stable, reliable values for the route; do not treat metadata as a guarantee by itself.
+
+NanoGPT will publish a seed-support matrix when route-level capability data is reliable enough to maintain one. Until then, treat `seed` as a best-effort hint and use [Provider Selection](/api-reference/miscellaneous/provider-selection) to reduce routing variability where supported.
 
 ### Example request
 

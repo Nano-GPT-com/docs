@@ -123,13 +123,25 @@ Authorization: Bearer YOUR_API_KEY
 | `metadata` | object | No | Custom metadata (max 16 keys, 64 char keys, 512 char values) |
 | `truncation` | string | No | Truncation strategy: `auto` or `disabled` |
 | `user` | string | No | Unique user identifier |
-| `seed` | integer | No | Random seed for reproducibility |
+| `seed` | integer | No | Optional integer forwarded to providers that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different route, uses a fallback, or the provider changes its backend. |
 | `conversation` | object | No | Conversation context: `{ id?: string, messages?: InputItem[] }` |
 | `include` | string[] | No | Additional fields to include in response |
 | `safety_identifier` | string | No | Safety tracking identifier |
 | `prompt_cache_key` | string | No | Key for prompt caching |
 | `background` | boolean | No | Enable background/async processing |
 | `service_tier` | string | No | Service tier: `"auto"`, `"default"`, `"flex"`, or `"priority"`. See [Service tiers (flex and priority)](#service-tiers-priority) near the end. |
+
+### Reproducibility guidance
+
+Seeded generation is best-effort and is not a byte-identical output guarantee. To reduce variability across requests:
+
+- Keep the exact model, messages, tools, and sampling settings unchanged.
+- Select a specific provider where provider selection is supported.
+- Disable automatic fallbacks where routing controls expose that option.
+- Use a low or zero `temperature` where the selected model and provider support it.
+- Record provider and system-fingerprint metadata if NanoGPT exposes stable, reliable values for the route; do not treat metadata as a guarantee by itself.
+
+NanoGPT will publish a seed-support matrix when route-level capability data is reliable enough to maintain one. Until then, treat `seed` as a best-effort hint and use [Provider Selection](/api-reference/miscellaneous/provider-selection) to reduce routing variability where supported.
 
 ### Response Storage And Retention
 
