@@ -464,9 +464,13 @@ Use `reasoning` to control depth and visibility of reasoning output:
 
 | Parameter | Values | Description |
 | --- | --- | --- |
-| `effort` | `none`, `minimal`, `low`, `medium`, `high`, `xhigh` | Reasoning depth. Any value other than `none` explicitly requests reasoning mode. |
+| `effort` | See below | Reasoning depth. Any value other than `none` explicitly requests reasoning mode. |
 | `summary` | `none`, `auto`, `detailed`, `concise` | Reasoning summary format |
 | `exclude` | `true`, `false` | Controls output visibility (hides reasoning fields/blocks). It does not inherently disable reasoning compute. |
+
+Possible values are `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`. The exact accepted subset depends on the selected model. Check `reasoning_efforts` from `GET /api/v1/models?detailed=true`.
+
+Unsupported values are rejected with `unsupported_reasoning_effort`, and the error response includes the model's supported values.
 
 ## Text/Format Configuration
 
@@ -666,7 +670,7 @@ The `usage` object always includes token details:
 
 ```json
 {
-  "effort": "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | null,
+  "effort": "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max" | null,
   "summary": "none" | "auto" | "detailed" | "concise" | null
 }
 ```

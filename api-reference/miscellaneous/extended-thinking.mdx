@@ -79,7 +79,17 @@ Or:
 
 Both formats are accepted. If both are present, top-level `reasoning_effort` is authoritative for Chat Completions request shaping.
 
-Valid values are `none`, `minimal`, `low`, `medium`, `high`, `xhigh`.
+Possible reasoning effort values across NanoGPT are `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`. Support is model-specific: not every model accepts every value. Check the selected model's `reasoning_efforts` field from `GET /api/v1/models?detailed=true` for the exact accepted values.
+
+A value may be valid in NanoGPT's API vocabulary but unsupported by a particular model. For example, DeepSeek V4 Thinking accepts only `none`, `high`, and `max`.
+
+| Value | Meaning for DeepSeek V4 Thinking |
+| --- | --- |
+| `none` | Disable reasoning |
+| `high` | High reasoning effort; default for the `:thinking` model |
+| `max` | Maximum reasoning effort |
+
+Unsupported values are rejected with `unsupported_reasoning_effort`, and the error response includes the model's supported values.
 
 ### Legacy Field Name Compatibility (`reasoning_content`)
 

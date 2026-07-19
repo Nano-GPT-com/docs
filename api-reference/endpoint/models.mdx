@@ -78,6 +78,7 @@ When `detailed=true`, additional fields may be included per model:
 - `context_length` — max input tokens (if known)
 - `max_output_tokens` — max output tokens (if known)
 - `capabilities` — feature flags (see below)
+- `reasoning_efforts` — exact reasoning effort values accepted by the model (when it exposes a configurable effort scale)
 - `pricing.prompt` and `pricing.completion` — at-cost per-million-token pricing in USD
 - `pricing.unit` — `per_million_tokens`
 - `icon_url` — small icon representing the provider
@@ -251,11 +252,40 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `context_length` | number | Maximum input tokens (null if not available) |
 | `max_output_tokens` | number | Maximum output tokens (null if not available) |
 | `capabilities` | object | Feature flags (e.g., `vision: boolean`) |
+| `reasoning_efforts` | array of strings | Exact reasoning effort values accepted by this model when it exposes a configurable effort scale |
 | `pricing` | object | Pricing information object |
 | `icon_url` | string | Path/URL for a small provider icon |
 | `cost_estimate` | string or object | Internal hints (for example `"$"` / `"$$"` or `{ cheap: true }`) |
 | `category` | string | Optional category (e.g., `"flagship"`, `"mini"`, `"reasoning"`) |
 | `distillationPolicy` | object | Optional API-only distillation metadata. See [Distillation Policy](/api-reference/miscellaneous/distillation-policy). |
+
+`reasoning_efforts` is omitted for fixed-reasoning, toggle-only, or not-yet-documented models. Its absence must not be interpreted as support for every effort value.
+
+### Discover reasoning effort values
+
+Query detailed model metadata before setting a reasoning effort:
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?detailed=true" |
+  jq '.data[] |
+      select(.id == "deepseek/deepseek-v4-pro:thinking") |
+      {id, reasoning_efforts}'
+```
+
+Example response:
+
+```json
+{
+  "id": "deepseek/deepseek-v4-pro:thinking",
+  "reasoning_efforts": [
+    "none",
+    "high",
+    "max"
+  ]
+}
+```
+
+NanoGPT recognizes a common reasoning-effort vocabulary, but supported levels are model-specific. Always use the `reasoning_efforts` metadata returned for the selected model. Unsupported values are rejected with `unsupported_reasoning_effort`, and the error response includes the model's supported values.
 
 ### Pricing Object Structure
 

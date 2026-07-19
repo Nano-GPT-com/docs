@@ -3894,8 +3894,8 @@
           },
           "reasoning_effort": {
             "type": "string",
-            "description": "Controls reasoning depth and acts as an explicit reasoning-mode signal. Any value other than \"none\" requests reasoning/thinking behavior. Use \"none\" to explicitly disable reasoning.",
-            "enum": ["none", "minimal", "low", "medium", "high", "xhigh"]
+            "description": "Controls reasoning depth and acts as an explicit reasoning-mode signal. Any value other than \"none\" requests reasoning/thinking behavior. Use \"none\" to explicitly disable reasoning. Supported values are model-specific; inspect reasoning_efforts from GET /api/v1/models?detailed=true.",
+            "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
           },
           "reasoning": {
             "type": "object",
@@ -3908,8 +3908,8 @@
               },
               "effort": {
                 "type": "string",
-                "description": "Alias for reasoning_effort. If both are provided, top-level reasoning_effort is authoritative for Chat Completions request shaping.",
-                "enum": ["none", "minimal", "low", "medium", "high", "xhigh"]
+                "description": "Alias for reasoning_effort. If both are provided, top-level reasoning_effort is authoritative for Chat Completions request shaping. Supported values are model-specific; inspect reasoning_efforts from GET /api/v1/models?detailed=true.",
+                "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
               },
               "delta_field": {
                 "type": "string",
@@ -4959,6 +4959,14 @@
                   "type": "integer",
                   "description": "Maximum input tokens (detailed mode only, null if not available)",
                   "example": 128000
+                },
+                "reasoning_efforts": {
+                  "type": "array",
+                  "description": "Exact reasoning effort values accepted by this model when it exposes a configurable effort scale (detailed mode only). Omitted for fixed-reasoning, toggle-only, or not-yet-documented models; omission does not mean every value is supported.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": ["none", "high", "max"]
                 },
                 "pricing": {
                   "type": "object",
@@ -8340,8 +8348,15 @@
           },
           "reasoning": {
             "type": "object",
-            "description": "Reasoning configuration. Setting `reasoning.effort` to any non-`none` value explicitly requests reasoning mode.",
-            "additionalProperties": true
+            "description": "Reasoning configuration. Setting `reasoning.effort` to any non-`none` value explicitly requests reasoning mode. Supported effort values are model-specific; inspect reasoning_efforts from GET /api/v1/models?detailed=true.",
+            "additionalProperties": true,
+            "properties": {
+              "effort": {
+                "type": "string",
+                "description": "Reasoning depth. These are NanoGPT's possible values; the selected model may support only a subset.",
+                "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
+              }
+            }
           },
           "text": {
             "type": "object",
