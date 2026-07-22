@@ -244,6 +244,16 @@
               ],
               "example": "favorites"
             }
+          },
+          {
+            "name": "output_modalities",
+            "in": "query",
+            "description": "Use `transcription` as the sole normalized selector to return public speech-to-text models. Repeated and comma-separated values are parsed and deduplicated. Mixed selectors such as `text,transcription` continue to return the normal text-model catalog.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "transcription"
+            }
           }
         ],
         "responses": {

@@ -344,11 +344,15 @@ OpenAI-compatible transcription.
 ### cURL Example
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/audio/transcriptions \
-  -H "x-api-key: YOUR_API_KEY" \
-  -F "file=@audio.mp3" \
-  -F "model=STT_MODEL_ID"
+curl https://nano-gpt.com/api/v1/audio/transcriptions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -F "model=Whisper-Large-V3" \
+  -F "file=@audio.wav"
 ```
+
+The endpoint accepts multipart file uploads, reachable remote URLs through `file_url`, `audio_url`, or `audioUrl`, base64 audio data URIs through those URL fields, and OpenRouter-compatible `input_audio` JSON.
+
+The complete direct request body is limited to 4 MiB, including multipart overhead, JSON, and base64 encoding. JSON base64 input therefore has a practical decoded-audio limit of approximately 3 MiB. Submit larger media by reachable URL. Provider-specific file-size limits still apply to remote media.
 
 ### Response
 
@@ -358,9 +362,9 @@ curl -X POST https://nano-gpt.com/api/v1/audio/transcriptions \
 }
 ```
 
-See the current transcription model list and pricing at `GET /v1/audio-models`.
+Discover public transcription models with `GET /v1/models?output_modalities=transcription`. Inspect each model's `supported_parameters` for formats, optional parameters, and provider-specific file-size limits.
 
-Supported formats: MP3, WAV, M4A, OGG, AAC. Max file size limits vary by model; see docs for current limits and use URL-based submission for larger files.
+Common response formats are JSON, verbose JSON, plain text, SRT, and VTT, but support varies by model.
 
 ---
 

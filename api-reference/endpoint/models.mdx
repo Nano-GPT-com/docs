@@ -5,7 +5,7 @@ openapi: 'GET /v1/models'
 
 ## Overview
 
-The `/api/v1/models` endpoint provides a list of available text generation models. It supports optional detailed information including pricing data. The endpoint maintains full backwards compatibility while adding powerful new features.
+The `/api/v1/models` endpoint provides a list of available text generation models. It also supports a `transcription` discovery selector for public speech-to-text models. Optional detailed mode adds fields such as pricing data.
 
 For non-text model catalogs, use the dedicated catalog endpoints:
 
@@ -70,6 +70,7 @@ Provider selection support and provider IDs are discovered via `GET /api/models/
 |-----------|------|---------|-------------|
 | `detailed` | boolean | `false` | Returns detailed model information including pricing and capabilities |
 | `sort` | string | none | Values: `favorites`, `mostused`. Reorders the returned model list. Sorting only affects models that would already be visible to the caller. It does not add or hide models. |
+| `output_modalities` | string or string[] | none | Use `transcription` as the sole normalized value to discover public speech-to-text models. Repeated and comma-separated values are accepted and deduplicated. |
 
 When `detailed=true`, additional fields may be included per model:
 
@@ -85,6 +86,43 @@ When `detailed=true`, additional fields may be included per model:
 - `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
 - `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
 - `distillationPolicy` — optional policy metadata indicating whether model outputs may be used for distillation or output-based training under NanoGPT's recorded model-license rules
+
+### Discover transcription models
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?output_modalities=transcription"
+```
+
+This returns an OpenAI-style list of public speech-to-text models:
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "Whisper-Large-V3",
+      "object": "model",
+      "architecture": {
+        "modality": "audio->text",
+        "input_modalities": ["audio"],
+        "output_modalities": ["text"]
+      },
+      "supported_parameters": {
+        "max_request_body_mb": 4,
+        "supports_remote_url": true,
+        "max_file_size_mb": 500,
+        "supported_formats": ["mp3", "wav"]
+      }
+    }
+  ]
+}
+```
+
+`transcription` is a discovery selector, not a replacement for existing model metadata. Returned models retain `architecture.modality: "audio->text"` and `architecture.output_modalities: ["text"]`. Voice-cloning tools are excluded.
+
+Repeated and comma-separated `output_modalities` values are parsed and deduplicated. Transcription discovery is activated only when `transcription` is the sole normalized selector. Mixed selectors such as `text,transcription` continue to return the normal text-model catalog.
+
+See [Audio transcriptions](/api-reference/endpoint/audio-transcriptions) for input methods, model-specific limits, and response formats.
 
 ### Sorting model lists
 
@@ -463,6 +501,7 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 - [Image models](/api-reference/endpoint/image-models) - List image model capabilities and supported parameters
 - [Video models](/api-reference/endpoint/video-models) - List video model capabilities and supported parameters
 - [Audio models](/api-reference/endpoint/audio-models) - List text-to-speech and speech-to-text models
+- [Audio transcriptions](/api-reference/endpoint/audio-transcriptions) - Transcribe uploaded, remote, or base64-encoded audio
 - [Embedding models](/api-reference/endpoint/embedding-models) - List embedding model dimensions, token limits, and pricing
 - [/api/v1/embeddings](/api-reference/endpoint/embeddings) - Create embeddings using the available embedding models
 - [Provider Selection](/api-reference/miscellaneous/provider-selection) - Discover model providers and set provider preferences
@@ -471,5 +510,5 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 
 ## Notes
 
-- Scope: These endpoints list text-chat models. For image, video, audio, and embedding catalogs, use the dedicated model catalog pages linked above.
+- Scope: By default, these endpoints list text-chat models. Use `output_modalities=transcription` to discover speech-to-text models. For other image, video, audio, and embedding catalogs, use the dedicated model catalog pages linked above.
 - Fields are subject to change as new capabilities or providers are added. We aim to remain OpenAI-API compatible for basic consumers (`id`/`object`/`created`/`owned_by`).
