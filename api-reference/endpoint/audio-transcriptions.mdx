@@ -1,43 +1,90 @@
 ---
-title: "v1/audio/transcriptions (STT)"
+title: "Create an audio transcription"
 api: "POST https://nano-gpt.com/api/v1/audio/transcriptions"
-description: "OpenAI-compatible speech-to-text transcription endpoint"
+description: "Transcribe audio with the OpenAI-compatible speech-to-text endpoint"
 ---
 
-## Overview
+Transcribe audio with an OpenAI-compatible endpoint. Supply exactly one audio source as a multipart file, a remote URL, a base64 data URI, or a structured `input_audio` object.
 
-Transcribe audio with an OpenAI-compatible request. NanoGPT accepts a multipart file upload, a remote audio URL, a base64 audio data URI, or OpenRouter-compatible `input_audio` JSON.
-
-If you omit `model`, NanoGPT currently uses `Whisper-Large-V3`. Explicitly selecting a model is recommended.
-
-## Authentication
-
-Authenticate with either header:
+Authenticate with your NanoGPT API key:
 
 ```http
 Authorization: Bearer $NANOGPT_API_KEY
 ```
 
+The `model` field is optional and defaults to `Whisper-Large-V3`. To retrieve the current list of public synchronous transcription models and their capabilities, use:
+
 ```http
-x-api-key: $NANOGPT_API_KEY
+GET /api/v1/models?output_modalities=transcription
 ```
 
-## Input methods
+## Request size limit
 
-### Multipart file upload
+The complete direct multipart or JSON request body must not exceed **4 MiB (4,194,304 bytes)**. Multipart boundaries, form fields, the JSON envelope, and base64 expansion all count toward this limit.
 
-Send an audio file as the `file` field:
+Because base64 adds roughly 33% overhead, a base64 JSON request can usually contain only about **3 MiB of decoded audio**, with the exact ceiling depending on the rest of the JSON body. For larger media, provide a remotely reachable URL with `file_url` or `audio_url`. Remote media is still subject to the selected model's `max_file_size_mb` limit.
+
+## Multipart fields
+
+Send `multipart/form-data` with exactly one audio source.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `file` | file | One source required | Audio uploaded directly. The complete request must fit within 4 MiB. |
+| `file_url` | string | One source required | Remotely reachable audio URL. Aliases: `audio_url`, `audioUrl`. |
+| `model` | string | No | Speech-to-text model ID. Defaults to `Whisper-Large-V3`. |
+| `language` | string | No | Input language hint supported by the selected model. |
+| `prompt` | string | No | Optional transcription prompt supported by the selected model. |
+| `task` | string | No | `transcribe` or `translate`. Support varies by model. |
+| `response_format` | string | No | `json`, `verbose_json`, `text`, `srt`, or `vtt`. Alias: `responseFormat`. Support varies by model. |
+| `temperature` | number | No | Sampling temperature supported by the selected model. |
+| `timestamp_granularities[]` | string | No | Repeat with `word` and/or `segment`. Also accepted as `timestamp_granularities` or `timestampGranularities`. Support varies by model. |
+
+Unknown multipart fields are rejected. `actualDuration` is a legacy `/api/transcribe` field and is not accepted by this OpenAI-compatible endpoint.
+
+### Multipart file example
 
 ```bash
 curl https://nano-gpt.com/api/v1/audio/transcriptions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -F "file=@speech.wav" \
   -F "model=Whisper-Large-V3" \
-  -F "file=@audio.wav"
+  -F "response_format=verbose_json" \
+  -F "timestamp_granularities[]=word"
 ```
 
-Remote URLs can also be sent as multipart fields. The accepted field names are `file_url`, `audio_url`, and `audioUrl`.
+### Multipart URL example
 
-### Remote audio URL
+```bash
+curl https://nano-gpt.com/api/v1/audio/transcriptions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -F "file_url=https://example.com/speech.mp3" \
+  -F "model=Whisper-Large-V3"
+```
+
+## JSON requests
+
+Send `application/json` with exactly one of these source forms:
+
+- A remote URL or base64 data URI in `file_url`, `audio_url`, or `audioUrl`.
+- A structured base64 object in `input_audio` or `inputAudio`.
+
+Structured `input_audio.format` accepts: `aac`, `flac`, `m4a`, `mp3`, `mp4`, `mpeg`, `mpga`, `ogg`, `opus`, `wav`, and `webm`.
+
+### JSON URL example
+
+```bash
+curl https://nano-gpt.com/api/v1/audio/transcriptions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_url": "https://example.com/speech.mp3",
+    "model": "Whisper-Large-V3",
+    "language": "en"
+  }'
+```
+
+### Structured base64 example
 
 ```bash
 curl https://nano-gpt.com/api/v1/audio/transcriptions \
@@ -45,171 +92,60 @@ curl https://nano-gpt.com/api/v1/audio/transcriptions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "Whisper-Large-V3",
-    "file_url": "https://example.com/audio.mp3"
+    "input_audio": {
+      "data": "BASE64_AUDIO_BYTES",
+      "format": "wav"
+    }
   }'
 ```
 
-The URL must be reachable by NanoGPT's backend. The following JSON field names are equivalent:
-
-- `file_url`
-- `audio_url`
-- `audioUrl`
-
-Use a remote URL for larger media.
-
-### OpenRouter-compatible base64 input
-
-Pass raw base64 audio bytes in `input_audio.data` and identify the audio format separately:
+A data URI can be supplied directly through a URL alias:
 
 ```json
 {
   "model": "Whisper-Large-V3",
-  "input_audio": {
-    "data": "<raw-base64-audio>",
-    "format": "wav"
-  }
+  "audio_url": "data:audio/wav;base64,BASE64_AUDIO_BYTES"
 }
 ```
 
-`inputAudio` is accepted as a camel-case alias. The `data` value must not include a `data:` prefix. Whitespace and omitted base64 padding are accepted.
-
-Supported `input_audio.format` values are:
-
-- `aac`
-- `flac`
-- `m4a`
-- `mp3`
-- `mp4`
-- `mpeg`
-- `mpga`
-- `ogg`
-- `opus`
-- `wav`
-- `webm`
-
-### Base64 data URI
-
-A supported audio data URI can be passed through any remote URL field alias:
-
-```json
-{
-  "model": "Whisper-Large-V3",
-  "file_url": "data:audio/wav;base64,UklGR..."
-}
-```
-
-## Direct request-body limit
-
-The complete direct request body is limited to **4 MiB (4,194,304 bytes)**. This includes multipart boundaries and form fields, the JSON envelope, and base64 encoding overhead.
-
-As a result:
-
-- A multipart file must be somewhat smaller than 4 MiB.
-- JSON base64 input has a practical decoded-audio limit of approximately 3 MiB.
-- Larger media should be hosted at a reachable URL and submitted with `file_url` or `audio_url`.
-
-This transport limit is separate from each provider's media file-size limit. Remote URL input remains subject to the selected model and provider limit.
-
-Transcription model catalog entries expose these limits through `supported_parameters`:
-
-```json
-{
-  "supported_parameters": {
-    "max_request_body_mb": 4,
-    "supports_remote_url": true,
-    "max_file_size_mb": 500
-  }
-}
-```
-
-- `max_request_body_mb` is NanoGPT's direct-request transport limit.
-- `max_file_size_mb` is model-specific and is primarily relevant to URL-based media that exceeds the direct upload limit.
-
-> Existing clients that send multipart or base64 request bodies larger than 4 MiB must move those files to a reachable URL and submit the URL instead.
-
-## Optional parameters
-
-Common optional parameters include:
-
-| Parameter | Description |
-| --- | --- |
-| `language` | Language hint for the input audio. |
-| `prompt` | Text that can guide the transcription. |
-| `temperature` | Sampling temperature, where supported. |
-| `response_format` | Requested response format. |
-| `timestamp_granularities` | Timestamp detail: `word`, `segment`, or both, where supported. |
-
-Supported response formats vary by model:
-
-- `json`
-- `verbose_json`
-- `text`
-- `srt`
-- `vtt`
-
-`text`, `srt`, and `vtt` return `text/plain`. `json` and `verbose_json` return JSON. Not every model supports every parameter or response format; inspect the selected model's catalog metadata before sending optional fields.
+Do not send more than one source type in the same request.
 
 ## Responses
 
-### JSON response
-
-A successful JSON response can contain:
+For `json`, the endpoint returns a JSON object. Fields that are unavailable are omitted:
 
 ```json
 {
-  "text": "Hello world.",
+  "text": "Transcribed text",
   "language": "en",
-  "duration": 90,
+  "duration": 42.1,
   "usage": {
-    "total_tokens": 12,
-    "seconds": 90,
-    "cost": 0.012,
+    "type": "duration",
+    "seconds": 42.1,
+    "cost": 0.001,
     "currency": "USD"
   }
 }
 ```
 
-Only `text` is guaranteed. Other fields are returned when available from the selected model and billing path.
+- `text` is always present in a successful JSON response.
+- `language` is included when available.
+- `duration` is measured media duration in seconds. It is not a rounded or billable duration and may be omitted when the duration cannot be measured.
+- `usage` is included when usage or billing information is available. `cost` is the NanoGPT customer charge and `currency` is the actual billing ticker, such as `USD` or `XNO`.
+- Duration-based usage has `type: "duration"` and `seconds`. When token counts are available, usage has `type: "tokens"` and can include `input_tokens`, `output_tokens`, and `total_tokens`.
+- `verbose_json` can additionally include `task`, `language_probability`, `segments`, and `words`. In verbose output, unknown `language` or `duration` may be `null`.
+- `text`, `srt`, and `vtt` response formats return `text/plain` rather than JSON.
 
-`duration` and `usage.seconds` are the measured audio duration in seconds, not a rounded provider billing duration. Depending on the selected model and billing path, `usage` can include:
+Successful responses can include these headers:
 
-- `input_tokens`
-- `output_tokens`
-- `total_tokens`
-- `seconds`
-- `cost`
-- `currency`
-
-`usage.cost` is the NanoGPT customer charge. Provider wholesale costs, routing information, and other internal metadata are not exposed.
-
-With `response_format: "verbose_json"`, the response can additionally include `task`, `language_probability`, `segments`, and `words`.
-
-### Generation identifier
-
-When the provider supplies a generation identifier, the response includes:
-
-```http
-x-generation-id: <provider-generation-id>
-```
-
-This header is exposed through CORS, so browser clients can read it.
+| Header | Description |
+| --- | --- |
+| `x-generation-id` | Generation or upstream request identifier, when available. Exposed to browser clients through CORS. |
+| `x-request-id` | NanoGPT or upstream request identifier, when available. |
 
 ## Errors
 
-Validation and upstream errors use an OpenAI-style JSON envelope:
-
-```json
-{
-  "error": {
-    "message": "Description of the problem",
-    "type": "invalid_request_error",
-    "param": "input_audio.data",
-    "code": null
-  }
-}
-```
-
-An oversized direct request returns HTTP `413`:
+Errors use an OpenAI-style envelope:
 
 ```json
 {
@@ -222,70 +158,17 @@ An oversized direct request returns HTTP `413`:
 }
 ```
 
-## Discover transcription models
-
-Use the `transcription` output-modality selector to list public speech-to-text models:
-
-```bash
-curl "https://nano-gpt.com/api/v1/models?output_modalities=transcription"
-```
-
-The endpoint returns an OpenAI-style model list:
-
-```json
-{
-  "object": "list",
-  "data": [
-    {
-      "id": "Whisper-Large-V3",
-      "object": "model",
-      "architecture": {
-        "modality": "audio->text",
-        "input_modalities": ["audio"],
-        "output_modalities": ["text"]
-      },
-      "supported_parameters": {
-        "max_request_body_mb": 4,
-        "supports_remote_url": true,
-        "max_file_size_mb": 500,
-        "supported_formats": ["mp3", "wav"]
-      }
-    }
-  ]
-}
-```
-
-`transcription` is a discovery selector. Returned models retain their existing speech-to-text metadata, including `architecture.modality: "audio->text"` and `architecture.output_modalities: ["text"]`.
-
-Voice-cloning tools are excluded. Repeated or comma-separated `output_modalities` values are parsed and deduplicated, but transcription discovery is activated only when `transcription` is the sole normalized selector. A mixed selector such as `text,transcription` continues to return the normal text-model catalog.
-
-Some special model IDs can use the same endpoint for voice-cloning workflows instead of returning transcription text. These tools, including `qwen-voice-clone` and `minimax-voice-clone`, are intentionally omitted from transcription discovery.
-
-## Compatibility notes
-
-The explicit 4 MiB direct request-body limit is the main compatibility consideration. This update does not change transcription billing rates, prompt caching, sticky routing or `session_id`, database schemas, existing remote URL behavior, or existing `audio->text` model metadata.
-
-## Python example
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://nano-gpt.com/api/v1",
-    api_key="YOUR_API_KEY",
-)
-
-with open("audio.mp3", "rb") as audio_file:
-    transcript = client.audio.transcriptions.create(
-        model="Whisper-Large-V3",
-        file=audio_file,
-    )
-
-print(transcript.text)
-```
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing, conflicting, invalid, or unsupported request fields. |
+| `401` | Missing or invalid API credentials. |
+| `402` | Payment is required. |
+| `413` | The complete direct request body exceeds 4 MiB. Use a remote URL. |
+| `415` | Unsupported content type. Use `multipart/form-data` or `application/json`. |
+| `429` | Rate limit exceeded. |
 
 ## See also
 
-- [Models API](/api-reference/endpoint/models)
-- [NanoGPT transcription workflows](/api-reference/endpoint/transcribe)
-- [Speech-to-text guide and model list](/api-reference/speech-to-text)
+- [Discover transcription models](/api-reference/endpoint/models#discover-transcription-models)
+- [Speech-to-text guide](/api-reference/speech-to-text)
+- [Legacy transcription endpoint](/api-reference/endpoint/transcribe)

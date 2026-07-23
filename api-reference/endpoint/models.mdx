@@ -89,38 +89,39 @@ When `detailed=true`, additional fields may be included per model:
 
 ### Discover transcription models
 
+Use the `transcription` output selector to list public models that can be called synchronously through `POST /api/v1/audio/transcriptions`:
+
 ```bash
-curl "https://nano-gpt.com/api/v1/models?output_modalities=transcription"
+curl "https://nano-gpt.com/api/v1/models?output_modalities=transcription" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
-This returns an OpenAI-style list of public speech-to-text models:
+This selector excludes voice-cloning tools and models that require an asynchronous polling workflow. Do not use `?detailed=true` as a substitute for transcription discovery.
+
+`transcription` is a discovery selector. Returned model entries keep their normal architecture metadata:
 
 ```json
 {
-  "object": "list",
-  "data": [
-    {
-      "id": "Whisper-Large-V3",
-      "object": "model",
-      "architecture": {
-        "modality": "audio->text",
-        "input_modalities": ["audio"],
-        "output_modalities": ["text"]
-      },
-      "supported_parameters": {
-        "max_request_body_mb": 4,
-        "supports_remote_url": true,
-        "max_file_size_mb": 500,
-        "supported_formats": ["mp3", "wav"]
-      }
-    }
-  ]
+  "architecture": {
+    "modality": "audio->text",
+    "input_modalities": ["audio"],
+    "output_modalities": ["text"]
+  }
 }
 ```
 
-`transcription` is a discovery selector, not a replacement for existing model metadata. Returned models retain `architecture.modality: "audio->text"` and `architecture.output_modalities: ["text"]`. Voice-cloning tools are excluded.
+An individual model can also include:
 
-Repeated and comma-separated `output_modalities` values are parsed and deduplicated. Transcription discovery is activated only when `transcription` is the sole normalized selector. Mixed selectors such as `text,transcription` continue to return the normal text-model catalog.
+- `pricing.per_minute` and `pricing.currency`
+- `capabilities.speech_to_text`
+- `supported_parameters.max_request_body_mb` — the 4 MiB complete-body ceiling for direct multipart and JSON requests
+- `supported_parameters.supports_remote_url`
+- `supported_parameters.max_file_size_mb` — the selected model's remote-media file limit, when specified
+- `supported_parameters.supported_formats`
+- `supported_parameters.supported_languages`
+- Model-specific features such as timestamps or diarization
+
+Transcription discovery is selected when `transcription` is the sole normalized `output_modalities` value. A mixed selector such as `text,transcription` retains the normal text-model behavior. A private-only transcription query returns an empty list.
 
 See [Audio transcriptions](/api-reference/endpoint/audio-transcriptions) for input methods, model-specific limits, and response formats.
 

@@ -3,6 +3,14 @@ title: "Changelog"
 description: "Recent API behavior changes and migration notes."
 ---
 
+## Transcription API compatibility and discovery
+
+- `POST /api/v1/audio/transcriptions` now accepts remote URL aliases, base64 data URIs, and structured `input_audio` JSON requests.
+- `GET /api/v1/models?output_modalities=transcription` lists public synchronous speech-to-text models and their capabilities.
+- **Breaking:** Direct multipart and JSON transcription request bodies are limited to 4 MiB, including multipart boundaries, JSON envelopes, and base64 overhead. Use `file_url` or `audio_url` for larger media.
+- **Breaking:** `duration` now represents measured media duration in seconds and may be omitted when it cannot be measured. Rounded billable duration is no longer presented as measured media length.
+- Successful JSON responses can include sanitized usage details, and response headers can include `x-generation-id` and `x-request-id`.
+
 ## Cache-Capable Provider Routing
 
 `caching: true` now defaults to sticky provider routing. Pass `stickyprovider: false` to restore the previous non-sticky routing behavior while still requiring a cache-capable provider.

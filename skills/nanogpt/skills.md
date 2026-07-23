@@ -350,9 +350,9 @@ curl https://nano-gpt.com/api/v1/audio/transcriptions \
   -F "file=@audio.wav"
 ```
 
-The endpoint accepts multipart file uploads, reachable remote URLs through `file_url`, `audio_url`, or `audioUrl`, base64 audio data URIs through those URL fields, and OpenRouter-compatible `input_audio` JSON.
+The endpoint accepts multipart file uploads, reachable remote URLs through `file_url`, `audio_url`, or `audioUrl`, base64 audio data URIs through those URL fields, and structured `input_audio` JSON.
 
-The complete direct request body is limited to 4 MiB, including multipart overhead, JSON, and base64 encoding. JSON base64 input therefore has a practical decoded-audio limit of approximately 3 MiB. Submit larger media by reachable URL. Provider-specific file-size limits still apply to remote media.
+The complete direct request body is limited to 4 MiB, including multipart overhead, JSON, and base64 encoding. JSON base64 input therefore has a practical decoded-audio limit of approximately 3 MiB. Submit larger media by reachable URL. Model-specific file-size limits still apply to remote media.
 
 ### Response
 
@@ -362,7 +362,7 @@ The complete direct request body is limited to 4 MiB, including multipart overhe
 }
 ```
 
-Discover public transcription models with `GET /v1/models?output_modalities=transcription`. Inspect each model's `supported_parameters` for formats, optional parameters, and provider-specific file-size limits.
+Discover public transcription models with `GET /v1/models?output_modalities=transcription`. Inspect each model's `supported_parameters` for formats, optional parameters, and model-specific file-size limits.
 
 Common response formats are JSON, verbose JSON, plain text, SRT, and VTT, but support varies by model.
 

@@ -7,7 +7,9 @@ openapi: 'POST /transcribe'
 
 The Speech-to-Text transcription endpoint converts audio files into text using state-of-the-art speech recognition models. Supports multiple languages, speaker diarization, and various audio formats.
 
-Looking for a drop-in OpenAI-compatible STT endpoint? Use `POST /api/v1/audio/transcriptions`. See `api-reference/endpoint/audio-transcriptions.mdx`.
+Looking for a drop-in OpenAI-compatible STT endpoint? Use `POST /api/v1/audio/transcriptions`. See [Create an audio transcription](/api-reference/endpoint/audio-transcriptions).
+
+`actualDuration` is a legacy `/api/transcribe` field. The OpenAI-compatible `/api/v1/audio/transcriptions` multipart endpoint rejects it.
 
 ## Supported Models
 
@@ -24,7 +26,11 @@ Looking for a drop-in OpenAI-compatible STT endpoint? Use `POST /api/v1/audio/tr
 
 ## Upload Methods
 
-### Direct File Upload (≤3MB)
+### Direct upload
+
+The complete multipart or JSON request body must not exceed **4 MiB**. Multipart boundaries, form fields, the JSON envelope, and base64 overhead count toward the limit.
+
+For multipart uploads, send the file as `audio` or `file`.
 
 <CodeGroup>
 
@@ -82,7 +88,11 @@ curl -X POST https://nano-gpt.com/api/transcribe \
 
 </CodeGroup>
 
-### URL Upload (≤500MB)
+### Remote URL
+
+Use a remotely reachable URL for larger media. The maximum remote file size varies by model; do not assume a universal 500 MB limit.
+
+Multipart and JSON requests accept `file_url`, `audio_url`, or `audioUrl`. In JSON, these aliases can also contain a supported base64 audio data URI, such as `data:audio/wav;base64,BASE64_AUDIO_BYTES`. The complete JSON body, including base64 expansion, must fit within 4 MiB.
 
 <CodeGroup>
 
