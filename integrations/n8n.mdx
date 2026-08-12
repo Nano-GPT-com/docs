@@ -3,6 +3,8 @@ title: 'n8n'
 description: 'Use n8n OpenAI nodes with NanoGPT to access 50+ models in your workflows'
 ---
 
+import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+
 ## Overview
 
 n8n can use any OpenAI-compatible API. With NanoGPT, you get:
@@ -55,7 +57,7 @@ Use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing)
 
 | Model | Provider | Best for |
 | --- | --- | --- |
-| `openai/gpt-5.2` | OpenAI | Best overall |
+| <code>{exampleTextModel}</code> | OpenAI | Best overall |
 | `anthropic/claude-opus-4.5` | Anthropic | Deep reasoning, writing |
 | `anthropic/claude-sonnet-4.5` | Anthropic | Coding, analysis |
 | `google/gemini-3-flash-preview` | Google | Fast, cost-effective |
@@ -71,7 +73,7 @@ Use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing)
 
 OpenAI Chat node:
 - Credential: NanoGPT
-- Model: openai/gpt-5.2
+- Model: {{example-text-model}}
 - Messages: User message from input
 ```
 
@@ -120,7 +122,7 @@ If you need full control over parameters, use the HTTP Request node:
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "messages": [
     { "role": "user", "content": "{{ $json.prompt }}" }
   ]

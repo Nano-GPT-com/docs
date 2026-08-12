@@ -3,6 +3,8 @@ title: "Context Memory"
 description: "Lossless, hierarchical episodic memory for unlimited AI conversations"
 ---
 
+import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+
 ## Overview
 
 Large Language Models are limited by their context window. As conversations grow, models forget details, degrade in quality, or hit hard limits. **Context Memory** solves this with lossless, hierarchical compression of your entire conversation history, enabling unlimited-length coding sessions and conversations while preserving full awareness.
@@ -71,7 +73,7 @@ headers = {
 
 # Use the :memory suffix
 payload = {
-    "model": "openai/gpt-5.2:memory",
+    "model": "{{example-text-model}}:memory",
     "messages": [
         {"role": "user", "content": "Remember our plan and continue from step 3."}
     ]
@@ -94,7 +96,7 @@ const res = await fetch(`${BASE_URL}/chat/completions`, {
     'memory': 'true'
   },
   body: JSON.stringify({
-    model: 'openai/gpt-5.2',
+    model: '{{example-text-model}}',
     messages: [{ role: 'user', content: 'Continue the previous discussion but keep all earlier decisions.' }]
   })
 });
@@ -108,7 +110,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-5.2:online:memory",
+    "model": "{{example-text-model}}:online:memory",
     "messages": [
       {"role": "user", "content": "Research alternatives we discussed and continue our plan."}
     ]
@@ -121,7 +123,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 
 - **Default retention**: 30 days.
 - **Configure via model suffix**: `:memory-<days>` where `<days>` is 1..365
-  - Example: `openai/gpt-5.2:memory-90`
+  - Example: <code>{exampleTextModel}:memory-90</code>
 - **Configure via header**: `memory_expiration_days: <days>` (1..365)
   - Example:
     ```bash
@@ -131,7 +133,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
       -H "memory: true" \
       -H "memory_expiration_days: 45" \
       -d '{
-        "model": "openai/gpt-5.2",
+        "model": "{{example-text-model}}",
         "messages": [{"role": "user", "content": "Hello"}]
       }'
     ```

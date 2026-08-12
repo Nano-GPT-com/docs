@@ -3,6 +3,8 @@ title: 'Messages'
 openapi: 'POST /v1/messages'
 ---
 
+import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+
 ## Overview
 
 The `/v1/messages` endpoint provides full Anthropic API compatibility. Clients using the Anthropic SDK can use NanoGPT by simply changing the base URL -- no code changes required.
@@ -341,7 +343,7 @@ The v1/messages endpoint also works with non-Anthropic models:
 
 | Model | Streaming | Tools | Vision |
 | --- | --- | --- | --- |
-| openai/gpt-5.2 | Yes | Yes | Yes |
+| {exampleTextModel} | Yes | Yes | Yes |
 | google/gemini-3-flash-preview | Yes | Yes | Yes |
 | google/gemini-3.1-pro-preview | Yes | Yes | Yes |
 | zai-org/glm-4.7 | Yes | Yes | -- |

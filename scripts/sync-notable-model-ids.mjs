@@ -5,14 +5,16 @@ import https from 'node:https';
 import path from 'node:path';
 
 const MODELS_URL = 'https://nano-gpt.com/api/v1/models';
+const DOCS_CONFIG_PATH = 'docs.json';
 const MODELS_DOC_PATH = path.join('api-reference', 'endpoint', 'models.mdx');
 const START_MARKER = '{/* AUTO-GENERATED: notable-model-ids:start */}';
 const END_MARKER = '{/* AUTO-GENERATED: notable-model-ids:end */}';
 
-const FAMILY_CONFIG = [
+function getFamilyConfig(exampleTextModel) {
+  return [
   {
     label: 'OpenAI',
-    ids: ['openai/gpt-5.2', 'openai/gpt-5.2-chat', 'openai/gpt-5.2-codex', 'openai/gpt-5.2-pro'],
+    ids: [exampleTextModel],
   },
   {
     label: 'Anthropic',
@@ -56,7 +58,8 @@ const FAMILY_CONFIG = [
     label: 'NousResearch Hermes 4',
     ids: ['nousresearch/hermes-4-405b', 'nousresearch/hermes-4-405b:thinking', 'nousresearch/hermes-4-70b'],
   },
-];
+  ];
+}
 
 function fetchJson(url) {
   return new Promise((resolve, reject) => {
@@ -89,16 +92,16 @@ function fetchJson(url) {
   });
 }
 
-function buildGeneratedLines(liveIds) {
+function buildGeneratedLines(liveIds, familyConfig, exampleTextModel) {
   const rows = [];
 
-  for (const family of FAMILY_CONFIG) {
+  for (const family of familyConfig) {
     const kept = family.ids.filter((id) => liveIds.has(id));
     if (kept.length === 0) {
       throw new Error(`No live IDs found for family "${family.label}"`);
     }
 
-    rows.push(`- **${family.label}**: ${kept.map((id) => `\`${id}\``).join(', ')}`);
+    rows.push(`- **${family.label}**: ${kept.map((id) => id === exampleTextModel ? '<code>{exampleTextModel}</code>' : `\`${id}\``).join(', ')}`);
   }
 
   return rows;
@@ -129,7 +132,13 @@ async function main() {
     throw new Error('Live catalog is empty; refusing to generate notable model IDs');
   }
 
-  const rows = buildGeneratedLines(liveIds);
+  const docsConfig = JSON.parse(await fs.readFile(DOCS_CONFIG_PATH, 'utf8'));
+  const exampleTextModel = docsConfig?.variables?.['example-text-model'];
+  if (!exampleTextModel) {
+    throw new Error('Missing docs.json variable: example-text-model');
+  }
+
+  const rows = buildGeneratedLines(liveIds, getFamilyConfig(exampleTextModel), exampleTextModel);
   const docText = await fs.readFile(MODELS_DOC_PATH, 'utf8');
   const nextDocText = replaceGeneratedBlock(docText, rows);
 

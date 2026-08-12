@@ -3622,7 +3622,7 @@
             "type": "string",
             "description": "The model to use for completion. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.).",
             "default": "minimax/minimax-m2.7",
-            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.2:online/exa-instant", "openai/gpt-5.2:online/exa-deep-reasoning"]
+            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.6-sol:online/exa-instant", "openai/gpt-5.6-sol:online/exa-deep-reasoning"]
           },
           "billing_mode": {
             "type": "string",
@@ -4277,7 +4277,7 @@
             "type": "string",
             "description": "The model to use for completion. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.).",
             "default": "minimax/minimax-m2.7",
-            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.2:online/exa-instant", "openai/gpt-5.2:online/exa-deep-reasoning"]
+            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.6-sol:online/exa-instant", "openai/gpt-5.6-sol:online/exa-deep-reasoning"]
           },
           "billing_mode": {
             "type": "string",
@@ -4868,7 +4868,7 @@
             "type": "string",
             "description": "The model to use for generation. The legacy endpoint supports the same model suffix parser for web search and provider routing, including ':caching', ':cache', and ':cached', as Chat Completions.",
             "default": "minimax/minimax-m2.7",
-            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.2:online/exa-instant"]
+            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.6-sol:online/exa-instant"]
           },
           "provider": {
             "description": "Optional provider override or structured provider routing controls for provider-selection-capable models. A string explicitly selects one provider. An object can set soft order, hard pins, exclusions, sort preference, price caps, fallback behavior, and parameter-capability requirements.",
@@ -4929,7 +4929,7 @@
                 "id": {
                   "type": "string",
                   "description": "Unique identifier for the model",
-                  "example": "openai/gpt-5.2"
+                  "example": "openai/gpt-5.6-sol"
                 },
                 "object": {
                   "type": "string",
@@ -5085,7 +5085,7 @@
             "items": {
               "type": "string",
               "description": "Model identifier",
-              "example": "openai/gpt-5.2"
+              "example": "openai/gpt-5.6-sol"
             }
           }
         }

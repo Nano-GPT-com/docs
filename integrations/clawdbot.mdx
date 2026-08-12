@@ -3,6 +3,8 @@ title: ClawdBot
 description: Using NanoGPT with ClawdBot for Discord AI chat
 ---
 
+import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+
 ## Quick Setup Guide
 
 1. Install [ClawdBot](https://github.com/moltbot/moltbot) (stable or dev channel) and skip the model setup during installation
@@ -38,8 +40,8 @@ description: Using NanoGPT with ClawdBot for Discord AI chat
             "maxTokens": 8192
           },
           {
-            "id": "openai/gpt-5.2",
-            "name": "GPT 5.2",
+            "id": "{{example-text-model}}",
+            "name": "{{example-text-model-name}}",
             "api": "openai-completions",
             "reasoning": false,
             "contextWindow": 128000,
@@ -211,7 +213,7 @@ To set a default model, add an `agents` section to your config with the desired 
 
 You can access all our models through this integration, including:
 - Claude Opus 4.5
-- GPT 5.2
+- {exampleTextModelName}
 - Gemini 3 Flash Preview
 - And many more!
 

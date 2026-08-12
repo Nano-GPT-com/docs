@@ -3,6 +3,8 @@ title: 'OpenCode'
 description: 'OpenCode integration for NanoGPT'
 ---
 
+import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+
 # OpenCode Integration
 
 Use NanoGPT with [OpenCode](https://opencode.ai), the open source AI coding agent for your terminal.
@@ -18,7 +20,7 @@ curl -fsSL "https://nano-gpt.com/install/opencode_nanogpt.sh" | bash
 This will:
 1. Open your browser to authenticate with NanoGPT (or let you paste an API key)
 2. Configure OpenCode to use NanoGPT as your AI provider
-3. Set up popular models like Claude Sonnet 4.5, Claude 4.5 Opus, GPT 5.2, Gemini 3 Flash (Preview), Gemini 3 Pro, GLM 4.7
+3. Set up popular models like Claude Sonnet 4.5, Claude 4.5 Opus, {exampleTextModelName}, Gemini 3 Flash (Preview), Gemini 3 Pro, GLM 4.7
 
 ## Manual Setup
 
@@ -60,9 +62,9 @@ Create `~/.config/opencode/.opencode.json`:
           "name": "Claude Sonnet 4.5",
           "limit": { "context": 1000000, "output": 64000 }
         },
-        "openai/gpt-5.2": {
-          "name": "GPT 5.2",
-          "limit": { "context": 128000, "output": 128000 }
+        "{{example-text-model}}": {
+          "name": "{{example-text-model-name}}",
+          "limit": { "context": 1050000, "output": 128000 }
         },
         "deepseek/deepseek-v4-pro": {
           "name": "DeepSeek V4 Pro",
@@ -124,7 +126,7 @@ The setup script preconfigures these models:
 |----------|-------------|
 | `nano-gpt/claude-sonnet-4-5-20250929` | Claude Sonnet 4.5 (default) |
 | `nano-gpt/claude-opus-4-5-20251101` | Claude 4.5 Opus |
-| `nano-gpt/openai/gpt-5.2` | GPT 5.2 |
+| <code>nano-gpt/{exampleTextModel}</code> | {exampleTextModelName} |
 | `nano-gpt/deepseek/deepseek-v4-pro` | DeepSeek V4 Pro |
 | `nano-gpt/deepseek/deepseek-v4-pro:thinking` | DeepSeek V4 Pro Thinking |
 | `nano-gpt/deepseek/deepseek-v4-flash` | DeepSeek V4 Flash |

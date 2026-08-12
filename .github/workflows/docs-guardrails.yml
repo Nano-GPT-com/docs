@@ -24,3 +24,8 @@ jobs:
       - name: Validate model-like IDs in docs against /api/v1/models
         run: node scripts/validate-model-ids.mjs
 
+      - name: Validate canonical example text model
+        run: node scripts/validate-example-text-model.mjs
+
+      - name: Verify OpenAPI examples use canonical text model
+        run: node scripts/sync-example-text-model.mjs --check

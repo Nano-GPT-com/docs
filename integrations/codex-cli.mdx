@@ -3,6 +3,8 @@ title: 'Codex CLI'
 description: 'Using OpenAI Codex CLI with NanoGPT'
 ---
 
+import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+
 # Codex CLI
 
 > Use OpenAI's Codex CLI with NanoGPT to access GPT-5.2, Claude Opus 4.5, Gemini 3 Flash Preview, and 400+ AI models through a single API key.
@@ -87,7 +89,7 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
 
         ```toml
         model_provider = "nanogpt"
-        model = "openai/gpt-5.2"
+        model = "{{example-text-model}}"
 
         [model_providers.nanogpt]
         name = "NanoGPT"
@@ -143,7 +145,7 @@ codex
 Or specify a model directly:
 
 ```bash
-codex --model openai/gpt-5.2
+codex --model {{example-text-model}}
 ```
 
 ---
@@ -156,7 +158,7 @@ NanoGPT supports 400+ models. Popular choices for Codex:
 
 | Use Case | Recommended Model | Config |
 |----------|-------------------|--------|
-| Best overall | `openai/gpt-5.2` | `model = "openai/gpt-5.2"` |
+| Best overall | <code>{exampleTextModel}</code> | <code>model = "{exampleTextModel}"</code> |
 | Best Claude | `anthropic/claude-opus-4.5` | `model = "anthropic/claude-opus-4.5"` |
 | Fast/cheap | `google/gemini-3-flash-preview` | `model = "google/gemini-3-flash-preview"` |
 | Long context | `google/gemini-3-pro-preview` | `model = "google/gemini-3-pro-preview"` |
@@ -168,12 +170,12 @@ List available models with `GET https://nano-gpt.com/api/v1/models`.
 
 **Option 1**: Edit `~/.codex/config.toml`:
 ```toml
-model = "openai/gpt-5.2"
+model = "{{example-text-model}}"
 ```
 
 **Option 2**: Use CLI flag:
 ```bash
-codex --model openai/gpt-5.2
+codex --model {{example-text-model}}
 ```
 
 ### Configuration Not Working?

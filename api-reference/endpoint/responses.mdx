@@ -73,7 +73,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "x-encryption-key: YOUR_ENCRYPTION_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "Sensitive information",
     "store": true
   }'
@@ -230,7 +230,7 @@ The `input` parameter accepts either a simple string or an array of input items.
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": "What is the capital of France?"
 }
 ```
@@ -239,7 +239,7 @@ The `input` parameter accepts either a simple string or an array of input items.
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": [
     {
       "type": "message",
@@ -337,7 +337,7 @@ Define functions that the model can call:
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": "What's the weather in Paris?",
   "tools": [
     {
@@ -474,7 +474,7 @@ Control response format and verbosity:
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": "List 3 colors",
   "text": {
     "format": { "type": "json_object" },
@@ -539,7 +539,7 @@ Control response format and verbosity:
   "object": "response",
   "created_at": 1699000000,
   "completed_at": 1699000001,
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "status": "completed",
   "instructions": null,
   "previous_response_id": null,
@@ -854,7 +854,7 @@ Enable streaming to receive incremental response updates:
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": "Write a short story",
   "stream": true
 }
@@ -930,7 +930,7 @@ You can use `previous_response_id` or the `conversation` object (`id` or `messag
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": "My name is Alice."
 }
 ```
@@ -941,7 +941,7 @@ Response includes `id`: `"resp_abc123"`
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": "What is my name?",
   "previous_response_id": "resp_abc123"
 }
@@ -959,7 +959,7 @@ For long-running requests, use background mode to receive an immediate response 
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "input": "Write a detailed analysis...",
   "background": true
 }
@@ -972,7 +972,7 @@ For long-running requests, use background mode to receive an immediate response 
   "id": "resp_abc123",
   "object": "response",
   "created_at": 1699000000,
-  "model": "openai/gpt-5.2",
+  "model": "{{example-text-model}}",
   "status": "queued",
   "output": []
 }
@@ -1073,7 +1073,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "Explain quantum computing in one sentence."
   }'
 ```
@@ -1086,7 +1086,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "I want to learn Python programming."
   }'
 
@@ -1095,7 +1095,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "Where should I start?",
     "previous_response_id": "resp_abc123"
   }'
@@ -1108,7 +1108,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "Write a haiku about programming",
     "stream": true
   }'
@@ -1135,7 +1135,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "What is the weather in Tokyo?",
     "tools": [
       {
@@ -1161,7 +1161,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": [
       {
         "type": "message",
@@ -1191,7 +1191,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": [
       {
         "type": "message",
@@ -1212,7 +1212,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "List the planets in our solar system",
     "text": {
       "format": { "type": "json_object" }
@@ -1228,7 +1228,7 @@ curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "{{example-text-model}}",
     "input": "Generate a comprehensive report...",
     "background": true
   }'
