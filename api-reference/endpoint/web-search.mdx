@@ -1,7 +1,7 @@
 ---
 title: "Direct Web Search API"
 api: "POST https://nano-gpt.com/api/web"
-description: "Run direct web search requests with explicit query control, Linkup output formats, and normalized metadata"
+description: "Run direct web search requests with explicit query control, provider-specific options, and Sofya search, fetch, extract, and research operations"
 ---
 
 ## Overview
@@ -10,7 +10,9 @@ Use `POST /api/web` when you want direct control over search requests and output
 
 You can also call this tool through the unified [Data API](/api-reference/endpoint/data-api) at `POST /api/v1/data/web/search`. The Data API preserves this endpoint's request body, response body, billing, and provider behavior while adding discovery and dispatch metadata.
 
-For chat-first workflows, use `POST /api/v1/chat/completions` with model suffixes like `:online`, `:online/linkup`, or `:online/linkup-deep`, including provider-specific suffixes such as `:online/exa-instant`, `:online/exa-deep-reasoning`, `:online/brave`, and `:online/valyu-web-deep`. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes#web-search-suffixes).
+For chat-first workflows, use `POST /api/v1/chat/completions` with model suffixes like `:online`, `:online/linkup`, or `:online/sofya`, including provider-specific suffixes such as `:online/exa-instant`, `:online/exa-deep-reasoning`, `:online/brave`, and `:online/valyu-web-deep`. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes#web-search-suffixes).
+
+Sofya can do more than search on this endpoint. Set `provider: "sofya"` and choose the `search`, `fetch`, `extract`, or `research` operation.
 
 ## When to use which endpoint
 
@@ -55,12 +57,16 @@ If you receive `401 missing_api_key` immediately, check that the initial quote r
 
 ## Request body
 
-<ParamField body="query" type="string" required>
-  Search query string.
+<ParamField body="query" type="string">
+  Search or research query. Required for every provider's search operation and for Sofya research. Not used by Sofya fetch or extract.
 </ParamField>
 
 <ParamField body="provider" type="string" default="linkup">
-  Search provider. `openai-native` is not allowed on `/api/web`.
+  Search provider: `linkup`, `tavily`, `exa`, `kagi`, `perplexity`, `valyu`, `brave`, `sofya`, or `firecrawl`. `openai-native` is not allowed on `/api/web`.
+</ParamField>
+
+<ParamField body="operation" type="string" default="search">
+  Sofya operation: `search`, `fetch`, `extract`, or `research`. Other providers support `search` only.
 </ParamField>
 
 <ParamField body="depth" type="string" default="standard">
@@ -104,6 +110,43 @@ If you receive `401 missing_api_key` immediately, check that the initial quote r
   Non-Linkup providers currently support only `outputType: "searchResults"`.
 </Note>
 
+### Sofya operations
+
+Sofya Search returns extracted page content instead of snippets alone. The other operations let you fetch known URLs, extract requested information from one page, or produce a cited multi-source research report.
+
+#### Search
+
+Use `operation: "search"` or omit `operation`.
+
+- `query` (string, required)
+- `maxResults` (integer, 1-20; default 10)
+- `topic` (`general` or `news`)
+- `freshness` (`day`, `week`, `month`, `year`, or `YYYY-MM-DD:YYYY-MM-DD`)
+- `includeDomains` / `excludeDomains` (up to 10 strings each)
+
+#### Fetch
+
+Use `operation: "fetch"` with:
+
+- `urls` (array of 1-10 URL strings, required)
+- `includeRawHtml` or `include_raw_html` (boolean)
+
+#### Extract
+
+Use `operation: "extract"` with:
+
+- `url` (string, required)
+- `prompt` (string, required), describing what to extract
+
+#### Research
+
+Use `operation: "research"` with:
+
+- `query` (string, required)
+- `topic` (`general` or `news`)
+- `freshness` (`day`, `week`, `month`, `year`, or `YYYY-MM-DD:YYYY-MM-DD`)
+- `maxSources` or `max_sources` (integer, 5-30)
+
 ## Response shape
 
 <ResponseField name="data" type="array|object">
@@ -117,6 +160,9 @@ If you receive `401 missing_api_key` immediately, check that the initial quote r
     </ResponseField>
     <ResponseField name="provider" type="string">
       Resolved provider (for example, `linkup`).
+    </ResponseField>
+    <ResponseField name="operation" type="string">
+      Resolved operation. This is `search` except for Sofya fetch, extract, or research requests.
     </ResponseField>
     <ResponseField name="depth" type="string">
       Resolved depth.
@@ -133,7 +179,7 @@ If you receive `401 missing_api_key` immediately, check that the initial quote r
   </Expandable>
 </ResponseField>
 
-For `searchResults`, `data` is an array of normalized results.
+For `searchResults`, `data` is normally an array of normalized results. Sofya extract and research return an object, while Sofya fetch returns an array.
 For `sourcedAnswer` and `structured`, `data` is the provider response object.
 
 ### Example response
@@ -158,6 +204,10 @@ For `sourcedAnswer` and `structured`, `data` is the provider response object.
 | --- | --- |
 | Linkup standard | $0.006 |
 | Linkup deep | $0.06 |
+| Sofya search | $0.01575 |
+| Sofya fetch | $0.00525 per URL |
+| Sofya extract | $0.02625 |
+| Sofya research | $0.13125 |
 
 ## Error codes
 
@@ -220,6 +270,73 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
     "messages": [
       { "role": "user", "content": "Summarize today'\''s top AI headlines." }
     ]
+  }'
+```
+
+```bash cURL (chat completions with Sofya)
+curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o:online/sofya",
+    "messages": [
+      { "role": "user", "content": "Summarize today'\''s top AI headlines." }
+    ]
+  }'
+```
+
+</CodeGroup>
+
+### Sofya examples
+
+<CodeGroup>
+
+```bash cURL (search)
+curl -X POST https://nano-gpt.com/api/web \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "sofya",
+    "operation": "search",
+    "query": "NanoGPT API documentation",
+    "maxResults": 10,
+    "topic": "general"
+  }'
+```
+
+```bash cURL (fetch)
+curl -X POST https://nano-gpt.com/api/web \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "sofya",
+    "operation": "fetch",
+    "urls": ["https://sofya.co/docs"],
+    "includeRawHtml": false
+  }'
+```
+
+```bash cURL (extract)
+curl -X POST https://nano-gpt.com/api/web \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "sofya",
+    "operation": "extract",
+    "url": "https://sofya.co/pricing",
+    "prompt": "Extract the available plans and their prices."
+  }'
+```
+
+```bash cURL (research)
+curl -X POST https://nano-gpt.com/api/web \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "sofya",
+    "operation": "research",
+    "query": "Compare current AI web search APIs",
+    "maxSources": 15
   }'
 ```
 

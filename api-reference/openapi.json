@@ -7161,18 +7161,24 @@
       },
       "WebSearchRequest": {
         "type": "object",
-        "required": ["query"],
         "properties": {
           "query": {
             "type": "string",
-            "description": "The search query to execute",
+            "description": "The query to execute. Required for search and Sofya research; omitted for Sofya fetch and extract.",
             "example": "latest AI news"
           },
           "provider": {
             "type": "string",
             "description": "Search provider. Defaults to 'linkup'. 'openai-native' is not supported on /api/web.",
+            "enum": ["linkup", "tavily", "exa", "kagi", "perplexity", "valyu", "brave", "sofya", "firecrawl"],
             "default": "linkup",
             "example": "linkup"
+          },
+          "operation": {
+            "type": "string",
+            "description": "Operation to run. Fetch, extract, and research are supported only when provider is sofya.",
+            "enum": ["search", "fetch", "extract", "research"],
+            "default": "search"
           },
           "depth": {
             "type": "string",
@@ -7221,6 +7227,48 @@
               "type": "string"
             },
             "example": ["trusted.com", "official.org"]
+          },
+          "maxResults": {
+            "type": "integer",
+            "description": "Maximum results. Sofya search accepts 1-20.",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "topic": {
+            "type": "string",
+            "description": "Sofya search or research topic.",
+            "enum": ["general", "news"]
+          },
+          "freshness": {
+            "type": "string",
+            "description": "Sofya freshness window: day, week, month, year, or YYYY-MM-DD:YYYY-MM-DD."
+          },
+          "urls": {
+            "type": "array",
+            "description": "One to ten URLs for Sofya fetch.",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "type": "string"
+            }
+          },
+          "includeRawHtml": {
+            "type": "boolean",
+            "description": "Whether Sofya fetch should include raw HTML."
+          },
+          "url": {
+            "type": "string",
+            "description": "URL for Sofya extract."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Instructions describing what Sofya should extract from the URL."
+          },
+          "maxSources": {
+            "type": "integer",
+            "description": "Maximum sources for Sofya research.",
+            "minimum": 5,
+            "maximum": 30
           }
         }
       },
@@ -7262,7 +7310,7 @@
               },
               {
                 "type": "object",
-                "description": "Sourced answer when outputType is 'sourcedAnswer'",
+                "description": "Provider-formatted object for sourcedAnswer, structured output, or Sofya extract/research",
                 "properties": {
                   "answer": {
                     "type": "string",
@@ -7298,7 +7346,7 @@
           },
           "metadata": {
             "type": "object",
-            "required": ["query", "provider", "depth", "outputType", "timestamp", "cost"],
+            "required": ["query", "provider", "operation", "depth", "outputType", "timestamp", "cost"],
             "properties": {
               "query": {
                 "type": "string",
@@ -7307,6 +7355,11 @@
               "provider": {
                 "type": "string",
                 "description": "The provider that executed the search"
+              },
+              "operation": {
+                "type": "string",
+                "description": "The resolved operation. This is search except for Sofya fetch, extract, and research requests.",
+                "enum": ["search", "fetch", "extract", "research"]
               },
               "depth": {
                 "type": "string",
