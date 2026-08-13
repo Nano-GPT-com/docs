@@ -53,6 +53,10 @@ If you receive `401 missing_api_key` immediately, check that the initial quote r
 - `GET /v1/responses/{id}` - Retrieve a stored response by ID
 - `DELETE /v1/responses/{id}` - Delete a stored response (soft delete)
 
+## Batch processing
+
+For high-volume work that does not need an immediate response, `/v1/responses` requests can be submitted through the [Batch API](/api-reference/endpoint/batches). Responses batches are non-streaming, stateless, use direct OpenAI models, and run with `store: false`. Function and custom tools, structured text output, and remote or data-URL images are supported; stateful features, provider-hosted tools, file references, and NanoGPT-only request extensions are not.
+
 ## BYOK Encryption (Stored Responses)
 
 If you set `store: true`, you can optionally encrypt the stored response at rest using your own key or passphrase.
