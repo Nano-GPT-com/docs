@@ -3464,6 +3464,12 @@
       }
     },
     "/v1/responses": {
+      "servers": [
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API host preferred for large or long-running Responses requests"
+        }
+      ],
       "post": {
         "description": "Create a response with the OpenAI-compatible Responses API. The NanoGPT Advisor extension is available for non-streaming, foreground, platform-billed pay-as-you-go API-key requests that do not use client tools, structured output, inline moderation, BYOK, accountless payment, memory, or server-side content enhancements.",
         "security": [
@@ -3561,6 +3567,12 @@
       }
     },
     "/v1/responses/{id}": {
+      "servers": [
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API host preferred for Responses storage operations"
+        }
+      ],
       "get": {
         "description": "Retrieve a stored response by ID",
         "security": [

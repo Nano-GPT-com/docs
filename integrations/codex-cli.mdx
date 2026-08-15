@@ -81,6 +81,8 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
 
         If a browser does not open automatically, copy the printed URL into your browser and approve the request.
 
+        For local or self-hosted testing, `NANOGPT_BASE_URL` keeps login and API traffic on the same origin. To override only the Codex API endpoint, set `NANOGPT_API_BASE_URL` to the complete versioned base URL, including `/api/v1` (for example, `https://api.nano-gpt.example/api/v1`).
+
         For more details on the browser login flow, see [CLI login](https://docs.nano-gpt.com/integrations/cli-login).
       </Tab>
 
@@ -93,12 +95,14 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
 
         [model_providers.nanogpt]
         name = "NanoGPT"
-        base_url = "https://nano-gpt.com/api/v1"
+        base_url = "https://api.nano-gpt.com/api/v1"
         env_key = "NANOGPT_API_KEY"
         wire_api = "responses"
         ```
 
         Recent Codex CLI versions require `wire_api = "responses"`. Older examples that use `wire_api = "chat"` will fail on current Codex CLI releases.
+
+        The dedicated `api.nano-gpt.com` host connects directly to NanoGPT's API infrastructure. Use it for Codex because long-running agent sessions resend increasingly large Responses API payloads, which can exceed the website host's request limit before reaching NanoGPT.
 
         **Step 2**: Set your API key as an environment variable:
 
@@ -124,7 +128,7 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
         If you just want to override the default OpenAI endpoint without a config file:
 
         ```bash
-        export OPENAI_BASE_URL="https://nano-gpt.com/api/v1"
+        export OPENAI_BASE_URL="https://api.nano-gpt.com/api/v1"
         export OPENAI_API_KEY="your_nanogpt_api_key"
         ```
 
