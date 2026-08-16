@@ -5,6 +5,10 @@ openapi: 'POST /v1/messages'
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
 
+<Note>
+  `/v1/messages` accepts **compressed request bodies** (`Content-Encoding: gzip`, `deflate`, or `br`) on authenticated JSON requests — useful for long conversations, where compressed uploads cut time-to-first-token. See [Compressed Request Bodies](/api-reference/miscellaneous/request-compression).
+</Note>
+
 ## Overview
 
 The `/v1/messages` endpoint provides full Anthropic API compatibility. Clients using the Anthropic SDK can use NanoGPT by simply changing the base URL -- no code changes required.

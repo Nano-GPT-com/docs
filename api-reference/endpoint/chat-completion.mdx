@@ -85,6 +85,7 @@ Use the jump list below to navigate the long-form reference quickly.
   </Accordion>
   <Accordion title="Other">
     - [Service tiers (flex and priority)](#service-tiers-priority)
+    - [Compressed Request Bodies](#compressed-request-bodies)
     - [YouTube Transcripts](#youtube-transcripts)
     - [Performance Benchmarks](#performance-benchmarks)
     - [Important Notes](#important-notes)
@@ -1579,6 +1580,10 @@ LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
 | LinkUp Standard Search | 85% |
 | Perplexity Sonar | 77% |
 | Tavily | 73% |
+
+## Compressed Request Bodies
+
+Request bodies may be sent gzip, deflate, or Brotli compressed by adding a `Content-Encoding` header (e.g. `Content-Encoding: gzip`). Conversation-history payloads compress roughly 5:1, which cuts upload time — and therefore time-to-first-token — on long conversations. Requires a JSON `Content-Type` and authentication; the 32 MB body limit applies to both the compressed and decompressed body. See [Compressed Request Bodies](/api-reference/miscellaneous/request-compression) for SDK-ready snippets.
 
 ## Important Notes
 
