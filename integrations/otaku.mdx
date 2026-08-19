@@ -1,0 +1,40 @@
+---
+title: 'Otaku'
+description: 'Using NanoGPT with Otaku, a roleplay terminal client'
+---
+
+# Otaku Integration
+
+[Otaku](https://otaku.sh) is a roleplay client for the terminal, available on macOS, Linux, and Windows through WSL. NanoGPT is built in, so your NanoGPT model catalog appears directly in the model picker.
+
+## Setup
+
+1. Install Otaku:
+
+   ```bash
+   curl -LsSf https://otaku.sh/install.sh | sh
+   ```
+
+   Alternatively, install it with `uv tool install otaku`.
+
+2. Run `otaku`. When the model picker opens, press **Tab** to move to the provider panel, select **NanoGPT**, and paste your NanoGPT API key into the `API key:` field. Otaku verifies the key and lists your NanoGPT model catalog on the left. Your API key is stored encrypted in the configuration file.
+
+3. Choose a model and start chatting. The prompt shows `$` while a cloud model is selected.
+
+## Useful commands
+
+- `/model` (Ctrl+O) reopens the picker to switch models or providers.
+- `/balance` shows your NanoGPT balance.
+- `/context` shows exactly what is sent to the model.
+
+## Manual configuration
+
+To configure Otaku manually, add your API key to the `[nanogpt]` section of `~/.otaku/configs/providers.toml`:
+
+```toml
+[nanogpt]
+url = "https://nano-gpt.com/api/v1"
+api_key = "your-nanogpt-api-key"
+```
+
+For more information, see the [Otaku guide and demo](https://otaku.sh) or the [Otaku source code](https://github.com/enclavum/otaku).
