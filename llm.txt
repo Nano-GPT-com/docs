@@ -281,6 +281,19 @@ const visionReply = await client.chat.completions.create({
 console.log(visionReply.choices[0]?.message.content);
 ```
 
+VIDEO INPUT
+Video understanding is supported on /api/v1/chat/completions, /api/v1/responses, and /api/v1/messages when the selected text or multimodal model advertises video input. This is unrelated to video generation.
+
+Discover compatibility first with GET /api/v1/models?detailed=true. Look for architecture.input_modalities containing "video" and/or capabilities.video_input: true. Automatic fallback keeps only routes that preserve video input.
+
+Use the endpoint's canonical content shape:
+
+- Chat Completions: { type: 'video_url', video_url: { url: 'https://...', detail: 'auto' } }
+- Responses: { type: 'input_video', video_url: 'https://...' }
+- Anthropic Messages: { type: 'video', source: { type: 'url', url: 'https://...', media_type: 'video/mp4' } } or a base64 source with source.data.
+
+Sources may be public HTTPS URLs or inline video data/base64 in the endpoint's established shape. Do not use opaque file_id references for Responses video input; unresolved IDs return video_file_id_not_supported. Video input is unsupported in Responses Batch. Segment offsets are validated but no current public text-model route can honor them. YouTube pass-through is route-dependent; NanoGPT does not download or scrape YouTube for video understanding.
+
 PROMPT CACHING
 NanoGPT uses implicit caching automatically on providers that support it (including OpenAI, Gemini, and many open-source provider routes).
 

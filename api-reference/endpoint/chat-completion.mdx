@@ -62,6 +62,7 @@ Use the jump list below to navigate the long-form reference quickly.
   </Accordion>
   <Accordion title="Images & caching">
     - [Image Input](#image-input)
+    - [Video Input](#video-input)
     - [Supported Forms](#supported-forms)
     - [Message Shape](#message-shape)
     - [cURL - Image URL](#curl-image-url-non-streaming)
@@ -971,6 +972,31 @@ curl -N \
 The response streams `data: { ... }` lines until a final terminator. Usage metrics appear only when requested: set `stream_options.include_usage` to `true` for streaming responses, or send `"include_usage": true` on non-streaming calls.
 
 _Note: Prompt-caching helpers implicitly force `include_usage`, so cached requests still receive usage data without extra flags._
+
+## Video Input
+
+Send video clips to a compatible text or multimodal model using the canonical `video_url` content part. The URL may be a public HTTPS URL or a `data:video/*;base64,...` URL:
+
+```json
+{
+  "model": "google/gemini-3.1-flash-lite",
+  "messages": [{
+    "role": "user",
+    "content": [
+      { "type": "text", "text": "Describe this clip." },
+      {
+        "type": "video_url",
+        "video_url": {
+          "url": "https://cdn.example.com/clip.mp4",
+          "detail": "auto"
+        }
+      }
+    ]
+  }]
+}
+```
+
+Compatibility aliases (`input_video`, direct `video`, and safely identifiable `input_file`/`file` blocks) are accepted, but new integrations should emit `video_url`. See the [Video Input guide](/api-reference/miscellaneous/video-input) for model discovery, source validation, limits, errors, YouTube behavior, and the Responses and Messages shapes.
 
 ### Caching (Implicit and Explicit Controls)
 

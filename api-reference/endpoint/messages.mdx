@@ -22,7 +22,7 @@ This endpoint supports:
 - Text generation (streaming and non-streaming)
 - Multi-turn conversations
 - Tool use (function calling)
-- Vision (images) and document/PDF processing
+- Vision (images), video understanding, and document/PDF processing
 - Extended thinking (reasoning models)
 - Prompt caching
 - Token estimates via [`POST /api/v1/messages/count_tokens`](/api-reference/endpoint/messages-count-tokens)
@@ -144,6 +144,36 @@ Supported media types: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
   }
 }
 ```
+
+#### Video Block (for video-capable models)
+
+Use `type: "video"` for new integrations. Inline video bytes use an Anthropic base64 source:
+
+```json
+{
+  "type": "video",
+  "source": {
+    "type": "base64",
+    "media_type": "video/mp4",
+    "data": "AAAA..."
+  }
+}
+```
+
+For URL transport, use an HTTPS URL and declare the video MIME type:
+
+```json
+{
+  "type": "video",
+  "source": {
+    "type": "url",
+    "url": "https://cdn.example.com/clip.mp4",
+    "media_type": "video/mp4"
+  }
+}
+```
+
+A `document` compatibility block with a `video/*` source is normalized as video. A document with `application/pdf` remains a document. Public remote sources must use HTTPS; inline base64 must be valid. See the [Video Input guide](/api-reference/miscellaneous/video-input) for model discovery, limits, errors, segment behavior, and the equivalent Chat Completions and Responses shapes.
 
 #### Tool Use Block (in assistant messages)
 

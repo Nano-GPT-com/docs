@@ -77,7 +77,7 @@
             }
           },
           "400": {
-            "description": "Unexpected error",
+            "description": "Unexpected error. Video errors include video_input_not_supported, invalid_video_url_scheme, invalid_video_data_url, invalid_video_base64, invalid_video_mime_type, missing_video_source, video_file_id_not_supported, video_attachment_too_large, video_attachment_limit_exceeded, invalid_video_segment, video_segment_not_supported, and youtube_video_route_not_supported.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1130,7 +1130,7 @@
             }
           },
           "400": {
-            "description": "Bad Request - Invalid parameters",
+            "description": "Bad Request - Invalid parameters. Video errors include video_input_not_supported, invalid_video_url_scheme, invalid_video_data_url, invalid_video_base64, invalid_video_mime_type, missing_video_source, video_file_id_not_supported, video_attachment_too_large, video_attachment_limit_exceeded, invalid_video_segment, video_segment_not_supported, and youtube_video_route_not_supported.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3463,6 +3463,32 @@
         }
       }
     },
+    "/v1/messages": {
+      "post": {
+        "operationId": "createMessage",
+        "tags": ["Anthropic"],
+        "summary": "Create an Anthropic-compatible message",
+        "description": "Accepts Anthropic Messages requests, including video blocks for models that advertise video input.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnthropicMessageRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Anthropic message response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AnthropicMessage" } },
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "400": {
+            "description": "Bad Request. Video errors include video_input_not_supported, invalid_video_url_scheme, invalid_video_data_url, invalid_video_base64, invalid_video_mime_type, missing_video_source, video_file_id_not_supported, invalid_video_segment, video_segment_not_supported, and youtube_video_route_not_supported.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
     "/v1/responses": {
       "servers": [
         {
@@ -4095,7 +4121,7 @@
           "type": {
             "type": "string",
             "description": "Content block type",
-            "enum": ["text", "image_url", "input_text", "input_audio", "input_video", "tool_use", "tool_result"]
+            "enum": ["text", "image_url", "video_url", "input_text", "input_audio", "input_video", "video", "input_file", "file", "document", "tool_use", "tool_result"]
           },
           "text": {
             "type": "string",
@@ -4130,16 +4156,11 @@
               }
             }
           },
-          "input_video": {
-            "type": "object",
-            "description": "Inline video reference",
-            "properties": {
-              "video_url": {
-                "type": "string",
-                "description": "HTTPS URL or data URL for the video"
-              }
-            }
+          "video_url": {
+            "$ref": "#/components/schemas/VideoUrl"
           },
+          "start_offset": { "type": "number", "minimum": 0 },
+          "end_offset": { "type": "number", "minimum": 0 },
           "cache_control": {
             "type": "object",
             "description": "Prompt caching control applied to this content block for explicit caching flows (primarily Claude).",
@@ -4157,6 +4178,106 @@
             }
           }
         }
+      },
+
+      "VideoUrl": {
+        "type": "object",
+        "description": "Canonical Chat Completions video reference. Use a public HTTPS URL or a data:video/*;base64,... URL.",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string", "description": "Public HTTPS URL or video base64 data URL." },
+          "detail": { "type": "string", "enum": ["auto", "low", "high"] },
+          "start_offset": { "type": "number", "minimum": 0, "description": "Validated segment start; current public text-model routes return video_segment_not_supported." },
+          "end_offset": { "type": "number", "minimum": 0, "description": "Validated segment end; current public text-model routes return video_segment_not_supported." }
+        },
+        "additionalProperties": false
+      },
+      "ResponsesInputContentPart": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "type": "string", "enum": ["input_text", "input_image", "input_video", "input_file"] },
+          "text": { "type": "string" },
+          "image_url": { "oneOf": [{ "type": "string" }, { "type": "object", "additionalProperties": true }] },
+          "detail": { "type": "string", "enum": ["auto", "low", "high"] },
+          "video_url": { "oneOf": [{ "type": "string", "description": "Public HTTPS URL or video data URL." }, { "$ref": "#/components/schemas/VideoUrl" }] },
+          "file_id": { "type": "string", "description": "Opaque file IDs are not resolved for Responses video input." },
+          "file_url": { "type": "string" },
+          "file_data": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "ResponsesInputItem": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["message", "function_call", "function_call_output"] },
+          "role": { "type": "string" },
+          "content": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "$ref": "#/components/schemas/ResponsesInputContentPart" } }] }
+        },
+        "additionalProperties": true
+      },
+      "AnthropicVideoSourceBase64": {
+        "type": "object",
+        "required": ["type", "media_type", "data"],
+        "properties": {
+          "type": { "const": "base64" },
+          "media_type": { "type": "string", "pattern": "^video/" },
+          "data": { "type": "string", "contentEncoding": "base64" }
+        },
+        "additionalProperties": false
+      },
+      "AnthropicVideoSourceUrl": {
+        "type": "object",
+        "required": ["type", "url", "media_type"],
+        "properties": {
+          "type": { "const": "url" },
+          "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+          "media_type": { "type": "string", "pattern": "^video/" }
+        },
+        "additionalProperties": false
+      },
+      "AnthropicVideoBlock": {
+        "type": "object",
+        "required": ["type", "source"],
+        "properties": {
+          "type": { "const": "video" },
+          "source": { "oneOf": [{ "$ref": "#/components/schemas/AnthropicVideoSourceBase64" }, { "$ref": "#/components/schemas/AnthropicVideoSourceUrl" }] }
+        },
+        "additionalProperties": true
+      },
+      "AnthropicMessageRequest": {
+        "type": "object",
+        "required": ["model", "messages"],
+        "properties": {
+          "model": { "type": "string" },
+          "max_tokens": { "type": "integer" },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["role", "content"],
+              "properties": {
+                "role": { "type": "string", "enum": ["user", "assistant"] },
+                "content": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "oneOf": [{ "$ref": "#/components/schemas/AnthropicVideoBlock" }, { "type": "object", "additionalProperties": true }] } }] }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "AnthropicMessage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "role": { "type": "string" },
+          "model": { "type": "string" },
+          "content": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "stop_reason": { "type": ["string", "null"] },
+          "usage": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
       },
       "ChatCompletionResponse": {
         "type": "object",
@@ -8329,12 +8450,12 @@
             "description": "Alias for billing_mode."
           },
           "input": {
-            "description": "Prompt string or array of input items",
+            "description": "Prompt string or array of input items. Use an input_video content part with a video_url field for video understanding.",
             "oneOf": [
               { "type": "string" },
               {
                 "type": "array",
-                "items": { "type": "object", "additionalProperties": true }
+                "items": { "$ref": "#/components/schemas/ResponsesInputItem" }
               }
             ]
           },

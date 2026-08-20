@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-07-17
+Last updated: 2026-08-13
 
 GOAL
 Equip developers to call the NanoGPT API for chat, Advisor consultations, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -22,7 +22,7 @@ REQUIRED PACKAGES AND VERSIONS
 
 CORE CONCEPTS
 - API base https://nano-gpt.com/api hosts OpenAI-style chat/completions/embeddings plus /v1/audio/speech; Anthropic /v1/messages lives at https://nano-gpt.com/v1/messages.
-- Batch API base https://api.nano-gpt.com/api/v1 hosts /files and /batches for asynchronous OpenAI-compatible chat completion jobs. Use api.nano-gpt.com for file upload, batch creation, polling, cancellation, and output downloads; do not use nano-gpt.com for batch uploads.
+- Batch API base https://api.nano-gpt.com/api/v1 hosts /files and /batches for asynchronous /v1/chat/completions and /v1/responses jobs. The smaller inline workflow is at https://api.nano-gpt.com/api/beta/batches. Use api.nano-gpt.com for file upload, batch creation, polling, cancellation, and output downloads; do not use nano-gpt.com for batch uploads.
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
 - Accountless x402: selected endpoints can be quoted by sending the initial API request without Authorization or x-api-key and with x-x402: true. NanoGPT returns 402 Payment Required with available payment options and a top-level payment quote. Unauthenticated requests without x-x402: true are normal unauthenticated requests and return 401 missing_api_key. Check GET /api/v1/x402/endpoints for the supported matrix; stable public endpoints include non-streaming chat completions, non-streaming responses, image generations, JSON image edits, /api/v1/data/web/search, and /api/v1/data/url/scrape.
 - Compatibility: NanoGPT accepts many standard OpenAI request fields, including seed, for sync and streaming calls, but parameter support and behavior vary by model and provider route. Unsupported fields may be ignored by the upstream provider.
@@ -66,7 +66,7 @@ HARD RULES AND GOTCHAS
 - Memory replaces the entire history with a compressed summary; send the up-to-date messages each turn and avoid mixing original transcripts with memory output.
 - BYOK requests skip fallback providers; warn developers that misconfigured downstream keys return provider errors directly without NanoGPT failover.
 - Inline moderation is input-only and API-key-only. Accountless x402/exact-payment requests with moderation return inline_moderation_requires_api_key. Unsupported or uninspectable image inputs fail closed with unsupported_moderation_input.
-- Batch API JSONL rows must use method POST, url /v1/chat/completions, unique custom_id values, body.messages, body.model, and body.max_tokens or body.max_completion_tokens. All rows in one batch must use the same model and model family; do not mix GPT, Claude, and Gemini rows. Streaming, tools/functions, response_format, audio, and non-image multimodal bodies are not supported.
+- Batch API JSONL rows must use method POST, a unique custom_id, and url /v1/chat/completions or /v1/responses. Every row in one batch must use the same endpoint and model. Chat rows require messages plus max_tokens or max_completion_tokens. Responses rows require input plus max_output_tokens >= 16, support direct OpenAI models only, and run statelessly with store false. Responses Batch supports function/custom tools, text.format structured output, and remote/data-URL images, but not stateful fields, provider-hosted tools, file references, or NanoGPT-only extensions. All batches are non-streaming.
 - Advisor is initially non-streaming and restricted to platform-billed pay-as-you-go API-key requests. auto mode permits zero or one consultation; required mode requires one valid consultation attempt, not guaranteed successful advice. Each completed executor, advisor, and continuation phase is billed separately.
 - Do not combine Advisor with client tools, structured output, Fusion, BYOK, subscriptions, Private Mode, x402/L402, inline moderation, Context Memory, server-side web search, URL scraping, YouTube transcript enhancements, or Responses background mode.
 
@@ -101,7 +101,7 @@ run().catch((err) => {
 ```
 
 BATCH API MINIMAL
-Use asynchronous batches for high-volume offline chat completion jobs where latency is not important. Supported rows target /v1/chat/completions for supported GPT, Claude, and Gemini models, including text and image_url inputs.
+Use asynchronous batches for high-volume offline Chat Completions or Responses API jobs where latency is not important. All rows in one batch must use the same endpoint and model.
 
 ```bash
 cat > batch.jsonl <<'JSONL'
@@ -280,6 +280,19 @@ const visionReply = await client.chat.completions.create({
 });
 console.log(visionReply.choices[0]?.message.content);
 ```
+
+VIDEO INPUT
+Video understanding is supported on /api/v1/chat/completions, /api/v1/responses, and /api/v1/messages when the selected text or multimodal model advertises video input. This is unrelated to video generation.
+
+Discover compatibility first with GET /api/v1/models?detailed=true. Look for architecture.input_modalities containing "video" and/or capabilities.video_input: true. Automatic fallback keeps only routes that preserve video input.
+
+Use the endpoint's canonical content shape:
+
+- Chat Completions: { type: 'video_url', video_url: { url: 'https://...', detail: 'auto' } }
+- Responses: { type: 'input_video', video_url: 'https://...' }
+- Anthropic Messages: { type: 'video', source: { type: 'url', url: 'https://...', media_type: 'video/mp4' } } or a base64 source with source.data.
+
+Sources may be public HTTPS URLs or inline video data/base64 in the endpoint's established shape. Do not use opaque file_id references for Responses video input; unresolved IDs return video_file_id_not_supported. Video input is unsupported in Responses Batch. Segment offsets are validated but no current public text-model route can honor them. YouTube pass-through is route-dependent; NanoGPT does not download or scrape YouTube for video understanding.
 
 PROMPT CACHING
 NanoGPT uses implicit caching automatically on providers that support it (including OpenAI, Gemini, and many open-source provider routes).

@@ -1,0 +1,157 @@
+---
+title: "Video Input"
+description: "Send videos to compatible text and multimodal models through Chat Completions, Responses, or Messages."
+---
+
+Video input lets compatible text and multimodal models understand a video. It is separate from [video generation](/api-reference/endpoint/video-generation): this guide covers video sent as input, not video creation, editing, or video-to-video generation.
+
+## Choose a compatible model
+
+Request the detailed model catalog and select a model that advertises video input:
+
+```http
+GET /api/v1/models?detailed=true
+```
+
+Look for additive capability fields such as:
+
+```json
+{
+  "architecture": { "input_modalities": ["text", "image", "video"] },
+  "capabilities": { "video_input": true }
+}
+```
+
+An explicitly selected model without video capability is rejected before provider dispatch and billing. Automatic fallback keeps only routes that preserve video input.
+
+## Chat Completions
+
+Use the canonical OpenAI-compatible `video_url` content part with `POST /api/v1/chat/completions`:
+
+```json
+{
+  "model": "google/gemini-3.1-flash-lite",
+  "messages": [{
+    "role": "user",
+    "content": [
+      { "type": "text", "text": "Describe this clip." },
+      {
+        "type": "video_url",
+        "video_url": {
+          "url": "https://cdn.example.com/clip.mp4",
+          "detail": "auto"
+        }
+      }
+    ]
+  }]
+}
+```
+
+`video_url.url` may be a public HTTPS URL or a `data:video/*;base64,...` URL. `detail` accepts `auto`, `low`, or `high` where the selected route supports it.
+
+The endpoint accepts compatibility aliases (`input_video`, direct `video`, and safely identifiable `input_file`/`file` blocks), but new integrations should emit `video_url`. A file block is classified as video only when NanoGPT can identify it from a `video/*` MIME type, a video data URL, or a recognized video filename/URL extension. Do not use an opaque file reference for video.
+
+See [Chat Completions](/api-reference/endpoint/chat-completion#video-input) for endpoint-specific examples.
+
+## Responses
+
+Use `input_video` inside a message content array with `POST /api/v1/responses`:
+
+```json
+{
+  "model": "google/gemini-3.1-flash-lite",
+  "input": [{
+    "type": "message",
+    "role": "user",
+    "content": [
+      { "type": "input_text", "text": "Summarize the action." },
+      {
+        "type": "input_video",
+        "video_url": "data:video/mp4;base64,AAAA..."
+      }
+    ]
+  }]
+}
+```
+
+Chat-style `video_url` is accepted as a compatibility alias. `input_file` is accepted as video only when its MIME type, data URL, or recognized filename/URL extension safely identifies video. PDFs, audio files, and unknown or opaque files are not silently treated as video. An opaque `file_id` is not resolved for Responses video input and returns `video_file_id_not_supported`.
+
+Responses Batch is separate and currently rejects video inputs. This change does not add video support to Batch.
+
+See [Responses](/api-reference/endpoint/responses#video-input) for the full endpoint contract.
+
+## Anthropic Messages
+
+Use an Anthropic `video` content block with `POST /api/v1/messages`. For inline bytes, use the base64 source form:
+
+```json
+{
+  "model": "google/gemini-3.1-flash-lite",
+  "max_tokens": 512,
+  "messages": [{
+    "role": "user",
+    "content": [
+      { "type": "text", "text": "What happens in this clip?" },
+      {
+        "type": "video",
+        "source": {
+          "type": "base64",
+          "media_type": "video/mp4",
+          "data": "AAAA..."
+        }
+      }
+    ]
+  }]
+}
+```
+
+For URL transport, use:
+
+```json
+{
+  "type": "video",
+  "source": {
+    "type": "url",
+    "url": "https://cdn.example.com/clip.mp4",
+    "media_type": "video/mp4"
+  }
+}
+```
+
+A `document` compatibility block with a `video/*` source is normalized as video. A document with `application/pdf` remains a document. Use `type: "video"` for new integrations.
+
+See [Messages](/api-reference/endpoint/messages#video-block) for endpoint-specific examples.
+
+## Sources, limits, and security
+
+- Public remote sources must use HTTPS. Plain HTTP and other schemes are rejected.
+- Inline sources must be valid `data:video/*;base64,...` URLs, or raw base64 in an established direct field such as Anthropic `source.data` or a video-typed `input_file.file_data`.
+- Routes that fetch or materialize video apply SSRF protections, validate the fetched content type, allow at most 2 video attachments, and limit each attachment to 20 MB by default. Provider pass-through routes may impose stricter codec, duration, or size limits.
+- NanoGPT does not publish one universal duration or token conversion limit. Video remains a distinct modality for routing and billing; when duration metadata is unavailable, a conservative estimate may be reconciled against provider-reported usage.
+
+## Segment selection
+
+`start_offset` and `end_offset` are measured in seconds and validated as finite, non-negative numbers (`end_offset` must be greater than `start_offset`). No current public text-model route can reliably honor these fields, so valid offsets return `video_segment_not_supported`; invalid ranges return `invalid_video_segment`. Do not present segment selection as supported.
+
+## YouTube URLs
+
+YouTube pass-through is model- and route-dependent. An applicable direct Gemini route may accept a public YouTube URL. A route that would need NanoGPT to fetch or materialize it returns `youtube_video_route_not_supported`. NanoGPT does not download or scrape YouTube for video input. The separate opt-in YouTube transcript feature is not video understanding.
+
+## Validation errors
+
+Video errors use the endpoint's normal OpenAI- or Anthropic-compatible error envelope. Common `400` codes include:
+
+| Code | Meaning |
+| --- | --- |
+| `video_input_not_supported` | The selected model does not support video input. |
+| `invalid_video_url_scheme` | A non-HTTPS remote source was used. Chat Completions may expose `video_attachment_url_invalid` as an established alias. |
+| `invalid_video_data_url` | The data URL is malformed or is not a video data URL. |
+| `invalid_video_base64` | Inline base64 is malformed. |
+| `invalid_video_mime_type` | An explicit non-video MIME type was used for video content. |
+| `missing_video_source` | The content block has no usable URL or data. |
+| `video_file_id_not_supported` | An unresolved uploaded-file reference was used. |
+| `video_attachment_too_large` | A materialized attachment exceeded the route limit. |
+| `video_attachment_limit_exceeded` | Too many materialized video attachments were supplied. |
+| `invalid_video_segment` | Segment offsets are invalid. |
+| `video_segment_not_supported` | The selected route cannot honor segment selection. |
+| `youtube_video_route_not_supported` | The selected route cannot accept the YouTube URL directly. |

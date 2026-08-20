@@ -87,6 +87,20 @@ When `detailed=true`, additional fields may be included per model:
 - `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
 - `distillationPolicy` — optional policy metadata indicating whether model outputs may be used for distillation or output-based training under NanoGPT's recorded model-license rules
 
+### Discovering video-capable models
+
+For multimodal input, call `GET /api/v1/models?detailed=true` and select a model whose catalog entry advertises video input. Catalog fields are additive, so inspect both the architecture modalities and capability flags when present:
+
+```json
+{
+  "id": "google/gemini-3.1-flash-lite",
+  "architecture": { "input_modalities": ["text", "image", "video"] },
+  "capabilities": { "video_input": true }
+}
+```
+
+An explicitly selected model without video capability is rejected before provider dispatch and billing. Automatic fallback keeps only routes that preserve the requested video input. See [Video Input](/api-reference/miscellaneous/video-input) for the endpoint content shapes and source rules.
+
 ### Sorting model lists
 
 `GET /api/v1/models` supports `sort=favorites` and `sort=mostused`.
@@ -133,6 +147,7 @@ Common capability flags:
 | `parallel_tool_calls` | boolean | Supports multiple tool calls in parallel |
 | `structured_output` | boolean | Supports structured/JSON output modes |
 | `pdf_upload` | boolean | Supports PDF/document inputs |
+| `video_input` | boolean | Supports video inputs for text or multimodal understanding |
 
 ## Authentication
 
@@ -197,7 +212,8 @@ Enhanced format with model descriptions, context lengths, and pricing:
         "tool_calling": true,
         "parallel_tool_calls": true,
         "structured_output": true,
-        "pdf_upload": true
+        "pdf_upload": true,
+        "video_input": true
       },
       "pricing": {
         "prompt": 2.50,

@@ -16,7 +16,7 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
 - Background (async) processing for long-running requests
 - Response storage and retrieval
 - Function/tool calling support
-- Multimodal inputs (images, files) for supported models
+- Multimodal inputs (images, video, files) for supported models
 
 <Note>
   **Recommended base URL:** Use `https://api.nano-gpt.com/api/v1` for Responses API clients. This dedicated API host accepts request bodies up to NanoGPT's 32 MiB application limit and avoids the smaller ingress limit on the website host. It is especially important for Codex and other long-running agents that resend accumulated conversation state.
@@ -63,7 +63,7 @@ If you receive `401 missing_api_key` immediately, check that the initial quote r
 
 ## Batch processing
 
-For high-volume work that does not need an immediate response, `/v1/responses` requests can be submitted through the [Batch API](/api-reference/endpoint/batches). Responses batches are non-streaming, stateless, use direct OpenAI models, and run with `store: false`. Function and custom tools, structured text output, and remote or data-URL images are supported; stateful features, provider-hosted tools, file references, and NanoGPT-only request extensions are not.
+For high-volume work that does not need an immediate response, `/v1/responses` requests can be submitted through the [Batch API](/api-reference/endpoint/batches). Responses batches are non-streaming, stateless, use direct OpenAI models, and run with `store: false`. Function and custom tools, structured text output, and remote or data-URL images are supported; video input remains unsupported in Responses Batch. Stateful features, provider-hosted tools, file references, and NanoGPT-only request extensions are not.
 
 ## BYOK Encryption (Stored Responses)
 
@@ -301,6 +301,7 @@ Content can be a string or an array of content parts:
 | --- | --- |
 | `input_text` | Text input |
 | `input_image` | Image input (via URL or file_id) |
+| `input_video` | Video input (via HTTPS URL or video data URL) |
 | `input_file` | File input |
 | `output_text` | Text output (includes annotations/logprobs) |
 | `refusal` | Model refusal |
@@ -316,6 +317,33 @@ Content can be a string or an array of content parts:
 ```
 
 The `detail` parameter can be: `auto`, `low`, or `high`.
+
+#### Video Input
+
+Use `input_video` for video understanding on a model that advertises video input:
+
+```json
+{
+  "model": "google/gemini-3.1-flash-lite",
+  "input": [{
+    "type": "message",
+    "role": "user",
+    "content": [
+      { "type": "input_text", "text": "Summarize the action." },
+      {
+        "type": "input_video",
+        "video_url": "data:video/mp4;base64,AAAA..."
+      }
+    ]
+  }]
+}
+```
+
+`video_url` may be a public HTTPS URL or a valid `data:video/*;base64,...` URL. Chat-style `video_url` content parts are accepted as a compatibility alias, but `input_video` is the canonical Responses shape.
+
+`input_file` is treated as video only when NanoGPT can safely identify it from a `video/*` MIME type, video data URL, or recognized video filename/URL extension. PDFs, audio files, and unknown or opaque files are not silently treated as video. An opaque `file_id` is not resolved for Responses video input; it returns `video_file_id_not_supported`.
+
+Video is currently rejected in Responses Batch. Segment offsets are validated but no current public text-model route can honor them; valid offsets return `video_segment_not_supported`.
 
 #### Function Call Item
 
@@ -1216,6 +1244,10 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
     ]
   }'
 ```
+
+### Video Input (Understanding)
+
+Video input is separate from video generation and is available only on models advertising video capability. See the [Video Input guide](/api-reference/miscellaneous/video-input) for source rules, limits, YouTube behavior, and validation errors.
 
 ### JSON Output
 
