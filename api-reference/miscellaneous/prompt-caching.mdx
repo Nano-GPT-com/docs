@@ -340,6 +340,12 @@ Best practices:
 - Keep cached content identical across requests (no timestamps, request IDs, or dynamic inserts).
 - Put dynamic content after the cache boundary (typically the latest user message).
 
+### Large tool catalogs and hosted search
+
+An eagerly loaded function catalog is part of the initial prompt prefix. Adding, removing, or changing any eager definition changes that prefix and can prevent reuse of the earlier cached prompt.
+
+On compatible Responses models, [hosted tool search](/api-reference/miscellaneous/hosted-tool-search) keeps a small search-tool definition in the initial prefix and reveals relevant functions later. This can reduce initial input tokens and improve the opportunity for cache reuse across catalog changes. It does not guarantee a cache hit: exact-prefix rules, minimum token thresholds, TTLs, and the selected model route still apply.
+
 Behavior:
 
 - On cache hit, TTL resets.

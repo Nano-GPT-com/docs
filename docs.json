@@ -104,6 +104,7 @@
           "api-reference/miscellaneous/streaming-protocol",
           "api-reference/miscellaneous/request-compression",
           "api-reference/miscellaneous/tool-calling-diagnostics",
+          "api-reference/miscellaneous/hosted-tool-search",
           "api-reference/miscellaneous/advisor",
           "api-reference/miscellaneous/video-input",
           "api-reference/miscellaneous/prompt-caching",

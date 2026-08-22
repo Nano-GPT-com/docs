@@ -6,6 +6,37 @@ The NanoGPT API allows you to generate text, images and video using any AI model
 
 ## Endpoints
 
+### Hosted Tool Search (POST /v1/responses)
+
+Compatible Responses models can discover relevant functions from a large request-scoped catalog without loading every definition into the initial prompt. Add one `nanogpt:tool_search` entry (or the `tool_search` alias) and mark deferred function tools with `defer_loading: true`.
+
+```json
+{
+  "model": "openai/gpt-5.2",
+  "input": "What is the weather in Amsterdam?",
+  "tools": [
+    { "type": "nanogpt:tool_search", "max_results": 5 },
+    {
+      "type": "function",
+      "name": "weather_forecast",
+      "description": "Get the weather forecast for a city.",
+      "parameters": {
+        "type": "object",
+        "properties": { "city": { "type": "string" } },
+        "required": ["city"]
+      },
+      "defer_loading": true
+    }
+  ]
+}
+```
+
+Search activity appears as `tool_search_call`. A selected function appears as a normal `function_call`; the client remains responsible for authorization, approval, execution, and returning `function_call_output`. Discovery never grants access to a tool.
+
+The pilot is Responses-only, supports one search entry, requires at least one deferred function, limits the complete tools array to 2,000 entries, and accepts `max_results` from 1 to 50 (default 5). It does not support `background: true`, other hosted built-ins in the same request, forced/required/none tool choice, or unsupported models. Search has no separate NanoGPT fee; normal model usage and any applicable hosted-tool charge remain billable.
+
+Full guide: https://docs.nano-gpt.com/api-reference/miscellaneous/hosted-tool-search
+
 ### Data API (GET/POST /v1/data)
 
 Unified discovery and dispatch layer for NanoGPT data tools. Use `GET /api/v1/data` to list available tools, `POST /api/v1/data/{path}` for path-style dispatch, or `POST /api/v1/data` with an `endpoint`/`id`/`type` field for body-style dispatch.

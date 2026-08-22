@@ -34,6 +34,10 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
   **Advisor extension:** Non-streaming pay-as-you-go API-key requests can include an `advisor` object so the executor model can consult one different model before returning its final answer. Use `mode: "auto"` to let the executor decide or `mode: "required"` to require a consultation attempt. Each completed model phase is billed separately. Advisor is a NanoGPT extension, not part of the standard OpenAI request schema. See [Advisor](/api-reference/miscellaneous/advisor).
 </Note>
 
+<Note>
+  **Hosted tool search:** Compatible models can discover relevant functions from large deferred catalogs. Add `nanogpt:tool_search` and mark functions with `defer_loading: true`. This pilot is Responses-only. See [Hosted tool search](/api-reference/miscellaneous/hosted-tool-search).
+</Note>
+
 ## Authentication
 
 Use an API key for normal authenticated billing:
@@ -121,7 +125,7 @@ Authorization: Bearer YOUR_API_KEY
 | `presence_penalty` | number | No | Presence penalty for sampling (-2.0 to 2.0) |
 | `frequency_penalty` | number | No | Frequency penalty for sampling (-2.0 to 2.0) |
 | `top_logprobs` | integer | No | Number of top logprobs to return (0-20) |
-| `tools` | array | No | Array of tools available to the model |
+| `tools` | array | No | Array of tools available to the model. Compatible models can use [hosted tool search](/api-reference/miscellaneous/hosted-tool-search) with deferred function definitions. |
 | `tool_choice` | string or object | No | Tool use: `auto`, `none`, `required`, `{ type: "function", name: "..." }`, or `{ type: "allowed_tools", ... }` |
 | `parallel_tool_calls` | boolean | No | Allow multiple tool calls in parallel |
 | `stream` | boolean | No | Enable streaming responses (default: false) |
@@ -400,6 +404,34 @@ Define functions that the model can call:
   "tool_choice": "auto"
 }
 ```
+
+### Hosted Tool Search
+
+For large function catalogs, add one `nanogpt:tool_search` entry (or its `tool_search` alias) and mark discoverable functions with `defer_loading: true`:
+
+```json
+{
+  "model": "openai/gpt-5.2",
+  "input": "Find the weather in Amsterdam",
+  "tools": [
+    { "type": "nanogpt:tool_search", "max_results": 5 },
+    {
+      "type": "function",
+      "name": "weather_forecast",
+      "description": "Get the weather forecast for a city",
+      "parameters": {
+        "type": "object",
+        "properties": { "city": { "type": "string" } },
+        "required": ["city"]
+      },
+      "defer_loading": true
+    }
+  ],
+  "tool_choice": "auto"
+}
+```
+
+The search activity is returned as `tool_search_call`. A selected function is still returned as a normal `function_call`; your client executes it and sends `function_call_output`. See [Hosted tool search](/api-reference/miscellaneous/hosted-tool-search) for limits, billing, authorization, and compatibility.
 
 ### Web Search Tool
 
@@ -755,6 +787,18 @@ All output items include a `status` field.
   "status": "completed"
 }
 ```
+
+#### Hosted Tool Search Call
+
+```json
+{
+  "type": "tool_search_call",
+  "id": "ts_123",
+  "status": "completed"
+}
+```
+
+This item records discovery activity. It does not execute or approve a client function. A revealed function selected by the model appears separately as `function_call`.
 
 #### Reasoning Output (reasoning-capable models)
 
@@ -1288,6 +1332,7 @@ curl https://api.nano-gpt.com/api/v1/responses/resp_abc123 \
 2. GPU-TEE streaming: Streaming is not supported for GPU-TEE models. Use `/v1/chat/completions` for these models.
 3. Background mode: Maximum duration is approximately 800 seconds.
 4. Metadata limits: Maximum 16 keys, 64 character key names, 512 character values.
+5. Hosted tool search: Available only on compatible models in foreground Responses requests. It cannot currently be combined with background mode or other hosted built-ins. See [Hosted tool search](/api-reference/miscellaneous/hosted-tool-search).
 
 <a id="service-tiers-priority" />
 

@@ -3497,7 +3497,7 @@
         }
       ],
       "post": {
-        "description": "Create a response with the OpenAI-compatible Responses API. The NanoGPT Advisor extension is available for non-streaming, foreground, platform-billed pay-as-you-go API-key requests that do not use client tools, structured output, inline moderation, BYOK, accountless payment, memory, or server-side content enhancements.",
+        "description": "Create a response with the OpenAI-compatible Responses API. Compatible models can use the Responses-only hosted tool-search pilot by adding a nanogpt:tool_search or tool_search entry and marking function tools with defer_loading: true. The NanoGPT Advisor extension is available for non-streaming, foreground, platform-billed pay-as-you-go API-key requests that do not use client tools, structured output, inline moderation, BYOK, accountless payment, memory, or server-side content enhancements.",
         "security": [
           { "bearerAuth": [] },
           { "apiKeyAuth": [] },
@@ -8433,6 +8433,44 @@
           }
         }
       },
+      "ResponsesHostedToolSearchTool": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["nanogpt:tool_search", "tool_search"],
+            "description": "Hosted tool-search type. nanogpt:tool_search is canonical; tool_search is an accepted alias."
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 5,
+            "description": "Maximum number of relevant deferred function definitions to reveal per search."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponsesFunctionTool": {
+        "type": "object",
+        "required": ["type", "name"],
+        "properties": {
+          "type": { "type": "string", "enum": ["function"] },
+          "name": { "type": "string" },
+          "description": { "type": ["string", "null"] },
+          "parameters": {
+            "type": ["object", "null"],
+            "additionalProperties": true
+          },
+          "strict": { "type": ["boolean", "null"] },
+          "defer_loading": {
+            "type": "boolean",
+            "description": "When true, keep this function out of the initial prompt and make it discoverable through hosted tool search."
+          }
+        },
+        "additionalProperties": true
+      },
       "ResponsesCreateRequest": {
         "type": "object",
         "required": ["model", "input"],
@@ -8482,8 +8520,15 @@
           },
           "tools": {
             "type": "array",
-            "description": "Function tools available to the model",
-            "items": { "type": "object", "additionalProperties": true }
+            "maxItems": 2000,
+            "description": "Tools available to the model. The Responses-only hosted tool-search pilot accepts one nanogpt:tool_search or tool_search entry plus function tools marked defer_loading: true on compatible models.",
+            "items": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/ResponsesHostedToolSearchTool" },
+                { "$ref": "#/components/schemas/ResponsesFunctionTool" },
+                { "type": "object", "additionalProperties": true }
+              ]
+            }
           },
           "tool_choice": {
             "description": "How the model should use tools",

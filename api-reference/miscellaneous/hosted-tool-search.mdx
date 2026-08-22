@@ -1,0 +1,155 @@
+---
+title: "Hosted tool search"
+description: "Let compatible models discover relevant functions from large deferred tool catalogs on demand."
+---
+
+Hosted tool search lets a compatible model search a large function catalog and load only the definitions it needs. This can reduce the input tokens used by tool definitions and helps keep the initial prompt prefix stable when the catalog changes.
+
+The pilot is available on the [Responses API](/api-reference/endpoint/responses). Add one `nanogpt:tool_search` entry (the shorter `tool_search` alias is also accepted), then mark functions that should be discovered on demand with `defer_loading: true`.
+
+<Note>
+  Hosted tool search discovers function definitions. It does not execute a client function, grant permission to use it, or bypass an approval flow.
+</Note>
+
+## How it works
+
+1. Your request includes the search tool and the complete set of functions the caller is already authorized to use.
+2. Eager functions remain visible immediately. Deferred functions are searched and revealed on demand.
+3. Search activity appears in the response as a `tool_search_call` output item.
+4. When the model selects a revealed function, it returns a normal `function_call` item.
+5. Your client executes that function under its normal authorization and approval rules, then sends a normal `function_call_output` item.
+
+NanoGPT does not search tools outside the request's authorized catalog. Tool names, descriptions, and schemas should still be treated as untrusted application input.
+
+## Request example
+
+```bash
+curl https://api.nano-gpt.com/api/v1/responses \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-5.2",
+    "input": "What is the weather in Amsterdam?",
+    "tools": [
+      {
+        "type": "nanogpt:tool_search",
+        "max_results": 5
+      },
+      {
+        "type": "function",
+        "name": "weather_forecast",
+        "description": "Get the weather forecast for a city.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": { "type": "string" }
+          },
+          "required": ["city"]
+        },
+        "defer_loading": true
+      },
+      {
+        "type": "function",
+        "name": "calendar_events_find",
+        "description": "Find calendar events.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string" }
+          }
+        },
+        "defer_loading": true
+      }
+    ]
+  }'
+```
+
+A compatible response can contain both discovery and the selected function call:
+
+```json
+{
+  "output": [
+    {
+      "type": "tool_search_call",
+      "id": "ts_123",
+      "status": "completed"
+    },
+    {
+      "type": "function_call",
+      "id": "fc_123",
+      "call_id": "call_abc123",
+      "name": "weather_forecast",
+      "arguments": "{\"city\":\"Amsterdam\"}",
+      "status": "completed"
+    }
+  ]
+}
+```
+
+Execute `weather_forecast` in your application only after applying the same authorization and approval checks you use for eager tools. Return its result with a normal `function_call_output` continuation.
+
+## `tool_choice`
+
+Hosted tool search supports:
+
+- Omitted `tool_choice`
+- `"auto"`
+- A Responses `allowed_tools` choice
+
+It cannot be combined with `"none"`, `"required"`, or a forced function choice. These combinations return `tool_search_tool_choice_conflict` instead of silently changing the request.
+
+If you use `allowed_tools`, the allowlist must remain consistent with the functions the caller is authorized to use. Discovery never expands that authorization boundary.
+
+## Limits and compatibility
+
+| Limit | Current pilot behavior |
+| --- | --- |
+| API | Responses API only |
+| Search entries | Exactly one when deferred functions are present |
+| Deferred functions | At least one |
+| Complete `tools` array | Maximum 2,000 entries |
+| `max_results` | Integer from 1 to 50; default 5 |
+| Tool names | Unique, case-insensitively |
+| Background requests | `background: true` is not supported |
+| Other hosted tools | Cannot be mixed with web search, X search, MCP, namespace, or other hosted built-ins in the pilot |
+| Model support | Capability-dependent; unsupported models fail explicitly |
+
+The search entry itself cannot set `defer_loading: true`. Chat Completions and Anthropic Messages do not support this NanoGPT hosted-search contract and return `tool_search_api_not_supported` when it is requested.
+
+Existing MCP integrations remain available outside this pilot. If your client converts already-authorized MCP definitions into ordinary Responses function tools, those function definitions can participate in hosted search; the client remains responsible for execution, credentials, authorization, and approval. Do not include MCP credentials in function names, descriptions, or schemas.
+
+Use [`GET /api/v1/agent-capabilities`](https://nano-gpt.com/api/v1/agent-capabilities) and inspect `toolSearch` for the current public contract, aliases, API support, and limits. Model support is still evaluated per request.
+
+## Prompt caching
+
+Sending every function eagerly makes the full catalog part of the initial prompt prefix. Adding, removing, or editing an eager definition changes that prefix.
+
+With hosted search, the small search-tool definition stays in the initial prefix and relevant deferred definitions are revealed later. This improves the opportunity for prompt-cache reuse and usually reduces initial input tokens for large catalogs. It does not guarantee a cache hit: model/provider thresholds, TTLs, routing, and exact-prefix requirements still apply.
+
+## Billing
+
+Hosted search has no separate NanoGPT fee. Normal model input and output usage remains billable, including model work involved in discovery. Any applicable hosted-tool charge is also included in normal request accounting.
+
+Usage and `x_nanogpt_pricing` continue to follow the normal Responses contract. Search rounds are bounded by the platform, and the request fails rather than entering an unbounded discovery loop.
+
+## Errors
+
+Errors use the standard NanoGPT error envelope. Hosted-search validation can return:
+
+| Code | Meaning |
+| --- | --- |
+| `tool_search_required` | A function uses `defer_loading` without a search entry |
+| `deferred_tools_required` | A search entry has no deferred function to search |
+| `duplicate_tool_search` | More than one search entry was supplied |
+| `duplicate_tool_name` | Function names collide case-insensitively |
+| `invalid_defer_loading` | `defer_loading` is not a boolean |
+| `tool_search_cannot_be_deferred` | The search entry itself is deferred |
+| `invalid_tool_search_max_results` | `max_results` is outside the integer range 1–50 |
+| `tool_search_catalog_too_large` | The complete tools array exceeds 2,000 entries |
+| `tool_search_tool_choice_conflict` | `tool_choice` would prevent or force a conflicting call |
+| `tool_search_model_not_supported` | The selected model cannot perform hosted search |
+| `tool_search_api_not_supported` | The request uses an unsupported API surface |
+| `tool_search_background_not_supported` | Hosted search was combined with background mode |
+| `tool_search_mixed_hosted_tools_not_supported` | The pilot was mixed with another hosted or non-function tool type |
+
+No match is a valid search outcome. The model may search again within platform limits, answer without a function, or return an ordinary incomplete/failed response. Clients should handle cancellation and partial streams using the normal [streaming protocol](/api-reference/miscellaneous/streaming-protocol).

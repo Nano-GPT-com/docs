@@ -1,9 +1,9 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-08-13
+Last updated: 2026-08-22
 
 GOAL
-Equip developers to call the NanoGPT API for chat, Advisor consultations, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
+Equip developers to call the NanoGPT API for chat, Advisor consultations, hosted tool search, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
 
 STYLE FOR ANSWERS
 - Prefer TypeScript (Node 18+) with openai@^5.8.0 and baseURL set to https://nano-gpt.com/api.
@@ -36,6 +36,7 @@ CORE CONCEPTS
 - Reasoning and pricing: request reasoning via the reasoning object, read delta.reasoning in streams, and handle x_nanogpt_pricing as an extension object on final streaming chunks or non-stream JSON responses.
 - Usage API: GET /api/v1/usage returns aggregate spend, refund, request, and token usage for the authenticated API key by UTC day, public model label, or both. It does not expose prompts, responses, raw transaction rows, provider routing, or account-wide usage across multiple keys.
 - Responses API retention: stored /v1/responses records are retained up to 7 days by default when storage is enabled. Set store: false to disable stored Responses API data for a request. For stored requests, override retention with retentionDays or retention_days (integer 0..365); 0 means do not retain stored response data. User/team defaults exist via API endpoints, not the main web Settings UI.
+- Hosted tool search: compatible models on POST /api/v1/responses can discover relevant functions from large request-scoped catalogs. Add one nanogpt:tool_search (canonical) or tool_search entry and mark deferred function tools with defer_loading: true. The client still authorizes, approves, executes, and returns function_call_output for selected functions.
 - Caching and memory: most providers use implicit caching automatically when supported; top-level caching: true or model suffix :caching/:cache/:cached routes to a cache-capable provider and defaults to stickyprovider: true; prompt_caching/cache_control is for explicit Claude cache controls (5m or 1h TTL), and memory compression replaces prior turns before dispatch.
 - Inline moderation: authenticated API-key callers can send moderation: true or moderation: <model-id> on supported text, image, and video generation routes to run a paid input safety preflight before provider dispatch. It charges separately, blocks flagged input with content_policy_violation, and does not moderate generated outputs.
 - Advisor: set a top-level advisor object on POST /api/v1/chat/completions or POST /api/v1/responses to let the executor consult one different, client-selected model before its final answer. This is a NanoGPT request extension, not a model ID or OpenRouter's openrouter:advisor tool shape.
@@ -46,6 +47,7 @@ GLOSSARY
 - Sofya: web search with extracted page content via :online/sofya ($0.01575); POST /api/web also supports Sofya search, URL fetch, field extraction, and multi-source research operations.
 - Polychat memory: hierarchical compression invoked by :memory suffix or memory header; stores 1-365 day summaries and replaces conversation history.
 - Prompt caching: implicit for providers that support it (including OpenAI, Gemini, and many open-source provider routes); top-level caching: true or :caching/:cache/:cached is capability-based provider routing, not cache annotation; automatic cache-affinity routing uses request shape plus user/API-key or session identity where useful but does not add explicit cache-write annotations; explicit controls via prompt_caching/promptCaching/cache_control are mainly for Claude and support optional cutAfterMessageIndex.
+- Hosted tool search: a Responses-only pilot that keeps deferred function definitions out of the initial prompt and reveals relevant definitions on demand. Search activity appears as tool_search_call; selected client functions use the normal function_call/function_call_output flow.
 - Distillation policy: API-only metadata indicating whether model or provider-route outputs may be used for output-based model training or distillation under NanoGPT's recorded model-license and provider-terms rules. Status values are allowed, disallowed, and unknown.
 - Reasoning stream: delta.reasoning text emitted by reasoning-enabled models; reasoning_details provides structured metadata when available.
 - x_nanogpt_pricing: billing extension object with stable core fields (amount, currency, sanitized error) plus provider-dependent optional metadata (cost, paymentSource, token counters, team billing flags).
@@ -69,6 +71,9 @@ HARD RULES AND GOTCHAS
 - Batch API JSONL rows must use method POST, a unique custom_id, and url /v1/chat/completions or /v1/responses. Every row in one batch must use the same endpoint and model. Chat rows require messages plus max_tokens or max_completion_tokens. Responses rows require input plus max_output_tokens >= 16, support direct OpenAI models only, and run statelessly with store false. Responses Batch supports function/custom tools, text.format structured output, and remote/data-URL images, but not stateful fields, provider-hosted tools, file references, or NanoGPT-only extensions. All batches are non-streaming.
 - Advisor is initially non-streaming and restricted to platform-billed pay-as-you-go API-key requests. auto mode permits zero or one consultation; required mode requires one valid consultation attempt, not guaranteed successful advice. Each completed executor, advisor, and continuation phase is billed separately.
 - Do not combine Advisor with client tools, structured output, Fusion, BYOK, subscriptions, Private Mode, x402/L402, inline moderation, Context Memory, server-side web search, URL scraping, YouTube transcript enhancements, or Responses background mode.
+- Hosted tool search is Responses-only. Chat Completions and Messages reject it. Include exactly one search entry and at least one deferred function; the complete tools array is limited to 2,000 entries and max_results is 1..50 (default 5).
+- Do not combine hosted tool search with background: true, other hosted built-ins, tool_choice none/required, or a forced function. Omit tool_choice, use auto, or use a Responses allowed_tools choice.
+- Do not treat discovery as authorization or approval. Send only functions the caller may already use, keep names unique case-insensitively, and apply normal approval checks before executing a revealed function.
 
 QUICKSTART MINIMAL
 Set up the OpenAI SDK once and call the chat completions endpoint with familiar parameters.
@@ -212,6 +217,31 @@ if (call) {
   console.log('args', call.function.arguments);
 }
 ```
+
+HOSTED TOOL SEARCH (RESPONSES ONLY)
+Use hosted tool search when a compatible model needs access to a large function catalog but should not load every definition into the initial prompt. Search has no separate NanoGPT fee; normal model input/output usage and any applicable hosted-tool charge remain billable.
+
+```bash
+curl https://api.nano-gpt.com/api/v1/responses \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"openai/gpt-5.2",
+    "input":"What is the weather in Amsterdam?",
+    "tools":[
+      {"type":"nanogpt:tool_search","max_results":5},
+      {
+        "type":"function",
+        "name":"weather_forecast",
+        "description":"Get the weather forecast for a city.",
+        "parameters":{"type":"object","properties":{"city":{"type":"string"}},"required":["city"]},
+        "defer_loading":true
+      }
+    ]
+  }'
+```
+
+Handle tool_search_call as discovery telemetry, not an executable function. Execute only a returned function_call that passes the client's existing authorization and approval checks, then send function_call_output normally. Check GET /api/v1/agent-capabilities under toolSearch for the current public limits and aliases; unsupported models fail explicitly.
 
 MEMORY AND SEARCH
 Combine Polychat memory with Linkup search by opting into the suffix and optional headers.
@@ -561,6 +591,7 @@ LINKS
 - api-reference/endpoint/batches
 - api-reference/endpoint/data-api
 - [Advisor](https://docs.nano-gpt.com/api-reference/miscellaneous/advisor.md): Let one model consult a different second model before producing its final answer.
+- [Hosted tool search](https://docs.nano-gpt.com/api-reference/miscellaneous/hosted-tool-search.md): Let compatible models discover relevant functions from large deferred catalogs on demand.
 - docs/reasoning.md
 - docs/v1/models.md
 - memory.md
