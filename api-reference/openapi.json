@@ -8520,7 +8520,6 @@
           },
           "tools": {
             "type": "array",
-            "maxItems": 2000,
             "description": "Tools available to the model. The Responses-only hosted tool-search pilot accepts one nanogpt:tool_search or tool_search entry plus function tools marked defer_loading: true on compatible models.",
             "items": {
               "anyOf": [

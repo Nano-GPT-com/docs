@@ -19,7 +19,7 @@ The pilot is available on the [Responses API](/api-reference/endpoint/responses)
 4. When the model selects a revealed function, it returns a normal `function_call` item.
 5. Your client executes that function under its normal authorization and approval rules, then sends a normal `function_call_output` item.
 
-NanoGPT does not search tools outside the request's authorized catalog. Tool names, descriptions, and schemas should still be treated as untrusted application input.
+Search is limited to the function definitions submitted in the request. Callers must submit only functions the user is authorized to use. Tool names, descriptions, and schemas should still be treated as untrusted application input.
 
 ## Request example
 
@@ -28,7 +28,7 @@ curl https://api.nano-gpt.com/api/v1/responses \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "openai/gpt-5.5",
     "input": "What is the weather in Amsterdam?",
     "tools": [
       {
@@ -130,7 +130,7 @@ With hosted search, the small search-tool definition stays in the initial prefix
 
 Hosted search has no separate NanoGPT fee. Normal model input and output usage remains billable, including model work involved in discovery. Any applicable hosted-tool charge is also included in normal request accounting.
 
-Usage and `x_nanogpt_pricing` continue to follow the normal Responses contract. Search rounds are bounded by the platform, and the request fails rather than entering an unbounded discovery loop.
+Usage and `x_nanogpt_pricing` continue to follow the normal Responses contract. Use `max_tool_calls` and client-side cancellation or turn limits to bound the overall agent workflow.
 
 ## Errors
 
@@ -152,4 +152,4 @@ Errors use the standard NanoGPT error envelope. Hosted-search validation can ret
 | `tool_search_background_not_supported` | Hosted search was combined with background mode |
 | `tool_search_mixed_hosted_tools_not_supported` | The pilot was mixed with another hosted or non-function tool type |
 
-No match is a valid search outcome. The model may search again within platform limits, answer without a function, or return an ordinary incomplete/failed response. Clients should handle cancellation and partial streams using the normal [streaming protocol](/api-reference/miscellaneous/streaming-protocol).
+No match is a valid search outcome. The model may search again, answer without a function, or return an ordinary incomplete/failed response. Clients should enforce their own turn and tool-call limits, and handle cancellation and partial streams using the normal [streaming protocol](/api-reference/miscellaneous/streaming-protocol).

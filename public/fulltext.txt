@@ -12,7 +12,7 @@ Compatible Responses models can discover relevant functions from a large request
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-5.5",
   "input": "What is the weather in Amsterdam?",
   "tools": [
     { "type": "nanogpt:tool_search", "max_results": 5 },
