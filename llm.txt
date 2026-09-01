@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-08-22
+Last updated: 2026-09-01
 
 GOAL
 Equip developers to call the NanoGPT API for chat, Advisor consultations, hosted tool search, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -22,7 +22,7 @@ REQUIRED PACKAGES AND VERSIONS
 
 CORE CONCEPTS
 - API base https://nano-gpt.com/api hosts OpenAI-style chat/completions/embeddings plus /v1/audio/speech; Anthropic /v1/messages lives at https://nano-gpt.com/v1/messages.
-- Batch API base https://api.nano-gpt.com/api/v1 hosts /files and /batches for asynchronous /v1/chat/completions and /v1/responses jobs. The smaller inline workflow is at https://api.nano-gpt.com/api/beta/batches. Use api.nano-gpt.com for file upload, batch creation, polling, cancellation, and output downloads; do not use nano-gpt.com for batch uploads.
+- Batch API base https://api.nano-gpt.com/api/v1 hosts /files and /batches for asynchronous /v1/chat/completions and /v1/responses jobs. List all visible batches, including inline and file-backed jobs, with GET https://api.nano-gpt.com/api/v1/batches. The smaller inline workflow uses POST https://api.nano-gpt.com/api/beta/batches for creation, GET https://api.nano-gpt.com/api/beta/batches for a metadata-only inline list, GET /api/beta/batches/{id} for lookup, and POST /api/beta/batches/{id}/cancel for cancellation. Use api.nano-gpt.com for all batch operations; do not use nano-gpt.com for batch uploads.
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
 - Accountless x402: selected endpoints can be quoted by sending the initial API request without Authorization or x-api-key and with x-x402: true. NanoGPT returns 402 Payment Required with available payment options and a top-level payment quote. Unauthenticated requests without x-x402: true are normal unauthenticated requests and return 401 missing_api_key. Check GET /api/v1/x402/endpoints for the supported matrix; stable public endpoints include non-streaming chat completions, non-streaming responses, image generations, JSON image edits, /api/v1/data/web/search, and /api/v1/data/url/scrape.
 - Compatibility: NanoGPT accepts many standard OpenAI request fields, including seed, for sync and streaming calls, but parameter support and behavior vary by model and provider route. Unsupported fields may be ignored by the upstream provider.
@@ -69,6 +69,8 @@ HARD RULES AND GOTCHAS
 - BYOK requests skip fallback providers; warn developers that misconfigured downstream keys return provider errors directly without NanoGPT failover.
 - Inline moderation is input-only and API-key-only. Accountless x402/exact-payment requests with moderation return inline_moderation_requires_api_key. Unsupported or uninspectable image inputs fail closed with unsupported_moderation_input.
 - Batch API JSONL rows must use method POST, a unique custom_id, and url /v1/chat/completions or /v1/responses. Every row in one batch must use the same endpoint and model. Chat rows require messages plus max_tokens or max_completion_tokens. Responses rows require input plus max_output_tokens >= 16, support direct OpenAI models only, and run statelessly with store false. Responses Batch supports function/custom tools, text.format structured output, and remote/data-URL images, but not stateful fields, provider-hosted tools, file references, or NanoGPT-only extensions. All batches are non-streaming.
+- Batch model IDs are canonical NanoGPT slugs; upstream provider IDs are implementation details and must not be submitted or documented. Discover the live set with GET /api/v1/models?detailed=true and filter for /v1/chat/completions in supported_batch_endpoints.
+- Both batch list routes accept limit (1..100, default 20), after, before, repeatable or comma-separated status, created_after, and created_before. Results are newest first. Use after=<last_id> for the next older page and before=<first_id> for the adjacent newer page, preserving all filters. after and before cannot be combined. Inline list results are metadata-only: results is always null; use the individual inline lookup route for completed result bodies.
 - Advisor is initially non-streaming and restricted to platform-billed pay-as-you-go API-key requests. auto mode permits zero or one consultation; required mode requires one valid consultation attempt, not guaranteed successful advice. Each completed executor, advisor, and continuation phase is billed separately.
 - Do not combine Advisor with client tools, structured output, Fusion, BYOK, subscriptions, Private Mode, x402/L402, inline moderation, Context Memory, server-side web search, URL scraping, YouTube transcript enhancements, or Responses background mode.
 - Hosted tool search is Responses-only. Chat Completions and Messages reject it. Include exactly one search entry and at least one deferred function; the complete tools array is limited to 2,000 entries and max_results is 1..50 (default 5).

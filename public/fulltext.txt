@@ -207,56 +207,47 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
-### Batch API (POST /v1/batches)
+### Batch API (POST/GET /v1/batches and /beta/batches)
 
-OpenAI-compatible asynchronous batch jobs for high-volume chat completion workloads where latency is not important.
+Asynchronous batch jobs for high-volume `/v1/chat/completions` and `/v1/responses` workloads where latency is not important.
 
-**Base URL:** `https://api.nano-gpt.com/api/v1`
+Use `https://api.nano-gpt.com/api/v1` for file-backed batches and `https://api.nano-gpt.com/api/beta` for smaller inline batches. Every request requires `Authorization: Bearer $NANOGPT_API_KEY`.
 
-Use `api.nano-gpt.com` for file upload, batch creation, polling, cancellation, and output downloads. Do not use `nano-gpt.com` for batch uploads, because larger multipart uploads can be rejected before they reach the Batch API.
+Submit canonical NanoGPT model slugs in every batch row. Upstream provider model IDs are internal routing details. Discover current support with `GET /api/v1/models?detailed=true` and select models whose `supported_batch_endpoints` include `/v1/chat/completions`.
 
-**Authentication:** Bearer token
+**Listing endpoints:**
+- Inline batches: `GET https://api.nano-gpt.com/api/beta/batches`
+- All batches (OpenAI-compatible): `GET https://api.nano-gpt.com/api/v1/batches`
 
-**Supported endpoints:**
-- Files: `POST /files`, `GET /files/{file_id}`, `GET /files/{file_id}/content`
-- Batches: `POST /batches`, `GET /batches/{batch_id}`, `GET /batches`, `POST /batches/{batch_id}/cancel`
+Both list routes return batches visible to the authenticated credential, newest first. They accept `limit` (1 to 100, default 20), `after`, `before`, repeatable or comma-separated `status`, `created_after`, and `created_before`.
 
-**Supported JSONL row endpoint:** `/v1/chat/completions`
+Use `after=<last_id>` to fetch the next older page and `before=<first_id>` to return to the adjacent newer page. Keep the same filters on every request. `after` and `before` cannot be combined. Creation boundaries are strict and accept Unix seconds or timezone-qualified ISO 8601/RFC 3339 timestamps with no more than millisecond precision.
 
-Batch rows support the listed GPT/OpenAI, Claude, and Gemini chat models. GPT, Claude, and Gemini batch jobs support text prompts and OpenAI-compatible `image_url` image inputs in user messages. Image URLs may be `http://`, `https://`, or base64 `data:image/...;base64,...` URLs for PNG, JPEG, GIF, and WebP.
+Supported statuses are `validating`, `in_progress`, `finalizing`, `completed`, `failed`, `expired`, `cancelling`, and `cancelled`.
 
-**Request rules:**
-- Upload files with `purpose=batch`.
-- Each JSONL row must include a unique non-empty `custom_id`.
-- Each row must use `method: "POST"` and `url: "/v1/chat/completions"`.
-- Each row must include `body.messages`, `body.model`, and `body.max_tokens` or `body.max_completion_tokens`.
-- All rows in one batch must use the same model and model family. Do not mix GPT, Claude, and Gemini rows.
-- Streaming, tools/functions, `response_format`, audio, and non-image multimodal request bodies are not supported.
-
-**Example JSONL row:**
-```jsonl
-{"custom_id":"request-1","method":"POST","url":"/v1/chat/completions","body":{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"Summarize this in one sentence."}],"max_tokens":64}}
-```
-
-**Upload:**
 ```bash
-curl https://api.nano-gpt.com/api/v1/files \
-  -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  -F purpose=batch \
-  -F file=@batch.jsonl
+curl "https://api.nano-gpt.com/api/beta/batches?limit=20&status=in_progress,completed" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+
+curl "https://api.nano-gpt.com/api/v1/batches?limit=50&status=failed&created_after=1788192000" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
-**Create batch:**
-```bash
-curl https://api.nano-gpt.com/api/v1/batches \
-  -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"input_file_id":"file_abc123","endpoint":"/v1/chat/completions","completion_window":"24h"}'
+List responses use this envelope:
+
+```json
+{
+  "object": "list",
+  "data": [],
+  "first_id": null,
+  "last_id": null,
+  "has_more": false
+}
 ```
 
-**Statuses:** `validating`, `in_progress`, `finalizing`, `completed`, `failed`, `expired`, `cancelling`, `cancelled`
+Inline list responses are metadata-only. Their `results` field is always `null`, even for completed batches. Retrieve `GET /api/beta/batches/{id}` for completed inline result bodies. The OpenAI-compatible list includes both inline and file-backed jobs and retains the standard batch shape, including file IDs and lifecycle metadata.
 
-Batch jobs use NanoGPT account balance. Subscription included-token logic is not applied. NanoGPT checks account balance against a conservative maximum liability estimate at batch creation, then bills completed usage once after the batch reaches a terminal status.
+Listing returns `400` for conflicting cursors, invalid or inaccessible cursors, unsupported statuses, invalid timestamps, and reversed creation ranges. Missing or invalid authentication returns `401`.
 
 ### Chat Completion (POST /v1/chat/completions)
 

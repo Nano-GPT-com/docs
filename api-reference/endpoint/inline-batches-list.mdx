@@ -1,0 +1,9 @@
+---
+title: 'List Inline Batches'
+openapi: 'GET /api/beta/batches'
+description: 'List authenticated inline batches with filters and bidirectional cursor pagination'
+---
+
+Inline list responses contain metadata only. The `results` field is always `null`, including for completed batches. Retrieve `GET /api/beta/batches/{batch_id}` to obtain completed inline results.
+
+See the [Batch API guide](/api-reference/endpoint/batches#list-batches) for pagination examples, filter rules, and error behavior.

@@ -48,28 +48,29 @@ Completions, embeddings, image generation, audio, video, transcription, TTS, mod
 
 ### Chat Completions batches
 
-`/v1/chat/completions` batches support selected direct OpenAI, Claude, Gemini, managed, and Fireworks Batch API models. Current managed examples include MiniMax M3, GLM 5.1 and 5.2, DeepSeek V4 Pro, and Kimi K2.7 Code.
+`/v1/chat/completions` batches support selected OpenAI, Claude, Gemini, and additional models. Always submit the canonical NanoGPT model slug; upstream routing is handled automatically.
 
-Supported Fireworks Batch API model IDs include:
+Supported canonical model slugs include:
 
-- `accounts/fireworks/models/deepseek-v4-flash`
-- `accounts/fireworks/models/deepseek-v4-pro`
-- `accounts/fireworks/models/glm-5p2`
-- `accounts/fireworks/models/gpt-oss-120b`
-- `accounts/fireworks/models/gpt-oss-20b`
-- `accounts/fireworks/models/inkling`
-- `accounts/fireworks/models/kimi-k2p6`
-- `accounts/fireworks/models/kimi-k2p7-code`
-- `accounts/fireworks/models/kimi-k3`
-- `accounts/fireworks/models/minimax-m2p7`
-- `accounts/fireworks/models/minimax-m3`
-- `accounts/fireworks/models/muse-glimmer-30b`
-- `accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b`
-- `accounts/fireworks/models/nemotron-3-ultra-nvfp4`
-- `accounts/fireworks/models/qwen3p6-plus`
-- `accounts/fireworks/models/qwen3p7-plus`
+- `deepseek/deepseek-v4-pro`
+- `z-ai/glm-5.2`
+- `openai/gpt-oss-120b`
+- `openai/gpt-oss-20b`
+- `thinkingmachines/inkling`
+- `moonshotai/kimi-k2.6`
+- `moonshotai/kimi-k2.7-code`
+- `moonshotai/kimi-k3`
+- `minimax/minimax-m2.7`
+- `minimax/minimax-m3`
+- `meta/muse-glimmer-30b`
+- `nvidia/nemotron-3.5-lightning`
+- `nvidia/nemotron-3-ultra-550b-a55b`
+- `qwen-3.6-plus`
+- `qwen3.7-plus`
 
-The `:thinking` suffix is accepted for Fireworks model IDs where a thinking variant is configured. Claude thinking aliases are also accepted for compatible models; a numeric thinking budget must be lower than `max_tokens`.
+The `:thinking` suffix is accepted where a thinking variant is configured. Claude thinking aliases are also accepted for compatible models; a numeric thinking budget must be lower than `max_tokens`.
+
+For the live list, call [`GET /api/v1/models?detailed=true`](/api-reference/endpoint/models) and select models whose `supported_batch_endpoints` include `/v1/chat/completions`.
 
 Model availability changes. Validate a small batch before submitting a large job; an unsupported model returns an `unsupported_model` error.
 
@@ -87,8 +88,8 @@ Responses rows support function and custom tools, structured text output, and re
 - `GET /files/{file_id}`
 - `GET /files/{file_id}/content`
 - `POST /batches`
-- `GET /batches/{batch_id}`
 - `GET /batches`
+- `GET /batches/{batch_id}`
 - `POST /batches/{batch_id}/cancel`
 
 ### JSONL rules
@@ -144,15 +145,11 @@ curl https://api.nano-gpt.com/api/v1/batches \
   }'
 ```
 
-### Poll, list, cancel, and download
+### Poll, cancel, and download
 
 ```bash
 # Retrieve one batch
 curl https://api.nano-gpt.com/api/v1/batches/batch_abc123 \
-  -H "Authorization: Bearer $NANOGPT_API_KEY"
-
-# List batches; optional query parameters are limit and after
-curl https://api.nano-gpt.com/api/v1/batches \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 
 # Best-effort cancellation
@@ -169,6 +166,17 @@ Batch statuses are `validating`, `in_progress`, `finalizing`, `completed`, `fail
 ## Inline API
 
 Inline batches accept up to 10,000 requests, 20 MiB of normalized input, and 250,000 aggregate requested output tokens. Use the file-backed API for larger inputs.
+
+### Endpoints
+
+- `POST /batches`
+- `GET /batches`
+- `GET /batches/{batch_id}`
+- `POST /batches/{batch_id}/cancel`
+
+All inline routes use the `https://api.nano-gpt.com/api/beta` base URL.
+
+### Create an inline batch
 
 ```bash
 curl https://api.nano-gpt.com/api/beta/batches \
@@ -189,6 +197,101 @@ curl https://api.nano-gpt.com/api/beta/batches \
 Creation returns `202 Accepted`. Poll `GET /api/beta/batches/{batch_id}` and read `results` after completion. Cancel an active job with `POST /api/beta/batches/{batch_id}/cancel`.
 
 The batch-level model is inherited by every request body. If an inline row omits its endpoint-specific output cap, NanoGPT applies a 4096-token default. File-backed rows must always include the output cap explicitly.
+
+## List batches
+
+Use the authenticated list route for the workflow you want to inspect. Each route returns only batches visible to the supplied API key, ordered newest first.
+
+| Workflow | Endpoint |
+| --- | --- |
+| Inline | `GET https://api.nano-gpt.com/api/beta/batches` |
+| All batches (OpenAI-compatible) | `GET https://api.nano-gpt.com/api/v1/batches` |
+
+Both routes support the same filters and bidirectional cursor pagination:
+
+| Parameter | Description |
+| --- | --- |
+| `limit` | Page size from 1 to 100. Defaults to 20. |
+| `after` | Return the next page of batches older than this batch ID. Pass the current page's `last_id`. |
+| `before` | Return the adjacent page of batches newer than this batch ID, still ordered newest first. Pass the current page's `first_id`. |
+| `status` | Filter by one or more statuses. Repeat the parameter or provide comma-separated values. |
+| `created_after` | Return batches created strictly after this boundary. |
+| `created_before` | Return batches created strictly before this boundary. |
+
+`after` and `before` cannot be combined. Cursors are batch IDs, not arbitrary tokens. Creation boundaries accept Unix timestamps in seconds or timezone-qualified ISO 8601/RFC 3339 timestamps with no more than millisecond precision.
+
+Supported status values are `validating`, `in_progress`, `finalizing`, `completed`, `failed`, `expired`, `cancelling`, and `cancelled`.
+
+### Filter inline batches
+
+```bash
+curl "https://api.nano-gpt.com/api/beta/batches?limit=20&status=in_progress,completed" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+You can also filter by a strict creation-time range:
+
+```bash
+curl "https://api.nano-gpt.com/api/beta/batches?created_after=2026-09-01T00:00:00Z&created_before=2026-09-02T00:00:00Z" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+### Filter all batches
+
+```bash
+curl "https://api.nano-gpt.com/api/v1/batches?limit=50&status=failed&created_after=1788192000" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+### Response and pagination
+
+Both endpoints return the standard list envelope:
+
+```json
+{
+  "object": "list",
+  "data": [],
+  "first_id": null,
+  "last_id": null,
+  "has_more": false
+}
+```
+
+- `data` is always ordered newest first.
+- `first_id` and `last_id` are `null` for an empty page.
+- To fetch older batches, send `after=<last_id>` with the same filters.
+- To return to the adjacent newer page, send `before=<first_id>` with the same filters.
+- `has_more` indicates that more records exist in the direction being paged.
+
+For example:
+
+```bash
+# Fetch the next, older page
+curl "https://api.nano-gpt.com/api/v1/batches?limit=20&status=completed&after=batch_older_cursor" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+
+# Return to the adjacent newer page
+curl "https://api.nano-gpt.com/api/v1/batches?limit=20&status=completed&before=batch_newer_cursor" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+<Warning>
+  Inline list responses contain metadata only. `results` is always `null`, including for completed batches. Retrieve `GET /api/beta/batches/{batch_id}` to obtain a completed inline batch's results.
+</Warning>
+
+Inline list items include `id`, `object`, `endpoint`, `model`, `completion_window`, `status`, `created_at`, `finalized_at`, `request_counts`, `usage`, `error`, and a `results` field that is always `null`.
+
+The OpenAI-compatible list includes both inline and file-backed jobs. Its items retain the standard batch shape, including `input_file_id`, `output_file_id`, `error_file_id`, lifecycle timestamps, `request_counts`, `metadata`, `usage`, and `errors` where applicable.
+
+### Listing errors
+
+Both list routes return:
+
+- `401` for missing or invalid authentication.
+- `400` when `after` and `before` are both present.
+- `400` for an unknown or inaccessible cursor. The inline-only route also rejects a cursor that identifies a non-inline batch. A cursor does not need to match the active filters; it only supplies the page boundary.
+- `400` for an unsupported `status` value.
+- `400` for an invalid creation timestamp or a reversed creation-time range.
 
 ## Responses Batch restrictions
 

@@ -1,0 +1,9 @@
+---
+title: 'List All Batches'
+openapi: 'GET /api/v1/batches'
+description: 'List all authenticated batches with filters and bidirectional cursor pagination'
+---
+
+This OpenAI-compatible list includes both inline and file-backed jobs. Items retain the standard batch shape, including file IDs, lifecycle timestamps, request counts, metadata, usage, and errors where applicable.
+
+See the [Batch API guide](/api-reference/endpoint/batches#list-batches) for pagination examples, filter rules, and error behavior.
