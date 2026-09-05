@@ -31,7 +31,7 @@ curl -i https://nano-gpt.com/api/v1/images/edits \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
-    "model": "gpt-image-1",
+    "model": "gpt-image-2",
     "prompt": "Remove the background",
     "imageDataUrl": "data:image/png;base64,..."
   }'
@@ -62,7 +62,7 @@ Other image-generation parameters may pass through when supported by the selecte
 ```bash
 curl -X POST https://nano-gpt.com/api/v1/images/edits \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  -F model=gpt-image-1 \
+  -F model=gpt-image-2 \
   -F prompt="Remove the background" \
   -F image=@product.png \
   -F size=1024x1024
@@ -73,7 +73,7 @@ curl -X POST https://nano-gpt.com/api/v1/images/edits \
 ```bash
 curl -X POST https://nano-gpt.com/api/v1/images/edit \
   -H "x-api-key: $NANOGPT_API_KEY" \
-  -F model=gpt-image-1 \
+  -F model=gpt-image-2 \
   -F prompt="Combine these references into one product image" \
   -F "image[]=@reference-1.png" \
   -F "image[]=@reference-2.jpg"
@@ -85,7 +85,7 @@ Send JSON when you already have images as data URLs.
 
 ```json
 {
-  "model": "gpt-image-1",
+  "model": "gpt-image-2",
   "prompt": "Remove the background",
   "imageDataUrl": "data:image/png;base64,...",
   "maskDataUrl": "data:image/png;base64,..."
@@ -96,7 +96,7 @@ Send JSON when you already have images as data URLs.
 
 ```json
 {
-  "model": "gpt-image-1",
+  "model": "gpt-image-2",
   "prompt": "Combine these references into one product image",
   "imageDataUrls": [
     "data:image/png;base64,...",

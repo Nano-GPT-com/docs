@@ -15,7 +15,7 @@ The NanoGPT MCP server provides the following tools:
 |------|-------------|
 | `nanogpt_chat` | Send chat messages to any AI model available on NanoGPT |
 | `nanogpt_get_balance` | Check your account balance (USD and Nano) |
-| `nanogpt_image_generate` | Generate images using DALL-E, Flux, Midjourney, and more |
+| `nanogpt_image_generate` | Generate images using GPT Image 2 and other supported models |
 | `nanogpt_web_search` | Search the web for current information |
 | `nanogpt_scrape_urls` | Extract content from web pages |
 | `nanogpt_youtube_transcribe` | Get transcripts from YouTube videos |
@@ -88,11 +88,13 @@ claude mcp add nanogpt --scope user \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `NANOGPT_TIMEOUT_MS` | `600000` (10 min) | Request timeout in milliseconds |
-| `NANOGPT_DEFAULT_MODEL` | `claude-sonnet-4-5-20250929` | Default model for chat requests |
+| `NANOGPT_DEFAULT_MODEL` | Package-dependent | Default model for chat requests; set to `anthropic/claude-sonnet-5` for our recommended configuration |
 | `NANOGPT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
 | `NANOGPT_BASE_URL` | `https://nano-gpt.com` | Base URL for the NanoGPT API |
 | `NANOGPT_AUTH_MODE` | `bearer` | Auth mode: `bearer`, `x-api-key`, or `both` |
 | `NANOGPT_MAX_RETRIES` | `0` | Number of retry attempts |
+
+Set `NANOGPT_DEFAULT_MODEL=anthropic/claude-sonnet-5` in your MCP client configuration to use Claude Sonnet 5 for chat requests that omit `model`. Installed package versions can have older built-in defaults.
 
 ## Usage Examples
 
@@ -137,7 +139,7 @@ Send a chat completion request to an AI model.
 
 **Parameters:**
 - `messages` (required): Array of message objects with `role` ("system", "user", "assistant") and `content`
-- `model` (optional): Model ID (defaults to Claude Sonnet 4.5)
+- `model` (optional): Model ID (uses `NANOGPT_DEFAULT_MODEL` when omitted)
 - `temperature` (optional): Sampling temperature (0-2)
 - `max_tokens` (optional): Maximum tokens in response
 
@@ -168,7 +170,7 @@ Generate images from text prompts.
 
 **Parameters:**
 - `prompt` (required): Text description of the image to generate
-- `model` (optional): Image model to use (e.g., "dall-e-3", "flux-pro")
+- `model` (optional): Image model to use (e.g., "gpt-image-2")
 - `n` (optional): Number of images to generate (1-10)
 - `size` (optional): Image size (e.g., "1024x1024")
 - `quality` (optional): Image quality setting
@@ -177,7 +179,7 @@ Generate images from text prompts.
 ```json
 {
   "prompt": "A serene mountain landscape at dawn",
-  "model": "flux-pro",
+  "model": "gpt-image-2",
   "size": "1024x1024"
 }
 ```

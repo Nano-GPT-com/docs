@@ -83,9 +83,9 @@ On first launch, the CLI may prompt you to select a theme or complete authentica
 Once connected, you can use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing), including:
 
 - `google/gemini-3-pro-preview`
-- `google/gemini-3-flash-preview`
+- `google/gemini-3.7-flash`
 - <code>{exampleTextModel}</code>
-- `anthropic/claude-opus-4.5`
+- `anthropic/claude-opus-5`
 
 ## Optional: Verify Your Connection
 
@@ -94,7 +94,7 @@ curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer sk-nano-YOUR-API-KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "google/gemini-3-flash-preview",
+    "model": "google/gemini-3.7-flash",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
