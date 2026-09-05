@@ -7,9 +7,11 @@ Management tokens let you automate account tasks without sharing your inference 
 
 ## Create a token
 
-1. Sign in to NanoGPT and open [Settings → Security → Management API tokens](https://nano-gpt.com/settings#management-api-tokens).
+1. Open [Settings → Security → Management API tokens](https://nano-gpt.com/settings#management-api-tokens).
 2. Select **New token**, enter a name, and choose **Usage only — view subscription quotas**.
 3. Choose an expiration and copy the secret when it is shown. It is shown only once.
+
+Registration is optional: anonymous browser sessions can create, list, and revoke management tokens too. Tokens belong to the session that creates them. Save your sign-in key before clearing browser data so you can restore access and revoke tokens later. A management token cannot restore your browser session.
 
 Tokens expire after 90 days by default (365 days maximum). You can revoke them in Settings. Store the token as a secret: anyone who has it can read the data its scopes allow. Send it in an authorization header, not a URL.
 
