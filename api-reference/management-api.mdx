@@ -64,6 +64,36 @@ The endpoint reads the token owner's personal subscription. It accepts no accoun
 
 For inference-key-specific billing advice, use the existing [Subscription Usage](/api-reference/endpoint/subscription-usage) endpoint with an inference API key. Management tokens cannot authenticate inference endpoints.
 
+## Verify a Usage only token
+
+After creating a token with only `usage:read`, check that it can read quotas:
+
+```bash
+curl --fail-with-body \
+  https://nano-gpt.com/api/management/v1/subscription/usage \
+  -H "Authorization: Bearer $NANOGPT_MANAGEMENT_TOKEN"
+```
+
+Expect `200` with the usage fields described above. An inactive subscription can
+still return a successful response; check `active`, `state`, and the quota fields
+instead of assuming that HTTP success means included usage is available.
+
+Then check its permission boundary with a read-only API-key list request:
+
+```bash
+curl -i https://nano-gpt.com/api/management/v1/api-keys \
+  -H "Authorization: Bearer $NANOGPT_MANAGEMENT_TOKEN"
+```
+
+A token with only `usage:read` must return `403` with `insufficient_scope` here.
+If it returns `200`, the token has API-key read or write permissions too; create a
+token with only **Usage only** access for your monitoring tool.
+
+Missing, invalid, expired, or revoked management tokens return `401` with
+`invalid_management_token`. To check revocation, revoke a disposable test token
+in Settings and repeat the usage request; it should return `401`. Keep the token
+out of screenshots and logs.
+
 ## Permissions
 
 | Scope | Access |
