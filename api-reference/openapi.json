@@ -15,6 +15,331 @@
     }
   ],
   "paths": {
+    "/subscription/v1/usage": {
+      "get": {
+        "operationId": "getSubscriptionUsage",
+        "summary": "Read subscription usage and routing advice",
+        "description": "Requires an inference API key. For monitoring without spending permissions, use a usage:read management token with /api/management/v1/subscription/usage. Input-token quotas count tokens, not requests.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription quotas and billing-routing advice. Unavailable counters are null with degraded=true.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": [
+                    "active",
+                    "state",
+                    "limits",
+                    "dailyInputTokens",
+                    "weeklyInputTokens",
+                    "dailyImages",
+                    "period"
+                  ],
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "grace",
+                        "inactive"
+                      ]
+                    },
+                    "limits": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "dailyInputTokens",
+                        "weeklyInputTokens",
+                        "dailyImages"
+                      ],
+                      "properties": {
+                        "dailyInputTokens": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "weeklyInputTokens": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "dailyImages": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      }
+                    },
+                    "dailyInputTokens": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "description": "Null when this quota is not configured or applicable. Unavailable counters are null with degraded=true. percentUsed is a fraction and may exceed 1. resetAt is UNIX epoch milliseconds.",
+                      "properties": {
+                        "used": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "remaining": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "percentUsed": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "resetAt": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "degraded": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "used",
+                        "remaining",
+                        "percentUsed",
+                        "resetAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "weeklyInputTokens": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "description": "Null when this quota is not configured or applicable. Unavailable counters are null with degraded=true. percentUsed is a fraction and may exceed 1. resetAt is UNIX epoch milliseconds.",
+                      "properties": {
+                        "used": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "remaining": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "percentUsed": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "resetAt": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "degraded": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "used",
+                        "remaining",
+                        "percentUsed",
+                        "resetAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "dailyImages": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "description": "Null when this quota is not configured or applicable. Unavailable counters are null with degraded=true. percentUsed is a fraction and may exceed 1. resetAt is UNIX epoch milliseconds.",
+                      "properties": {
+                        "used": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "remaining": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "percentUsed": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "resetAt": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "degraded": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "used",
+                        "remaining",
+                        "percentUsed",
+                        "resetAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "tokens": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "description": "Null when this quota is not configured or applicable. Unavailable counters are null with degraded=true. percentUsed is a fraction and may exceed 1. resetAt is UNIX epoch milliseconds.",
+                      "properties": {
+                        "used": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "remaining": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "percentUsed": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "resetAt": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "degraded": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "used",
+                        "remaining",
+                        "percentUsed",
+                        "resetAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "period": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "currentPeriodEnd"
+                      ],
+                      "properties": {
+                        "currentPeriodEnd": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "usageUnits": {
+                      "type": "string",
+                      "enum": [
+                        "tokens"
+                      ],
+                      "description": "Present for token-based trials."
+                    },
+                    "tokenLimits": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "total"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        }
+                      },
+                      "description": "Present for token-based trials."
+                    },
+                    "routing": {
+                      "type": "object",
+                      "description": "Inference-key-specific billing-policy advice. Does not check current balance, consumed nonzero spend/request caps, or provider health.",
+                      "properties": {
+                        "recommendedMode": {
+                          "type": "string",
+                          "enum": [
+                            "subscription",
+                            "paygo",
+                            "unavailable"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "subscriptionQuotaAvailable": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "paidSpendPolicyAllowsBalance": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid inference API key"
+          },
+          "429": {
+            "description": "Authentication rate limited"
+          },
+          "500": {
+            "description": "Unable to read usage"
+          },
+          "503": {
+            "description": "Authentication temporarily unavailable"
+          }
+        }
+      }
+    },
     "/api/beta/batches": {
       "servers": [
         {

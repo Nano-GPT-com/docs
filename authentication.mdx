@@ -3,7 +3,13 @@ title: "Authentication"
 description: "How to authenticate with the NanoGPT API and web app."
 ---
 
-## API Authentication (Recommended)
+## Usage monitoring and API-key management
+
+For subscription quota monitoring, create a **Usage only** [management token](/api-reference/management-api) in Settings → Security. It can read usage without permission to run models or spend your balance.
+
+Management tokens begin with `sk-nano-mgmt-` and authenticate only `/api/management/v1` endpoints. Their permissions are separate from inference API keys. Use only `usage:read` for a monitoring tool; `api_keys:write` can create spending-capable inference keys.
+
+## API Authentication (Recommended for inference)
 
 Most integrations should use an **API key**.
 
@@ -19,7 +25,7 @@ Some older accounts may still have **legacy** keys (a plain UUID). Both formats 
 
 ### Send your key (headers)
 
-Use one of these headers on every request:
+Use one of these headers on inference API requests:
 
 1. `Authorization: Bearer <API_KEY>` (recommended)
 2. `X-API-Key: <API_KEY>`

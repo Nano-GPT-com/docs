@@ -1,0 +1,101 @@
+---
+title: 'Management API'
+description: 'Monitor subscription quotas or manage API keys with separate, scoped credentials.'
+---
+
+Management tokens let you automate account tasks without sharing your inference API key. Choose **Usage only** for a quota widget or monitoring script: that token cannot run models, spend your balance, or create API keys.
+
+## Create a token
+
+1. Sign in to NanoGPT and open [Settings → Security → Management API tokens](https://nano-gpt.com/settings#management-api-tokens).
+2. Select **New token**, enter a name, and choose **Usage only — view subscription quotas**.
+3. Choose an expiration and copy the secret when it is shown. It is shown only once.
+
+Tokens expire after 90 days by default (365 days maximum). You can revoke them in Settings. Store the token as a secret: anyone who has it can read the data its scopes allow. Send it in an authorization header, not a URL.
+
+## Read subscription usage
+
+```bash
+curl https://nano-gpt.com/api/management/v1/subscription/usage \
+  -H "Authorization: Bearer $NANOGPT_MANAGEMENT_TOKEN"
+```
+
+Example response (limits are illustrative; use the returned values):
+
+```json
+{
+  "active": true,
+  "state": "active",
+  "limits": {
+    "dailyInputTokens": 1000000,
+    "weeklyInputTokens": 6000000,
+    "dailyImages": 10
+  },
+  "dailyInputTokens": {
+    "used": 250000,
+    "remaining": 750000,
+    "percentUsed": 0.25,
+    "resetAt": 1788652800000
+  },
+  "weeklyInputTokens": {
+    "used": 1500000,
+    "remaining": 4500000,
+    "percentUsed": 0.25,
+    "resetAt": 1788739200000
+  },
+  "dailyImages": {
+    "used": 2,
+    "remaining": 8,
+    "percentUsed": 0.2,
+    "resetAt": 1788652800000
+  },
+  "period": { "currentPeriodEnd": "2026-10-05T00:00:00.000Z" }
+}
+```
+
+- `active` and `state` describe subscription status. Active status alone does not mean quota remains.
+- `dailyInputTokens` and `weeklyInputTokens` count input tokens, not requests or dollars. `dailyImages` counts images.
+- Each quota includes `used`, `remaining`, `percentUsed` (a fraction; multiply by 100 for display), and `resetAt` (UNIX epoch milliseconds). `percentUsed` can exceed 1.
+- A null quota/limit means that window is not configured or applicable. If a lookup is unavailable, the quota's counters are null and `degraded: true`; display **unknown**, not zero usage or a full allowance.
+- `period.currentPeriodEnd` is an ISO timestamp or null. Use the returned reset times instead of hardcoding billing or quota windows.
+- Token-based trials also return `usageUnits: "tokens"`, `tokenLimits.total`, and a `tokens` quota object.
+
+The endpoint reads the token owner's personal subscription. It accepts no account selector or force-refresh parameter. It returns no API-key secrets, Stripe identifiers, cancellation metadata, cash balance, or query history. Normal status refresh and quota reconciliation may run during a read.
+
+For inference-key-specific billing advice, use the existing [Subscription Usage](/api-reference/endpoint/subscription-usage) endpoint with an inference API key. Management tokens cannot authenticate inference endpoints.
+
+## Permissions
+
+| Scope | Access |
+| --- | --- |
+| `usage:read` | Read personal subscription quotas only |
+| `api_keys:read` | List and inspect API-key metadata; secrets are never returned |
+| `api_keys:write` | Create, update, and revoke API keys; includes `api_keys:read` |
+
+API-key scopes do not include `usage:read`. Existing tokens do not gain new permissions. Create a new token when you need a different scope. For monitoring, select only `usage:read`: a token with `api_keys:write` can create keys that spend money.
+
+## API-key management
+
+Base URL: `https://nano-gpt.com/api/management/v1`. Authenticate with `Authorization: Bearer sk-nano-mgmt-...`.
+
+| Method | Path | Required scope |
+| --- | --- | --- |
+| GET | `/subscription/usage` | `usage:read` |
+| GET | `/api-keys` | `api_keys:read` |
+| GET | `/api-keys/{id}` | `api_keys:read` |
+| POST | `/api-keys` | `api_keys:write` |
+| PATCH | `/api-keys/{id}` | `api_keys:write` |
+| DELETE | `/api-keys/{id}` | `api_keys:write` |
+
+Creating an inference key requires an `Idempotency-Key` header. The new key secret is returned only on creation and an exact idempotent replay. List, read, and update responses do not return it.
+
+See the [Management OpenAPI contract](https://nano-gpt.com/management-openapi.json) for request and response schemas. Ordinary inference API keys cannot call the Management API.
+
+## Errors
+
+- `401`: missing, invalid, expired, or revoked management token.
+- `403` with `insufficient_scope`: create a token with the required scope.
+- `429`: rate limited; respect `Retry-After`.
+- `503`: temporarily unavailable; retry with backoff and respect `Retry-After` when present.
+
+Responses are private and uncached. Retain `X-Request-Id` for troubleshooting; never log the authorization header.
