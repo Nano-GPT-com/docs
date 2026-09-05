@@ -150,8 +150,8 @@ By default, Claude Code uses the real Claude models through NanoGPT:
 
 | Claude Code Model | NanoGPT Routes To |
 |-------------------|-------------------|
-| Opus | Claude Opus 4.5 |
-| Sonnet | Claude Sonnet 4.5 |
+| Opus | Claude Opus 5 |
+| Sonnet | Claude Sonnet 5 |
 | Haiku | Claude Haiku 4.5 |
 
 No model mapping is required. NanoGPT passes the model names directly to Anthropic.
@@ -166,8 +166,8 @@ Yes. NanoGPT supports 400+ models. You can configure Claude Code to use differen
     "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
     "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1",
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "{{example-text-model}}",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "anthropic/claude-opus-4.5",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemini-3-flash-preview"
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "anthropic/claude-opus-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemini-3.7-flash"
   }
 }
 ```
@@ -176,8 +176,8 @@ Recommended models:
 
 | Use Case | Recommended Model |
 |----------|-------------------|
-| Best overall | <code>{exampleTextModel}</code>, `anthropic/claude-opus-4.5` |
-| Fast/cheap | `google/gemini-3-flash-preview` |
+| Best overall | <code>{exampleTextModel}</code>, `anthropic/claude-opus-5` |
+| Fast/cheap | `google/gemini-3.7-flash` |
 
 List available models with `GET https://nano-gpt.com/api/v1/models`.
 

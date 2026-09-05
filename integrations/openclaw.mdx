@@ -12,6 +12,8 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
 3. Open your config (Config -> Models -> Raw, or edit `~/.clawdbot/clawdbot.json`).
 4. Add a NanoGPT provider block like this:
 
+Model limits and per-million-token USD cost estimates below were checked against the NanoGPT catalog on September 5, 2026. Check the [models endpoint](/api-reference/endpoint/models) for current rates.
+
 ```json
 {
   "models": {
@@ -26,18 +28,21 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
         "authHeader": false,
         "models": [
           {
-            "id": "anthropic/claude-opus-4.5",
-            "name": "Claude Opus 4.5",
-            "reasoning": false,
-            "input": ["text"],
+            "id": "anthropic/claude-opus-5",
+            "name": "Claude Opus 5",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
             "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
+              "input": 5,
+              "output": 25,
+              "cacheRead": 0.5,
+              "cacheWrite": 6.25
             },
-            "contextWindow": 200000,
-            "maxTokens": 8192
+            "contextWindow": 1000000,
+            "maxTokens": 128000
           }
         ]
       }
@@ -53,11 +58,11 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
 
 These are examples only. Use the model IDs returned by the models endpoint below.
 
-- `anthropic/claude-opus-4.5`
+- `anthropic/claude-opus-5`
 - <code>{exampleTextModel}</code>
-- `google/gemini-3-flash-preview`
-- `minimax/minimax-m2.1`
-- `moonshotai/kimi-k2-thinking`
+- `google/gemini-3.7-flash`
+- `minimax/minimax-m3`
+- `moonshotai/kimi-k3`
 
 ## Get The Most Recent Models
 
