@@ -1,80 +1,48 @@
 ---
 title: 'Subscription Usage'
 openapi: 'GET /subscription/v1/usage'
+description: 'Read subscription token quotas and billing-routing advice for your inference API key.'
 ---
 
-## Overview
+## Choose the right credential
 
-Returns subscription status and current daily/monthly usage for the active billing period.
+For a quota widget or monitoring script, use a [Usage only management token](/api-reference/management-api). It can read subscription quotas without permission to run models or spend your balance.
+
+This endpoint uses an **inference API key** and also returns billing-routing advice specific to that key. Management tokens are accepted only at `GET /api/management/v1/subscription/usage`.
 
 ## Request
 
 - Method: `GET`
-- Path: `/api/subscription/v1/usage`
+- Path: `/api/subscription/v1/usage` (alias: `/api/v1/subscription/usage`)
 - Auth: `Authorization: Bearer <api_key>` or `x-api-key: <api_key>`
+
+```bash
+curl https://nano-gpt.com/api/subscription/v1/usage \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
 
 ## Response
 
-`200 application/json`. Timestamps are UNIX epoch milliseconds.
+The response includes `active`, `state`, `limits`, `dailyInputTokens`, `weeklyInputTokens`, `dailyImages`, `period`, and `routing`. See the [quota example and field definitions](/api-reference/management-api#read-subscription-usage) for the shared usage fields. The inference-authenticated response also includes subscription metadata and `allowOverage`.
 
-```json
-{
-  "active": true,
-  "limits": { "daily": 5000, "monthly": 60000 },
-  "enforceDailyLimit": true,
-  "daily": {
-    "used": 5,
-    "remaining": 4995,
-    "percentUsed": 0.001,
-    "resetAt": 1738540800000
-  },
-  "monthly": {
-    "used": 45,
-    "remaining": 59955,
-    "percentUsed": 0.00075,
-    "resetAt": 1739404800000
-  },
-  "period": {
-    "currentPeriodEnd": "2025-02-13T23:59:59.000Z"
-  },
-  "state": "active",
-  "graceUntil": null
-}
-```
+Input-token quotas count tokens, not operation counts or dollars. Image quotas count images. `percentUsed` is a fraction and may exceed 1. Quota `resetAt` values are UNIX epoch milliseconds; `period.currentPeriodEnd` is an ISO timestamp or null. Use returned limits and reset times instead of hardcoding them.
 
-Fields
+A null quota/limit is not configured or applicable. When a lookup is unavailable, counters are null with `degraded: true`. Display **unknown**, not a full allowance. Token-based trials also include `usageUnits`, `tokenLimits`, and `tokens`.
 
-- `active` — Whether the account is currently active for subscription usage.
-- `limits.daily`, `limits.monthly` — Configured daily/monthly allowance.
-- `enforceDailyLimit` — Always `true` for subscriptions. Daily and monthly limits are both enforced and the daily limit cannot be disabled.
-- `daily.used`, `monthly.used` — Usage units consumed in the current day/month window.
-- `daily.remaining`, `monthly.remaining` — Remaining allowance for each window.
-- `daily.percentUsed`, `monthly.percentUsed` — Decimal fraction in [0,1].
-- `daily.resetAt`, `monthly.resetAt` — Millisecond epoch when the window resets.
-- `period.currentPeriodEnd` — ISO timestamp for the end of the current billing period, if known.
-- `state` — One of `active`, `grace`, `inactive`.
-- `graceUntil` — ISO timestamp when grace access ends (if applicable).
+## Billing-routing advice
 
-## Usage semantics
+Use `routing.recommendedMode` when choosing between included subscription usage and pay-as-you-go billing:
 
-- Usage units represent successful subscription‑covered operations (e.g., a completed generation). They are not tokens or dollar cost.
-- Daily window resets at the next UTC day start; monthly usage aligns to the subscription billing cycle when available. Daily limits are always enforced.
+| Value | Meaning |
+| --- | --- |
+| `subscription` | This key permits subscription billing and quota is available or temporarily unknown, rather than known to be exhausted |
+| `paygo` | Subscription use is unavailable or exhausted and the key's policy permits paid-balance spending |
+| `unavailable` | Neither billing mode is usable under the known subscription and key policy |
 
-## Examples
+`routing.reason` explains the recommendation. `subscriptionQuotaAvailable` is `true`, `false`, or `null` (unknown). The weekly routing calculation includes the service's small enforcement allowance, so the displayed base quota can be exhausted before the recommendation switches to paid usage.
 
-<CodeGroup>
+The advice checks billing policy and known subscription quotas. It does not check current cash balance, consumed non-zero request/spend caps, the cost of a particular request, or provider health. The generation endpoint remains authoritative. A configured zero daily request or input-token cap makes the recommendation unavailable.
 
-```bash cURL
-curl -s \
-  -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  https://nano-gpt.com/api/subscription/v1/usage | jq
-```
+`active: true` alone does not prove quota remains, and a zero cash balance does not prove included subscription tokens are exhausted. Use [Check Balance](/api-reference/endpoint/check-balance) separately when you need cash balances.
 
-```ts JavaScript/TypeScript
-const res = await fetch('https://nano-gpt.com/api/subscription/v1/usage', {
-  headers: { 'Authorization': `Bearer ${NANOGPT_API_KEY}` },
-});
-const data = await res.json();
-```
-
-</CodeGroup>
+Clients can reuse advice briefly, but should refresh it after quota or billing errors. Never force a subscription-only key onto paid billing. Retain the NanoGPT request ID when reporting a transient billing issue.
