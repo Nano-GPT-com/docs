@@ -1,6 +1,6 @@
 ---
 title: 'Model Suffixes'
-description: 'Supported suffixes for web search, memory, PII redaction, caching, reasoning visibility, thinking variants, and provider routing preferences.'
+description: 'Supported suffixes for web search, memory, PII redaction, caching, reasoning effort and visibility, thinking variants, and provider routing preferences.'
 ---
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
@@ -112,6 +112,43 @@ Header `memory_expiration_days` takes precedence over `:memory-<days>`. `memory:
 Redaction suffixes are stripped before model routing and can compose with other supported NanoGPT suffixes, such as `:online`. If a request explicitly enables redaction with a model suffix, redaction remains enabled even if an account-level or API-key default would otherwise be disabled for that request.
 
 For details, pricing, and limitations, see [PII Redaction](/api-reference/miscellaneous/pii-redaction).
+
+## Reasoning Effort Suffixes
+
+If a custom-provider client such as Chatbox or Cherry Studio does not expose a reasoning-effort setting, enter the effort in the model ID:
+
+```json
+{
+  "model": "openai/gpt-latest:reasoning-effort/high",
+  "messages": [{ "role": "user", "content": "Analyze the tradeoffs of this design." }]
+}
+```
+
+On Chat Completions, this is equivalent to `model: "openai/gpt-latest"` with `reasoning_effort: "high"`. NanoGPT removes the suffix before model checks and routing, then resolves the base ID or compatibility alias normally. These are request shortcuts, not additional models: they do not appear in the model picker or `/v1/models`. Add the suffixed ID manually in your client; the shortcut does not enable the client's reasoning-setting UI.
+
+| Suffix | Requested effort |
+| --- | --- |
+| `:reasoning-effort/low` | `low` |
+| `:reasoning-effort/medium` | `medium` |
+| `:reasoning-effort/high` | `high` |
+| `:reasoning-effort/xhigh` | `xhigh` |
+| `:reasoning-effort/max` | `max` |
+
+Supported on `/v1/chat/completions`, `/v1/responses`, and `/v1/messages`, for streaming and non-streaming requests. Responses uses `reasoning.effort`; Messages uses `output_config.effort`. Tool-call turns and post-tool continuations accept the same suffix; include it on each request where you want the default effort.
+
+Rules:
+
+- Explicit request-body generation settings take precedence, including an effort, thinking budget, or disabled-thinking setting. The suffix supplies a default only. Existing endpoint rules still determine precedence between body parameters.
+- Reasoning visibility is separate: `reasoning.exclude: true` hides reasoning without cancelling the suffix's requested effort. On endpoints supporting `:reasoning-exclude`, that suffix can also be combined with the effort suffix.
+- Effort support remains model/provider-specific. A suffix does not add reasoning capability or new effort levels to a model. `max` and `xhigh` are distinct inputs; existing provider-specific mappings still apply.
+- Effort suffixes are case-insensitive and can appear before or after other supported suffixes, such as `:thinking`, `:speed`, or a provider suffix. Other suffixes keep their normal compatibility and billing rules.
+- Use one effort suffix. If repeated, the rightmost recognized effort wins.
+- Unknown effort values are not stripped or silently replaced. They remain part of the model ID and are subject to normal model validation. The suffix shortcut accepts only the five values above.
+
+```json
+{ "model": "openai/gpt-latest:reasoning-effort/high:reasoning-exclude", "messages": [{ "role": "user", "content": "Solve the problem." }] }
+{ "model": "z-ai/glm-5.3-flash:reasoning-effort/max:runinfra", "messages": [{ "role": "user", "content": "Check this algorithm." }] }
+```
 
 ## Reasoning and Thinking Suffixes
 

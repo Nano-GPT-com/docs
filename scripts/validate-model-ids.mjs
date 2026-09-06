@@ -52,6 +52,7 @@ function normalizeLookupId(input) {
   let value = input.trim().replace(/[),.]+$/g, '');
 
   // Public routing/output suffixes documented by NanoGPT; strip before lookup.
+  value = value.replace(/:reasoning-effort\/(?:low|medium|high|xhigh|max)(?=[:]|$)/gi, '');
   value = value.replace(/:reasoning-exclude(?=[:]|$)/gi, '');
   value = value.replace(/:(?:speed|fast|throughput|latency|price|cheap|floor|tools)(?=[:]|$)/gi, '');
   value = value.replace(/:online(?:\/[a-z0-9-]+)?(?=[:]|$)/gi, '');

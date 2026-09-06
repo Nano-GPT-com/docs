@@ -81,6 +81,7 @@ Use the jump list below to navigate the long-form reference quickly.
     - [Streaming payload format](#streaming-payload-format)
     - [Showing or hiding reasoning](#showing-or-hiding-reasoning)
     - [Reasoning Effort](#reasoning-effort)
+    - [Model suffix: reasoning effort](#model-suffix-reasoning-effort)
     - [Model suffix: :reasoning-exclude](#model-suffix-reasoning-exclude)
     - [Legacy delta field compatibility](#legacy-delta-field-compatibility)
   </Accordion>
@@ -1453,6 +1454,22 @@ If an effort level is set to a non-`none` value, reasoning can still run while h
   }
 }
 ```
+
+### Model suffix: reasoning effort
+
+Clients that do not expose reasoning controls for custom-provider models can set an effort in the model ID, for example `openai/gpt-latest:reasoning-effort/high`. Supported suffix values are `low`, `medium`, `high`, `xhigh`, and `max`.
+
+NanoGPT strips the suffix before model lookup and uses it as the default `reasoning_effort`. Explicit body generation settings take precedence. These IDs are not additional model-list entries; enter them manually in your client. Effort support remains model/provider-specific.
+
+```json
+{
+  "model": "openai/gpt-latest:reasoning-effort/high",
+  "messages": [{ "role": "user", "content": "Analyze this design." }],
+  "reasoning": { "exclude": true }
+}
+```
+
+This requests high effort while hiding reasoning output. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes) for precedence, suffix composition, and Responses/Messages equivalents.
 
 ### Model suffix: `:reasoning-exclude`
 
