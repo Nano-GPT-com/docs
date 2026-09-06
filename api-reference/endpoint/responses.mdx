@@ -4,6 +4,10 @@ openapi: 'POST /v1/responses'
 ---
 
 <Note>
+  To set reasoning effort through a custom model ID, append `:reasoning-effort/high` (also `low`, `medium`, `xhigh`, or `max`). NanoGPT strips the suffix before routing and uses it as the default `reasoning.effort`. Explicit body generation settings take precedence; supported efforts remain model/provider-specific. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes).
+</Note>
+
+<Note>
   `/v1/responses` accepts **compressed request bodies** (`Content-Encoding: gzip`, `deflate`, or `br`) on authenticated JSON requests — useful for long conversations, where compressed uploads cut time-to-first-token. See [Compressed Request Bodies](/api-reference/miscellaneous/request-compression).
 </Note>
 

@@ -3,6 +3,10 @@ title: 'Messages'
 openapi: 'POST /v1/messages'
 ---
 
+<Note>
+  To set reasoning effort through a custom model ID, append `:reasoning-effort/high` (also `low`, `medium`, `xhigh`, or `max`). NanoGPT strips the suffix before routing and uses it as the default `output_config.effort`. Explicit body generation settings take precedence; supported efforts remain model/provider-specific. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes).
+</Note>
+
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
 
 <Note>

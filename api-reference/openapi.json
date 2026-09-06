@@ -4504,7 +4504,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.).",
+            "description": "The model to use for completion. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.). Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is low, medium, high, xhigh, or max, to supply a default reasoning_effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence. Effort support remains model/provider-specific.",
             "default": "minimax/minimax-m2.7",
             "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.6-sol:online/exa-instant", "openai/gpt-5.6-sol:online/exa-deep-reasoning"]
           },
@@ -5095,7 +5095,8 @@
         "type": "object",
         "required": ["model", "messages"],
         "properties": {
-          "model": { "type": "string" },
+          "model": { "type": "string",
+            "description": "Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is low, medium, high, xhigh, or max, to supply a default output_config.effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence. Effort support remains model/provider-specific." },
           "max_tokens": { "type": "integer" },
           "messages": {
             "type": "array",
@@ -9323,7 +9324,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Model ID to use for the response. Provider-selection-capable models may include routing preference suffixes such as ':fast', ':speed', ':cheap', ':price', ':latency', ':throughput', ':floor', ':tools', ':caching', ':cache', or ':cached'."
+            "description": "Model ID to use for the response. Provider-selection-capable models may include routing preference suffixes such as ':fast', ':speed', ':cheap', ':price', ':latency', ':throughput', ':floor', ':tools', ':caching', ':cache', or ':cached'. Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is low, medium, high, xhigh, or max, to supply a default reasoning.effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence. Effort support remains model/provider-specific."
           },
           "billing_mode": {
             "type": "string",
