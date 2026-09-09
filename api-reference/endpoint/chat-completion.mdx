@@ -1439,6 +1439,10 @@ Alternatively, pass it as part of the `reasoning` object:
 
 Both formats are accepted. If both are present, top-level `reasoning_effort` is authoritative for Chat Completions request shaping.
 
+#### Change Effort Within a Conversation
+
+GPT-6 Astra and Claude Fable 5.1 accept `configuration_update` on empty `system` or `developer` messages. An update at the end of the request applies to the generated answer. Keep the request-level effort constant, preserve each update in later history, and do not place updates next to each other. See [inline reasoning effort updates](/api-reference/miscellaneous/inline-reasoning-effort) for examples and supported combinations.
+
 #### Combining effort with exclude
 
 `reasoning.exclude` controls output visibility only. It hides reasoning fields/blocks, but does not inherently disable reasoning compute.

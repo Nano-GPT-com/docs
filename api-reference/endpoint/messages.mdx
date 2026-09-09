@@ -257,6 +257,10 @@ If the requested model does not support thinking, NanoGPT automatically ignores/
 
 For Chat Completions compatibility controls, `:reasoning-exclude` (or `reasoning.exclude`) only hides reasoning output; it does not force reasoning compute off. Use `reasoning_effort` / `reasoning.effort` to control reasoning depth, and set `none` to disable reasoning behavior.
 
+## Change Effort Within a Conversation
+
+GPT-6 Astra and Claude Fable 5.1 support [inline reasoning effort updates](/api-reference/miscellaneous/inline-reasoning-effort) using an empty system message: `{"role":"system","content":[],"output_config":{"effort":"high"}}`. Set the baseline with request-level `output_config.effort` and leave it unchanged. A trailing update applies to the generated answer; preserve it before assistant output when replaying history. This Messages form requires the `system` role.
+
 ## Response Format
 
 ### Non-Streaming Response

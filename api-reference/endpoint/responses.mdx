@@ -116,10 +116,12 @@ Authorization: Bearer YOUR_API_KEY
 
 ### Request Body
 
+For [inline reasoning effort updates](/api-reference/miscellaneous/inline-reasoning-effort), keep the request-level `reasoning.effort` constant. A trailing update controls the current response; preserve its position when replaying output or continuing with `previous_response_id`. Adjacent updates, automatic truncation, and `reasoning.exclude: true` are unsupported with these updates.
+
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `model` | string | Yes | Model ID to use for the response. Provider-selection-capable models may include routing preference suffixes such as `:fast`, `:speed`, `:cheap`, `:price`, `:latency`, `:throughput`, `:floor`, `:tools`, `:caching`, `:cache`, or `:cached`. |
-| `input` | string or array | Yes | The input prompt or array of input items |
+| `input` | string or array | Yes | The input prompt or array of input items. Astra and Fable 5.1 also accept [inline reasoning effort updates](/api-reference/miscellaneous/inline-reasoning-effort) as `configuration_update` items. |
 | `advisor` | object | No | NanoGPT extension that lets the executor consult one different, client-selected model. Initially limited to non-streaming, pay-as-you-go API-key requests. See [Advisor](/api-reference/miscellaneous/advisor). |
 | `instructions` | string | No | System instructions for the model |
 | `max_output_tokens` | integer | No | Maximum tokens in the response (minimum: 16) |

@@ -81,6 +81,10 @@ Both formats are accepted. If both are present, top-level `reasoning_effort` is 
 
 Valid values are `none`, `minimal`, `low`, `medium`, `high`, `xhigh`.
 
+### Change Effort Within a Conversation
+
+For GPT-6 Astra and Claude Fable 5.1, use [inline reasoning effort updates](/api-reference/miscellaneous/inline-reasoning-effort) to change effort while keeping the request-level baseline and earlier history unchanged. Updates can precede a user turn or appear at the end of a request to control its generated answer. Chat Completions accepts empty `system` or `developer` update messages; Responses and Messages have equivalent forms.
+
 ### Legacy Field Name Compatibility (`reasoning_content`)
 
 If a client expects `reasoning_content` instead of `reasoning`, you can:

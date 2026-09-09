@@ -4222,6 +4222,40 @@
   },
   "components": {
     "schemas": {
+      "InlineConfigurationUpdate": {
+        "type": "object",
+        "required": [
+          "reasoning"
+        ],
+        "properties": {
+          "reasoning": {
+            "$ref": "#/components/schemas/InlineReasoningEffort"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ordered effort control for Astra and Fable 5.1. A trailing update applies to the generated response. Keep baseline effort unchanged and replay each update in its original position; adjacent updates are rejected. See /api-reference/miscellaneous/inline-reasoning-effort."
+      },
+      "InlineReasoningEffort": {
+        "type": "object",
+        "required": [
+          "effort"
+        ],
+        "properties": {
+          "effort": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ],
+            "description": "Astra: low, medium, high, xhigh. Fable 5.1: low, medium, high, xhigh, max; minimal maps to low. Other models and none are unsupported for inline updates."
+          }
+        },
+        "additionalProperties": false
+      },
       "BatchStatus": {
         "type": "string",
         "enum": [
@@ -4543,7 +4577,7 @@
           },
           "messages": {
             "type": "array",
-            "description": "Array of message objects with role and content",
+            "description": "Array of message objects with role and content; content-less system/developer configuration_update messages are supported for Astra and Fable 5.1, including trailing updates.",
             "default": [
               {
                 "role": "user",
@@ -4553,14 +4587,18 @@
             "items": {
               "type": "object",
               "required": [
-                "role",
-                "content"
+                "role"
               ],
               "properties": {
                 "role": {
                   "type": "string",
                   "description": "The role of the message author",
-                  "enum": ["system", "user", "assistant"]
+                  "enum": [
+                    "system",
+                    "user",
+                    "assistant",
+                    "developer"
+                  ]
                 },
                 "content": {
                   "description": "Message content as a simple string or an array of multimodal parts",
@@ -4573,10 +4611,54 @@
                       "items": {
                         "$ref": "#/components/schemas/MessageContentPart"
                       }
+                    },
+                    {
+                      "type": "null"
                     }
                   ]
+                },
+                "configuration_update": {
+                  "$ref": "#/components/schemas/InlineConfigurationUpdate"
                 }
-              }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "required": [
+                      "configuration_update"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "role": {
+                        "enum": [
+                          "system",
+                          "developer"
+                        ]
+                      },
+                      "content": {
+                        "enum": [
+                          "",
+                          [],
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "required": [
+                      "content"
+                    ],
+                    "properties": {
+                      "content": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
             }
           },
           "stream": {
@@ -5056,11 +5138,57 @@
       "ResponsesInputItem": {
         "type": "object",
         "properties": {
-          "type": { "type": "string", "enum": ["message", "function_call", "function_call_output"] },
-          "role": { "type": "string" },
-          "content": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "$ref": "#/components/schemas/ResponsesInputContentPart" } }] }
+          "type": {
+            "type": "string",
+            "enum": [
+              "message",
+              "function_call",
+              "function_call_output",
+              "configuration_update",
+              "reasoning"
+            ]
+          },
+          "role": {
+            "type": "string"
+          },
+          "content": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResponsesInputContentPart"
+                }
+              }
+            ]
+          },
+          "reasoning": {
+            "$ref": "#/components/schemas/InlineReasoningEffort"
+          }
         },
-        "additionalProperties": true
+        "additionalProperties": true,
+        "description": "An ordered input/history item. configuration_update requires reasoning.effort and may trail the request, controlling its generated response. Preserve updates and provider reasoning/tool output during replay. See /api-reference/miscellaneous/inline-reasoning-effort.",
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "const": "configuration_update"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "reasoning"
+              ]
+            }
+          }
+        ]
       },
       "AnthropicVideoSourceBase64": {
         "type": "object",
@@ -5095,6 +5223,10 @@
         "type": "object",
         "required": ["model", "messages"],
         "properties": {
+        "output_config": {
+          "$ref": "#/components/schemas/InlineReasoningEffort",
+          "description": "Request-level effort baseline. Keep unchanged when using inline output_config updates."
+        },
           "model": { "type": "string",
             "description": "Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is low, medium, high, xhigh, or max, to supply a default output_config.effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence. Effort support remains model/provider-specific." },
           "max_tokens": { "type": "integer" },
@@ -5102,12 +5234,89 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["role", "content"],
+              "required": [
+                "role"
+              ],
               "properties": {
-                "role": { "type": "string", "enum": ["user", "assistant"] },
-                "content": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "oneOf": [{ "$ref": "#/components/schemas/AnthropicVideoBlock" }, { "type": "object", "additionalProperties": true }] } }] }
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant",
+                    "system"
+                  ]
+                },
+                "content": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/AnthropicVideoBlock"
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "output_config": {
+                  "$ref": "#/components/schemas/InlineReasoningEffort",
+                  "description": "Astra/Fable 5.1 inline effort update. Requires system role and empty content; trailing updates apply to the generated response."
+                }
               },
-              "additionalProperties": true
+              "additionalProperties": true,
+              "allOf": [
+                {
+                  "if": {
+                    "required": [
+                      "output_config"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "role": {
+                        "const": "system"
+                      },
+                      "content": {
+                        "enum": [
+                          "",
+                          [],
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "else": {
+                    "required": [
+                      "content"
+                    ],
+                    "properties": {
+                      "role": {
+                        "enum": [
+                          "user",
+                          "assistant"
+                        ]
+                      },
+                      "content": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
             }
           }
         },

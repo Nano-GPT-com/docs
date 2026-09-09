@@ -11,6 +11,7 @@ const DOC_FILES = [
   'api-reference/endpoint/chat-completion.mdx',
   'api-reference/endpoint/messages.mdx',
   'api-reference/miscellaneous/extended-thinking.mdx',
+  'api-reference/miscellaneous/inline-reasoning-effort.mdx',
   'api-reference/miscellaneous/provider-selection.mdx',
   'api-reference/miscellaneous/pricing.mdx',
 ];
