@@ -279,6 +279,23 @@ The `input` parameter accepts either a simple string or an array of input items.
 | `message` | A message with role and content |
 | `function_call` | A tool/function call made by the model |
 | `function_call_output` | The result of a tool/function call |
+| `custom_tool_call` | A custom tool call made by the model |
+| `custom_tool_call_output` | The result of a custom tool call |
+| `reasoning` | A reasoning item returned by the model and replayed as conversation history |
+| `item_reference` | A reference to a stored response output item |
+| `mcp_list_tools` | A list of tools returned by an MCP server |
+| `mcp_call` | An MCP tool call returned by the model |
+| `additional_tools` | A Responses Lite tool-catalog update |
+| `configuration_update` | An inline reasoning-effort update for supported models |
+| `web_search_call` | A provider web-search call replayed from a previous response |
+| `web_extractor_call` | A provider web-extraction call replayed from a previous response |
+| `image_generation_call` | A provider image-generation call replayed from a previous response |
+| `computer_call` | A provider computer-use call replayed from a previous response |
+| `computer_call_output` | The screenshot result of a computer-use call |
+| `file_search_call` | A provider file-search call replayed from a previous response |
+| `code_interpreter_call` | A provider code-interpreter call replayed from a previous response |
+
+Hosted-tool call items are provider-owned history records. Send them back unchanged, including their `id`, `status`, and provider-specific fields, and continue with the same compatible native Responses model. NanoGPT rejects invented or incomplete envelopes and returns `hosted_tool_history_model_not_supported` when the selected model/provider cannot consume that history type.
 
 #### Message Item
 
@@ -377,6 +394,47 @@ Video is currently rejected in Responses Batch. Segment offsets are validated bu
 }
 ```
 
+#### Stateless Output Replay
+
+Clients that use `store: false` and do not use `previous_response_id` can replay the response `output` items in the next request. Preserve output items such as `reasoning` and `web_search_call`; NanoGPT accepts them as ordered conversation history for compatible native Responses models.
+
+```json
+{
+  "model": "openai/gpt-5.6-luna",
+  "store": false,
+  "tools": [
+    { "type": "web_search", "external_web_access": false }
+  ],
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [{ "type": "input_text", "text": "Find the latest result." }]
+    },
+    {
+      "type": "web_search_call",
+      "id": "ws_123",
+      "status": "completed",
+      "action": { "type": "search", "query": "latest result" }
+    },
+    {
+      "type": "message",
+      "id": "msg_123",
+      "role": "assistant",
+      "status": "completed",
+      "content": [{ "type": "output_text", "text": "Here is the result." }]
+    },
+    {
+      "type": "message",
+      "role": "user",
+      "content": [{ "type": "input_text", "text": "Continue." }]
+    }
+  ]
+}
+```
+
+In practice, append the provider-returned `output` array rather than constructing hosted-tool call items yourself.
+
 ## Tools
 
 Provide function tools and built-in tools the model can use:
@@ -443,7 +501,8 @@ The search activity is returned as `tool_search_call`. A selected function is st
 
 ```json
 {
-  "type": "web_search_preview",
+  "type": "web_search",
+  "external_web_access": false,
   "search_context_size": "low",
   "user_location": {
     "type": "approximate",
@@ -453,6 +512,8 @@ The search activity is returned as `tool_search_call`. A selected function is st
   }
 }
 ```
+
+`external_web_access: false` selects offline/cache-only search; it does **not** disable the tool. The model can still search cached or indexed content and return `web_search_call` items. Omit the web-search tool when you need to disable search entirely. If `external_web_access` is omitted, live access is enabled by default. The legacy `web_search_preview` variants ignore this field and behave as though it were `true`.
 
 ### File Search Tool
 
