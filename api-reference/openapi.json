@@ -5145,7 +5145,20 @@
               "function_call",
               "function_call_output",
               "configuration_update",
-              "reasoning"
+              "reasoning",
+              "item_reference",
+              "additional_tools",
+              "mcp_list_tools",
+              "mcp_call",
+              "custom_tool_call",
+              "custom_tool_call_output",
+              "web_search_call",
+              "web_extractor_call",
+              "image_generation_call",
+              "computer_call",
+              "computer_call_output",
+              "file_search_call",
+              "code_interpreter_call"
             ]
           },
           "role": {
@@ -5169,7 +5182,7 @@
           }
         },
         "additionalProperties": true,
-        "description": "An ordered input/history item. configuration_update requires reasoning.effort and may trail the request, controlling its generated response. Preserve updates and provider reasoning/tool output during replay. See /api-reference/miscellaneous/inline-reasoning-effort.",
+        "description": "An ordered input/history item. Stateless clients may replay provider output items such as reasoning, web_search_call, image_generation_call, computer_call, file_search_call, and code_interpreter_call for compatible native Responses models. Preserve provider-owned replay items unchanged, including id, status, and provider-specific fields. configuration_update requires reasoning.effort and may trail the request, controlling its generated response. See /api-reference/endpoint/responses#stateless-output-replay and /api-reference/miscellaneous/inline-reasoning-effort.",
         "allOf": [
           {
             "if": {
