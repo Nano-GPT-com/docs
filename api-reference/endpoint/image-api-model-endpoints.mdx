@@ -20,14 +20,14 @@ Authentication is optional.
 ## Request
 
 ```http
-GET /api/v1/images/models/gpt-image-2/endpoints
+GET /api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints
 ```
 
 ## Response
 
 ```json
 {
-  "id": "gpt-image-2",
+  "id": "openai/gpt-image-2.5/flare/text-to-image",
   "endpoints": [
     {
       "provider_name": "OpenAI",
@@ -36,8 +36,8 @@ GET /api/v1/images/models/gpt-image-2/endpoints
       "supported_parameters": {
         "resolution": {
           "type": "enum",
-          "values": ["1024x1024", "1024x768"],
-          "default": "1024x1024"
+          "values": ["1k", "2k", "4k"],
+          "default": "1k"
         },
         "n": {
           "type": "range",
@@ -52,12 +52,12 @@ GET /api/v1/images/models/gpt-image-2/endpoints
         {
           "billable": "output_image",
           "unit": "image",
-          "cost_usd": 0.06551,
-          "resolution": "1024x1024"
+          "cost_usd": 0.153,
+          "resolution": "1k"
         }
       ],
       "input_reference_constraints": {
-        "max_items": 4,
+        "max_items": 16,
         "route": {
           "min_width": 8,
           "min_height": 8,
@@ -89,7 +89,7 @@ GET /api/v1/images/models/gpt-image-2/endpoints
 ## Example
 
 ```bash
-curl https://nano-gpt.com/api/v1/images/models/gpt-image-2/endpoints
+curl https://nano-gpt.com/api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints
 ```
 
 ## Notes

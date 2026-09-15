@@ -20,7 +20,7 @@ curl -fsSL "https://nano-gpt.com/install/opencode_nanogpt.sh" | bash
 This will:
 1. Open your browser to authenticate with NanoGPT (or let you paste an API key)
 2. Configure OpenCode to use NanoGPT as your AI provider
-3. Set up popular models like Claude Sonnet 5, Claude Opus 5, {exampleTextModelName}, Gemini 3.7 Flash, Gemini 3.1 Pro, GLM 5.3
+3. Set up popular models like Claude Sonnet 5, Claude Opus 5, {exampleTextModelName}, Gemini Flash Latest, Gemini Pro Latest, GLM 5.3
 
 ## Manual Setup
 
@@ -103,15 +103,15 @@ Create `~/.config/opencode/.opencode.json`:
             "output": 384000
           }
         },
-        "google/gemini-3.7-flash": {
-          "name": "Gemini 3.7 Flash",
+        "google/gemini-flash-latest": {
+          "name": "Gemini Flash Latest",
           "limit": {
             "context": 1048576,
             "output": 65536
           }
         },
         "google/gemini-3.1-pro-preview": {
-          "name": "Gemini 3.1 Pro",
+          "name": "Gemini Pro Latest",
           "limit": {
             "context": 1048576,
             "output": 65536
@@ -161,8 +161,8 @@ The setup script preconfigures these models:
 | `nano-gpt/deepseek/deepseek-v4-pro:thinking` | DeepSeek V4 Pro Thinking |
 | `nano-gpt/deepseek/deepseek-v4-flash` | DeepSeek V4 Flash |
 | `nano-gpt/deepseek/deepseek-v4-flash:thinking` | DeepSeek V4 Flash Thinking |
-| `nano-gpt/google/gemini-3.7-flash` | Gemini 3.7 Flash |
-| `nano-gpt/google/gemini-3.1-pro-preview` | Gemini 3.1 Pro |
+| `nano-gpt/google/gemini-flash-latest` | Gemini Flash Latest |
+| `nano-gpt/google/gemini-3.1-pro-preview` | Gemini Pro Latest |
 | `nano-gpt/z-ai/glm-5.3` | GLM 5.3 |
 
 ### Adding More Models

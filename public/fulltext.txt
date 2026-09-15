@@ -137,7 +137,7 @@ Authorization: Bearer YOUR_API_KEY
   "object": "list",
   "data": [
     {
-      "id": "openai/gpt-5.2",
+      "id": "openai/gpt-chat-latest",
       "object": "model",
       "created": 1677649963,
       "owned_by": "openai"
@@ -170,11 +170,11 @@ Authorization: Bearer YOUR_API_KEY
   "object": "list",
   "data": [
     {
-      "id": "openai/gpt-5.2",
+      "id": "openai/gpt-chat-latest",
       "object": "model",
       "created": 1677649963,
       "owned_by": "openai",
-      "name": "GPT-5.2",
+      "name": "GPT Chat Latest",
       "description": "OpenAI's flagship general-purpose model",
       "context_length": 128000,
       "pricing": {
@@ -203,7 +203,7 @@ x-api-key: YOUR_API_KEY
 **Example Response:**
 ```json
 {
-  "models": ["openai/gpt-5.2", "gpt-4-latest", "gpt-3.5-turbo-latest"]
+  "models": ["openai/gpt-chat-latest", "gpt-4-latest", "gpt-3.5-turbo-latest"]
 }
 ```
 
@@ -266,7 +266,7 @@ Authorization: Bearer YOUR_API_KEY
 Content-Type: application/json
 
 {
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-chat-latest",
   "messages": [
     {
       "role": "system",
@@ -325,7 +325,7 @@ Authorization: Bearer YOUR_API_KEY
 Content-Type: application/json
 
 {
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-chat-latest",
   "prompt": "Write a short story about a robot learning to paint:",
   "max_tokens": 4000,
   "temperature": 0.7,
@@ -343,7 +343,7 @@ Content-Type: application/json
   "id": "cmpl-123",
   "object": "text_completion",
   "created": 1677652288,
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-chat-latest",
   "choices": [
     {
       "text": "Once upon a time, there was a robot named Pixel...",
@@ -485,7 +485,7 @@ Content-Type: application/json
 
 {
   "prompt": "",
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-chat-latest",
   "messages": [
     {
       "role": "user",
@@ -620,9 +620,9 @@ Cline is a powerful command-line interface for interacting with various AI model
    - API Provider: OpenAI Compatible
    - Base URL: https://nano-gpt.com/api/v1/
    - API Key: Your key from step 1
-   - Model ID: openai/gpt-5.2
+   - Model ID: openai/gpt-chat-latest
 
-Available models include openai/gpt-5.2, anthropic/claude-opus-4.5, google/gemini-3-flash-preview, and many more.
+Available models include openai/gpt-chat-latest, anthropic/claude-opus-5, google/gemini-flash-latest, and many more.
 
 ### Cursor
 
@@ -647,7 +647,7 @@ SillyTavern is a popular web-based chat interface designed for roleplaying and c
    - Select "OpenAI" as the API type (NanoGPT uses an OpenAI-compatible API)
    - Enter your NanoGPT API key
    - Set the API URL to: `https://nano-gpt.com/api`
-   - Set the Model to: `openai/gpt-5.2` (or another model of your choice)
+   - Set the Model to: `openai/gpt-chat-latest` (or another model of your choice)
 
 If you choose the Chat Completions endpoint in SillyTavern, you will see NanoGPT automatically appear as an option.
 
@@ -679,7 +679,7 @@ TypingMind is a powerful alternative web UI for ChatGPT with advanced features.
    - API Type: OpenAI Compatible API
    - Icon URL (Optional): https://nano-gpt.com/logo.png
    - Endpoint: `https://nano-gpt.com/api/v1/chat/completions`
-   - Model ID: openai/gpt-5.2 (or any other model)
+   - Model ID: openai/gpt-chat-latest (or any other model)
    - Authorization: Bearer YOUR_API_KEY
 5. Click "Test" to verify the connection, then "Add Model"
 
@@ -715,7 +715,7 @@ const nanogpt = new NanoGPT('your-api-key');
 
 async function chatExample() {
   const response = await nanogpt.chat({
-    model: 'openai/gpt-5.2',
+    model: 'openai/gpt-chat-latest',
     messages: [
       { role: 'user', content: 'Hello!' }
     ]
@@ -743,7 +743,7 @@ const client = new NanoGPTClient({
 
 async function main() {
   const response = await client.chatCompletions.create({
-    model: 'openai/gpt-5.2',
+    model: 'openai/gpt-chat-latest',
     messages: [
       { role: 'user', content: 'Hello!' }
     ]

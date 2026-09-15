@@ -15,7 +15,7 @@ The NanoGPT MCP server provides the following tools:
 |------|-------------|
 | `nanogpt_chat` | Send chat messages to any AI model available on NanoGPT |
 | `nanogpt_get_balance` | Check your account balance (USD and Nano) |
-| `nanogpt_image_generate` | Generate images using GPT Image 2 and other supported models |
+| `nanogpt_image_generate` | Generate images using GPT Image 2.5 Flare and other supported models |
 | `nanogpt_web_search` | Search the web for current information |
 | `nanogpt_scrape_urls` | Extract content from web pages |
 | `nanogpt_youtube_transcribe` | Get transcripts from YouTube videos |
@@ -170,7 +170,7 @@ Generate images from text prompts.
 
 **Parameters:**
 - `prompt` (required): Text description of the image to generate
-- `model` (optional): Image model to use (e.g., "gpt-image-2")
+- `model` (optional): Image model to use (e.g., "openai/gpt-image-2.5/flare/text-to-image")
 - `n` (optional): Number of images to generate (1-10)
 - `size` (optional): Image size (e.g., "1024x1024")
 - `quality` (optional): Image quality setting
@@ -179,7 +179,7 @@ Generate images from text prompts.
 ```json
 {
   "prompt": "A serene mountain landscape at dawn",
-  "model": "gpt-image-2",
+  "model": "openai/gpt-image-2.5/flare/text-to-image",
   "size": "1024x1024"
 }
 ```

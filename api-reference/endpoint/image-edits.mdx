@@ -8,6 +8,8 @@ description: "OpenAI-compatible image editing endpoint with multipart and JSON i
 
 Use the image edits endpoint to modify one or more input images with a text prompt. This is an OpenAI-compatible image editing endpoint.
 
+GPT Image 2 remains the compatibility choice for requests that include a mask. For natural-language edits without a mask, use `openai/gpt-image-2.5/flare/edit` for the current everyday recommendation.
+
 For new JSON-only image-to-image generation flows, also consider the dedicated [Image API](/api-reference/image-generation), which uses `input_references` and `POST /api/v1/images`.
 
 Both paths are supported aliases:

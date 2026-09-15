@@ -45,7 +45,7 @@ curl https://nano-gpt.com/api/v1/images/models
 ```
 
 ```bash
-curl https://nano-gpt.com/api/v1/images/models/gpt-image-2/endpoints
+curl https://nano-gpt.com/api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints
 ```
 
 ```bash
@@ -53,10 +53,10 @@ curl https://nano-gpt.com/api/v1/images \
   -H "Content-Type: application/json" \
   -H "x-api-key: $NANOGPT_API_KEY" \
   -d '{
-    "model": "gpt-image-2",
+    "model": "openai/gpt-image-2.5/flare/text-to-image",
     "prompt": "A clean product photo of a matte black espresso machine",
-    "resolution": "1024x1024",
-    "quality": "medium",
+    "resolution": "1k",
+    "quality": "high",
     "n": 1
   }'
 ```
@@ -76,8 +76,8 @@ Response:
   "object": "list",
   "data": [
     {
-      "id": "gpt-image-2",
-      "name": "GPT Image 2",
+      "id": "openai/gpt-image-2.5/flare/text-to-image",
+      "name": "GPT Image 2.5 Flare",
       "description": "Model description...",
       "created": 1760000000,
       "owned_by": "openai",
@@ -88,8 +88,8 @@ Response:
       "supported_parameters": {
         "resolution": {
           "type": "enum",
-          "values": ["1024x1024", "1024x768"],
-          "default": "1024x1024"
+          "values": ["1k", "2k", "4k"],
+          "default": "1k"
         },
         "n": {
           "type": "range",
@@ -99,17 +99,17 @@ Response:
         },
         "quality": {
           "type": "enum",
-          "values": ["low", "medium", "high"],
-          "default": "medium"
+          "values": ["low", "medium", "high", "xhigh", "max"],
+          "default": "high"
         },
         "input_references": {
           "type": "range",
           "min": 0,
-          "max": 4
+          "max": 16
         }
       },
       "supports_streaming": false,
-      "endpoints": "/api/v1/images/models/gpt-image-2/endpoints",
+      "endpoints": "/api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints",
       "capabilities": {
         "image_generation": true,
         "image_to_image": true,
@@ -147,7 +147,7 @@ GET /api/v1/images/models/{modelId}/endpoints
 Example:
 
 ```http
-GET /api/v1/images/models/gpt-image-2/endpoints
+GET /api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints
 ```
 
 For model IDs that contain slashes, use the `endpoints` path returned by `GET /api/v1/images/models`.
@@ -156,7 +156,7 @@ Response:
 
 ```json
 {
-  "id": "gpt-image-2",
+  "id": "openai/gpt-image-2.5/flare/text-to-image",
   "endpoints": [
     {
       "provider_name": "OpenAI",
@@ -165,8 +165,8 @@ Response:
       "supported_parameters": {
         "resolution": {
           "type": "enum",
-          "values": ["1024x1024", "1024x768"],
-          "default": "1024x1024"
+          "values": ["1k", "2k", "4k"],
+          "default": "1k"
         },
         "n": {
           "type": "range",
@@ -181,12 +181,12 @@ Response:
         {
           "billable": "output_image",
           "unit": "image",
-          "cost_usd": 0.06551,
-          "resolution": "1024x1024"
+          "cost_usd": 0.153,
+          "resolution": "1k"
         }
       ],
       "input_reference_constraints": {
-        "max_items": 4,
+        "max_items": 16,
         "route": {
           "min_width": 8,
           "min_height": 8,
@@ -223,10 +223,10 @@ Text-to-image request:
 
 ```json
 {
-  "model": "gpt-image-2",
+  "model": "openai/gpt-image-2.5/flare/text-to-image",
   "prompt": "A clean product photo of a matte black espresso machine on a white counter",
-  "resolution": "1024x1024",
-  "quality": "medium",
+  "resolution": "1k",
+  "quality": "high",
   "n": 1
 }
 ```
@@ -235,7 +235,7 @@ Image-to-image request:
 
 ```json
 {
-  "model": "gpt-image-2",
+  "model": "openai/gpt-image-2.5/flare/text-to-image",
   "prompt": "Make this look like a polished studio product photo",
   "input_references": [
     {
@@ -245,8 +245,8 @@ Image-to-image request:
       }
     }
   ],
-  "resolution": "1024x1024",
-  "quality": "medium",
+  "resolution": "1k",
+  "quality": "high",
   "n": 1
 }
 ```

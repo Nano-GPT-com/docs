@@ -24,8 +24,8 @@ Authentication is optional.
   "object": "list",
   "data": [
     {
-      "id": "gpt-image-2",
-      "name": "GPT Image 2",
+      "id": "openai/gpt-image-2.5/flare/text-to-image",
+      "name": "GPT Image 2.5 Flare",
       "description": "Model description...",
       "created": 1760000000,
       "owned_by": "openai",
@@ -36,8 +36,8 @@ Authentication is optional.
       "supported_parameters": {
         "resolution": {
           "type": "enum",
-          "values": ["1024x1024", "1024x768"],
-          "default": "1024x1024"
+          "values": ["1k", "2k", "4k"],
+          "default": "1k"
         },
         "n": {
           "type": "range",
@@ -47,7 +47,7 @@ Authentication is optional.
         }
       },
       "supports_streaming": false,
-      "endpoints": "/api/v1/images/models/gpt-image-2/endpoints",
+      "endpoints": "/api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints",
       "capabilities": {
         "image_generation": true,
         "image_to_image": true,

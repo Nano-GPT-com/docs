@@ -9,7 +9,7 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
 
 n8n can use any OpenAI-compatible API. With NanoGPT, you get:
 
-- One API key for 50+ models (GPT-5.2, Claude Opus 5, Gemini 3.7 Flash, and more)
+- One API key for 50+ models (GPT 5.6 Sol, Claude Opus 5, Gemini Flash Latest, and more)
 - The ability to switch models without changing your workflow logic
 - Unified billing across providers
 
@@ -60,9 +60,9 @@ Use any model listed on the [NanoGPT pricing page](https://nano-gpt.com/pricing)
 | <code>{exampleTextModel}</code> | OpenAI | Best overall |
 | `anthropic/claude-opus-5` | Anthropic | Deep reasoning, writing |
 | `anthropic/claude-sonnet-4.5` | Anthropic | Coding, analysis |
-| `google/gemini-3.7-flash` | Google | Fast, cost-effective |
-| `google/gemini-3-pro-preview` | Google | Long context, reasoning |
-| `zai-org/glm-4.7` | Zhipu | Open model alternative |
+| `google/gemini-flash-latest` | Google | Fast, cost-effective |
+| `google/gemini-pro-latest` | Google | Long context, reasoning |
+| `z-ai/glm-latest` | Zhipu | Open model alternative |
 
 ## Example workflows
 
@@ -83,7 +83,7 @@ OpenAI Chat node:
 [Webhook] -> [HTTP Request (fetch doc)] -> [OpenAI Chat] -> [Respond to Webhook]
 
 OpenAI Chat node:
-- Model: google/gemini-3.7-flash
+- Model: google/gemini-flash-latest
 - System: Summarize the following document concisely
 - User: {{ $json.documentContent }}
 ```
