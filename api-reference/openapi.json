@@ -4041,7 +4041,11 @@
         "operationId": "createMessage",
         "tags": ["Anthropic"],
         "summary": "Create an Anthropic-compatible message",
-        "description": "Accepts Anthropic Messages requests, including video blocks for models that advertise video input.",
+        "description": "Accepts Anthropic Messages requests, including video blocks for models that advertise video input. Authenticate with an API key using the Authorization: Bearer header or the x-api-key header.",
+        "security": [
+          { "bearerAuth": [] },
+          { "apiKeyAuth": [] }
+        ],
         "requestBody": {
           "required": true,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AnthropicMessageRequest" } } }
@@ -5124,8 +5128,9 @@
         "type": "object",
         "required": ["type"],
         "properties": {
-          "type": { "type": "string", "enum": ["input_text", "input_image", "input_video", "input_file"] },
+          "type": { "type": "string", "enum": ["input_text", "output_text", "text", "input_image", "image_url", "input_video", "video_url", "input_file", "refusal"] },
           "text": { "type": "string" },
+          "refusal": { "type": "string" },
           "image_url": { "oneOf": [{ "type": "string" }, { "type": "object", "additionalProperties": true }] },
           "detail": { "type": "string", "enum": ["auto", "low", "high"] },
           "video_url": { "oneOf": [{ "type": "string", "description": "Public HTTPS URL or video data URL." }, { "$ref": "#/components/schemas/VideoUrl" }] },
@@ -5136,70 +5141,102 @@
         "additionalProperties": true
       },
       "ResponsesInputItem": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "message",
-              "function_call",
-              "function_call_output",
-              "configuration_update",
-              "reasoning",
-              "item_reference",
-              "additional_tools",
-              "mcp_list_tools",
-              "mcp_call",
-              "custom_tool_call",
-              "custom_tool_call_output",
-              "web_search_call",
-              "web_extractor_call",
-              "image_generation_call",
-              "computer_call",
-              "computer_call_output",
-              "file_search_call",
-              "code_interpreter_call"
-            ]
-          },
-          "role": {
-            "type": "string"
-          },
-          "content": {
-            "oneOf": [
-              {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "message",
+                  "function_call",
+                  "function_call_output",
+                  "configuration_update",
+                  "item_reference",
+                  "additional_tools",
+                  "mcp_list_tools",
+                  "mcp_call",
+                  "custom_tool_call",
+                  "custom_tool_call_output",
+                  "web_search_call",
+                  "web_extractor_call",
+                  "image_generation_call",
+                  "computer_call",
+                  "computer_call_output",
+                  "file_search_call",
+                  "code_interpreter_call"
+                ]
+              },
+              "role": {
                 "type": "string"
               },
+              "content": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ResponsesInputContentPart"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reasoning": {
+                "$ref": "#/components/schemas/InlineReasoningEffort"
+              }
+            },
+            "additionalProperties": true,
+            "description": "An ordered input/history item. Stateless clients may replay provider output items such as reasoning, web_search_call, image_generation_call, computer_call, file_search_call, and code_interpreter_call for compatible native Responses models. Preserve provider-owned replay items unchanged, including id, status, and provider-specific fields. configuration_update requires reasoning.effort and may trail the request, controlling its generated response. See /api-reference/endpoint/responses#stateless-output-replay and /api-reference/miscellaneous/inline-reasoning-effort.",
+            "allOf": [
               {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ResponsesInputContentPart"
+                "if": {
+                  "required": [
+                    "type"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "configuration_update"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "reasoning"
+                  ]
                 }
               }
             ]
           },
-          "reasoning": {
-            "$ref": "#/components/schemas/InlineReasoningEffort"
-          }
-        },
-        "additionalProperties": true,
-        "description": "An ordered input/history item. Stateless clients may replay provider output items such as reasoning, web_search_call, image_generation_call, computer_call, file_search_call, and code_interpreter_call for compatible native Responses models. Preserve provider-owned replay items unchanged, including id, status, and provider-specific fields. configuration_update requires reasoning.effort and may trail the request, controlling its generated response. See /api-reference/endpoint/responses#stateless-output-replay and /api-reference/miscellaneous/inline-reasoning-effort.",
-        "allOf": [
           {
-            "if": {
-              "required": [
-                "type"
-              ],
-              "properties": {
-                "type": {
-                  "const": "configuration_update"
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "reasoning"
+                ]
+              },
+              "content": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
                 }
               }
             },
-            "then": {
-              "required": [
-                "reasoning"
-              ]
-            }
+            "additionalProperties": true,
+            "description": "Provider-owned reasoning history, including reasoning_text content parts. Preserve replay items unchanged."
           }
         ]
       },
@@ -5267,7 +5304,7 @@
                     {
                       "type": "array",
                       "items": {
-                        "oneOf": [
+                        "anyOf": [
                           {
                             "$ref": "#/components/schemas/AnthropicVideoBlock"
                           },
