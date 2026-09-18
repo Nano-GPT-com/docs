@@ -15,6 +15,19 @@ NanoGPT supports streaming responses via Server-Sent Events (SSE). Streaming is 
 
 All SSE streams are delivered as a sequence of `data:` frames separated by a blank line. Some endpoints also include an `event:` line to name the event type.
 
+## Recover billing after a disconnect
+
+For Chat Completions, save the server-generated `X-Request-ID` response header
+before reading the stream. If the final usage chunk is lost, use that ID and the
+same inference API key with [Request Billing](/api-reference/endpoint/request-billing)
+to look up the recorded primary charge within its rolling 24-hour window.
+Accounting token counts may be estimated after an interrupted stream.
+
+Billing can take time to appear. A lookup `404` does not mean the request was
+free; honor its `Retry-After: 30` header. Looking up billing does not repeat
+inference. Repeating inference can create another charge, even if you reuse
+`X-Request-ID`: it is a correlation ID, not an idempotency key.
+
 ## Enabling Streaming
 
 Set `"stream": true` in the JSON request body.

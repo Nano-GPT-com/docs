@@ -21,6 +21,10 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
   **Advisor extension:** Non-streaming pay-as-you-go API-key requests can include an `advisor` object so the executor model can consult one different model before returning its final answer. Use `mode: "auto"` to let the executor decide or `mode: "required"` to require a consultation attempt. Each completed model phase is billed separately. Advisor is a NanoGPT extension, not part of the standard OpenAI request schema. See [Advisor](/api-reference/miscellaneous/advisor).
 </Note>
 
+<Note>
+  **Billing after a disconnect:** Save the server-generated `X-Request-ID` response header before consuming a stream. With the same API key, [Request Billing](/api-reference/endpoint/request-billing) can return the recorded primary charge and token usage for 24 hours from its accounting timestamp. Refunds and separately billed extras are excluded. Billing may be delayed; a missing record does not mean zero cost.
+</Note>
+
 ## Page map
 
 Use the jump list below to navigate the long-form reference quickly.

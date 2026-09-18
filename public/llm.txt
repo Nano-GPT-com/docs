@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-09-01
+Last updated: 2026-09-18
 
 GOAL
 Equip developers to call the NanoGPT API for chat, Advisor consultations, hosted tool search, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -581,6 +581,15 @@ Non-stream JSON example:
 }
 ```
 
+REQUEST BILLING LOOKUP
+- GET /api/v1/usage/requests/{request_id} returns one recorded primary charge for a rolling 24 hours from its accounting timestamp. Use the same inference API key; no dates or other query parameters are accepted. Key rotation does not transfer access, and team membership does not grant access to another key's charges.
+- Capture the server-generated X-Request-ID response header before reading SSE. Use the header, not a JSON/SSE completion ID. The ID is not an idempotency key: reusing it does not prevent another inference charge. A billing lookup does not rerun inference.
+- cost is an exact decimal string in currency USD or XNO, with cost_scope primary_charge. It excludes refunds and separately billed extras; amounts already part of the primary charge remain included. This is not a net total or proof that balance collection has finished. Tokens can be estimated after interruption; unavailable token counts are null. Do not add reasoning_tokens to output_tokens.
+- Responses include created_at (accounting timestamp), expires_at (created_at plus 24 hours), and as_of. Delayed accounting does not reset the window. Expired, unavailable, absent, and inaccessible records all return 404; never interpret that as zero cost. Multiple eligible primary charges return 409 ambiguous_request_id, without a sum or arbitrary selection.
+- Try the first lookup about two seconds after completion/disconnect. On 404 honor Retry-After: 30 plus jitter. Honor Retry-After on 429/503 too, including delays longer than 30 seconds. The header can be seconds or an HTTP date. For network failures without a response, use jittered backoff from two up to 30 seconds.
+- Stop on 200; stop and correct access/input or seek support on 400/401/403/409. Stop retries no later than 24 hours after the original request. Do not repeat inference to resolve a billing lookup error or keep polling for refunds. Coordinate the shared limits of 60 lookups/minute per key and 300/minute per IP, including unsuccessful lookups. All responses are private/no-store.
+- Full contract: https://docs.nano-gpt.com/api-reference/endpoint/request-billing
+
 ERROR HANDLING AND OBSERVABILITY
 - Error responses follow OpenAI envelopes: { error: { message, type, code, param } } with x-request-id headers for support.
 - Authentication failures increment an abuse counter; repeated failures yield 429 with rate_limit_exceeded.
@@ -590,6 +599,7 @@ ERROR HANDLING AND OBSERVABILITY
 LINKS
 - https://nano-gpt.com/api
 - api-reference/endpoint/usage
+- [Request Billing](https://docs.nano-gpt.com/api-reference/endpoint/request-billing.md): Recover the original primary request charge by captured X-Request-ID for 24 hours.
 - api-reference/endpoint/batches
 - api-reference/endpoint/data-api
 - [Advisor](https://docs.nano-gpt.com/api-reference/miscellaneous/advisor.md): Let one model consult a different second model before producing its final answer.

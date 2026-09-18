@@ -15,6 +15,11 @@ The Usage API returns bounded aggregate usage for the API key used to authentica
 
 The endpoint returns aggregate usage only. It does not return raw transaction rows, request payloads, prompts, responses, provider routing details, or account-wide usage across multiple API keys.
 
+For one recent request, use [Request Billing](/api-reference/endpoint/request-billing)
+with its captured `X-Request-ID` and the same inference API key. That lookup has
+a rolling 24-hour window and returns the original primary charge; it does not
+subtract refunds or include separately billed extras.
+
 ## Base URL
 
 ```text

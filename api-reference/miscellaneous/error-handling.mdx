@@ -167,6 +167,11 @@ If an error happens mid-stream, treat it as a failed request:
 - Log the `X-Request-ID` header if available
 - Retry only when the status/category indicates it is safe to retry (for example 408/429/500/503)
 
+A stream failure does not by itself establish whether a charge was recorded.
+Capture `X-Request-ID` before reading the stream and use [Request Billing](/api-reference/endpoint/request-billing)
+with the same API key to check the original primary charge. Repeating inference
+can create a separate charge; a reused request ID does not deduplicate it.
+
 ## Retry Guidance
 
 General retry recommendations:
@@ -183,6 +188,13 @@ Attempt 3: 4s
 ```
 
 Add jitter to avoid synchronized retries.
+
+**Billing lookup exception:** A `404` from [Request Billing](/api-reference/endpoint/request-billing)
+can mean accounting is still pending. Wait at least its `Retry-After: 30` delay
+plus jitter before looking up the same ID again. Honor larger retry delays on
+`429` and `503`; stop on `200`, permanent errors, or no later than 24 hours after
+the original request. A `404` can also mean expired, absent, or inaccessible
+records, so it never proves zero cost.
 
 If you need current guidance on global rate limits, see [Rate Limits](/api-reference/miscellaneous/rate-limits).
 
