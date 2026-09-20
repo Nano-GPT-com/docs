@@ -7,7 +7,9 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
 
 ## Overview
 
-The `/api/v1/models` endpoint provides a list of available text generation models. It supports optional detailed information including pricing data. The endpoint maintains full backwards compatibility while adding powerful new features.
+The `/api/v1/models` endpoint provides a list of available text generation models. It supports optional detailed information including capabilities, supported service tiers, and pricing data. The endpoint maintains full backwards compatibility while adding powerful new features.
+
+The default response deliberately stays close to OpenAI's minimal Models API shape. Enhanced fields such as `supported_service_tiers` are returned only when you add `?detailed=true`.
 
 For non-text model catalogs, use the dedicated catalog endpoints:
 
@@ -59,8 +61,8 @@ Each model minimally includes:
 
 ## Features
 
-- **Basic Mode**: Standard OpenAI-compatible model listing
-- **Detailed Mode**: Enhanced information with pricing and model descriptions  
+- **Basic Mode**: Standard OpenAI-compatible model listing. Capability and service-tier metadata is omitted.
+- **Detailed Mode**: Enhanced information with capabilities, supported service tiers, pricing, and model descriptions.
 
 ## Provider Selection Discovery
 
@@ -70,7 +72,7 @@ Provider selection support and provider IDs are discovered via `GET /api/models/
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `detailed` | boolean | `false` | Returns detailed model information including pricing and capabilities |
+| `detailed` | boolean | `false` | Returns detailed model information including capabilities, supported service tiers, and pricing |
 | `sort` | string | none | Values: `favorites`, `mostused`. Reorders the returned model list. Sorting only affects models that would already be visible to the caller. It does not add or hide models. |
 
 When `detailed=true`, additional fields may be included per model:
@@ -80,12 +82,38 @@ When `detailed=true`, additional fields may be included per model:
 - `context_length` — max input tokens (if known)
 - `max_output_tokens` — max output tokens (if known)
 - `capabilities` — feature flags (see below)
+- `supported_service_tiers` — alternate `service_tier` values accepted by the model (`flex`, `fast`, and/or the legacy `priority` alias); an empty array means only the default tier is available
 - `pricing.prompt` and `pricing.completion` — at-cost per-million-token pricing in USD
 - `pricing.unit` — `per_million_tokens`
 - `icon_url` — small icon representing the provider
 - `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
 - `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
 - `distillationPolicy` — optional policy metadata indicating whether model outputs may be used for distillation or output-based training under NanoGPT's recorded model-license rules
+
+### Discovering service-tier support
+
+Service-tier availability is model-specific. To discover it programmatically, request the detailed model list and inspect each model's `supported_service_tiers` array:
+
+```bash
+curl -s "https://nano-gpt.com/api/v1/models?detailed=true" \
+  | jq '.data[] | select(.supported_service_tiers | length > 0) | {id, supported_service_tiers}'
+```
+
+For example:
+
+```json
+{
+  "id": "{{example-text-model}}",
+  "supported_service_tiers": ["flex", "fast", "priority"]
+}
+```
+
+- `flex` requests lower-cost, variable-capacity processing.
+- `fast` is the preferred public spelling for higher-priority OpenAI processing.
+- `priority` remains accepted as a legacy alias and may still be the provider-native name on compatible non-OpenAI routes.
+- An empty array means the model supports only the default service tier.
+
+The basic `GET /api/v1/models` response intentionally omits this field for OpenAI compatibility. The [Models page](https://nano-gpt.com/models) also displays service-tier badges for visual discovery. Provider-specific availability can differ when you explicitly force a route; see [Provider Selection](/api-reference/miscellaneous/provider-selection).
 
 ### Discovering video-capable models
 
@@ -206,6 +234,7 @@ Enhanced format with model descriptions, context lengths, and pricing:
       "description": "OpenAI's flagship general-purpose model",
       "context_length": 128000,
       "max_output_tokens": 16384,
+      "supported_service_tiers": ["flex", "fast", "priority"],
       "capabilities": {
         "vision": true,
         "reasoning": false,
@@ -234,6 +263,7 @@ Enhanced format with model descriptions, context lengths, and pricing:
       "description": "Anthropic's top-tier model for deep reasoning and writing",
       "context_length": 200000,
       "max_output_tokens": 8192,
+      "supported_service_tiers": [],
       "capabilities": { "vision": true, "reasoning": true, "tool_calling": true },
       "pricing": {
         "prompt": 15.00,
@@ -269,6 +299,7 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `context_length` | number | Maximum input tokens (null if not available) |
 | `max_output_tokens` | number | Maximum output tokens (null if not available) |
 | `capabilities` | object | Feature flags (e.g., `vision: boolean`) |
+| `supported_service_tiers` | string[] | Alternate service tiers accepted by the model. An empty array means only the default tier is available. |
 | `pricing` | object | Pricing information object |
 | `icon_url` | string | Path/URL for a small provider icon |
 | `cost_estimate` | string or object | Internal hints (for example `"$"` / `"$$"` or `{ cheap: true }`) |

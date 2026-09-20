@@ -151,7 +151,7 @@ For [inline reasoning effort updates](/api-reference/miscellaneous/inline-reason
 | `safety_identifier` | string | No | Safety tracking identifier |
 | `prompt_cache_key` | string | No | Key for prompt caching |
 | `background` | boolean | No | Enable background/async processing |
-| `service_tier` | string | No | Service tier: `"auto"`, `"default"`, `"flex"`, or `"priority"`. See [Service tiers (flex and priority)](#service-tiers-priority) near the end. |
+| `service_tier` | string | No | Service tier: `"auto"`, `"default"`, `"flex"`, `"fast"`, or the legacy `"priority"` alias. See [Service tiers (Flex and Fast/Priority)](#service-tiers-priority) near the end. |
 
 ### Reproducibility guidance
 
@@ -1403,19 +1403,22 @@ curl https://api.nano-gpt.com/api/v1/responses/resp_abc123 \
 
 <a id="service-tiers-priority" />
 
-## Service tiers (flex and priority)
+## Service tiers (Flex and Fast/Priority)
 
 Set `service_tier` to request a non-default capacity tier on providers that support service tiers:
 
 - `auto` or omitted: use NanoGPT's normal routing and the provider default.
 - `default`: request the provider's standard tier where the provider accepts an explicit default value.
 - `flex`: request lower-cost, variable-capacity processing where supported.
-- `priority`: request higher-cost priority processing where supported.
+- `fast`: request lower-latency, higher-priority processing where supported.
+- `priority`: legacy alias for `fast` on OpenAI models; compatible non-OpenAI providers may continue to use the Priority name.
+
+Before sending a tiered request, call [`GET /api/v1/models?detailed=true`](/api-reference/endpoint/models) and inspect the selected model's `supported_service_tiers` array. The basic model list intentionally omits this field for OpenAI compatibility. An empty array means the model supports only the default tier.
 
 Behavior notes:
 
-- Service tier availability is model- and provider-specific. Model pages show which tiers are supported.
-- Flex and priority tiers are only applied when the routed provider supports them.
+- Service tier availability is model- and provider-specific. The detailed model API is the programmatic source of truth; [model pages](https://nano-gpt.com/models) show the same support as badges.
+- Flex and Fast/Priority tiers are only applied when the routed provider supports them.
 - Header provider overrides (like `X-Provider`) and explicit provider selection are honored for pricing and x402 estimates.
 - Provider-native web search can force routing; tier pricing follows that routing.
 - If you explicitly force a provider that does not support service tiers, the requested tier may be ignored by the upstream provider, or routing and pricing may differ from the default route.
@@ -1423,7 +1426,7 @@ Behavior notes:
 Billing note:
 
 - Flex tier billing uses flex pricing where applicable.
-- Priority tier billing uses priority pricing where applicable.
+- Fast/Priority tier billing uses the applicable higher-priority pricing.
 - High-context pricing may also apply for models and providers with separate high-context SKUs, such as `es2k` pricing for GPT-5.5/GPT-5.4 where available.
 
 ### Example: flex tier
@@ -1436,15 +1439,17 @@ Billing note:
 }
 ```
 
-### Example: priority tier
+### Example: fast tier
 
 ```json
 {
   "model": "openai/gpt-5.5",
   "input": "Say hi in one sentence.",
-  "service_tier": "priority"
+  "service_tier": "fast"
 }
 ```
+
+Use `"priority"` instead only when maintaining compatibility with an older integration or a provider route that still uses that name.
 
 ## Response Headers
 

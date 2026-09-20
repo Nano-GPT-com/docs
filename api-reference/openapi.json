@@ -940,7 +940,7 @@
     },
     "/v1/models": {
       "get": {
-        "description": "List available models with optional detailed information including pricing",
+        "description": "List available models. The default response is intentionally minimal for OpenAI compatibility; use `detailed=true` for capabilities, supported service tiers, and pricing.",
         "security": [
           {
             "bearerAuth": []
@@ -953,7 +953,7 @@
           {
             "name": "detailed",
             "in": "query",
-            "description": "Returns detailed model information including pricing",
+            "description": "Returns detailed model information including capabilities, `supported_service_tiers`, and pricing. Inspect `supported_service_tiers` to discover whether a model accepts `flex`, `fast`, or the legacy `priority` alias; an empty array means only the default tier is available.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -4950,8 +4950,8 @@
           },
           "service_tier": {
             "type": "string",
-            "enum": ["auto", "default", "flex", "priority"],
-            "description": "Optional service tier: \"auto\", \"default\", \"flex\", or \"priority\". Use \"flex\" for lower-cost variable-capacity processing or \"priority\" for higher-cost priority processing where supported by the routed model/provider."
+            "enum": ["auto", "default", "flex", "fast", "priority"],
+            "description": "Optional processing tier. Use `flex` for lower-cost variable-capacity processing or `fast` for higher-priority processing where supported. `priority` remains accepted as a legacy alias for Fast on OpenAI models. Discover model support with `GET /api/v1/models?detailed=true` and inspect `supported_service_tiers`; the basic model list intentionally omits this field."
           },
           "temperature": {
             "type": "number",
@@ -6476,6 +6476,28 @@
                   "type": "integer",
                   "description": "Maximum input tokens (detailed mode only, null if not available)",
                   "example": 128000
+                },
+                "max_output_tokens": {
+                  "type": ["integer", "null"],
+                  "description": "Maximum generated output tokens (detailed mode only, null if no serving-route limit is known)",
+                  "example": 16384
+                },
+                "capabilities": {
+                  "type": "object",
+                  "description": "Model capability flags such as vision, reasoning, tool calling, structured output, PDF upload, video input, and Batch API support (detailed mode only)",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  }
+                },
+                "supported_service_tiers": {
+                  "type": "array",
+                  "description": "Alternate service tiers accepted by the model (detailed mode only). Fast is the preferred public spelling for higher-priority OpenAI processing; priority remains accepted as a legacy alias. An empty array means only the default service tier is available.",
+                  "items": {
+                    "type": "string",
+                    "enum": ["flex", "fast", "priority"]
+                  },
+                  "uniqueItems": true,
+                  "example": ["flex", "fast", "priority"]
                 },
                 "pricing": {
                   "type": "object",
@@ -9986,8 +10008,8 @@
           },
           "service_tier": {
             "type": "string",
-            "enum": ["auto", "default", "flex", "priority"],
-            "description": "Optional service tier: \"auto\", \"default\", \"flex\", or \"priority\". Use \"flex\" for lower-cost variable-capacity processing or \"priority\" for higher-cost priority processing where supported by the routed model/provider."
+            "enum": ["auto", "default", "flex", "fast", "priority"],
+            "description": "Optional processing tier. Use `flex` for lower-cost variable-capacity processing or `fast` for higher-priority processing where supported. `priority` remains accepted as a legacy alias for Fast on OpenAI models. Discover model support with `GET /api/v1/models?detailed=true` and inspect `supported_service_tiers`; the basic model list intentionally omits this field."
           },
           "advisor": {
             "$ref": "#/components/schemas/AdvisorConfig"
