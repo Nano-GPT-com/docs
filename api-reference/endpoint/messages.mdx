@@ -21,6 +21,10 @@ NanoGPT accepts requests in the **Anthropic Messages** format, routes them to th
 
 For non‑Anthropic models, NanoGPT transparently translates the request to an OpenAI-style chat format internally and then converts the response back to Anthropic Messages format.
 
+<Note>
+  TypeSafe Jev decision models use `output_config.format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `content[0].text`. See [Jev Decisions](/api-reference/endpoint/jev-decisions) for complete examples and limitations.
+</Note>
+
 This endpoint supports:
 
 - Text generation (streaming and non-streaming)

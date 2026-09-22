@@ -1,0 +1,427 @@
+---
+title: "Jev Decisions"
+description: "Call TypeSafe Jev for typed choices, scores, and yes/no probabilities."
+openapi: "POST /v1/decisions"
+---
+
+## Overview
+
+TypeSafe Jev is a decision model. Instead of generating prose, Jev answers named, typed questions about the state you provide:
+
+- `choice` selects one named option and returns a probability for every option.
+- `score` returns an expected score over an ordered rubric.
+- `noul` returns the probability that a yes/no statement is true.
+
+For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If you already use the official TypeSafe SDK, point it at NanoGPT's `POST /api/v1/systemone` compatibility endpoint. Jev is also available through NanoGPT's OpenAI-compatible Chat Completions and Responses APIs and the Anthropic-compatible Messages API.
+
+<Note>
+  Jev returns calibrated probabilities, not generated text. Use a chat model when you need an explanation or other free-form response.
+</Note>
+
+## Models
+
+| Model | Use |
+| --- | --- |
+| `typesafe/jev-1.13` | Pinned Jev 1.13 release for integrations that should not follow alias upgrades. |
+| `typesafe/jev-latest` | Moving alias for the latest Jev release. |
+
+The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. Use the `typesafe/...` names on the native Decisions and OpenAI/Anthropic-compatible endpoints.
+
+## Native Decisions API
+
+### Endpoint
+
+```text
+POST https://nano-gpt.com/api/v1/decisions
+```
+
+Authenticate with either `Authorization: Bearer YOUR_API_KEY` or `x-api-key: YOUR_API_KEY`.
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl https://nano-gpt.com/api/v1/decisions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "typesafe/jev-1.13",
+    "state": {
+      "ticket": "I was charged twice and need this fixed before Friday.",
+      "customer_tier": "business"
+    },
+    "questions": {
+      "route": {
+        "type": "choice",
+        "instructions": "Which team should handle this ticket?",
+        "criteria": {
+          "billing": "Payments, invoices, refunds, or duplicate charges",
+          "technical": "Product behavior, bugs, or integrations",
+          "sales": "Plans, pricing, or purchasing"
+        }
+      },
+      "urgency": {
+        "type": "score",
+        "instructions": "How urgent is the ticket?",
+        "criteria": [
+          "No time pressure",
+          "Can wait several days",
+          "Needs attention within one business day",
+          "Immediate action is required"
+        ]
+      },
+      "needs_human_review": {
+        "type": "noul",
+        "instructions": "Does this ticket need human review?",
+        "criteria": {
+          "true": "A person should review the case",
+          "false": "Automation can safely handle the case"
+        }
+      }
+    },
+    "user": "customer_123"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch("https://nano-gpt.com/api/v1/decisions", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "typesafe/jev-1.13",
+    state: {
+      ticket: "I was charged twice and need this fixed before Friday.",
+      customer_tier: "business",
+    },
+    questions: {
+      route: {
+        type: "choice",
+        instructions: "Which team should handle this ticket?",
+        criteria: {
+          billing: "Payments, invoices, refunds, or duplicate charges",
+          technical: "Product behavior, bugs, or integrations",
+          sales: "Plans, pricing, or purchasing",
+        },
+      },
+      urgency: {
+        type: "score",
+        instructions: "How urgent is the ticket?",
+        criteria: [
+          "No time pressure",
+          "Can wait several days",
+          "Needs attention within one business day",
+          "Immediate action is required",
+        ],
+      },
+      needs_human_review: {
+        type: "noul",
+        instructions: "Does this ticket need human review?",
+        criteria: {
+          true: "A person should review the case",
+          false: "Automation can safely handle the case",
+        },
+      },
+    },
+    user: "customer_123",
+  }),
+});
+
+if (!response.ok) throw new Error(await response.text());
+const decision = await response.json();
+console.log(decision.answers);
+```
+
+```python Python
+import os
+import requests
+
+response = requests.post(
+    "https://nano-gpt.com/api/v1/decisions",
+    headers={
+        "Authorization": f"Bearer {os.environ['NANOGPT_API_KEY']}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "typesafe/jev-1.13",
+        "state": {
+            "ticket": "I was charged twice and need this fixed before Friday.",
+            "customer_tier": "business",
+        },
+        "questions": {
+            "route": {
+                "type": "choice",
+                "instructions": "Which team should handle this ticket?",
+                "criteria": {
+                    "billing": "Payments, invoices, refunds, or duplicate charges",
+                    "technical": "Product behavior, bugs, or integrations",
+                    "sales": "Plans, pricing, or purchasing",
+                },
+            },
+            "urgency": {
+                "type": "score",
+                "instructions": "How urgent is the ticket?",
+                "criteria": [
+                    "No time pressure",
+                    "Can wait several days",
+                    "Needs attention within one business day",
+                    "Immediate action is required",
+                ],
+            },
+            "needs_human_review": {
+                "type": "noul",
+                "instructions": "Does this ticket need human review?",
+                "criteria": {
+                    "true": "A person should review the case",
+                    "false": "Automation can safely handle the case",
+                },
+            },
+        },
+        "user": "customer_123",
+    },
+    timeout=30,
+)
+response.raise_for_status()
+print(response.json()["answers"])
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "id": "decision_...",
+  "model": "typesafe/jev-1.13",
+  "provider": "TypeSafe",
+  "answers": {
+    "route": {
+      "type": "choice",
+      "choice": "billing",
+      "confidence": 0.97,
+      "probabilities": {
+        "billing": 0.97,
+        "technical": 0.02,
+        "sales": 0.01
+      }
+    },
+    "urgency": {
+      "type": "score",
+      "score": 2.63,
+      "confidence": 0.81,
+      "legend": {
+        "0": "No time pressure",
+        "1": "Can wait several days",
+        "2": "Needs attention within one business day",
+        "3": "Immediate action is required"
+      },
+      "probabilities": {
+        "0": 0.01,
+        "1": 0.05,
+        "2": 0.24,
+        "3": 0.70
+      }
+    },
+    "needs_human_review": {
+      "type": "noul",
+      "noul": 0.84
+    }
+  },
+  "usage": {
+    "input_tokens": 126,
+    "output_tokens": 8
+  }
+}
+```
+
+`noul` is the probability of the `true` outcome. A `score` can be fractional because it is the expected value across the returned score distribution.
+
+## Question types
+
+| Type | Required fields | Answer |
+| --- | --- | --- |
+| `choice` | `instructions` and a non-empty `criteria` object | `choice`, `confidence`, and `probabilities` keyed by the supplied labels |
+| `score` | `instructions` and 2-10 ordered `criteria` entries | Fractional `score`, `confidence`, `legend`, and `probabilities` keyed from `0` |
+| `noul` | `instructions`; optional `criteria.true` and `criteria.false` descriptions | `noul`, a probability from `0` to `1` |
+
+`instructions` and criterion descriptions can be strings, non-empty JSON objects, or non-empty arrays. A `choice` criterion may also be `null` when its label is self-explanatory. The top-level `state` can be a string, JSON object, or JSON array. Question names become keys in `answers`.
+
+## Request fields
+
+| Field | Type | Required | Description |
+| --- | --- | ---: | --- |
+| `model` | string | Yes | `typesafe/jev-1.13` or `typesafe/jev-latest`. |
+| `state` | string, object, or array | Yes | Application state for Jev to evaluate. |
+| `questions` | object | Yes | One or more named `choice`, `score`, or `noul` questions. |
+| `user` | string | No | Your end-user identifier, up to 256 characters. |
+| `session_id` | string | No | Your session identifier, up to 256 characters. |
+| `trace` | object | No | Caller-supplied trace metadata. |
+| `provider` | object or null | No | Native Decisions routing controls. Usually omit this field. |
+
+The native `provider` object can contain endpoint-level `order`, `only`, `ignore`, `allow_fallbacks`, `require_parameters`, `max_price`, `zdr`, and `data_collection` controls. These names describe native Decisions endpoints such as `TypeSafe`; they are not NanoGPT provider IDs. API-key provider restrictions and zero-data-retention requirements still apply.
+
+## Official TypeSafe SDK
+
+NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call Jev without changing their request types.
+
+<CodeGroup>
+
+```typescript JavaScript / TypeScript
+// npm install @typesafe-ai/sdk
+import { choice, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient({
+  apiKey: process.env.NANOGPT_API_KEY!,
+  baseURL: "https://nano-gpt.com/api",
+  defaultModel: "jev-latest",
+});
+
+const result = await client.systemOne({
+  state: { ticket: "I was charged twice. Please fix this." },
+  questions: {
+    route: choice("Which team should handle this ticket?", {
+      billing: null,
+      technical: null,
+      sales: null,
+    }),
+  },
+});
+
+console.log(result.answers.route.choice);
+```
+
+```python Python
+# pip install typesafe-sdk
+import os
+from typesafe_sdk import Choice, TypeSafeClient
+
+with TypeSafeClient(
+    api_key=os.environ["NANOGPT_API_KEY"],
+    base_url="https://nano-gpt.com/api",
+    model="jev-latest",
+) as client:
+    result = client.system_one(
+        state={"ticket": "I was charged twice. Please fix this."},
+        questions={
+            "route": Choice(
+                instructions="Which team should handle this ticket?",
+                criteria={
+                    "billing": None,
+                    "technical": None,
+                    "sales": None,
+                },
+            ),
+        },
+    )
+
+print(result.choices["route"].choice)
+```
+
+</CodeGroup>
+
+<Warning>
+  The SDK's System One call is supported. The SDK's model-list method is not, because NanoGPT's `/api/v1/models` response uses the NanoGPT/OpenAI-compatible model-list shape rather than TypeSafe's model-list shape.
+</Warning>
+
+## OpenAI and Anthropic compatibility
+
+Use these shapes when Jev must fit into an existing OpenAI- or Anthropic-compatible client. The answer object is returned as JSON text, so parse the returned string once.
+
+### Chat Completions
+
+```bash
+curl https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "typesafe/jev-latest",
+    "messages": [
+      {"role": "user", "content": "I was charged twice. Please fix this."}
+    ],
+    "stream": false,
+    "response_format": {
+      "type": "questions",
+      "questions": {
+        "billing": {
+          "type": "noul",
+          "instructions": "Is this request about billing?"
+        }
+      }
+    }
+  }'
+```
+
+Parse `choices[0].message.content` as JSON.
+
+### Responses API
+
+```bash
+curl https://nano-gpt.com/api/v1/responses \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "typesafe/jev-latest",
+    "input": "I was charged twice. Please fix this.",
+    "stream": false,
+    "store": false,
+    "text": {
+      "format": {
+        "type": "questions",
+        "questions": {
+          "billing": {
+            "type": "noul",
+            "instructions": "Is this request about billing?"
+          }
+        }
+      }
+    }
+  }'
+```
+
+Parse `output_text` as JSON. The same JSON text is also available in the assistant output item.
+
+### Anthropic Messages
+
+```bash
+curl https://nano-gpt.com/api/v1/messages \
+  -H "x-api-key: $NANOGPT_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "typesafe/jev-latest",
+    "max_tokens": 128,
+    "messages": [
+      {"role": "user", "content": "I was charged twice. Please fix this."}
+    ],
+    "stream": false,
+    "output_config": {
+      "format": {
+        "type": "questions",
+        "questions": {
+          "billing": {
+            "type": "noul",
+            "instructions": "Is this request about billing?"
+          }
+        }
+      }
+    }
+  }'
+```
+
+Parse `content[0].text` as JSON. `max_tokens` is accepted for Anthropic SDK compatibility but does not change Jev's fixed typed output.
+
+## Limitations
+
+Jev requests are deliberately narrower than chat generation requests:
+
+- Only non-streaming text input in `user` messages is supported on compatibility endpoints.
+- System, developer, assistant, tool, image, audio, video, and file input is not supported.
+- Tools, sampling controls, log probabilities, and reasoning generation controls are not supported.
+- Output-token-limit fields are accepted where an SDK requires them, but they do not change Jev's fixed typed output.
+- BYOK and accountless x402 payments are not supported.
+- Standard NanoGPT or `X-Provider` provider pins are not supported. Use the native Decisions `provider` object only when you need endpoint-level routing controls.
+
+Unsupported combinations return a `400` error instead of being silently ignored.

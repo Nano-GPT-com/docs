@@ -6,6 +6,10 @@ openapi: 'POST /v1/chat/completions'
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
 
 <Note>
+  TypeSafe Jev decision models use `response_format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `choices[0].message.content`. See [Jev Decisions](/api-reference/endpoint/jev-decisions) for complete examples and limitations.
+</Note>
+
+<Note>
   If you are on a NanoGPT subscription and want to keep requests limited to subscription-included models (or you have no prepaid balance), use the subscription base URL: `https://nano-gpt.com/api/subscription/v1/chat/completions` (swap `/api/v1` for `/api/subscription/v1`).
 </Note>
 
