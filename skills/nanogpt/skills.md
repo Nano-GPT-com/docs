@@ -25,13 +25,15 @@ Use this skill when an agent needs to:
 ## Base URL
 
 ```
-https://nano-gpt.com/api/v1
+https://api.nano-gpt.com/api/v1
 ```
 
 Alternative domains (same API, same endpoints):
 - `https://ai.bitcoin.com/api/v1`
 - `https://bcashgpt.com/api/v1`
 - `https://cake.nano-gpt.com/api/v1`
+
+Use the direct API host for API-key inference, attachments, and long-running calls; it has a higher request size limit and longer runtime than the website host. Keep API-key creation, browser login, OAuth, and Management API flows on `nano-gpt.com`. For Anthropic SDKs, use `https://api.nano-gpt.com/api` because the SDK appends `/v1/messages`.
 
 ## Authentication
 
@@ -79,7 +81,7 @@ OpenAI-compatible.
 ### cURL Example
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+curl -X POST https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -95,7 +97,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://nano-gpt.com/api/v1",
+    base_url="https://api.nano-gpt.com/api/v1",
     api_key="YOUR_NANOGPT_API_KEY"
 )
 
@@ -109,7 +111,7 @@ print(response.choices[0].message.content)
 ### JavaScript Example
 
 ```javascript
-const response = await fetch("https://nano-gpt.com/api/v1/chat/completions", {
+const response = await fetch("https://api.nano-gpt.com/api/v1/chat/completions", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -156,7 +158,7 @@ OpenAI-compatible image generation with 100+ models.
 ### cURL Example
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/images/generations \
+curl -X POST https://api.nano-gpt.com/api/v1/images/generations \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -228,7 +230,7 @@ Generate videos from text prompts or images. This is an async API.
 ### cURL Example
 
 ```bash
-curl -X POST https://nano-gpt.com/api/generate-video \
+curl -X POST https://api.nano-gpt.com/api/generate-video \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -250,7 +252,7 @@ curl -X POST https://nano-gpt.com/api/generate-video \
 ### Poll for Completion
 
 ```bash
-curl "https://nano-gpt.com/api/generate-video/status?requestId=abc123" \
+curl "https://api.nano-gpt.com/api/generate-video/status?requestId=abc123" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -296,7 +298,7 @@ OpenAI-compatible TTS endpoint.
 ### cURL Example
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/audio/speech \
+curl -X POST https://api.nano-gpt.com/api/v1/audio/speech \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -311,7 +313,7 @@ curl -X POST https://nano-gpt.com/api/v1/audio/speech \
 
 ```python
 client = OpenAI(
-    base_url="https://nano-gpt.com/api/v1",
+    base_url="https://api.nano-gpt.com/api/v1",
     api_key="YOUR_NANOGPT_API_KEY"
 )
 
@@ -344,7 +346,7 @@ OpenAI-compatible transcription.
 ### cURL Example
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/audio/transcriptions \
+curl -X POST https://api.nano-gpt.com/api/v1/audio/transcriptions \
   -H "x-api-key: YOUR_API_KEY" \
   -F "file=@audio.mp3" \
   -F "model=STT_MODEL_ID"
@@ -383,7 +385,7 @@ OpenAI-compatible embeddings for semantic search, RAG, and clustering.
 
 ```python
 client = OpenAI(
-    base_url="https://nano-gpt.com/api/v1",
+    base_url="https://api.nano-gpt.com/api/v1",
     api_key="YOUR_NANOGPT_API_KEY"
 )
 
@@ -405,7 +407,7 @@ Batch processing limits vary by model.
 ### Check Balance
 
 ```bash
-curl -X POST https://nano-gpt.com/api/check-balance \
+curl -X POST https://api.nano-gpt.com/api/check-balance \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -440,7 +442,7 @@ Deposit limits may apply; see docs for current limits.
 ### Estimate Cost Before Requesting
 
 ```bash
-curl -X POST https://nano-gpt.com/api/get-completion-cost \
+curl -X POST https://api.nano-gpt.com/api/get-completion-cost \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -451,7 +453,7 @@ curl -X POST https://nano-gpt.com/api/get-completion-cost \
 
 For images:
 ```bash
-curl -X POST https://nano-gpt.com/api/estimate-image-cost \
+curl -X POST https://api.nano-gpt.com/api/estimate-image-cost \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{"model": "IMAGE_MODEL_ID", "size": "1024x1024"}'
@@ -464,35 +466,35 @@ curl -X POST https://nano-gpt.com/api/estimate-image-cost \
 ### List All Text Models
 
 ```bash
-curl https://nano-gpt.com/api/v1/models \
+curl https://api.nano-gpt.com/api/v1/models \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
 ### List Image Models
 
 ```bash
-curl https://nano-gpt.com/api/v1/image-models \
+curl https://api.nano-gpt.com/api/v1/image-models \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
 ### List Video Models
 
 ```bash
-curl https://nano-gpt.com/api/v1/video-models \
+curl https://api.nano-gpt.com/api/v1/video-models \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
 ### List Audio Models
 
 ```bash
-curl https://nano-gpt.com/api/v1/audio-models \
+curl https://api.nano-gpt.com/api/v1/audio-models \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
 ### List Embedding Models
 
 ```bash
-curl https://nano-gpt.com/api/v1/embedding-models \
+curl https://api.nano-gpt.com/api/v1/embedding-models \
   -H "x-api-key: YOUR_API_KEY"
 ```
 

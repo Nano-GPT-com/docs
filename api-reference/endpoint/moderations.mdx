@@ -15,7 +15,7 @@ The endpoint is synchronous and returns an OpenAI-compatible moderation response
 ## Endpoint
 
 ```text
-POST https://nano-gpt.com/api/v1/moderations
+POST https://api.nano-gpt.com/api/v1/moderations
 ```
 
 ## Authentication
@@ -98,7 +98,7 @@ Image support depends on the selected model. Text-only models reject image input
 ## Example
 
 ```bash
-curl https://nano-gpt.com/api/v1/moderations \
+curl https://api.nano-gpt.com/api/v1/moderations \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

@@ -43,7 +43,7 @@ For smaller audio files, upload directly using multipart/form-data:
 ```python
 import requests
 
-BASE_URL = "https://nano-gpt.com/api"
+BASE_URL = "https://api.nano-gpt.com/api"
 API_KEY = "YOUR_API_KEY"
 
 def transcribe_file(file_path, model="Whisper-Large-V3", language="auto"):
@@ -303,7 +303,7 @@ from pathlib import Path
 class NanoGPTTranscriber:
     def __init__(self, api_key):
         self.api_key = api_key
-        self.base_url = "https://nano-gpt.com/api"
+        self.base_url = "https://api.nano-gpt.com/api"
         
     def transcribe(self, audio_path=None, audio_url=None, **kwargs):
         """

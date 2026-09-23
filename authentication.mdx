@@ -13,6 +13,8 @@ Management tokens begin with `sk-nano-mgmt-` and authenticate only `/api/managem
 
 Most integrations should use an **API key**.
 
+Send API-key requests to `https://api.nano-gpt.com`. Create and manage keys on the [NanoGPT website](https://nano-gpt.com/api); see [API Hosts](/api-reference/miscellaneous/api-hosts) for the correct client base URL.
+
 ### API key format
 
 New keys use the format:
@@ -33,7 +35,7 @@ Use one of these headers on inference API requests:
 Example:
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models" \
+curl "https://api.nano-gpt.com/api/v1/models" \
   -H "Authorization: Bearer sk-nano-YOUR_API_KEY"
 ```
 

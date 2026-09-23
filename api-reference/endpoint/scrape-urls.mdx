@@ -29,7 +29,7 @@ Authorization: Bearer YOUR_API_KEY
 For accountless payment, prefer the public Data API path:
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/url/scrape \
+curl -i https://api.nano-gpt.com/api/v1/data/url/scrape \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -193,7 +193,7 @@ Summary statistics for the request:
 <CodeGroup>
 
 ```bash cURL
-curl -X POST https://nano-gpt.com/api/scrape-urls \
+curl -X POST https://api.nano-gpt.com/api/scrape-urls \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -214,7 +214,7 @@ urls = [
 ]
 
 response = requests.post(
-    "https://nano-gpt.com/api/scrape-urls",
+    "https://api.nano-gpt.com/api/scrape-urls",
     headers={
         "Content-Type": "application/json",
         "x-api-key": api_key
@@ -238,7 +238,7 @@ const urls = [
   'https://blog.com/post'
 ];
 
-const response = await fetch('https://nano-gpt.com/api/scrape-urls', {
+const response = await fetch('https://api.nano-gpt.com/api/scrape-urls', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

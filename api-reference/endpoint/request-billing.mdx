@@ -14,7 +14,7 @@ server-generated ID from each response. Save it as soon as the response headers
 arrive, before consuming the stream; it is the ID to use for this lookup.
 
 ```sh
-curl 'https://nano-gpt.com/api/v1/usage/requests/req_example' \
+curl 'https://api.nano-gpt.com/api/v1/usage/requests/req_example' \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
@@ -135,7 +135,7 @@ even if reading the body fails. `model` and `messages` are the values from your
 normal chat request, and `apiKey` is your NanoGPT API key.
 
 ```js
-const response = await fetch('https://nano-gpt.com/api/v1/chat/completions', {
+const response = await fetch('https://api.nano-gpt.com/api/v1/chat/completions', {
   method: 'POST',
   headers: {
     Authorization: `Bearer ${apiKey}`,
@@ -157,7 +157,7 @@ For a later lookup, use the same key and the captured ID:
 ```js
 if (requestId) {
   const lookup = await fetch(
-    `https://nano-gpt.com/api/v1/usage/requests/${encodeURIComponent(requestId)}`,
+    `https://api.nano-gpt.com/api/v1/usage/requests/${encodeURIComponent(requestId)}`,
     { headers: { Authorization: `Bearer ${apiKey}` } },
   );
   if (lookup.ok) {

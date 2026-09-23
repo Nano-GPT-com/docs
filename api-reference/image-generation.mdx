@@ -41,15 +41,15 @@ Model discovery routes can be called without authentication. Generation requests
 ## Quickstart
 
 ```bash
-curl https://nano-gpt.com/api/v1/images/models
+curl https://api.nano-gpt.com/api/v1/images/models
 ```
 
 ```bash
-curl https://nano-gpt.com/api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints
+curl https://api.nano-gpt.com/api/v1/images/models/openai/gpt-image-2.5/flare/text-to-image/endpoints
 ```
 
 ```bash
-curl https://nano-gpt.com/api/v1/images \
+curl https://api.nano-gpt.com/api/v1/images \
   -H "Content-Type: application/json" \
   -H "x-api-key: $NANOGPT_API_KEY" \
   -d '{

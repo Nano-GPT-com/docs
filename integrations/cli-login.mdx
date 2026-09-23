@@ -138,14 +138,14 @@ Once you have the API key, use it for all NanoGPT API requests.
 List available models:
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models" \
+curl "https://api.nano-gpt.com/api/v1/models" \
   -H "Authorization: Bearer sk-nano-..."
 ```
 
 Chat completions (OpenAI-compatible):
 
 ```bash
-curl "https://nano-gpt.com/api/v1/chat/completions" \
+curl "https://api.nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer sk-nano-..." \
   -H "Content-Type: application/json" \
   -d '{

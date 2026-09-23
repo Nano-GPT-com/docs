@@ -118,7 +118,7 @@ The search entry itself cannot set `defer_loading: true`. Chat Completions and A
 
 Existing MCP integrations remain available outside this pilot. If your client converts already-authorized MCP definitions into ordinary Responses function tools, those function definitions can participate in hosted search; the client remains responsible for execution, credentials, authorization, and approval. Do not include MCP credentials in function names, descriptions, or schemas.
 
-Use [`GET /api/v1/agent-capabilities`](https://nano-gpt.com/api/v1/agent-capabilities) and inspect `toolSearch` for the current public contract, aliases, API support, and limits. Model support is still evaluated per request.
+Use [`GET /api/v1/agent-capabilities`](https://api.nano-gpt.com/api/v1/agent-capabilities) and inspect `toolSearch` for the current public contract, aliases, API support, and limits. Model support is still evaluated per request.
 
 ## Prompt caching
 

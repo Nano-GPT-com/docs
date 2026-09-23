@@ -47,27 +47,27 @@ grok --version
 
     | Variable | Value | Description |
     |----------|-------|-------------|
-    | `GROK_BASE_URL` | `https://nano-gpt.com/api/v1` | NanoGPT OpenAI-compatible endpoint |
+    | `GROK_BASE_URL` | `https://api.nano-gpt.com/api/v1` | NanoGPT OpenAI-compatible endpoint |
     | `GROK_API_KEY` | `sk-nano-YOUR-API-KEY` | Your NanoGPT API key |
 
     <Tabs>
       <Tab title="macOS & Linux">
         ```bash
-        export GROK_BASE_URL="https://nano-gpt.com/api/v1"
+        export GROK_BASE_URL="https://api.nano-gpt.com/api/v1"
         export GROK_API_KEY="sk-nano-YOUR-API-KEY"
         ```
       </Tab>
 
       <Tab title="Windows PowerShell">
         ```powershell
-        $env:GROK_BASE_URL = "https://nano-gpt.com/api/v1"
+        $env:GROK_BASE_URL = "https://api.nano-gpt.com/api/v1"
         $env:GROK_API_KEY = "sk-nano-YOUR-API-KEY"
         ```
       </Tab>
 
       <Tab title="Windows Cmd">
         ```cmd
-        set GROK_BASE_URL=https://nano-gpt.com/api/v1
+        set GROK_BASE_URL=https://api.nano-gpt.com/api/v1
         set GROK_API_KEY=sk-nano-YOUR-API-KEY
         ```
       </Tab>
@@ -80,7 +80,7 @@ grok --version
     Add the variables to your shell profile (for example, `~/.zshrc` or `~/.bashrc`):
 
     ```bash
-    echo 'export GROK_BASE_URL="https://nano-gpt.com/api/v1"' >> ~/.zshrc
+    echo 'export GROK_BASE_URL="https://api.nano-gpt.com/api/v1"' >> ~/.zshrc
     echo 'export GROK_API_KEY="sk-nano-YOUR-API-KEY"' >> ~/.zshrc
     source ~/.zshrc
     ```
@@ -149,7 +149,7 @@ Yes. You can use Grok models from Claude Code, Cursor, or any OpenAI-compatible 
 
 | Setting | Value |
 |---------|-------|
-| Base URL | `https://nano-gpt.com/api/v1` |
+| Base URL | `https://api.nano-gpt.com/api/v1` |
 | Chat Completions Endpoint | `POST /chat/completions` |
 | Models Endpoint | `GET /models` |
 | Auth Header | `Authorization: Bearer sk-nano-...` |
@@ -157,7 +157,7 @@ Yes. You can use Grok models from Claude Code, Cursor, or any OpenAI-compatible 
 ### Example cURL (verify connection)
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
+curl -X POST "https://api.nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer sk-nano-YOUR-API-KEY" \
   -H "Content-Type: application/json" \
   -d '{

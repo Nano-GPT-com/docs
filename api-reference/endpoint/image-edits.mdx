@@ -1,6 +1,6 @@
 ---
 title: "Image Edits"
-api: "POST https://nano-gpt.com/api/v1/images/edits"
+api: "POST https://api.nano-gpt.com/api/v1/images/edits"
 description: "OpenAI-compatible image editing endpoint with multipart and JSON inputs"
 ---
 
@@ -62,7 +62,7 @@ Send `multipart/form-data` when uploading files.
 Other image-generation parameters may pass through when supported by the selected model.
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/images/edits \
+curl -X POST https://api.nano-gpt.com/api/v1/images/edits \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -F model=gpt-image-2 \
   -F prompt="Remove the background" \
@@ -73,7 +73,7 @@ curl -X POST https://nano-gpt.com/api/v1/images/edits \
 ### Multi-image Multipart
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/images/edit \
+curl -X POST https://api.nano-gpt.com/api/v1/images/edit \
   -H "x-api-key: $NANOGPT_API_KEY" \
   -F model=gpt-image-2 \
   -F prompt="Combine these references into one product image" \

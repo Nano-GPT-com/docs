@@ -247,7 +247,7 @@ Eval run and item rate limits are applied to normal runs and reruns. Rate-limite
 ### 1. Create a dataset
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/v1/evals/datasets" \
+curl -X POST "https://api.nano-gpt.com/api/v1/evals/datasets" \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -265,14 +265,14 @@ curl -X POST "https://nano-gpt.com/api/v1/evals/datasets" \
 ### 2. Freeze a dataset version
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/v1/evals/datasets/evaldataset_abc123/versions" \
+curl -X POST "https://api.nano-gpt.com/api/v1/evals/datasets/evaldataset_abc123/versions" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
 ### 3. Create a scorer
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/v1/evals/scorers" \
+curl -X POST "https://api.nano-gpt.com/api/v1/evals/scorers" \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -286,7 +286,7 @@ curl -X POST "https://nano-gpt.com/api/v1/evals/scorers" \
 ### 4. Create an async experiment
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/v1/evals/experiments" \
+curl -X POST "https://api.nano-gpt.com/api/v1/evals/experiments" \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -321,14 +321,14 @@ The response returns an experiment with status `queued` or `in_progress`. Poll t
 ### 5. Poll the experiment
 
 ```bash
-curl "https://nano-gpt.com/api/v1/evals/experiments/experiment_abc123" \
+curl "https://api.nano-gpt.com/api/v1/evals/experiments/experiment_abc123" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
 ### 6. Read output items
 
 ```bash
-curl "https://nano-gpt.com/api/v1/evals/experiments/experiment_abc123/output_items" \
+curl "https://api.nano-gpt.com/api/v1/evals/experiments/experiment_abc123/output_items" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
@@ -866,7 +866,7 @@ To trace a normal API request, add `metadata.nanogpt_eval_trace: true` to the ch
 Example:
 
 ```bash
-curl -X POST "https://nano-gpt.com/v1/chat/completions" \
+curl -X POST "https://api.nano-gpt.com/v1/chat/completions" \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

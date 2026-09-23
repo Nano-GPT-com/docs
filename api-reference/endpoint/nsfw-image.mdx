@@ -126,7 +126,7 @@ At least one image field is required. If more than 10 images are provided, only 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST https://nano-gpt.com/api/nsfw/image \
+curl -X POST https://api.nano-gpt.com/api/nsfw/image \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -150,7 +150,7 @@ payload = {
 }
 
 response = requests.post(
-    "https://nano-gpt.com/api/nsfw/image",
+    "https://api.nano-gpt.com/api/nsfw/image",
     headers={
         "Content-Type": "application/json",
         "x-api-key": api_key
@@ -164,7 +164,7 @@ print(response.json())
 ```javascript JavaScript
 const apiKey = 'YOUR_API_KEY';
 
-const response = await fetch('https://nano-gpt.com/api/nsfw/image', {
+const response = await fetch('https://api.nano-gpt.com/api/nsfw/image', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

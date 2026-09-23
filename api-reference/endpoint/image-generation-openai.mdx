@@ -10,7 +10,7 @@ For new integrations that do not need OpenAI-compatible request shapes, use the 
 
 ## Endpoint
 
-- Method/Path: `POST https://nano-gpt.com/v1/images/generations`
+- Method/Path: `POST https://api.nano-gpt.com/v1/images/generations`
 - Auth: `Authorization: Bearer <API_KEY>`
 - Required header: `Content-Type: application/json`
 
@@ -48,7 +48,7 @@ For OpenAI-compatible image editing, use [Image Edits](/api-reference/endpoint/i
 <CodeGroup>
 
 ```bash cURL (basic)
-curl https://nano-gpt.com/v1/images/generations \
+curl https://api.nano-gpt.com/v1/images/generations \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -60,7 +60,7 @@ curl https://nano-gpt.com/v1/images/generations \
 ```
 
 ```bash cURL (response_format: "url")
-curl https://nano-gpt.com/v1/images/generations \
+curl https://api.nano-gpt.com/v1/images/generations \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -83,7 +83,7 @@ with open("input.jpg", "rb") as f:
     image_data_url = f"data:image/jpeg;base64,{encoded}"
 
 response = requests.post(
-    "https://nano-gpt.com/v1/images/generations",
+    "https://api.nano-gpt.com/v1/images/generations",
     headers={
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",

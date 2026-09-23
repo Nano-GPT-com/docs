@@ -9,7 +9,7 @@ Replay each update in its original position. Do not replace previous updates or 
 
 ## Chat Completions
 
-Send to `POST https://nano-gpt.com/api/v1/chat/completions`.
+Send to `POST https://api.nano-gpt.com/api/v1/chat/completions`.
 
 `configuration_update` accepts `system` and `developer` roles with empty content.
 
@@ -47,7 +47,7 @@ When replaying this request, leave the update before the returned assistant resp
 
 ## Responses
 
-Send to `POST https://nano-gpt.com/api/v1/responses`.
+Send to `POST https://api.nano-gpt.com/api/v1/responses`.
 
 ```json
 {
@@ -66,7 +66,7 @@ Use manual replay or NanoGPT's stored `previous_response_id` history. Manual rep
 
 ## Anthropic Messages
 
-Send to `POST https://nano-gpt.com/api/v1/messages`.
+Send to `POST https://api.nano-gpt.com/api/v1/messages`.
 
 ```json
 {

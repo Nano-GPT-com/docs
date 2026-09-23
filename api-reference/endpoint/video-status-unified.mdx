@@ -28,7 +28,7 @@ Provide `x-api-key` or a valid session cookie.
 import requests
 import time
 
-BASE = "https://nano-gpt.com/api"
+BASE = "https://api.nano-gpt.com/api"
 
 def get_video_status(request_id: str, api_key: str) -> dict:
     resp = requests.get(
@@ -53,7 +53,7 @@ def wait_for_video(request_id: str, api_key: str, max_attempts: int = 120, delay
 ```
 
 ```javascript JavaScript
-const BASE = 'https://nano-gpt.com/api';
+const BASE = 'https://api.nano-gpt.com/api';
 
 async function getVideoStatus(requestId, apiKey) {
   const url = new URL(`${BASE}/video/status`);
@@ -79,12 +79,12 @@ export async function waitForVideo(requestId, apiKey, maxAttempts = 120, delayMs
 
 ```bash cURL
 # Single status check
-curl -s "https://nano-gpt.com/api/video/status?requestId=vid_m1abc123def456" \
+curl -s "https://api.nano-gpt.com/api/video/status?requestId=vid_m1abc123def456" \
   -H "x-api-key: YOUR_API_KEY" | jq .
 
 # Poll until complete (~10 minutes max)
 for i in {1..120}; do
-  RESP=$(curl -s "https://nano-gpt.com/api/video/status?requestId=vid_m1abc123def456" -H "x-api-key: YOUR_API_KEY")
+  RESP=$(curl -s "https://api.nano-gpt.com/api/video/status?requestId=vid_m1abc123def456" -H "x-api-key: YOUR_API_KEY")
   STATUS=$(echo "$RESP" | jq -r '.data.status // empty')
   echo "Attempt $i: status=$STATUS"
   if [ "$STATUS" = "COMPLETED" ]; then

@@ -18,7 +18,7 @@ A quick guide to setting up LibreChat with NanoGPT's API.
 # NanoGPT Example
 - name: 'NanoGPT'
   apiKey: '${NANO_GPT_API_KEY}'
-  baseURL: 'https://nano-gpt.com/api/v1/'
+  baseURL: 'https://api.nano-gpt.com/api/v1/'
   models:
       default: [
         "{{example-text-model}}",
@@ -34,7 +34,7 @@ A quick guide to setting up LibreChat with NanoGPT's API.
   iconUrl: https://nano-gpt.com/logo.png
 ```
 
-LibreChat currently streams internal thinking from the legacy `reasoning_content` field. The `addParams` block above enables NanoGPT's compatibility shim so LibreChat can render thoughts without additional changes. If you would rather not send the compatibility flag, you can instead point LibreChat at `https://nano-gpt.com/api/v1legacy/` which keeps the legacy response shape by default.
+LibreChat currently streams internal thinking from the legacy `reasoning_content` field. The `addParams` block above enables NanoGPT's compatibility shim so LibreChat can render thoughts without additional changes. If you would rather not send the compatibility flag, you can instead point LibreChat at `https://api.nano-gpt.com/api/v1legacy/` which keeps the legacy response shape by default.
 
 5. Set your API key in your environment variables:
    ```bash

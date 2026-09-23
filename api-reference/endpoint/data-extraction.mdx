@@ -1,6 +1,6 @@
 ---
 title: "Data Extraction APIs"
-api: "POST https://nano-gpt.com/api/v1/firecrawl"
+api: "POST https://api.nano-gpt.com/api/v1/firecrawl"
 description: "Public data extraction endpoints for web, maps, social, and email/domain intelligence workflows"
 ---
 
@@ -65,7 +65,7 @@ Typical responses include a data payload and billing metadata:
 ## Web Crawling
 
 ```text
-POST https://nano-gpt.com/api/v1/firecrawl
+POST https://api.nano-gpt.com/api/v1/firecrawl
 ```
 
 ### Body
@@ -101,7 +101,7 @@ PDF parsing has max page controls when PDF parsing is enabled.
 ## Google Maps
 
 ```text
-POST https://nano-gpt.com/api/v1/googlemaps
+POST https://api.nano-gpt.com/api/v1/googlemaps
 ```
 
 ### Required Input
@@ -128,7 +128,7 @@ Provide at least one of:
 ## Google Maps Reviews
 
 ```text
-POST https://nano-gpt.com/api/v1/googlemaps/reviews
+POST https://api.nano-gpt.com/api/v1/googlemaps/reviews
 ```
 
 ### Required Input
@@ -153,7 +153,7 @@ Provide at least one of:
 ## Facebook Ads
 
 ```text
-POST https://nano-gpt.com/api/v1/facebook/ads
+POST https://api.nano-gpt.com/api/v1/facebook/ads
 ```
 
 ### Required Input
@@ -170,7 +170,7 @@ POST https://nano-gpt.com/api/v1/facebook/ads
 ## Instagram Profile
 
 ```text
-POST https://nano-gpt.com/api/v1/instagram/profile
+POST https://api.nano-gpt.com/api/v1/instagram/profile
 ```
 
 ### Required Input
@@ -186,7 +186,7 @@ POST https://nano-gpt.com/api/v1/instagram/profile
 ## Instagram Posts
 
 ```text
-POST https://nano-gpt.com/api/v1/instagram/posts
+POST https://api.nano-gpt.com/api/v1/instagram/posts
 ```
 
 ### Required Input
@@ -204,7 +204,7 @@ POST https://nano-gpt.com/api/v1/instagram/posts
 ## Reddit
 
 ```text
-POST https://nano-gpt.com/api/v1/reddit
+POST https://api.nano-gpt.com/api/v1/reddit
 ```
 
 ### Required Input
@@ -231,7 +231,7 @@ Provide at least one of:
 ## TikTok
 
 ```text
-POST https://nano-gpt.com/api/v1/tiktok
+POST https://api.nano-gpt.com/api/v1/tiktok
 ```
 
 ### Required Input
@@ -266,10 +266,10 @@ Supported examples include:
 ### Endpoints
 
 ```text
-GET  https://nano-gpt.com/api/v1/hunter/{path}
-POST https://nano-gpt.com/api/v1/hunter/{path}
-GET  https://nano-gpt.com/api/v1/hunter?endpoint=domain-search
-POST https://nano-gpt.com/api/v1/hunter
+GET  https://api.nano-gpt.com/api/v1/hunter/{path}
+POST https://api.nano-gpt.com/api/v1/hunter/{path}
+GET  https://api.nano-gpt.com/api/v1/hunter?endpoint=domain-search
+POST https://api.nano-gpt.com/api/v1/hunter
 ```
 
 For `GET`, query params are forwarded except:
@@ -301,7 +301,7 @@ For `POST`, JSON body params are forwarded. Use `endpoint` or `path` to select t
 ## Example
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/googlemaps \
+curl -X POST https://api.nano-gpt.com/api/v1/googlemaps \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

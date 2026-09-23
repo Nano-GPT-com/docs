@@ -10,8 +10,8 @@
   },
   "servers": [
     {
-      "url": "https://nano-gpt.com/api",
-      "description": "NanoGPT API Server"
+      "url": "https://api.nano-gpt.com/api",
+      "description": "NanoGPT API Server (recommended for API-key requests)"
     }
   ],
   "paths": {
@@ -832,6 +832,9 @@
       }
     },
     "/v1/decisions": {
+      "servers": [
+        { "url": "https://nano-gpt.com/api", "description": "Jev Decisions currently uses the website host" }
+      ],
       "post": {
         "operationId": "createDecision",
         "tags": [
@@ -902,6 +905,9 @@
       }
     },
     "/v1/systemone": {
+      "servers": [
+        { "url": "https://nano-gpt.com/api", "description": "TypeSafe System One currently uses the website host" }
+      ],
       "post": {
         "operationId": "createSystemOneDecision",
         "tags": [
@@ -2292,7 +2298,7 @@
     "/v1/images/generations": {
       "servers": [
         {
-          "url": "https://nano-gpt.com",
+          "url": "https://api.nano-gpt.com",
           "description": "Root server for OpenAI-compatible endpoints"
         }
       ],
@@ -2465,7 +2471,7 @@
     },
     "/v1/tee/attestation": {
       "servers": [
-        { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
+        { "url": "https://api.nano-gpt.com", "description": "Root server for TEE endpoints" }
       ],
       "get": {
         "description": "Fetch TEE attestation report for a model",
@@ -2486,7 +2492,7 @@
     },
     "/v1/tee/signature/{requestId}": {
       "servers": [
-        { "url": "https://nano-gpt.com", "description": "Root server for TEE endpoints" }
+        { "url": "https://api.nano-gpt.com", "description": "Root server for TEE endpoints" }
       ],
       "get": {
         "description": "Fetch ECDSA signature for a chat request",
