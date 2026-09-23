@@ -23,7 +23,7 @@ subtract refunds or include separately billed extras.
 ## Base URL
 
 ```text
-https://nano-gpt.com/api/v1/usage
+https://api.nano-gpt.com/api/v1/usage
 ```
 
 ## Authentication
@@ -37,7 +37,7 @@ Authorization: Bearer $NANOGPT_API_KEY
 Example:
 
 ```bash
-curl "https://nano-gpt.com/api/v1/usage" \
+curl "https://api.nano-gpt.com/api/v1/usage" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
@@ -46,7 +46,7 @@ curl "https://nano-gpt.com/api/v1/usage" \
 If no date range is provided, the endpoint returns the authenticated API key's last 30 UTC days, grouped by both day and model.
 
 ```bash
-curl "https://nano-gpt.com/api/v1/usage" \
+curl "https://api.nano-gpt.com/api/v1/usage" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
@@ -55,7 +55,7 @@ curl "https://nano-gpt.com/api/v1/usage" \
 Use `from` and `to` to request an explicit UTC date range. Both values must be `YYYY-MM-DD` dates. `to` is inclusive.
 
 ```bash
-curl "https://nano-gpt.com/api/v1/usage?from=2026-05-01&to=2026-05-31" \
+curl "https://api.nano-gpt.com/api/v1/usage?from=2026-05-01&to=2026-05-31" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
@@ -82,7 +82,7 @@ Use `group_by` to control which aggregate arrays are returned.
 Example:
 
 ```bash
-curl "https://nano-gpt.com/api/v1/usage?from=2026-05-01&to=2026-05-31&group_by=model" \
+curl "https://api.nano-gpt.com/api/v1/usage?from=2026-05-01&to=2026-05-31&group_by=model" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 

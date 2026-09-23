@@ -31,22 +31,22 @@ GET /api/models/:canonicalId/providers
 
 Provider rows may also include `distillationPolicy`, which indicates whether that specific hosted provider route is allowed for output-based model training or distillation under NanoGPT's recorded provider-terms and model-license rules. See [Distillation Policy](/api-reference/miscellaneous/distillation-policy).
 
-This endpoint is not under `/api/v1`. If your base URL is `https://nano-gpt.com/api/v1`, do not append this path to that base URL. Use:
+This endpoint is not under `/api/v1`. If your base URL is `https://api.nano-gpt.com/api/v1`, do not append this path to that base URL. Use:
 
 ```http
-GET https://nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
+GET https://api.nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
 ```
 
 If the model ID contains `/`, URL-encode the slash when placing it in the path:
 
 ```http
-GET https://nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
+GET https://api.nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
 ```
 
 Do not use the unencoded form, because the slash is treated as a path separator:
 
 ```http
-GET https://nano-gpt.com/api/models/moonshotai/kimi-k2.6/providers
+GET https://api.nano-gpt.com/api/models/moonshotai/kimi-k2.6/providers
 ```
 
 Here `:canonicalId` means the model ID or one of its supported aliases.
@@ -103,7 +103,7 @@ Notes:
 For a single request, send the provider ID in the `X-Provider` header.
 
 ```bash
-curl https://nano-gpt.com/api/v1/chat/completions \
+curl https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -H "X-Provider: novita" \

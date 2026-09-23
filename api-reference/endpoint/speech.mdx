@@ -1,6 +1,6 @@
 ---
 title: 'v1/audio/speech (TTS + Music)'
-api: "POST https://nano-gpt.com/api/v1/audio/speech"
+api: "POST https://api.nano-gpt.com/api/v1/audio/speech"
 ---
 
 ## Overview
@@ -15,10 +15,10 @@ When you use a music model (for example `Minimax-Music-02`), the `input` field i
 
 ## Endpoint
 
-- Method/Path: `POST https://nano-gpt.com/api/v1/audio/speech`
+- Method/Path: `POST https://api.nano-gpt.com/api/v1/audio/speech`
 - Auth: `Authorization: Bearer <API_KEY>`
 - Required header: `Content-Type: application/json`
-- You may see older examples using `POST https://nano-gpt.com/api/v1/speech`. Prefer `/api/v1/audio/speech` for OpenAI SDK compatibility.
+- You may see older examples using `POST https://api.nano-gpt.com/api/v1/speech`. Prefer `/api/v1/audio/speech` for OpenAI SDK compatibility.
 
 ## Request Parameters
 
@@ -93,7 +93,7 @@ Common error types: `invalid_model`, `invalid_voice`, `unsupported_format`, `inp
 curl -X POST \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
-  https://nano-gpt.com/api/v1/audio/speech \
+  https://api.nano-gpt.com/api/v1/audio/speech \
   -d '{
     "model": "gpt-4o-mini-tts",
     "input": "Hello from NanoGPT!",
@@ -109,7 +109,7 @@ curl -X POST \
 curl -X POST \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
-  https://nano-gpt.com/api/v1/audio/speech \
+  https://api.nano-gpt.com/api/v1/audio/speech \
   -d '{
     "model": "gpt-4o-mini-tts",
     "input": "Hello, this is a streaming test with a longer message to observe progressive chunking.",
@@ -128,7 +128,7 @@ import { createWriteStream } from "node:fs";
 
 const client = new OpenAI({
   apiKey: process.env.NANOGPT_API_KEY,
-  baseURL: "https://nano-gpt.com/api/v1",
+  baseURL: "https://api.nano-gpt.com/api/v1",
 });
 
 const response = await client.audio.speech.create({
@@ -159,7 +159,7 @@ from openai import OpenAI
 
 client = OpenAI(
     api_key="your-nanogpt-api-key",
-    base_url="https://nano-gpt.com/api/v1",
+    base_url="https://api.nano-gpt.com/api/v1",
 )
 
 with client.audio.speech.with_streaming_response.create(
@@ -177,7 +177,7 @@ with client.audio.speech.with_streaming_response.create(
 ### Compare TTFB (streaming vs non-streaming)
 
 ```bash
-curl -X POST https://nano-gpt.com/api/v1/audio/speech \
+curl -X POST https://api.nano-gpt.com/api/v1/audio/speech \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-4o-mini-tts","input":"A longer sentence to demonstrate the streaming improvement.","voice":"alloy","stream":true}' \

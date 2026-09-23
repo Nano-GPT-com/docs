@@ -44,7 +44,7 @@ The OpenAI and Anthropic SDKs don't compress request bodies on their own, but bo
 ```bash
 echo '{"model":"{{example-text-model}}","messages":[{"role":"user","content":"Hello!"}]}' \
   | gzip \
-  | curl https://nano-gpt.com/api/v1/chat/completions \
+  | curl https://api.nano-gpt.com/api/v1/chat/completions \
       -H "Authorization: Bearer $NANOGPT_API_KEY" \
       -H "Content-Type: application/json" \
       -H "Content-Encoding: gzip" \
@@ -66,7 +66,7 @@ payload = {
 }
 
 response = requests.post(
-    "https://nano-gpt.com/api/v1/chat/completions",
+    "https://api.nano-gpt.com/api/v1/chat/completions",
     data=gzip.compress(json.dumps(payload).encode("utf-8")),
     headers={
         "Authorization": f"Bearer {API_KEY}",
@@ -110,7 +110,7 @@ class GzipJsonTransport(httpx.BaseTransport):
 
 
 client = OpenAI(
-    base_url="https://nano-gpt.com/api/v1",
+    base_url="https://api.nano-gpt.com/api/v1",
     api_key=API_KEY,
     http_client=httpx.Client(transport=GzipJsonTransport()),
 )
@@ -135,7 +135,7 @@ const payload = {
   messages: [{ role: "user", content: "Hello!" }],
 };
 
-const response = await fetch("https://nano-gpt.com/api/v1/chat/completions", {
+const response = await fetch("https://api.nano-gpt.com/api/v1/chat/completions", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
@@ -166,7 +166,7 @@ const gzipFetch = async (url, init = {}) => {
 };
 
 const client = new OpenAI({
-  baseURL: "https://nano-gpt.com/api/v1",
+  baseURL: "https://api.nano-gpt.com/api/v1",
   apiKey: process.env.NANOGPT_API_KEY,
   fetch: gzipFetch,
 });

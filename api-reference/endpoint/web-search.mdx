@@ -1,6 +1,6 @@
 ---
 title: "Direct Web Search API"
-api: "POST https://nano-gpt.com/api/web"
+api: "POST https://api.nano-gpt.com/api/web"
 description: "Run direct web search requests with explicit query control, provider-specific options, and Sofya search, fetch, extract, and research operations"
 ---
 
@@ -40,7 +40,7 @@ Either auth header is supported:
 For accountless payment, prefer the public Data API path:
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/web/search \
+curl -i https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -225,7 +225,7 @@ For `sourcedAnswer` and `structured`, `data` is the provider response object.
 <CodeGroup>
 
 ```bash cURL (Authorization)
-curl -X POST https://nano-gpt.com/api/web \
+curl -X POST https://api.nano-gpt.com/api/web \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -237,7 +237,7 @@ curl -X POST https://nano-gpt.com/api/web \
 ```
 
 ```bash cURL (x-api-key)
-curl -X POST https://nano-gpt.com/api/web \
+curl -X POST https://api.nano-gpt.com/api/web \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -249,7 +249,7 @@ curl -X POST https://nano-gpt.com/api/web \
 ```
 
 ```bash cURL (structured output)
-curl -X POST https://nano-gpt.com/api/web \
+curl -X POST https://api.nano-gpt.com/api/web \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -262,7 +262,7 @@ curl -X POST https://nano-gpt.com/api/web \
 ```
 
 ```bash cURL (chat completions with Linkup)
-curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+curl -X POST https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -274,7 +274,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 ```
 
 ```bash cURL (chat completions with Sofya)
-curl -X POST https://nano-gpt.com/api/v1/chat/completions \
+curl -X POST https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -292,7 +292,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 <CodeGroup>
 
 ```bash cURL (search)
-curl -X POST https://nano-gpt.com/api/web \
+curl -X POST https://api.nano-gpt.com/api/web \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -305,7 +305,7 @@ curl -X POST https://nano-gpt.com/api/web \
 ```
 
 ```bash cURL (fetch)
-curl -X POST https://nano-gpt.com/api/web \
+curl -X POST https://api.nano-gpt.com/api/web \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -317,7 +317,7 @@ curl -X POST https://nano-gpt.com/api/web \
 ```
 
 ```bash cURL (extract)
-curl -X POST https://nano-gpt.com/api/web \
+curl -X POST https://api.nano-gpt.com/api/web \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -329,7 +329,7 @@ curl -X POST https://nano-gpt.com/api/web \
 ```
 
 ```bash cURL (research)
-curl -X POST https://nano-gpt.com/api/web \
+curl -X POST https://api.nano-gpt.com/api/web \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

@@ -1,6 +1,6 @@
 ---
 title: "Image Models"
-api: "GET https://nano-gpt.com/api/v1/image-models"
+api: "GET https://api.nano-gpt.com/api/v1/image-models"
 description: "List available image generation and image editing models with capabilities and supported parameters"
 ---
 
@@ -15,7 +15,7 @@ This endpoint is cacheable. Refresh it periodically and handle new fields as add
 ## Endpoint
 
 ```text
-GET https://nano-gpt.com/api/v1/image-models
+GET https://api.nano-gpt.com/api/v1/image-models
 ```
 
 ## Authentication
@@ -119,7 +119,7 @@ Use the model's `supported_parameters` and `capabilities` objects to decide whic
 ## Example
 
 ```bash
-curl "https://nano-gpt.com/api/v1/image-models?detailed=true" \
+curl "https://api.nano-gpt.com/api/v1/image-models?detailed=true" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 

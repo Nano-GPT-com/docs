@@ -20,7 +20,7 @@ Model limits and per-million-token USD cost estimates below were checked against
     "mode": "merge",
     "providers": {
       "nanogpt": {
-        "baseUrl": "https://nano-gpt.com/api/v1",
+        "baseUrl": "https://api.nano-gpt.com/api/v1",
         "apiKey": "YOUR_NANOGPT_API_KEY_HERE",
         "auth": "api-key",
         "api": "openai-completions",
@@ -67,13 +67,13 @@ These are examples only. Use the model IDs returned by the models endpoint below
 ## Get The Most Recent Models
 
 ```bash
-curl https://nano-gpt.com/api/v1/models
+curl https://api.nano-gpt.com/api/v1/models
 ```
 
 If you want filtered lists:
 
-- `https://nano-gpt.com/api/subscription/v1/models` (subscription-only)
-- `https://nano-gpt.com/api/paid/v1/models` (paid-only)
+- `https://api.nano-gpt.com/api/subscription/v1/models` (subscription-only)
+- `https://api.nano-gpt.com/api/paid/v1/models` (paid-only)
 
 ## Verify Your Setup
 

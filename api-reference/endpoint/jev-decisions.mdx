@@ -15,6 +15,10 @@ TypeSafe Jev is a decision model. Instead of generating prose, Jev answers named
 For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If you already use the official TypeSafe SDK, point it at NanoGPT's `POST /api/v1/systemone` compatibility endpoint. Jev is also available through NanoGPT's OpenAI-compatible Chat Completions and Responses APIs and the Anthropic-compatible Messages API.
 
 <Note>
+  Jev is currently available on `https://nano-gpt.com`, including the Decisions and System One endpoints and Jev requests through compatible chat APIs. The direct API host does not yet list Jev models or serve its dedicated routes. Use the website host for Jev until the direct host is updated.
+</Note>
+
+<Note>
   Jev returns calibrated probabilities, not generated text. Use a chat model when you need an explanation or other free-form response.
 </Note>
 

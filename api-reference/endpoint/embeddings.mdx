@@ -83,7 +83,7 @@ from openai import OpenAI
 # Initialize client pointing to NanoGPT
 client = OpenAI(
     api_key="YOUR_NANOGPT_API_KEY",
-    base_url="https://nano-gpt.com/api/v1"
+    base_url="https://api.nano-gpt.com/api/v1"
 )
 
 # Create embedding
@@ -105,7 +105,7 @@ import OpenAI from 'openai';
 // Initialize client pointing to NanoGPT
 const openai = new OpenAI({
     apiKey: 'YOUR_NANOGPT_API_KEY',
-    baseURL: 'https://nano-gpt.com/api/v1'
+    baseURL: 'https://api.nano-gpt.com/api/v1'
 });
 
 // Create embedding
@@ -122,7 +122,7 @@ console.log(`Embedding dimensions: ${embedding.length}`);
 ### cURL
 
 ```bash
-curl https://nano-gpt.com/api/v1/embeddings \
+curl https://api.nano-gpt.com/api/v1/embeddings \
   -H "Authorization: Bearer YOUR_NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

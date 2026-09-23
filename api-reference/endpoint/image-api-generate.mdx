@@ -1,6 +1,6 @@
 ---
 title: "Generate Images"
-api: "POST https://nano-gpt.com/api/v1/images"
+api: "POST https://api.nano-gpt.com/api/v1/images"
 description: "Generate text-to-image and image-to-image outputs through NanoGPT's normalized Image API endpoint"
 ---
 
@@ -30,7 +30,7 @@ Content-Type: application/json
 ## Text-To-Image Example
 
 ```bash
-curl https://nano-gpt.com/api/v1/images \
+curl https://api.nano-gpt.com/api/v1/images \
   -H "Content-Type: application/json" \
   -H "x-api-key: $NANOGPT_API_KEY" \
   -d '{

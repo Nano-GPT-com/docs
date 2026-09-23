@@ -80,7 +80,7 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
         {
           "env": {
             "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
-            "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1",
+            "ANTHROPIC_BASE_URL": "https://api.nano-gpt.com/api/v1",
             "API_TIMEOUT_MS": "600000"
           }
         }
@@ -102,7 +102,7 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
         {
           "env": {
             "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
-            "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1"
+            "ANTHROPIC_BASE_URL": "https://api.nano-gpt.com/api/v1"
           }
         }
         ```
@@ -111,14 +111,14 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
 
         ```cmd
         setx ANTHROPIC_AUTH_TOKEN your_nanogpt_api_key
-        setx ANTHROPIC_BASE_URL https://nano-gpt.com/api/v1
+        setx ANTHROPIC_BASE_URL https://api.nano-gpt.com/api/v1
         ```
 
         **Windows PowerShell**:
 
         ```powershell
         [System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', 'your_nanogpt_api_key', 'User')
-        [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://nano-gpt.com/api/v1', 'User')
+        [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.nano-gpt.com/api/v1', 'User')
         ```
 
         Replace `your_nanogpt_api_key` with your actual API key. A new terminal window is required for changes to take effect.
@@ -164,7 +164,7 @@ Yes. NanoGPT supports 400+ models. You can configure Claude Code to use differen
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
-    "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1",
+    "ANTHROPIC_BASE_URL": "https://api.nano-gpt.com/api/v1",
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "{{example-text-model}}",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "anthropic/claude-opus-5",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemini-flash-latest"
@@ -179,7 +179,7 @@ Recommended models:
 | Best overall | <code>{exampleTextModel}</code>, `anthropic/claude-opus-5` |
 | Fast/cheap | `google/gemini-flash-latest` |
 
-List available models with `GET https://nano-gpt.com/api/v1/models`.
+List available models with `GET https://api.nano-gpt.com/api/v1/models`.
 
 ### Configuration Not Working?
 

@@ -1,6 +1,6 @@
 ---
 title: "Data API"
-api: "GET https://nano-gpt.com/api/v1/data"
+api: "GET https://api.nano-gpt.com/api/v1/data"
 description: "Discover and call NanoGPT data tools through one stable endpoint family"
 ---
 
@@ -13,7 +13,7 @@ The Data API is a wrapper around the existing direct endpoints. It does not chan
 ## Base URL
 
 ```text
-https://nano-gpt.com/api/v1/data
+https://api.nano-gpt.com/api/v1/data
 ```
 
 Local development:
@@ -78,7 +78,7 @@ Cache-Control: public, max-age=300, stale-while-revalidate=3600
       "provider": "NanoGPT",
       "methods": ["POST"],
       "endpoint": "/api/v1/data/web/search",
-      "url": "https://nano-gpt.com/api/v1/data/web/search",
+      "url": "https://api.nano-gpt.com/api/v1/data/web/search",
       "direct_endpoint": "/api/web",
       "pricing": "Usage-based; estimated from provider, depth, and partner markup.",
       "status": "available"
@@ -120,7 +120,7 @@ The Data API supports path-style dispatch and body-style dispatch.
 Use a stable Data API path and send the underlying endpoint's normal input body.
 
 ```bash
-curl https://nano-gpt.com/api/v1/data/web/search \
+curl https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -136,7 +136,7 @@ Path-style dispatch is the simplest format for fixed integrations because each t
 Use `POST /api/v1/data` and specify the target endpoint in the request body.
 
 ```bash
-curl https://nano-gpt.com/api/v1/data \
+curl https://api.nano-gpt.com/api/v1/data \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -315,7 +315,7 @@ For path-style `POST` requests with no body, the wrapper forwards `{}` and prese
 ### Web Search
 
 ```bash
-curl https://nano-gpt.com/api/v1/data/web/search \
+curl https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -329,7 +329,7 @@ curl https://nano-gpt.com/api/v1/data/web/search \
 Body-style dispatch:
 
 ```bash
-curl https://nano-gpt.com/api/v1/data \
+curl https://api.nano-gpt.com/api/v1/data \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -346,7 +346,7 @@ curl https://nano-gpt.com/api/v1/data \
 ### Scrape URLs
 
 ```bash
-curl https://nano-gpt.com/api/v1/data/url/scrape \
+curl https://api.nano-gpt.com/api/v1/data/url/scrape \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -358,7 +358,7 @@ curl https://nano-gpt.com/api/v1/data/url/scrape \
 ### Accountless x402 Data Request
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/web/search \
+curl -i https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -370,7 +370,7 @@ curl -i https://nano-gpt.com/api/v1/data/web/search \
 ```
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/url/scrape \
+curl -i https://api.nano-gpt.com/api/v1/data/url/scrape \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -384,7 +384,7 @@ Both examples return `402 Payment Required` with a `payment` object when account
 ### Google Maps Search
 
 ```bash
-curl https://nano-gpt.com/api/v1/data/google-maps/search \
+curl https://api.nano-gpt.com/api/v1/data/google-maps/search \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -398,12 +398,12 @@ Google Maps search also supports `GET` for the same behavior exposed by the dire
 ### Hunter Domain Search
 
 ```bash
-curl "https://nano-gpt.com/api/v1/data/hunter/domain-search?domain=example.com" \
+curl "https://api.nano-gpt.com/api/v1/data/hunter/domain-search?domain=example.com" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
 ```bash
-curl https://nano-gpt.com/api/v1/data/hunter/domain-search \
+curl https://api.nano-gpt.com/api/v1/data/hunter/domain-search \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -414,7 +414,7 @@ curl https://nano-gpt.com/api/v1/data/hunter/domain-search \
 Body-style dispatch:
 
 ```bash
-curl https://nano-gpt.com/api/v1/data \
+curl https://api.nano-gpt.com/api/v1/data \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -428,14 +428,14 @@ curl https://nano-gpt.com/api/v1/data \
 ### X Search With Query Parameters
 
 ```bash
-curl "https://nano-gpt.com/api/v1/data/x/search?query=nanogpt" \
+curl "https://api.nano-gpt.com/api/v1/data/x/search?query=nanogpt" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
 Path-style `POST` also works for query-only X calls:
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/v1/data/x/search?query=nanogpt" \
+curl -X POST "https://api.nano-gpt.com/api/v1/data/x/search?query=nanogpt" \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 

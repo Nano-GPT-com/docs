@@ -149,7 +149,7 @@ const axios = require('axios');
 
 async function getYouTubeTranscripts() {
   try {
-    const response = await axios.post('https://nano-gpt.com/api/youtube-transcribe', {
+    const response = await axios.post('https://api.nano-gpt.com/api/youtube-transcribe', {
       urls: [
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         'https://youtu.be/kJQP7kiw5Fk'
@@ -173,7 +173,7 @@ async function getYouTubeTranscripts() {
 import requests
 
 def get_youtube_transcripts():
-    url = 'https://nano-gpt.com/api/youtube-transcribe'
+    url = 'https://api.nano-gpt.com/api/youtube-transcribe'
     headers = {
         'Content-Type': 'application/json',
         'x-api-key': 'YOUR_API_KEY'
@@ -199,7 +199,7 @@ def get_youtube_transcripts():
 ```
 
 ```bash cURL
-curl -X POST https://nano-gpt.com/api/youtube-transcribe \
+curl -X POST https://api.nano-gpt.com/api/youtube-transcribe \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -d '{
@@ -212,7 +212,7 @@ curl -X POST https://nano-gpt.com/api/youtube-transcribe \
 
 ```php PHP
 <?php
-$url = 'https://nano-gpt.com/api/youtube-transcribe';
+$url = 'https://api.nano-gpt.com/api/youtube-transcribe';
 $data = [
     'urls' => [
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',

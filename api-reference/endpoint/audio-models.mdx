@@ -1,6 +1,6 @@
 ---
 title: "Audio Models"
-api: "GET https://nano-gpt.com/api/v1/audio-models"
+api: "GET https://api.nano-gpt.com/api/v1/audio-models"
 description: "List available text-to-speech and speech-to-text models"
 ---
 
@@ -13,7 +13,7 @@ This endpoint is cacheable. Refresh it periodically and do not hardcode audio mo
 ## Endpoint
 
 ```text
-GET https://nano-gpt.com/api/v1/audio-models
+GET https://api.nano-gpt.com/api/v1/audio-models
 ```
 
 ## Authentication
@@ -76,7 +76,7 @@ When `type` is not `all`, `meta` may include the active filter.
 ## Example
 
 ```bash
-curl "https://nano-gpt.com/api/v1/audio-models?type=stt&detailed=true" \
+curl "https://api.nano-gpt.com/api/v1/audio-models?type=stt&detailed=true" \
   -H "x-api-key: $NANOGPT_API_KEY"
 ```
 

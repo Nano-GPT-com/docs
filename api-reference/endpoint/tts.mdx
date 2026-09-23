@@ -45,7 +45,7 @@ def text_to_speech(text, model="Kokoro-82m", voice=None, **kwargs):
     payload.update(kwargs)
     
     response = requests.post(
-        "https://nano-gpt.com/api/tts",
+        "https://api.nano-gpt.com/api/tts",
         headers=headers,
         json=payload
     )
@@ -84,7 +84,7 @@ async function textToSpeech(text, options = {}) {
         ...options
     };
     
-    const response = await fetch('https://nano-gpt.com/api/tts', {
+    const response = await fetch('https://api.nano-gpt.com/api/tts', {
         method: 'POST',
         headers: {
             'x-api-key': 'YOUR_API_KEY',
@@ -121,7 +121,7 @@ textToSpeech('Hello world!', {
 ```
 
 ```bash cURL
-curl -X POST https://nano-gpt.com/api/tts \
+curl -X POST https://api.nano-gpt.com/api/tts \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -167,7 +167,7 @@ If your initial `POST /api/tts` returns HTTP 202 with a body like:
 
 ```bash cURL
 # 1) Submit TTS
-curl -X POST https://nano-gpt.com/api/tts \
+curl -X POST https://api.nano-gpt.com/api/tts \
   -H 'x-api-key: YOUR_API_KEY' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -178,7 +178,7 @@ curl -X POST https://nano-gpt.com/api/tts \
   }'
 
 # 2) If response is 202/pending, poll using returned values
-curl "https://nano-gpt.com/api/tts/status?runId=98b0d593-fe8d-49b8-89c9-233022232297&model=Elevenlabs-Turbo-V2.5&cost=0.0050388&paymentSource=USD&isApiRequest=true" \
+curl "https://api.nano-gpt.com/api/tts/status?runId=98b0d593-fe8d-49b8-89c9-233022232297&model=Elevenlabs-Turbo-V2.5&cost=0.0050388&paymentSource=USD&isApiRequest=true" \
   -H 'x-api-key: YOUR_API_KEY'
 
 # 3) On completion, you'll receive an audioUrl
@@ -192,7 +192,7 @@ curl "https://nano-gpt.com/api/tts/status?runId=98b0d593-fe8d-49b8-89c9-23302223
 
 ```javascript JavaScript
 async function submitTTS({ text, model = 'Elevenlabs-Turbo-V2.5', voice = 'Rachel', speed = 1 }) {
-  const res = await fetch('https://nano-gpt.com/api/tts', {
+  const res = await fetch('https://api.nano-gpt.com/api/tts', {
     method: 'POST',
     headers: {
       'x-api-key': 'YOUR_API_KEY',
@@ -232,7 +232,7 @@ async function pollTTSStatus({ runId, model, cost, paymentSource, isApiRequest }
     if (paymentSource) qs.set('paymentSource', String(paymentSource));
     if (typeof isApiRequest === 'boolean') qs.set('isApiRequest', String(isApiRequest));
 
-    const res = await fetch(`https://nano-gpt.com/api/tts/status?${qs.toString()}`, {
+    const res = await fetch(`https://api.nano-gpt.com/api/tts/status?${qs.toString()}`, {
       headers: { 'x-api-key': 'YOUR_API_KEY' }
     });
     if (!res.ok) {
@@ -345,7 +345,7 @@ text_to_speech(
 ```
 
 ```bash cURL
-curl -X POST https://nano-gpt.com/api/tts \
+curl -X POST https://api.nano-gpt.com/api/tts \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -396,7 +396,7 @@ for fmt in formats:
 
 ```bash cURL
 # With voice instructions
-curl -X POST https://nano-gpt.com/api/tts \
+curl -X POST https://api.nano-gpt.com/api/tts \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -408,7 +408,7 @@ curl -X POST https://nano-gpt.com/api/tts \
   }'
 
 # Ultra-low cost
-curl -X POST https://nano-gpt.com/api/tts \
+curl -X POST https://api.nano-gpt.com/api/tts \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

@@ -15,7 +15,7 @@ from openai import OpenAI
 # Initialize client pointing to NanoGPT
 client = OpenAI(
     api_key="YOUR_NANOGPT_API_KEY",
-    base_url="https://nano-gpt.com/api/v1"
+    base_url="https://api.nano-gpt.com/api/v1"
 )
 
 # Create embedding
@@ -77,13 +77,13 @@ print(f"Embedding has {len(embedding)} dimensions")
 
 ### Create Embeddings
 
-**Endpoint:** `POST https://nano-gpt.com/api/v1/embeddings`
+**Endpoint:** `POST https://api.nano-gpt.com/api/v1/embeddings`
 
 Create embeddings for one or more text inputs.
 
 ### Discover Embedding Models
 
-**Endpoint:** `GET https://nano-gpt.com/api/v1/embedding-models`
+**Endpoint:** `GET https://api.nano-gpt.com/api/v1/embedding-models`
 
 List all available embedding models with detailed information.
 
@@ -331,7 +331,7 @@ import OpenAI from 'openai';
 // Initialize client
 const openai = new OpenAI({
     apiKey: 'YOUR_NANOGPT_API_KEY',
-    baseURL: 'https://nano-gpt.com/api/v1'
+    baseURL: 'https://api.nano-gpt.com/api/v1'
 });
 
 // Create embedding
@@ -347,7 +347,7 @@ console.log(`Embedding has ${embedding.length} dimensions`);
 ### cURL
 
 ```bash
-curl https://nano-gpt.com/api/v1/embeddings \
+curl https://api.nano-gpt.com/api/v1/embeddings \
   -H "Authorization: Bearer YOUR_NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -373,7 +373,7 @@ data = {
 }
 
 response = requests.post(
-    "https://nano-gpt.com/api/v1/embeddings",
+    "https://api.nano-gpt.com/api/v1/embeddings",
     headers=headers,
     json=data
 )
@@ -422,7 +422,7 @@ client = OpenAI(api_key="sk-...")
 # NanoGPT (just change base_url and api_key)
 client = OpenAI(
     api_key="YOUR_NANOGPT_API_KEY",
-    base_url="https://nano-gpt.com/api/v1"
+    base_url="https://api.nano-gpt.com/api/v1"
 )
 
 # All other code remains exactly the same!

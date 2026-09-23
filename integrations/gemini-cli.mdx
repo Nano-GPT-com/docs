@@ -45,14 +45,14 @@ npm install
     <Tabs>
       <Tab title="macOS/Linux">
         ```bash
-        export OPENROUTER_BASE_URL="https://nano-gpt.com/api/v1"
+        export OPENROUTER_BASE_URL="https://api.nano-gpt.com/api/v1"
         export OPENROUTER_API_KEY="sk-nano-YOUR-API-KEY"
         ```
       </Tab>
 
       <Tab title="Windows PowerShell">
         ```powershell
-        $env:OPENROUTER_BASE_URL = "https://nano-gpt.com/api/v1"
+        $env:OPENROUTER_BASE_URL = "https://api.nano-gpt.com/api/v1"
         $env:OPENROUTER_API_KEY = "sk-nano-YOUR-API-KEY"
         ```
       </Tab>
@@ -61,7 +61,7 @@ npm install
     For persistent configuration, add the exports to your shell profile:
 
     ```bash
-    echo 'export OPENROUTER_BASE_URL="https://nano-gpt.com/api/v1"' >> ~/.zshrc
+    echo 'export OPENROUTER_BASE_URL="https://api.nano-gpt.com/api/v1"' >> ~/.zshrc
     echo 'export OPENROUTER_API_KEY="sk-nano-YOUR-API-KEY"' >> ~/.zshrc
     source ~/.zshrc
     ```
@@ -90,7 +90,7 @@ Once connected, you can use any model listed on the [NanoGPT pricing page](https
 ## Optional: Verify Your Connection
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
+curl -X POST "https://api.nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer sk-nano-YOUR-API-KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -104,6 +104,6 @@ curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
 | Issue | Solution |
 |-------|----------|
 | `401 Unauthorized` | Check your API key and ensure your account has credits |
-| `Connection refused` | Verify `OPENROUTER_BASE_URL` is set to `https://nano-gpt.com/api/v1` |
+| `Connection refused` | Verify `OPENROUTER_BASE_URL` is set to `https://api.nano-gpt.com/api/v1` |
 | `Model not found` | Confirm the model name at [nano-gpt.com/pricing](https://nano-gpt.com/pricing) |
 | CLI not recognizing variables | Restart your terminal or set the variables in the same session |

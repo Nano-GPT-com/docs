@@ -18,7 +18,7 @@ A quick guide to connecting JanitorAI chats to NanoGPT's API.
    ```text
    Configuration Name: any label, e.g. NanoGPT
    Model Name: Model ID, e.g. auto-model-basic
-   Proxy URL: https://nano-gpt.com/api/v1/chat/completions
+   Proxy URL: https://api.nano-gpt.com/api/v1/chat/completions
    API Key: <your NanoGPT API key>
    ```
 
@@ -35,7 +35,7 @@ JanitorAI now routes your conversations through NanoGPT.
 If you want JanitorAI to include reasoning output for reasoning-capable models, duplicate the configuration above and change the proxy URL to:
 
 ```text
-https://nano-gpt.com/api/v1thinking/chat/completions
+https://api.nano-gpt.com/api/v1thinking/chat/completions
 ```
 
 ## Troubleshooting
@@ -50,4 +50,4 @@ The most common causes are:
 
 - You used a paid model that is not included in your subscription and your NanoGPT account has no balance.
 - The model ID is outdated, misspelled, or unavailable. A `404` response usually means you should copy the model's current ID from the [NanoGPT pricing page](https://nano-gpt.com/pricing).
-- The proxy configuration is wrong. Re-check that **Proxy URL** is `https://nano-gpt.com/api/v1/chat/completions` or `https://nano-gpt.com/api/v1thinking/chat/completions`, and that your API key has no extra spaces.
+- The proxy configuration is wrong. Re-check that **Proxy URL** is `https://api.nano-gpt.com/api/v1/chat/completions` or `https://api.nano-gpt.com/api/v1thinking/chat/completions`, and that your API key has no extra spaces.

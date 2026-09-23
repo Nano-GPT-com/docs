@@ -235,7 +235,7 @@ Exact category names and score shapes depend on the moderation model.
 ### Chat Completions
 
 ```bash
-curl https://nano-gpt.com/api/v1/chat/completions \
+curl https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -H "moderation: true" \
@@ -250,7 +250,7 @@ curl https://nano-gpt.com/api/v1/chat/completions \
 ### Responses API with a Specific Moderation Model
 
 ```bash
-curl https://nano-gpt.com/api/v1/responses \
+curl https://api.nano-gpt.com/api/v1/responses \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -H "moderation: true" \
@@ -265,7 +265,7 @@ curl https://nano-gpt.com/api/v1/responses \
 ### Image Generation
 
 ```bash
-curl https://nano-gpt.com/api/v1/images/generations \
+curl https://api.nano-gpt.com/api/v1/images/generations \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -H "moderation: true" \

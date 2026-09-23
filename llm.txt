@@ -1,12 +1,12 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-09-18
+Last updated: 2026-09-23
 
 GOAL
 Equip developers to call the NanoGPT API for chat, Advisor consultations, hosted tool search, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
 
 STYLE FOR ANSWERS
-- Prefer TypeScript (Node 18+) with openai@^5.8.0 and baseURL set to https://nano-gpt.com/api.
+- Prefer TypeScript (Node 18+) with openai@^5.8.0 and baseURL set to https://api.nano-gpt.com/api/v1.
 - Share Python or curl snippets when requested or when automation beyond Node is the better fit.
 - Keep examples runnable, scoped to one task, and load secrets from environment variables.
 - Reference GET /api/v1/models for model availability instead of guessing ids or capabilities.
@@ -21,7 +21,7 @@ REQUIRED PACKAGES AND VERSIONS
 - Node 18+ or Deno/Bun with fetch and Web Streams support
 
 CORE CONCEPTS
-- API base https://nano-gpt.com/api hosts OpenAI-style chat/completions/embeddings plus /v1/audio/speech; Anthropic /v1/messages lives at https://nano-gpt.com/v1/messages.
+- Use https://api.nano-gpt.com for API-key inference and catalog calls. OpenAI-compatible SDK baseURL is https://api.nano-gpt.com/api/v1; Anthropic SDK baseURL is https://api.nano-gpt.com/api because that SDK appends /v1/messages. The direct API host accepts larger requests and allows longer runtimes than the website host. Keep dashboard, OAuth, device login, and Management API flows on nano-gpt.com.
 - Batch API base https://api.nano-gpt.com/api/v1 hosts /files and /batches for asynchronous /v1/chat/completions and /v1/responses jobs. List all visible batches, including inline and file-backed jobs, with GET https://api.nano-gpt.com/api/v1/batches. The smaller inline workflow uses POST https://api.nano-gpt.com/api/beta/batches for creation, GET https://api.nano-gpt.com/api/beta/batches for a metadata-only inline list, GET /api/beta/batches/{id} for lookup, and POST /api/beta/batches/{id}/cancel for cancellation. Use api.nano-gpt.com for all batch operations; do not use nano-gpt.com for batch uploads.
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
 - Accountless x402: selected endpoints can be quoted by sending the initial API request without Authorization or x-api-key and with x-x402: true. NanoGPT returns 402 Payment Required with available payment options and a top-level payment quote. Unauthenticated requests without x-x402: true are normal unauthenticated requests and return 401 missing_api_key. Check GET /api/v1/x402/endpoints for the supported matrix; stable public endpoints include non-streaming chat completions, non-streaming responses, image generations, JSON image edits, /api/v1/data/web/search, and /api/v1/data/url/scrape.
@@ -57,7 +57,8 @@ GLOSSARY
 - Inline moderation headers: moderation enables the default moderation model when truthy; moderation-model only selects a model when moderation is also present. Differing model IDs in both headers return conflicting_moderation_model.
 
 HARD RULES AND GOTCHAS
-- Always set baseURL to https://nano-gpt.com/api (or https://nano-gpt.com for /v1/messages) and include Authorization or x-api-key on every call.
+- Set baseURL to https://api.nano-gpt.com/api/v1 for OpenAI-compatible SDKs or https://api.nano-gpt.com/api for the Anthropic SDK, and include Authorization or x-api-key on API-key calls.
+- Check model availability on the host you use with GET https://api.nano-gpt.com/api/v1/models?detailed=true; website and direct API catalogs can differ during rollouts. Jev models currently require nano-gpt.com.
 - Exception to auth: for accountless x402 on supported endpoints, intentionally omit Authorization and x-api-key and include x-x402: true on the initial quote request. Key off the top-level payment object in the 402 response, then call completeUrl for nano/base-usdc, replay the same request with X-PAYMENT for exact schemes including nano-exact, x402-exact, and x402-solana-usdc, or replay the same request with Authorization: L402 <token>:<preimage> for lightning-l402. If the initial quote request returns 401 missing_api_key, check that x-x402: true was included.
 - Do not hardcode model support; call GET /api/v1/models?detailed=true to confirm vision, context length, supported service tiers, and subscription status. Service-tier support is listed in supported_service_tiers; the basic model response intentionally omits this field for OpenAI compatibility.
 - Do not hardcode image model support; call GET /api/v1/images/models and follow the returned endpoints URL for model-specific supported_parameters, public pricing, and image-input constraints.
@@ -87,7 +88,7 @@ import OpenAI from 'openai';
 
 const client = new OpenAI({
   apiKey: process.env.NANOGPT_API_KEY!,
-  baseURL: 'https://nano-gpt.com/api',
+  baseURL: 'https://api.nano-gpt.com/api/v1',
 });
 
 async function run() {
@@ -154,7 +155,7 @@ import OpenAI from 'openai';
 
 const client = new OpenAI({
   apiKey: process.env.NANOGPT_API_KEY!,
-  baseURL: 'https://nano-gpt.com/api',
+  baseURL: 'https://api.nano-gpt.com/api/v1',
 });
 
 async function streamSummary() {
@@ -271,14 +272,14 @@ DATA API
 Use /api/v1/data when building agents or clients that need one discoverable endpoint family for NanoGPT data tools. Direct endpoints remain available; Data API forwards requests to them and preserves request/response behavior, billing, provider options, and x402 behavior.
 
 ```bash
-curl https://nano-gpt.com/api/v1/data \
+curl https://api.nano-gpt.com/api/v1/data \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
 Path-style dispatch:
 
 ```bash
-curl https://nano-gpt.com/api/v1/data/web/search \
+curl https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"query":"latest AI model releases","depth":"standard"}'
@@ -287,7 +288,7 @@ curl https://nano-gpt.com/api/v1/data/web/search \
 Body-style dispatch:
 
 ```bash
-curl https://nano-gpt.com/api/v1/data \
+curl https://api.nano-gpt.com/api/v1/data \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"endpoint":"web.search","input":{"query":"latest AI model releases","depth":"standard"}}'
@@ -452,14 +453,14 @@ await client.chat.completions.create(
 ```
 
 ANTHROPIC-COMPATIBLE /v1/messages
-Point the Anthropic SDK at https://nano-gpt.com to reuse this adapter (streaming is unavailable for GPU-TEE models).
+Point the Anthropic SDK at https://api.nano-gpt.com/api to reuse this adapter (streaming is unavailable for GPU-TEE models).
 
 ```ts
 import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.NANOGPT_API_KEY!,
-  baseURL: 'https://nano-gpt.com',
+  baseURL: 'https://api.nano-gpt.com/api',
 });
 
 const response = await anthropic.messages.create({
@@ -507,7 +508,7 @@ PRICING AND BILLING
     - `billedTeamName?: string | null`
 - Compatibility rule: clients must tolerate additional fields in both `usage` and `x_nanogpt_pricing`; unknown keys should be ignored, not treated as schema errors.
 - Conversation-level transactions are billed in USD with optional auto-conversion to Nano when applicable.
-- Usage API: call GET https://nano-gpt.com/api/v1/usage with Authorization: Bearer $NANOGPT_API_KEY to retrieve aggregate usage for the current API key. Without dates it returns the last 30 UTC days grouped by day and model. Use from/to as YYYY-MM-DD UTC dates; both are required together, to is inclusive, to cannot be in the future, and ranges are capped at 366 days. group_by accepts day, model, day,model, and model,day (alias). scope defaults to current_key; api_key is an alias for the authenticated key, and api_key_id can only reference the current key.
+- Usage API: call GET https://api.nano-gpt.com/api/v1/usage with Authorization: Bearer $NANOGPT_API_KEY to retrieve aggregate usage for the current API key. Without dates it returns the last 30 UTC days grouped by day and model. Use from/to as YYYY-MM-DD UTC dates; both are required together, to is inclusive, to cannot be in the future, and ranges are capped at 366 days. group_by accepts day, model, day,model, and model,day (alias). scope defaults to current_key; api_key is an alias for the authenticated key, and api_key_id can only reference the current key.
 - Usage API response fields: totals plus optional byDay, byModel, and byDayModel arrays contain requests, costUsd, refundedUsd, netCostUsd, inputTokens, outputTokens, reasoningTokens, and totalTokens. totalTokens is inputTokens + outputTokens; reasoningTokens are reported separately. source.rollupDays, source.liveDays, and source.missingRollupDays indicate whether results came from rollups or live aggregation. netCostUsd is floored per bucket, so row sums can differ slightly from totals when refunds cross buckets.
 - Service tiers: pass service_tier: "flex" for lower-cost variable-capacity processing or service_tier: "fast" for higher-priority processing on /v1/chat/completions, /v1/responses, or /v1/messages. The legacy "priority" alias remains accepted. Discover model support with GET /api/v1/models?detailed=true and inspect supported_service_tiers; an empty array means default tier only. Availability is also provider-specific; routing overrides like X-Provider or provider-native web search affect tier pricing, and high-context pricing such as es2k can apply where available.
 - Use 429 handling with exponential backoff; subscription-free buckets allow roughly 60 RPM, while premium models may enforce tighter limits.
@@ -599,6 +600,7 @@ ERROR HANDLING AND OBSERVABILITY
 
 LINKS
 - https://nano-gpt.com/api
+- https://docs.nano-gpt.com/api-reference/miscellaneous/api-hosts
 - api-reference/endpoint/usage
 - [Request Billing](https://docs.nano-gpt.com/api-reference/endpoint/request-billing.md): Recover the original primary request charge by captured X-Request-ID for 24 hours.
 - api-reference/endpoint/batches

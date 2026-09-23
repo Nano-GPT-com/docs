@@ -1,6 +1,6 @@
 ---
 title: "Video Models"
-api: "GET https://nano-gpt.com/api/v1/video-models"
+api: "GET https://api.nano-gpt.com/api/v1/video-models"
 description: "List available video models with generation capabilities and supported parameters"
 ---
 
@@ -13,7 +13,7 @@ This endpoint is cacheable. Refresh it periodically and treat new fields as addi
 ## Endpoint
 
 ```text
-GET https://nano-gpt.com/api/v1/video-models
+GET https://api.nano-gpt.com/api/v1/video-models
 ```
 
 ## Authentication
@@ -82,7 +82,7 @@ Use the model's `supported_parameters` and `capabilities` objects to decide whic
 ## Example
 
 ```bash
-curl "https://nano-gpt.com/api/v1/video-models?detailed=true"
+curl "https://api.nano-gpt.com/api/v1/video-models?detailed=true"
 ```
 
 ## Notes

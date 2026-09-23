@@ -30,7 +30,7 @@ If you need direct control over search query, output mode (`searchResults` / `so
 import requests
 import json
 
-BASE_URL = "https://nano-gpt.com/api"
+BASE_URL = "https://api.nano-gpt.com/api"
 API_KEY = "YOUR_API_KEY"
 
 headers = {
@@ -75,7 +75,7 @@ if response.status_code == 200:
 ```
 
 ```javascript JavaScript
-const BASE_URL = "https://nano-gpt.com/api";
+const BASE_URL = "https://api.nano-gpt.com/api";
 const API_KEY = "YOUR_API_KEY";
 
 // Standard web search
@@ -109,7 +109,7 @@ const deepResponse = await fetch(`${BASE_URL}/talk-to-gpt`, {
 
 ```bash cURL
 # Standard web search
-curl -X POST https://nano-gpt.com/api/talk-to-gpt \
+curl -X POST https://api.nano-gpt.com/api/talk-to-gpt \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -119,7 +119,7 @@ curl -X POST https://nano-gpt.com/api/talk-to-gpt \
   }'
 
 # Deep web search
-curl -X POST https://nano-gpt.com/api/talk-to-gpt \
+curl -X POST https://api.nano-gpt.com/api/talk-to-gpt \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

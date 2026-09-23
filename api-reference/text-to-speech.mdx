@@ -66,7 +66,7 @@ x-api-key: YOUR_API_KEY
 import requests
 import json
 
-BASE_URL = "https://nano-gpt.com/api"
+BASE_URL = "https://api.nano-gpt.com/api"
 API_KEY = "YOUR_API_KEY"
 
 def text_to_speech(text, model="Kokoro-82m", voice=None, **kwargs):
@@ -142,7 +142,7 @@ See endpoint details in `GET /api/tts/status`.
 
 ```javascript JavaScript
 async function submitThenPollTTS({ text, model = 'Elevenlabs-Turbo-V2.5', voice = 'Rachel' }) {
-  const submit = await fetch('https://nano-gpt.com/api/tts', {
+  const submit = await fetch('https://api.nano-gpt.com/api/tts', {
     method: 'POST',
     headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, model, voice })
@@ -160,7 +160,7 @@ async function submitThenPollTTS({ text, model = 'Elevenlabs-Turbo-V2.5', voice 
   const maxAttempts = 60, delayMs = 3000;
   for (let i = 0; i < maxAttempts; i++) {
     const qs = new URLSearchParams({ runId: ticket.runId, model: ticket.model });
-    const res = await fetch(`https://nano-gpt.com/api/tts/status?${qs}`, {
+    const res = await fetch(`https://api.nano-gpt.com/api/tts/status?${qs}`, {
       headers: { 'x-api-key': 'YOUR_API_KEY' }
     });
     const data = await res.json();
@@ -174,7 +174,7 @@ async function submitThenPollTTS({ text, model = 'Elevenlabs-Turbo-V2.5', voice 
 
 ```bash cURL
 # Example status poll (after receiving a pending ticket)
-curl "https://nano-gpt.com/api/tts/status?runId=RUN_ID&model=Elevenlabs-Turbo-V2.5" \
+curl "https://api.nano-gpt.com/api/tts/status?runId=RUN_ID&model=Elevenlabs-Turbo-V2.5" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -371,7 +371,7 @@ from pathlib import Path
 class NanoGPTTTS:
     def __init__(self, api_key):
         self.api_key = api_key
-        self.base_url = "https://nano-gpt.com/api"
+        self.base_url = "https://api.nano-gpt.com/api"
         
         # Model capabilities
         self.model_info = {

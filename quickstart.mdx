@@ -11,6 +11,8 @@ Generate an API key on our [API page](https://nano-gpt.com/api).
 
 If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.com/balance). Minimum deposit is just \$1, or \$0.10 when using crypto.
 
+Send API requests to `https://api.nano-gpt.com`. The direct API host allows larger uploads and longer-running calls than the website host. See [API Hosts](/api-reference/miscellaneous/api-hosts) for SDK base URLs.
+
 ### API usage examples
 
 <AccordionGroup>
@@ -21,7 +23,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
     import requests
     import json
 
-    BASE_URL = "https://nano-gpt.com/api/v1"
+    BASE_URL = "https://api.nano-gpt.com/api/v1"
     API_KEY = "YOUR_API_KEY"  # Replace with your API key
 
     headers = {
@@ -100,7 +102,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
     You can also generate images using our OpenAI-compatible endpoint:
 
     ```bash
-    curl https://nano-gpt.com/v1/images/generations \
+    curl https://api.nano-gpt.com/v1/images/generations \
       -H "Authorization: Bearer YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -121,7 +123,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
 
     def generate_image(prompt, model="hidream", size="1024x1024"):
         response = requests.post(
-            "https://nano-gpt.com/v1/images/generations",
+            "https://api.nano-gpt.com/v1/images/generations",
             headers={
                 "Authorization": f"Bearer {API_KEY}",
                 "Content-Type": "application/json"
@@ -156,7 +158,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
     Submit a video generation job, then poll the status endpoint until the video is ready:
 
     ```bash
-    RUN_ID=$(curl -s -X POST https://nano-gpt.com/api/generate-video \
+    RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
       -H "Authorization: Bearer YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -164,7 +166,7 @@ If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.
         "prompt": "A cinematic shot of a mountain lake at sunrise"
       }' | jq -r '.runId')
 
-    curl "https://nano-gpt.com/api/video/status?requestId=$RUN_ID" \
+    curl "https://api.nano-gpt.com/api/video/status?requestId=$RUN_ID" \
       -H "Authorization: Bearer YOUR_API_KEY"
     ```
 

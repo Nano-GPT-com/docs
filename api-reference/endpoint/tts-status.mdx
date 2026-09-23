@@ -27,7 +27,7 @@ Including `cost`, `paymentSource`, and `isApiRequest` from the original ticket h
 import time
 import requests
 
-BASE = "https://nano-gpt.com/api"
+BASE = "https://api.nano-gpt.com/api"
 
 def get_tts_status(run_id: str, model: str, api_key: str, *, cost=None, payment_source=None, is_api_request=True) -> dict:
     params = {"runId": run_id, "model": model}
@@ -64,7 +64,7 @@ def wait_for_tts(run_id: str, model: str, api_key: str, *, cost=None, payment_so
 ```
 
 ```javascript JavaScript
-const BASE = 'https://nano-gpt.com/api';
+const BASE = 'https://api.nano-gpt.com/api';
 
 async function getTTSStatus({ runId, model, cost, paymentSource, isApiRequest = true }, apiKey) {
   const qs = new URLSearchParams({ runId, model });
@@ -95,12 +95,12 @@ export async function waitForTTS(ticket, apiKey, maxAttempts = 60, delayMs = 300
 
 ```bash cURL
 # Single status check
-curl -s "https://nano-gpt.com/api/tts/status?runId=RUN_ID&model=Elevenlabs-Turbo-V2.5&cost=0.0050388&paymentSource=USD&isApiRequest=true" \
+curl -s "https://api.nano-gpt.com/api/tts/status?runId=RUN_ID&model=Elevenlabs-Turbo-V2.5&cost=0.0050388&paymentSource=USD&isApiRequest=true" \
   -H "x-api-key: YOUR_API_KEY" | jq .
 
 # Simple poll (every 3s, 3 minutes max)
 for i in {1..60}; do
-  RESP=$(curl -s "https://nano-gpt.com/api/tts/status?runId=RUN_ID&model=Elevenlabs-Turbo-V2.5" -H "x-api-key: YOUR_API_KEY")
+  RESP=$(curl -s "https://api.nano-gpt.com/api/tts/status?runId=RUN_ID&model=Elevenlabs-Turbo-V2.5" -H "x-api-key: YOUR_API_KEY")
   STATUS=$(echo "$RESP" | jq -r '.status // empty')
   echo "Attempt $i: status=$STATUS"
   if [ "$STATUS" = "completed" ]; then

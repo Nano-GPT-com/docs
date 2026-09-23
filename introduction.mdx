@@ -7,8 +7,10 @@ description: "Welcome to the Nano-GPT.com API"
 
 The NanoGPT API allows you to generate text, images and video using any AI model available. Our implementation for text generation generally matches the OpenAI standards.
 
+For API-key integrations, use `https://api.nano-gpt.com` as your API host. It accepts larger requests and allows longer-running requests than the website host, which matters for attachments and long model calls. See [API Hosts](/api-reference/miscellaneous/api-hosts) for SDK base URLs and the website flows that should stay on `nano-gpt.com`.
+
 <Note>
-  All examples in this documentation also work on our alternative domains. Just replace the base URL `https://nano-gpt.com` with your preferred domain: [ai.bitcoin.com](https://ai.bitcoin.com), [bcashgpt.com](https://bcashgpt.com), or [cake.nano-gpt.com](https://cake.nano-gpt.com). Only the base URL changes; endpoints and request formats remain the same.
+  Partner domains such as [ai.bitcoin.com](https://ai.bitcoin.com), [bcashgpt.com](https://bcashgpt.com), and [cake.nano-gpt.com](https://cake.nano-gpt.com) may use the same API paths and request formats. Their request size and runtime limits can differ from `api.nano-gpt.com`.
 </Note>
 
 ## Main API Endpoints
@@ -32,7 +34,7 @@ Here's a simple python example using our OpenAI-compatible chat completions endp
 import requests
 import json
 
-BASE_URL = "https://nano-gpt.com/api/v1"
+BASE_URL = "https://api.nano-gpt.com/api/v1"
 API_KEY = "YOUR_API_KEY"  # Replace with your API key
 
 headers = {

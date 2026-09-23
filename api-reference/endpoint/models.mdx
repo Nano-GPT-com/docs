@@ -95,7 +95,7 @@ When `detailed=true`, additional fields may be included per model:
 Service-tier availability is model-specific. To discover it programmatically, request the detailed model list and inspect each model's `supported_service_tiers` array:
 
 ```bash
-curl -s "https://nano-gpt.com/api/v1/models?detailed=true" \
+curl -s "https://api.nano-gpt.com/api/v1/models?detailed=true" \
   | jq '.data[] | select(.supported_service_tiers | length > 0) | {id, supported_service_tiers}'
 ```
 
@@ -147,20 +147,20 @@ Examples:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?sort=favorites"
 ```
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?sort=mostused"
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
 ```
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
 ```
 
 ### `capabilities` (detailed mode)
@@ -353,50 +353,50 @@ This metadata is informational and is not legal advice. Provider terms and model
 ### Basic Request
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models"
+curl "https://api.nano-gpt.com/api/v1/models"
 ```
 
 ### Detailed Request
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true"
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true"
 ```
 
 ### Sort by Favorites
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?sort=favorites"
 ```
 
 ### Sort by Most Used
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?sort=mostused"
 ```
 
 ### Detailed and Sorted
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
 ```
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
 ```
 
 ### Detailed with Authentication
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true" \
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true" \
   -H "Authorization: Bearer your_api_key_here"
 ```
 
 ### Alternative API Key Header
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true" \
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true" \
   -H "x-api-key: your_api_key_here"
 ```
 
@@ -414,12 +414,12 @@ Examples:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  https://nano-gpt.com/api/v1/models
+  https://api.nano-gpt.com/api/v1/models
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?detailed=true"
+  "https://api.nano-gpt.com/api/v1/models?detailed=true"
 ```
 
 ### 2) GET /api/subscription/v1/models (subscription-only)
@@ -431,12 +431,12 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 Examples:
 
 ```bash
-curl https://nano-gpt.com/api/subscription/v1/models
+curl https://api.nano-gpt.com/api/subscription/v1/models
 ```
 
 ```bash
 curl -H "x-api-key: $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/subscription/v1/models?detailed=true"
+  "https://api.nano-gpt.com/api/subscription/v1/models?detailed=true"
 ```
 
 ### 3) GET /api/paid/v1/models (paid/extras)
@@ -447,12 +447,12 @@ curl -H "x-api-key: $NANOGPT_API_KEY" \
 Examples:
 
 ```bash
-curl https://nano-gpt.com/api/paid/v1/models
+curl https://api.nano-gpt.com/api/paid/v1/models
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/paid/v1/models?detailed=true"
+  "https://api.nano-gpt.com/api/paid/v1/models?detailed=true"
 ```
 
 ### Choosing the Right Endpoint

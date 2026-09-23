@@ -10,12 +10,12 @@ NanoGPT supports AI music generation through the same OpenAI-compatible Text-to-
 ## Endpoint
 
 ```http
-POST https://nano-gpt.com/api/v1/audio/speech
+POST https://api.nano-gpt.com/api/v1/audio/speech
 ```
 
 ## Choosing A Music Model
 
-Music model availability changes over time. Discover available audio models via `GET https://nano-gpt.com/api/v1/audio-models` (see [Audio Models](/api-reference/endpoint/audio-models)) and select a model intended for music generation.
+Music model availability changes over time. Discover available audio models via `GET https://api.nano-gpt.com/api/v1/audio-models` (see [Audio Models](/api-reference/endpoint/audio-models)) and select a model intended for music generation.
 
 ## Request Format
 
@@ -32,7 +32,7 @@ If you are using an OpenAI client that enforces the OpenAI TTS schema (for examp
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `model` | string | Yes | A music-capable audio model ID (discover via `GET https://nano-gpt.com/api/v1/audio-models`) |
+| `model` | string | Yes | A music-capable audio model ID (discover via `GET https://api.nano-gpt.com/api/v1/audio-models`) |
 | `input` | string | Yes | A text prompt describing the music you want generated |
 | `voice` | string | No | Ignored for music models. Some OpenAI-compatible clients require this field; if so, pass any string (for example `"alloy"`). |
 
@@ -52,7 +52,7 @@ The response body is raw audio bytes.
 <CodeGroup>
 
 ```bash cURL
-curl -X POST https://nano-gpt.com/api/v1/audio/speech \
+curl -X POST https://api.nano-gpt.com/api/v1/audio/speech \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -66,7 +66,7 @@ curl -X POST https://nano-gpt.com/api/v1/audio/speech \
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://nano-gpt.com/api/v1",
+    base_url="https://api.nano-gpt.com/api/v1",
     api_key="YOUR_API_KEY",
 )
 

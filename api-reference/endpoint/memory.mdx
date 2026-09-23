@@ -94,7 +94,7 @@ Note: This endpoint only charges for memory compression. If you later call `/v1/
 <CodeGroup>
 
 ```javascript JavaScript
-const res = await fetch('https://nano-gpt.com/api/v1/memory', {
+const res = await fetch('https://api.nano-gpt.com/api/v1/memory', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY',
@@ -116,7 +116,7 @@ const { messages, usage } = await res.json();
 ```python Python
 import requests
 
-url = 'https://nano-gpt.com/api/v1/memory'
+url = 'https://api.nano-gpt.com/api/v1/memory'
 headers = {
     'Authorization': 'Bearer YOUR_API_KEY',
     'Content-Type': 'application/json'
@@ -138,7 +138,7 @@ print(result['usage'])
 ```
 
 ```bash cURL
-curl -X POST https://nano-gpt.com/api/v1/memory \
+curl -X POST https://api.nano-gpt.com/api/v1/memory \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -H "memory_expiration_days: 90" \
