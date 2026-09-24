@@ -27,8 +27,8 @@ Model limits and per-million-token USD cost estimates below were checked against
         "authHeader": false,
         "models": [
           {
-            "id": "anthropic/claude-opus-5",
-            "name": "Claude Opus 5",
+            "id": "anthropic/claude-opus-5.5",
+            "name": "Claude Opus 5.5",
             "api": "openai-completions",
             "reasoning": true,
             "contextWindow": 1000000,
@@ -229,7 +229,7 @@ To set a default model, add an `agents` section to your config with the desired 
   "agents": {
     "defaults": {
       "model": {
-        "primary": "nanogpt/anthropic/claude-opus-5"
+        "primary": "nanogpt/anthropic/claude-opus-5.5"
       }
     }
   }
@@ -239,7 +239,7 @@ To set a default model, add an `agents` section to your config with the desired 
 ## Available Models
 
 You can access all our models through this integration, including:
-- Claude Opus 5
+- Claude Opus 5.5
 - {exampleTextModelName}
 - Gemini Flash Latest
 - And many more!

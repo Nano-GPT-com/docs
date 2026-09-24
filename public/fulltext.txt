@@ -624,7 +624,7 @@ Cline is a powerful command-line interface for interacting with various AI model
    - API Key: Your key from step 1
    - Model ID: openai/gpt-chat-latest
 
-Available models include openai/gpt-chat-latest, anthropic/claude-opus-5, google/gemini-flash-latest, and many more.
+Available models include openai/gpt-chat-latest, anthropic/claude-opus-5.5, google/gemini-flash-latest, and many more.
 
 ### Cursor
 

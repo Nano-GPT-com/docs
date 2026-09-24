@@ -13,11 +13,12 @@ const END_MARKER = '{/* AUTO-GENERATED: notable-model-ids:end */}';
 function getFamilyConfig(exampleTextModel) {
   return [
     { label: 'OpenAI', ids: [exampleTextModel, 'openai/gpt-6-astra', 'openai/gpt-latest'] },
-    { label: 'Anthropic', ids: ['anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'anthropic/claude-fable-5.1'] },
+    { label: 'Anthropic', ids: ['anthropic/claude-opus-5.5', 'anthropic/claude-sonnet-5', 'anthropic/claude-fable-5.1'] },
     { label: 'Google Gemini', ids: ['google/gemini-flash-latest', 'google/gemini-3.8-flash', 'google/gemini-3.1-pro-preview'] },
-    { label: 'SpaceXAI Grok', ids: ['x-ai/grok-4.6', 'x-ai/grok-latest'] },
+    { label: 'SpaceXAI Grok', ids: ['x-ai/grok-4.7', 'x-ai/grok-latest'] },
     { label: 'Moonshot Kimi', ids: ['moonshotai/kimi-k3', 'moonshotai/kimi-latest'] },
     { label: 'Z.AI GLM', ids: ['z-ai/glm-5.3', 'z-ai/glm-5.3:thinking', 'z-ai/glm-5.3-flash'] },
+    { label: 'Xiaomi MiMo', ids: ['xiaomi/mimo-v2.5-pro', 'xiaomi/mimo-v2.5-pro:thinking'] },
     { label: 'DeepSeek V4', ids: ['deepseek/deepseek-v4.1-flash', 'deepseek/deepseek-v4-flash', 'deepseek/deepseek-latest'] },
     { label: 'MiniMax', ids: ['minimax/minimax-m3', 'minimax/minimax-latest'] },
     { label: 'Qwen', ids: ['qwen/qwen3.8-max', 'qwen/qwen3-coder-next'] },
