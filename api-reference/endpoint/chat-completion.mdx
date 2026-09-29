@@ -1473,7 +1473,7 @@ If an effort level is set to a non-`none` value, reasoning can still run while h
 
 ### Model suffix: reasoning effort
 
-Clients that do not expose reasoning controls for custom-provider models can set an effort in the model ID, for example `openai/gpt-latest:reasoning-effort/high`. Supported suffix values are `low`, `medium`, `high`, `xhigh`, and `max`.
+Clients that do not expose reasoning controls for custom-provider models can set an effort in the model ID, for example `openai/gpt-latest:reasoning-effort/high`. Supported suffix values are `none`, `low`, `medium`, `high`, `xhigh`, and `max`.
 
 NanoGPT strips the suffix before model lookup and uses it as the default `reasoning_effort`. Explicit body generation settings take precedence. These IDs are not additional model-list entries; enter them manually in your client. Effort support remains model/provider-specific.
 
@@ -1485,7 +1485,11 @@ NanoGPT strips the suffix before model lookup and uses it as the default `reason
 }
 ```
 
-This requests high effort while hiding reasoning output. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes) for precedence, suffix composition, and Responses/Messages equivalents.
+The `:reasoning-effort/high` example requests high effort while hiding reasoning output.
+
+Use `openai/gpt-latest:reasoning-effort/none` to request disabled reasoning, equivalent to the base model with `reasoning_effort: "none"`. This is different from `:reasoning-exclude`, which only hides reasoning output. Models that require reasoning keep their existing restrictions. Explicit body generation settings, including enabled thinking, take precedence over the `none` suffix.
+
+See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes) for precedence, suffix composition, and Responses/Messages equivalents.
 
 ### Model suffix: `:reasoning-exclude`
 

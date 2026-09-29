@@ -4,7 +4,7 @@ openapi: 'POST /v1/messages'
 ---
 
 <Note>
-  To set reasoning effort through a custom model ID, append `:reasoning-effort/high` (also `low`, `medium`, `xhigh`, or `max`). NanoGPT strips the suffix before routing and uses it as the default `output_config.effort`. Explicit body generation settings take precedence; supported efforts remain model/provider-specific. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes).
+  To set reasoning effort through a custom model ID, append `:reasoning-effort/high` (also `none`, `low`, `medium`, `xhigh`, or `max`). NanoGPT strips the suffix before routing and uses it as the default `output_config.effort` for enabled reasoning levels. `:reasoning-effort/none` instead supplies `thinking: { type: "disabled" }`; `output_config.effort: "none"` is not accepted. Explicit body generation settings, including enabled thinking, take precedence over `none`. The suffix does not bypass model/provider restrictions. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes).
 </Note>
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';

@@ -128,24 +128,27 @@ On Chat Completions, this is equivalent to `model: "openai/gpt-latest"` with `re
 
 | Suffix | Requested effort |
 | --- | --- |
+| `:reasoning-effort/none` | `none` — request disabled reasoning where supported |
 | `:reasoning-effort/low` | `low` |
 | `:reasoning-effort/medium` | `medium` |
 | `:reasoning-effort/high` | `high` |
 | `:reasoning-effort/xhigh` | `xhigh` |
 | `:reasoning-effort/max` | `max` |
 
-Supported on `/v1/chat/completions`, `/v1/responses`, and `/v1/messages`, for streaming and non-streaming requests. Responses uses `reasoning.effort`; Messages uses `output_config.effort`. Tool-call turns and post-tool continuations accept the same suffix; include it on each request where you want the default effort.
+Supported on `/v1/chat/completions`, `/v1/responses`, and `/v1/messages`, for streaming and non-streaming requests. Responses uses `reasoning.effort`; Messages uses `output_config.effort` for enabled reasoning levels. For `none`, Messages instead supplies `thinking: { type: "disabled" }`, because `output_config.effort` does not accept `none`. Tool-call turns and post-tool continuations accept the same suffix; include it on each request where you want the default effort.
 
 Rules:
 
-- Explicit request-body generation settings take precedence, including an effort, thinking budget, or disabled-thinking setting. The suffix supplies a default only. Existing endpoint rules still determine precedence between body parameters.
+- Explicit request-body generation settings take precedence, including an effort, thinking budget, or disabled-thinking setting. For `none`, an explicit enabled-thinking setting also takes precedence. The suffix supplies a default only. Existing endpoint rules still determine precedence between body parameters.
 - Reasoning visibility is separate: `reasoning.exclude: true` hides reasoning without cancelling the suffix's requested effort. On endpoints supporting `:reasoning-exclude`, that suffix can also be combined with the effort suffix.
+- `none` requests disabled reasoning; it is not just an output-visibility filter. Models that require reasoning keep their existing restrictions. Use `:reasoning-exclude` where supported if you only want to hide reasoning output.
 - Effort support remains model/provider-specific. A suffix does not add reasoning capability or new effort levels to a model. `max` and `xhigh` are distinct inputs; existing provider-specific mappings still apply.
 - Effort suffixes are case-insensitive and can appear before or after other supported suffixes, such as `:thinking`, `:speed`, or a provider suffix. Other suffixes keep their normal compatibility and billing rules.
 - Use one effort suffix. If repeated, the rightmost recognized effort wins.
-- Unknown effort values are not stripped or silently replaced. They remain part of the model ID and are subject to normal model validation. The suffix shortcut accepts only the five values above.
+- Unknown effort values are not stripped or silently replaced. They remain part of the model ID and are subject to normal model validation. The suffix shortcut accepts only the six values above; `minimal` remains available only through request-body controls on models that support it.
 
 ```json
+{ "model": "openai/gpt-latest:reasoning-effort/none", "messages": [{ "role": "user", "content": "Reply briefly." }] }
 { "model": "openai/gpt-latest:reasoning-effort/high:reasoning-exclude", "messages": [{ "role": "user", "content": "Solve the problem." }] }
 { "model": "z-ai/glm-5.3-flash:reasoning-effort/max", "messages": [{ "role": "user", "content": "Check this algorithm." }] }
 ```
