@@ -9,6 +9,12 @@ NanoGPT APIs return standard HTTP status codes. Many endpoints also follow OpenA
 
 If you contact support about an API error, include the `X-Request-ID` response header (when present).
 
+For private feedback submission and status retrieval, see the
+[Feedback API](/api-reference/endpoint/feedback#retrieval-error-codes) for the
+exact HTTP status and `error.code` mapping. Feedback uses `feedback_unavailable`
+for both permanent `410` responses and temporary `503` responses, so clients
+must check the HTTP status before retrying.
+
 ## Error Response Formats
 
 NanoGPT has a few common error envelopes depending on the API surface.

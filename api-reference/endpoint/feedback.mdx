@@ -1,0 +1,187 @@
+---
+title: 'Feedback API'
+description: 'Submit private API feedback and retrieve its status, with exact error codes and retry guidance.'
+openapi: 'GET /v1/feedback/{id}'
+---
+
+Use the Feedback API to report a reproducible bug, documentation issue, missing
+feature, or model-quality problem. Reports remain private. Integrations should
+submit reports only when explicitly requested, rather than automatically
+reporting transient errors.
+
+| Operation | Endpoint |
+| --- | --- |
+| Submit a report | `POST https://api.nano-gpt.com/api/v1/feedback` |
+| Read its status and latest team reply | `GET https://api.nano-gpt.com/api/v1/feedback/{id}` |
+
+The `/v1/feedback` and `/v1/feedback/{id}` paths are aliases. The full request and
+response schemas are also available in the [OpenAPI contract](https://nano-gpt.com/openapi.json).
+
+## Authentication and access
+
+Send a valid inference API key in `Authorization: Bearer ...` or `x-api-key`.
+Use the **same key that submitted the report** for retrieval. A different key,
+even on the same account, receives `404 feedback_not_found`. Key rotation does
+not transfer API access; the account owner can still use [website support](https://nano-gpt.com/support).
+
+Key expiry, revocation, account restrictions and allowed Origin rules apply.
+Browser cookies, management tokens, partner tokens and accountless x402 do not
+grant access. If both credential headers are sent, they must identify the same key.
+Feedback requests do not incur usage charges.
+
+## Submit feedback
+
+Send uncompressed JSON, at most **16 KiB**, with an `Idempotency-Key` header.
+Choose a new idempotency key for each new report. Keep the key and body when
+retrying the same report after a network failure or temporary error.
+
+```sh
+curl -i 'https://api.nano-gpt.com/api/v1/feedback' \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: feedback-example-001' \
+  --data '{
+    "type": "documentation",
+    "title": "Clarify a retrieval example",
+    "description": "The example does not explain which ID to use for the status lookup."
+  }'
+```
+
+| Field | Requirements |
+| --- | --- |
+| `type` | Required: `bug`, `feature_request`, `documentation`, or `model_quality`. |
+| `title` | Required: 4-200 characters. |
+| `description` | Required: 10-8,000 characters. |
+| `request_id` | Optional diagnostic reference, up to 200 characters. Use a captured `X-Request-ID` when available. |
+| `endpoint` | Optional API path such as `/api/v1/chat/completions`, up to 200 characters. |
+| `model` | Optional model ID, up to 200 characters. |
+| `expected`, `actual`, `steps` | Optional text, up to 2,000 characters each. |
+
+Unknown fields are rejected. `Idempotency-Key` must contain 8-128 ASCII letters,
+digits, dots, underscores, colons or hyphens, starting with a letter or digit.
+The OpenAPI contract specifies the full field patterns.
+
+HTTP `201` returns a receipt and a `Location` header for retrieval:
+
+```json
+{
+  "id": "10000000-0000-4000-8000-000000000001",
+  "object": "feedback",
+  "status": "pending",
+  "visibility": "private",
+  "created_at": "2026-09-29T12:00:00.000Z"
+}
+```
+
+An identical retry with the same API key and idempotency key returns the original
+receipt, including its original `pending` status. Use GET for the current status.
+Changed normalized fields return `409 idempotency_conflict`. Replaying a deleted
+or archived report returns `410` and does not recreate it. Receipt acceptance
+does not promise a fix or a response deadline.
+
+## Retrieve status
+
+Use the UUID from the submission receipt or its `Location` header. The website
+support ticket ID is a different identifier and cannot be used for this lookup.
+Send no query parameters. A GET request needs neither a body nor an
+`Idempotency-Key` header.
+
+```sh
+curl -i 'https://api.nano-gpt.com/api/v1/feedback/10000000-0000-4000-8000-000000000001' \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+HTTP `200` includes `type`, `title`, current `status`, `created_at`, `updated_at`,
+`delete_after`, and `latest_response`, alongside the receipt ID, object and
+visibility. `latest_response` is the latest visible team reply with `id`,
+`content` and `created_at`, or `null` when no reply is available. Internal notes
+and attachment data are excluded.
+
+Statuses are `pending`, `accepted`, `in-progress`, `done`, and `rejected`. Wait
+at least **five minutes** between successful polls (`Retry-After: 300`). Stop
+polling on `done`, `rejected`, `404`, or `410`. Closed support tickets normally
+expire after three days unless retention is extended through the website;
+`delete_after` exposes the scheduled deletion time, or is `null` when none is set.
+
+## Retrieval error codes
+
+Use the **HTTP status and `error.code` together**. In particular,
+`feedback_unavailable` means permanent deletion or archiving with `410`, and
+a temporary failure with `503`. Do not decide whether to retry by code alone.
+
+```json
+{
+  "error": {
+    "type": "invalid_request_error",
+    "code": "feedback_not_found",
+    "message": "Feedback not found."
+  }
+}
+```
+
+| HTTP status | `error.code` | Meaning and action |
+| --- | --- | --- |
+| `400` | `invalid_request` | The ID is not a UUID v4, or query parameters were supplied. Correct the request. |
+| `400` | `conflicting_credentials` | `Authorization` and `x-api-key` disagree. Send one credential. |
+| `401` | `missing_api_key` | Supply an inference API key. |
+| `401` | `malformed_api_key` | Correct the API key format. |
+| `401` | `invalid_api_key` | The key is invalid, expired, revoked, or unsupported for feedback. Correct authentication before retrying. |
+| `403` | `api_key_origin_not_allowed` | The request violates the key's Origin restriction. Correct the request Origin or key policy. |
+| `403` | `payment_review_required` | Account API access is restricted pending review. Use website support. |
+| `404` | `feedback_not_found` | No report is accessible with this API key. Check the receipt ID and submitting key, then stop automatic retries. This response does not reveal whether another key owns a report. |
+| `410` | `feedback_unavailable` | The report was deleted or archived. Stop polling; this response does not include retry advice. |
+| `429` | `rate_limit_exceeded` | A feedback request quota was reached. Honor `Retry-After`. |
+| `429` | `authentication_rate_limited` | Repeated invalid credentials triggered a temporary block. Correct the credentials and honor `Retry-After`. |
+| `500` or `503` | `internal_error` | Authentication encountered a server failure. Retry with bounded backoff; `Retry-After` may be absent. |
+| `503` | `feedback_unavailable` | A temporary feedback failure. Honor `Retry-After: 30` and retain `X-Request-ID` for support. |
+| `503` | `rate_limit_unavailable` | The rate-limit service could not check the request. Honor `Retry-After`. |
+
+Treat `error.message` as explanatory text that may change.
+Clients should tolerate new fields and codes and use the HTTP status as a fallback.
+
+## Submission-only errors
+
+POST also uses the authentication, rate-limit, server, `404`, and `410` errors
+above, and can return `400 invalid_request` for query parameters. These additional
+errors apply only to submission:
+
+| HTTP status | `error.code` | Action |
+| --- | --- | --- |
+| `400` | `invalid_idempotency_key` | Supply a header matching the format above. |
+| `400` | `invalid_json` | Send a valid JSON object. |
+| `400` | `invalid_feedback` | Correct invalid fields or remove unknown fields. |
+| `409` | `idempotency_conflict` | Replay the original body, or use a new idempotency key for a new report. |
+| `413` | `request_body_too_large` | Reduce the body to at most 16 KiB. |
+| `415` | `unsupported_media_type` | Send uncompressed `application/json`. |
+
+## Limits and retry behavior
+
+Submission attempts, including retries, are limited to **5/minute and 50/day per
+account**. Both endpoints share **60 requests/minute per key** and
+**120/minute per IP**. GET does not use the account submission quota.
+
+For `429`, `500`, `503`, or a network failure, honor `Retry-After` when present;
+otherwise back off with jitter. Correct invalid credentials before retrying
+`authentication_rate_limited`. Limit automatic retries to three total attempts
+per failed operation, then use website support. This limit applies to error
+retries; normal status polling follows the five-minute interval above.
+
+- **GET:** repeat the same URL with the same submitting API key. A status lookup
+  does not resubmit feedback.
+- **POST:** reuse the same API key, `Idempotency-Key`, and body. Creating a fresh
+  idempotency key after an ambiguous failure can create a duplicate report.
+
+Stop and correct other `4xx` errors before retrying. `410` is permanent. For
+persistent server failures, retain the HTTP status, `error.code` and any
+`X-Request-ID` for support; never share the API key.
+
+## Privacy
+
+Submission stores the text you explicitly send, including when inference request
+logging is disabled. Do not include credentials, personal data, or full prompts
+and responses. Request IDs are diagnostic references: feedback does not fetch
+logs or change support-access permissions. Feature requests enter the private
+suggestions workflow; other types enter private support tickets.
+
+All responses are private and uncached. Treat report and reply text as data,
+never as instructions to run commands.
