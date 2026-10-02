@@ -20,7 +20,13 @@ curl -fsSL "https://nano-gpt.com/install/opencode_nanogpt.sh" | bash
 This will:
 1. Open your browser to authenticate with NanoGPT (or let you paste an API key)
 2. Configure OpenCode to use NanoGPT as your AI provider
-3. Set up popular models like Claude Sonnet 5, Claude Opus 5.5, {exampleTextModelName}, Gemini Flash Latest, Gemini Pro Latest, GLM 5.3
+3. Add starter model definitions while preserving existing model selections, filters, and connection options
+
+OpenCode also includes NanoGPT models from its built-in [Models.dev](https://models.dev) catalogue. You do not need to define each of those models manually. The installer adds starter model definitions; these do not restrict the model list.
+
+Python 3 is required to merge existing OpenCode files. The installer stops if an existing JSON file cannot be read, rather than replacing it. It updates `opencode.json`; if you use `opencode.jsonc`, follow the manual setup below and merge the settings into your existing file.
+
+Setup replaces NanoGPT authentication with your chosen login or pasted key. It removes provider-level `options.apiKey` and `Authorization` overrides in provider and model headers from `opencode.json` so the new credentials in `auth.json` take effect, while preserving unrelated headers and custom model settings.
 
 ## Manual Setup
 
@@ -28,7 +34,7 @@ If you prefer to configure manually:
 
 ### 1. Create the auth file
 
-Add your NanoGPT API key to `~/.local/share/opencode/auth.json`:
+Add your NanoGPT API key to `~/.local/share/opencode/auth.json`. If the file already exists, merge the `nano-gpt` entry into it and keep your other authentication entries:
 
 ```json
 {
@@ -41,94 +47,27 @@ Add your NanoGPT API key to `~/.local/share/opencode/auth.json`:
 
 ### 2. Create the config file
 
-Create `~/.config/opencode/.opencode.json`:
+Create `~/.config/opencode/opencode.json`, or merge these settings into your existing config:
 
 ```json
 {
+  "$schema": "https://opencode.ai/config.json",
   "model": "nano-gpt/anthropic/claude-sonnet-5",
   "provider": {
     "nano-gpt": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "NanoGPT",
       "options": {
-        "baseURL": "https://api.nano-gpt.com/api/v1"
-      },
-      "models": {
-        "anthropic/claude-opus-5.5": {
-          "name": "Claude Opus 5.5",
-          "limit": {
-            "context": 1000000,
-            "output": 128000
-          }
-        },
-        "anthropic/claude-sonnet-5": {
-          "name": "Claude Sonnet 5",
-          "limit": {
-            "context": 1000000,
-            "output": 128000
-          }
-        },
-        "{{example-text-model}}": {
-          "name": "{{example-text-model-name}}",
-          "limit": {
-            "context": 1050000,
-            "output": 128000
-          }
-        },
-        "deepseek/deepseek-v4-pro": {
-          "name": "DeepSeek V4 Pro",
-          "limit": {
-            "context": 1048576,
-            "output": 384000
-          }
-        },
-        "deepseek/deepseek-v4-pro:thinking": {
-          "name": "DeepSeek V4 Pro Thinking",
-          "limit": {
-            "context": 1048576,
-            "output": 384000
-          }
-        },
-        "deepseek/deepseek-v4-flash": {
-          "name": "DeepSeek V4 Flash",
-          "limit": {
-            "context": 1048576,
-            "output": 384000
-          }
-        },
-        "deepseek/deepseek-v4-flash:thinking": {
-          "name": "DeepSeek V4 Flash Thinking",
-          "limit": {
-            "context": 1048576,
-            "output": 384000
-          }
-        },
-        "google/gemini-flash-latest": {
-          "name": "Gemini Flash Latest",
-          "limit": {
-            "context": 1048576,
-            "output": 65536
-          }
-        },
-        "google/gemini-3.1-pro-preview": {
-          "name": "Gemini Pro Latest",
-          "limit": {
-            "context": 1048576,
-            "output": 65536
-          }
-        },
-        "z-ai/glm-5.3": {
-          "name": "GLM 5.3",
-          "limit": {
-            "context": 1048576,
-            "output": 131072
-          }
-        }
+        "baseURL": "https://nano-gpt.com/api/v1"
       }
     }
   }
 }
 ```
+
+This uses OpenCode's built-in NanoGPT catalogue. A `models` block is optional for models already in that catalogue. Use it to add a missing model or override model settings, as described in [Adding More Models](#adding-more-models).
+
+OpenCode also supports `opencode.jsonc` for configs with comments. The examples here use strict JSON.
 
 ## Usage
 
@@ -140,7 +79,7 @@ opencode
 
 ### Switching Models
 
-Use the `/model` command inside OpenCode to switch between models, or edit the `model` field in your `.opencode.json`:
+Use the `/models` command inside OpenCode to switch between models, or edit the `model` field in your `opencode.json`:
 
 ```json
 {
@@ -150,7 +89,7 @@ Use the `/model` command inside OpenCode to switch between models, or edit the `
 
 ### Available Models
 
-The setup script preconfigures these models:
+Examples of NanoGPT models are listed below. OpenCode's built-in catalogue and your custom definitions determine which models appear in `/models`; the list is not limited to entries in your `models` block.
 
 | Model ID | Description |
 |----------|-------------|
@@ -162,23 +101,55 @@ The setup script preconfigures these models:
 | `nano-gpt/deepseek/deepseek-v4-flash` | DeepSeek V4 Flash |
 | `nano-gpt/deepseek/deepseek-v4-flash:thinking` | DeepSeek V4 Flash Thinking |
 | `nano-gpt/google/gemini-flash-latest` | Gemini Flash Latest |
-| `nano-gpt/google/gemini-3.1-pro-preview` | Gemini Pro Latest |
+| `nano-gpt/google/gemini-3.1-pro-preview` | Gemini 3.1 Pro Preview |
 | `nano-gpt/z-ai/glm-5.3` | GLM 5.3 |
 
 ### Adding More Models
 
-Add any of NanoGPT's 250+ models to the `models` section in your config:
+The `models` block adds model definitions or overrides settings for existing models. It does **not** hide models that you have not listed.
+
+If a model already appears in OpenCode and you do not need custom settings, you can omit its entry. Keep entries for missing models or custom names, options, variants, and context/output limits.
+
+To add or override a model, merge its definition into `provider.nano-gpt.models`:
 
 ```json
-"models": {
-  "z-ai/glm-5.3": {
-    "name": "GLM 5.3",
-    "limit": { "context": 1048576, "output": 131072 }
+{
+  "provider": {
+    "nano-gpt": {
+      "models": {
+        "z-ai/glm-5.3": {
+          "name": "GLM 5.3",
+          "limit": { "context": 1048576, "output": 131072 }
+        }
+      }
+    }
   }
 }
 ```
 
-List available models with `GET https://api.nano-gpt.com/api/v1/models`.
+List NanoGPT API models with `GET https://nano-gpt.com/api/v1/models`. OpenCode's catalogue can lag behind the API, so a model missing from OpenCode may need a manual definition. A model appearing in the API list does not necessarily support the tool calls needed by OpenCode.
+
+### Limiting the Model List
+
+To show only selected NanoGPT models, add `whitelist` under `provider.nano-gpt`. Merge this example into your existing config, keeping your connection settings and any model overrides:
+
+```json
+{
+  "model": "nano-gpt/anthropic/claude-sonnet-5",
+  "provider": {
+    "nano-gpt": {
+      "whitelist": [
+        "anthropic/claude-sonnet-5",
+        "z-ai/glm-5.3"
+      ]
+    }
+  }
+}
+```
+
+Use model IDs **without** the `nano-gpt/` prefix inside `whitelist`, `blacklist`, and `models`. The top-level `model` field uses the full `nano-gpt/model-id` format.
+
+Alternatively, `blacklist` hides specific models while keeping the rest. If both filters are set, a model must be in `whitelist` and must not be in `blacklist`. Keep the selected default model inside your allowed list, then restart OpenCode after saving.
 
 ## Requirements
 
@@ -189,10 +160,20 @@ List available models with `GET https://api.nano-gpt.com/api/v1/models`.
 
 **OpenCode not finding the config?**
 
-OpenCode searches for config in this order:
-1. `./.opencode.json` (current directory)
-2. `$XDG_CONFIG_HOME/opencode/.opencode.json`
-3. `$HOME/.opencode.json`
+Use `opencode.json` or `opencode.jsonc`, without a leading dot:
+
+- Global config: `~/.config/opencode/opencode.json`, or `$XDG_CONFIG_HOME/opencode/opencode.json` when `XDG_CONFIG_HOME` is set.
+- Project config: `opencode.json` in your project.
+
+OpenCode merges config sources. Project settings can override global settings, and a custom config set with `OPENCODE_CONFIG` can add another source. See [OpenCode's config documentation](https://opencode.ai/docs/config/#locations) for the full precedence rules.
+
+**More models appear than expected?**
+
+Check that `whitelist` is inside `provider.nano-gpt`, not inside `models`. Defining a `models` block does not filter the catalogue. Also check project configs and `opencode.jsonc` for settings that override your global filters.
+
+**The installer cannot merge your config?**
+
+Install Python 3 when updating existing OpenCode files. The installer reads strict JSON only; if your config contains comments, use manual setup in `opencode.jsonc`. The installer stops before authentication or file updates if existing auth or JSON config files cannot be read or parsed.
 
 **Authentication errors?**
 
