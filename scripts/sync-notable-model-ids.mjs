@@ -13,7 +13,7 @@ const END_MARKER = '{/* AUTO-GENERATED: notable-model-ids:end */}';
 function getFamilyConfig(exampleTextModel) {
   return [
     { label: 'OpenAI', ids: [exampleTextModel, 'openai/gpt-6-astra', 'openai/gpt-latest'] },
-    { label: 'Anthropic', ids: ['anthropic/claude-opus-5.5', 'anthropic/claude-sonnet-5', 'anthropic/claude-fable-5.1'] },
+    { label: 'Anthropic', ids: ['anthropic/claude-opus-5.5', 'anthropic/claude-sonnet-5.5', 'anthropic/claude-fable-5.1'] },
     { label: 'Google Gemini', ids: ['google/gemini-flash-latest', 'google/gemini-3.8-flash', 'google/gemini-3.1-pro-preview'] },
     { label: 'SpaceXAI Grok', ids: ['x-ai/grok-4.7', 'x-ai/grok-latest'] },
     { label: 'Moonshot Kimi', ids: ['moonshotai/kimi-k3', 'moonshotai/kimi-latest'] },

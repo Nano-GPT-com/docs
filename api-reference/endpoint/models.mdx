@@ -4,6 +4,9 @@ openapi: 'GET /v1/models'
 ---
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
 
 ## Overview
 
@@ -27,7 +30,7 @@ Examples below include canonical IDs and public moving aliases; legacy compatibi
 
 {/* AUTO-GENERATED: notable-model-ids:start */}
 - **OpenAI**: <code>{exampleTextModel}</code>, `openai/gpt-6-astra`, `openai/gpt-latest`
-- **Anthropic**: `anthropic/claude-opus-5.5`, `anthropic/claude-sonnet-5`, `anthropic/claude-fable-5.1`
+- **Anthropic**: `anthropic/claude-opus-5.5`, `anthropic/claude-sonnet-5.5`, `anthropic/claude-fable-5.1`
 - **Google Gemini**: `google/gemini-flash-latest`, `google/gemini-3.8-flash`, `google/gemini-3.1-pro-preview`
 - **SpaceXAI Grok**: `x-ai/grok-4.7`, `x-ai/grok-latest`
 - **Moonshot Kimi**: `moonshotai/kimi-k3`, `moonshotai/kimi-latest`
@@ -96,7 +99,7 @@ When `detailed=true`, additional fields may be included per model:
 Service-tier availability is model-specific. To discover it programmatically, request the detailed model list and inspect each model's `supported_service_tiers` array:
 
 ```bash
-curl -s "https://api.nano-gpt.com/api/v1/models?detailed=true" \
+curl -s "https://nano-gpt.com/api/v1/models?detailed=true" \
   | jq '.data[] | select(.supported_service_tiers | length > 0) | {id, supported_service_tiers}'
 ```
 
@@ -148,20 +151,20 @@ Examples:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/v1/models?sort=favorites"
+  "https://nano-gpt.com/api/v1/models?sort=favorites"
 ```
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models?sort=mostused"
+curl "https://nano-gpt.com/api/v1/models?sort=mostused"
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
 ```
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
+curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
 ```
 
 ### `capabilities` (detailed mode)
@@ -205,13 +208,13 @@ Standard OpenAI-compatible format without pricing information:
     {
       "id": "{{example-text-model}}",
       "object": "model",
-      "created": 1704067200,
+      "created": 1790640000,
       "owned_by": "openai"
     },
     {
-      "id": "anthropic/claude-opus-4.6",
+      "id": "anthropic/claude-opus-5.5",
       "object": "model", 
-      "created": 1704067200,
+      "created": 1790035200,
       "owned_by": "anthropic"
     }
   ]
@@ -229,52 +232,66 @@ Enhanced format with model descriptions, context lengths, and pricing:
     {
       "id": "{{example-text-model}}",
       "object": "model",
-      "created": 1704067200,
+      "created": 1790640000,
       "owned_by": "openai",
-      "name": "GPT 5.6 Sol",
-      "description": "OpenAI's flagship general-purpose model",
-      "context_length": 128000,
-      "max_output_tokens": 16384,
-      "supported_service_tiers": ["flex", "fast", "priority"],
+      "name": "GPT 6.1 Sol",
+      "description": "GPT-6.1 Sol delivers near-Astra performance at a lower cost for complex coding, computer use, and professional work. It supports text and image input, tool calling, structured outputs, and reasoning from low through max.",
+      "context_length": 1050000,
+      "max_output_tokens": 128000,
+      "supported_service_tiers": [
+        "flex",
+        "fast",
+        "priority"
+      ],
       "capabilities": {
         "vision": true,
-        "reasoning": false,
+        "video_input": false,
+        "audio_input": false,
+        "reasoning": true,
         "tool_calling": true,
-        "parallel_tool_calls": true,
+        "parallel_tool_calls": false,
         "structured_output": true,
         "pdf_upload": true,
-        "video_input": true
+        "batch_api": true
       },
       "pricing": {
-        "prompt": 2.50,
-        "completion": 10.00,
+        "prompt": 2,
+        "completion": 10,
+        "cacheReadInputPer1kTokens": 0.0001,
+        "cacheWriteInputPer1kTokens": 0.0025,
         "currency": "USD",
         "unit": "per_million_tokens"
-      },
-      "icon_url": "/icons/OpenAI.svg",
-      "cost_estimate": "$",
-      "category": "flagship"
+      }
     },
     {
-      "id": "anthropic/claude-opus-4.6",
+      "id": "anthropic/claude-opus-5.5",
       "object": "model",
-      "created": 1704067200,
+      "created": 1790035200,
       "owned_by": "anthropic",
-      "name": "Claude Opus 4.5",
-      "description": "Anthropic's top-tier model for deep reasoning and writing",
-      "context_length": 200000,
-      "max_output_tokens": 8192,
+      "name": "Claude Opus 5.5",
+      "description": "Claude Opus 5.5 is Anthropic's flagship model for agentic coding, computer use, complex knowledge work, and long-running tasks, with improved efficiency and more natural communication.",
+      "context_length": 1000000,
+      "max_output_tokens": 128000,
       "supported_service_tiers": [],
-      "capabilities": { "vision": true, "reasoning": true, "tool_calling": true },
-      "pricing": {
-        "prompt": 15.00,
-        "completion": 75.00,
-        "currency": "USD", 
-        "unit": "per_million_tokens"
+      "capabilities": {
+        "vision": true,
+        "video_input": false,
+        "audio_input": false,
+        "reasoning": true,
+        "tool_calling": true,
+        "parallel_tool_calls": false,
+        "structured_output": true,
+        "pdf_upload": true,
+        "batch_api": true
       },
-      "icon_url": "/icons/Anthropic.svg",
-      "cost_estimate": "$$$",
-      "category": "reasoning"
+      "pricing": {
+        "prompt": 4,
+        "completion": 20,
+        "cacheReadInputPer1kTokens": 0.0002,
+        "cacheWriteInputPer1kTokens": 0.005,
+        "currency": "USD",
+        "unit": "per_million_tokens"
+      }
     }
   ]
 }
@@ -354,50 +371,50 @@ This metadata is informational and is not legal advice. Provider terms and model
 ### Basic Request
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models"
+curl "https://nano-gpt.com/api/v1/models"
 ```
 
 ### Detailed Request
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models?detailed=true"
+curl "https://nano-gpt.com/api/v1/models?detailed=true"
 ```
 
 ### Sort by Favorites
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/v1/models?sort=favorites"
+  "https://nano-gpt.com/api/v1/models?sort=favorites"
 ```
 
 ### Sort by Most Used
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models?sort=mostused"
+curl "https://nano-gpt.com/api/v1/models?sort=mostused"
 ```
 
 ### Detailed and Sorted
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
 ```
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
+curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
 ```
 
 ### Detailed with Authentication
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models?detailed=true" \
+curl "https://nano-gpt.com/api/v1/models?detailed=true" \
   -H "Authorization: Bearer your_api_key_here"
 ```
 
 ### Alternative API Key Header
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models?detailed=true" \
+curl "https://nano-gpt.com/api/v1/models?detailed=true" \
   -H "x-api-key: your_api_key_here"
 ```
 
@@ -415,12 +432,12 @@ Examples:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  https://api.nano-gpt.com/api/v1/models
+  https://nano-gpt.com/api/v1/models
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/v1/models?detailed=true"
+  "https://nano-gpt.com/api/v1/models?detailed=true"
 ```
 
 ### 2) GET /api/subscription/v1/models (subscription-only)
@@ -432,12 +449,12 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 Examples:
 
 ```bash
-curl https://api.nano-gpt.com/api/subscription/v1/models
+curl https://nano-gpt.com/api/subscription/v1/models
 ```
 
 ```bash
 curl -H "x-api-key: $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/subscription/v1/models?detailed=true"
+  "https://nano-gpt.com/api/subscription/v1/models?detailed=true"
 ```
 
 ### 3) GET /api/paid/v1/models (paid/extras)
@@ -448,12 +465,12 @@ curl -H "x-api-key: $NANOGPT_API_KEY" \
 Examples:
 
 ```bash
-curl https://api.nano-gpt.com/api/paid/v1/models
+curl https://nano-gpt.com/api/paid/v1/models
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/paid/v1/models?detailed=true"
+  "https://nano-gpt.com/api/paid/v1/models?detailed=true"
 ```
 
 ### Choosing the Right Endpoint

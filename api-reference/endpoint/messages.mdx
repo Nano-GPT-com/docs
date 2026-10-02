@@ -3,6 +3,10 @@ title: 'Messages'
 openapi: 'POST /v1/messages'
 ---
 
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
+
 <Note>
   To set reasoning effort through a custom model ID, append `:reasoning-effort/high` (also `none`, `low`, `medium`, `xhigh`, or `max`). NanoGPT strips the suffix before routing and uses it as the default `output_config.effort` for enabled reasoning levels. `:reasoning-effort/none` instead supplies `thinking: { type: "disabled" }`; `output_config.effort: "none"` is not accepted. Explicit body generation settings, including enabled thinking, take precedence over `none`. The suffix does not bypass model/provider restrictions. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes).
 </Note>
@@ -10,7 +14,7 @@ openapi: 'POST /v1/messages'
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
 
 <Note>
-  **API host:** Use `https://api.nano-gpt.com/api` as the base URL for the Anthropic SDK, which appends `/v1/messages`. For raw HTTP requests, use `https://api.nano-gpt.com/api/v1/messages`. See [API Hosts](/api-reference/miscellaneous/api-hosts).
+  **API host:** Use `https://nano-gpt.com/api` as the base URL for the Anthropic SDK, which appends `/v1/messages`. For raw HTTP requests, use `https://nano-gpt.com/api/v1/messages`. See [API Hosts](/api-reference/miscellaneous/api-hosts).
 </Note>
 
 <Note>
@@ -42,7 +46,7 @@ This endpoint supports:
 ## Endpoint
 
 ```
-POST https://api.nano-gpt.com/api/v1/messages
+POST https://nano-gpt.com/api/v1/messages
 ```
 
 ## Authentication
@@ -502,7 +506,7 @@ For Bring Your Own Key:
 ### Basic Request (cURL)
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/messages \
+curl -X POST https://nano-gpt.com/api/v1/messages \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -517,7 +521,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/messages \
 ### Streaming Request (cURL)
 
 ```bash
-curl -N -X POST https://api.nano-gpt.com/api/v1/messages \
+curl -N -X POST https://nano-gpt.com/api/v1/messages \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -531,7 +535,7 @@ curl -N -X POST https://api.nano-gpt.com/api/v1/messages \
 ### With Tools (cURL)
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/messages \
+curl -X POST https://nano-gpt.com/api/v1/messages \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -563,7 +567,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic({
   apiKey: process.env.NANOGPT_API_KEY,
-  baseURL: "https://api.nano-gpt.com/api"
+  baseURL: "https://nano-gpt.com/api"
 });
 
 const message = await anthropic.messages.create({
@@ -584,7 +588,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic({
   apiKey: process.env.NANOGPT_API_KEY,
-  baseURL: "https://api.nano-gpt.com/api"
+  baseURL: "https://nano-gpt.com/api"
 });
 
 const stream = await anthropic.messages.stream({
@@ -609,7 +613,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic({
   apiKey: process.env.NANOGPT_API_KEY,
-  baseURL: "https://api.nano-gpt.com/api"
+  baseURL: "https://nano-gpt.com/api"
 });
 
 const message = await anthropic.messages.create({
@@ -638,9 +642,10 @@ const message = await anthropic.messages.create({
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 
+
 const anthropic = new Anthropic({
   apiKey: process.env.NANOGPT_API_KEY,
-  baseURL: "https://api.nano-gpt.com/api"
+  baseURL: "https://nano-gpt.com/api"
 });
 
 const imageData = fs.readFileSync("image.jpg").toString("base64");
@@ -674,7 +679,7 @@ import anthropic
 
 client = anthropic.Anthropic(
     api_key="YOUR_NANOGPT_API_KEY",
-    base_url="https://api.nano-gpt.com/api"
+    base_url="https://nano-gpt.com/api"
 )
 
 message = client.messages.create(
@@ -708,7 +713,7 @@ To migrate from Anthropic's API to NanoGPT:
    - From: `https://api.anthropic.com`
    - To: `https://nano-gpt.com/api`
 
-   The full endpoint will be: `https://api.nano-gpt.com/api/v1/messages`
+   The full endpoint will be: `https://nano-gpt.com/api/v1/messages`
 
 2. Use your NanoGPT API key instead of your Anthropic key
 

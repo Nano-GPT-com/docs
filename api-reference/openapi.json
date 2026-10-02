@@ -11,7 +11,11 @@
   "servers": [
     {
       "url": "https://api.nano-gpt.com/api",
-      "description": "NanoGPT API Server (recommended for API-key requests)"
+      "description": "Direct API for uploads and long-running requests; choose a model listed by this host"
+    },
+    {
+      "url": "https://nano-gpt.com/api",
+      "description": "Website API for current text model examples"
     }
   ],
   "paths": {
@@ -745,6 +749,16 @@
       }
     },
     "/v1/chat/completions": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current model examples)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "post": {
         "description": "Creates a chat completion for the provided messages. The NanoGPT Advisor extension is available for non-streaming, platform-billed pay-as-you-go API-key requests that do not use client tools, structured output, inline moderation, BYOK, accountless payment, memory, or server-side content enhancements.",
         "security": [
@@ -978,6 +992,16 @@
       }
     },
     "/v1/completions": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current model examples)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "post": {
         "description": "Creates a completion for the provided prompt. This endpoint is available on a best-effort basis for legacy compatibility, and performance may be less consistent than /v1/chat/completions because not all upstream providers support the legacy completions API.",
         "security": [
@@ -1041,6 +1065,16 @@
       }
     },
     "/talk-to-gpt": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current model examples)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "post": {
         "description": "Legacy endpoint for chat interactions with the GPT model",
         "security": [
@@ -1085,6 +1119,16 @@
       }
     },
     "/v1/models": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current text model catalog)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "get": {
         "description": "List available models. The default response is intentionally minimal for OpenAI compatibility; use `detailed=true` for capabilities, supported service tiers, and pricing.",
         "security": [
@@ -1286,6 +1330,16 @@
       }
     },
     "/explore/text-models": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current text model catalog)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "get": {
         "description": "Explore text model records. Supports filtering to models whose model-level distillation policy is allowed.",
         "security": [
@@ -1336,6 +1390,16 @@
       }
     },
     "/explore/search": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current text model catalog)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "get": {
         "description": "Search explore records. The distillation filter applies only when searching text models.",
         "security": [
@@ -1406,6 +1470,16 @@
       }
     },
     "/models": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current text model catalog)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "get": {
         "description": "Legacy endpoint to list available models",
         "security": [
@@ -1438,6 +1512,16 @@
       }
     },
     "/models/{canonicalId}/providers": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current text model catalog)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "get": {
         "description": "List available providers and pricing for a model that supports provider selection",
         "security": [
@@ -4339,6 +4423,16 @@
       }
     },
     "/v1/messages": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current model examples)"
+        },
+        {
+          "url": "https://api.nano-gpt.com/api",
+          "description": "Direct API; choose a model listed by this host"
+        }
+      ],
       "post": {
         "operationId": "createMessage",
         "tags": ["Anthropic"],
@@ -4371,8 +4465,12 @@
     "/v1/responses": {
       "servers": [
         {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API (current model examples)"
+        },
+        {
           "url": "https://api.nano-gpt.com/api",
-          "description": "Direct API host preferred for large or long-running Responses requests"
+          "description": "Direct API for larger requests; choose a model listed by this host"
         }
       ],
       "post": {
@@ -4474,8 +4572,12 @@
     "/v1/responses/{id}": {
       "servers": [
         {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website API for responses created with the current model examples"
+        },
+        {
           "url": "https://api.nano-gpt.com/api",
-          "description": "Direct API host preferred for Responses storage operations"
+          "description": "Direct API for responses created on this host"
         }
       ],
       "get": {
@@ -5853,7 +5955,7 @@
             "type": "string",
             "description": "The model to use for completion. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.). Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is none, low, medium, high, xhigh, or max, to supply a default reasoning_effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence, including enabled thinking when the suffix is none. The none suffix requests disabled reasoning where supported; it does not bypass model/provider restrictions. Other effort levels remain model/provider-specific.",
             "default": "minimax/minimax-m2.7",
-            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.6-sol:online/exa-instant", "openai/gpt-5.6-sol:online/exa-deep-reasoning"]
+            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-6.1-sol:online/exa-instant", "openai/gpt-6.1-sol:online/exa-deep-reasoning"]
           },
           "billing_mode": {
             "type": "string",
@@ -6825,7 +6927,7 @@
             "type": "string",
             "description": "The model to use for completion. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.).",
             "default": "minimax/minimax-m2.7",
-            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.6-sol:online/exa-instant", "openai/gpt-5.6-sol:online/exa-deep-reasoning"]
+            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-6.1-sol:online/exa-instant", "openai/gpt-6.1-sol:online/exa-deep-reasoning"]
           },
           "billing_mode": {
             "type": "string",
@@ -7416,7 +7518,7 @@
             "type": "string",
             "description": "The model to use for generation. The legacy endpoint supports the same model suffix parser for web search and provider routing, including ':caching', ':cache', and ':cached', as Chat Completions.",
             "default": "minimax/minimax-m2.7",
-            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-5.6-sol:online/exa-instant"]
+            "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-6.1-sol:online/exa-instant"]
           },
           "provider": {
             "description": "Optional provider override or structured provider routing controls for provider-selection-capable models. A string explicitly selects one provider. An object can set soft order, hard pins, exclusions, sort preference, price caps, fallback behavior, and parameter-capability requirements.",
@@ -7477,7 +7579,7 @@
                 "id": {
                   "type": "string",
                   "description": "Unique identifier for the model",
-                  "example": "openai/gpt-5.6-sol"
+                  "example": "openai/gpt-6.1-sol"
                 },
                 "object": {
                   "type": "string",
@@ -7655,7 +7757,7 @@
             "items": {
               "type": "string",
               "description": "Model identifier",
-              "example": "openai/gpt-5.6-sol"
+              "example": "openai/gpt-6.1-sol"
             }
           }
         }

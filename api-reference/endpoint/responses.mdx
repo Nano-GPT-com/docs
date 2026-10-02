@@ -3,6 +3,10 @@ title: 'Responses'
 openapi: 'POST /v1/responses'
 ---
 
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
+
 <Note>
   To set reasoning effort through a custom model ID, append `:reasoning-effort/high` (also `none`, `low`, `medium`, `xhigh`, or `max`). NanoGPT strips the suffix before routing and uses it as the default `reasoning.effort`. `:reasoning-effort/none` requests disabled reasoning where the model supports it. Explicit body generation settings, including enabled thinking, take precedence over `none`. The suffix does not bypass model/provider restrictions. See [Reasoning Effort Suffixes](/api-reference/miscellaneous/model-suffixes#reasoning-effort-suffixes).
 </Note>
@@ -27,7 +31,7 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
 </Note>
 
 <Note>
-  **Recommended base URL:** Use `https://api.nano-gpt.com/api/v1` for Responses API clients. This dedicated API host accepts request bodies up to NanoGPT's 32 MiB application limit and avoids the smaller ingress limit on the website host. It is especially important for Codex and other long-running agents that resend accumulated conversation state.
+  **Large request bodies:** Use `https://api.nano-gpt.com/api/v1` with a model listed by that host for request bodies up to NanoGPT's 32 MiB application limit. The examples below use the website host because it currently lists their recommended model. The website has a smaller ingress limit; long-running agents may need the direct host and a model available there.
 </Note>
 
 <Note>
@@ -92,7 +96,7 @@ Example:
 
 ```bash
 # Create an encrypted, stored response
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -H "x-encryption-key: YOUR_ENCRYPTION_KEY" \
@@ -103,7 +107,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
   }'
 
 # Retrieve it later (must include the same encryption header)
-curl https://api.nano-gpt.com/api/v1/responses/resp_abc123 \
+curl https://nano-gpt.com/api/v1/responses/resp_abc123 \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "x-encryption-key: YOUR_ENCRYPTION_KEY"
 ```
@@ -1224,7 +1228,7 @@ Authorization: Bearer YOUR_API_KEY
 ### Simple Text Completion
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1237,7 +1241,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
 
 ```bash
 # First turn
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1246,7 +1250,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
   }'
 
 # Second turn (using response ID from first request)
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1259,7 +1263,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
 ### Streaming Response
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1272,7 +1276,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
 ### Per-request Retention Override
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1286,7 +1290,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
 ### Function Calling
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1312,7 +1316,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
 ### Submitting Tool Results
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1342,7 +1346,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
 ### Image Input (Vision)
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1367,7 +1371,7 @@ Video input is separate from video generation and is available only on models ad
 ### JSON Output
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1383,7 +1387,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
 
 ```bash
 # Start background request
-curl -X POST https://api.nano-gpt.com/api/v1/responses \
+curl -X POST https://nano-gpt.com/api/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
@@ -1393,7 +1397,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/responses \
   }'
 
 # Poll for results
-curl https://api.nano-gpt.com/api/v1/responses/resp_abc123 \
+curl https://nano-gpt.com/api/v1/responses/resp_abc123 \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

@@ -3,6 +3,10 @@ title: 'CLI Device Login'
 description: 'Integrate NanoGPT device login into your CLI app'
 ---
 
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
+
 # NanoGPT CLI Device Login Integration Guide
 
 This guide explains how to integrate device login into your CLI application so users can authenticate without embedding a browser.
@@ -138,14 +142,14 @@ Once you have the API key, use it for all NanoGPT API requests.
 List available models:
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/models" \
+curl "https://nano-gpt.com/api/v1/models" \
   -H "Authorization: Bearer sk-nano-..."
 ```
 
 Chat completions (OpenAI-compatible):
 
 ```bash
-curl "https://api.nano-gpt.com/api/v1/chat/completions" \
+curl "https://nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer sk-nano-..." \
   -H "Content-Type: application/json" \
   -d '{

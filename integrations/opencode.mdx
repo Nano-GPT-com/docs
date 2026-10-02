@@ -4,6 +4,9 @@ description: 'OpenCode integration for NanoGPT'
 ---
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
 
 # OpenCode Integration
 
@@ -52,7 +55,7 @@ Create `~/.config/opencode/opencode.json`, or merge these settings into your exi
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "nano-gpt/anthropic/claude-sonnet-5",
+  "model": "nano-gpt/anthropic/claude-sonnet-5.5",
   "provider": {
     "nano-gpt": {
       "npm": "@ai-sdk/openai-compatible",
@@ -93,7 +96,7 @@ Examples of NanoGPT models are listed below. OpenCode's built-in catalogue and y
 
 | Model ID | Description |
 |----------|-------------|
-| `nano-gpt/anthropic/claude-sonnet-5` | Claude Sonnet 5 (default) |
+| `nano-gpt/anthropic/claude-sonnet-5.5` | Claude Sonnet 5.5 (default) |
 | `nano-gpt/anthropic/claude-opus-5.5` | Claude Opus 5.5 |
 | <code>nano-gpt/{exampleTextModel}</code> | {exampleTextModelName} |
 | `nano-gpt/deepseek/deepseek-v4-pro` | DeepSeek V4 Pro |
@@ -135,11 +138,11 @@ To show only selected NanoGPT models, add `whitelist` under `provider.nano-gpt`.
 
 ```json
 {
-  "model": "nano-gpt/anthropic/claude-sonnet-5",
+  "model": "nano-gpt/anthropic/claude-sonnet-5.5",
   "provider": {
     "nano-gpt": {
       "whitelist": [
-        "anthropic/claude-sonnet-5",
+        "anthropic/claude-sonnet-5.5",
         "z-ai/glm-5.3"
       ]
     }

@@ -4,12 +4,15 @@ description: 'Use n8n OpenAI nodes with NanoGPT to access 50+ models in your wor
 ---
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
 
 ## Overview
 
 n8n can use any OpenAI-compatible API. With NanoGPT, you get:
 
-- One API key for 50+ models (GPT 5.6 Sol, Claude Opus 5.5, Gemini Flash Latest, and more)
+- One API key for 50+ models (GPT 6.1 Sol, Claude Opus 5.5, Gemini Flash Latest, and more)
 - The ability to switch models without changing your workflow logic
 - Unified billing across providers
 
@@ -37,7 +40,7 @@ n8n can use any OpenAI-compatible API. With NanoGPT, you get:
 | --- | --- |
 | Credential Name | `NanoGPT` (or any name you prefer) |
 | API Key | `sk-nano-YOUR-API-KEY` |
-| Base URL | `https://api.nano-gpt.com/api/v1` |
+| Base URL | `https://nano-gpt.com/api/v1` |
 
 6. Click **Save**
 
@@ -103,7 +106,7 @@ OpenAI Chat node:
 | `401 Unauthorized` | Verify the API key and that your account has credits |
 | `Invalid API Key` | Ensure there are no extra spaces when copying the key |
 | `Model not found` | Double-check the model name on the pricing page |
-| `Connection timeout` | Confirm the Base URL is `https://api.nano-gpt.com/api/v1` |
+| `Connection timeout` | Confirm the Base URL is `https://nano-gpt.com/api/v1` |
 | `Rate limited` | Add a delay between requests or upgrade your plan |
 
 ## Advanced: HTTP Request node
@@ -113,7 +116,7 @@ If you need full control over parameters, use the HTTP Request node:
 1. Add **HTTP Request**
 2. Set:
    - **Method:** `POST`
-   - **URL:** `https://api.nano-gpt.com/api/v1/chat/completions`
+   - **URL:** `https://nano-gpt.com/api/v1/chat/completions`
    - **Authentication:** Header Auth
    - **Header Name:** `Authorization`
    - **Header Value:** `Bearer sk-nano-YOUR-API-KEY`

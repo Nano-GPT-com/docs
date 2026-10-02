@@ -4,6 +4,9 @@ description: 'Use OpenClaw with NanoGPT to access Claude, GPT, Gemini, and more'
 ---
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
 
 ## Quick Setup Guide
 
@@ -12,7 +15,7 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
 3. Open your config (Config -> Models -> Raw, or edit `~/.clawdbot/clawdbot.json`).
 4. Add a NanoGPT provider block like this:
 
-Model limits and per-million-token USD cost estimates below were checked against the NanoGPT catalog on September 5, 2026. Check the [models endpoint](/api-reference/endpoint/models) for current rates.
+Model limits and per-million-token USD cost estimates below were checked against the NanoGPT catalog on October 2, 2026. Check the [models endpoint](/api-reference/endpoint/models) for current rates.
 
 ```json
 {
@@ -20,7 +23,7 @@ Model limits and per-million-token USD cost estimates below were checked against
     "mode": "merge",
     "providers": {
       "nanogpt": {
-        "baseUrl": "https://api.nano-gpt.com/api/v1",
+        "baseUrl": "https://nano-gpt.com/api/v1",
         "apiKey": "YOUR_NANOGPT_API_KEY_HERE",
         "auth": "api-key",
         "api": "openai-completions",
@@ -36,10 +39,10 @@ Model limits and per-million-token USD cost estimates below were checked against
               "image"
             ],
             "cost": {
-              "input": 5,
-              "output": 25,
-              "cacheRead": 0.5,
-              "cacheWrite": 6.25
+              "input": 4,
+              "output": 20,
+              "cacheRead": 0.2,
+              "cacheWrite": 5
             },
             "contextWindow": 1000000,
             "maxTokens": 128000
@@ -67,13 +70,13 @@ These are examples only. Use the model IDs returned by the models endpoint below
 ## Get The Most Recent Models
 
 ```bash
-curl https://api.nano-gpt.com/api/v1/models
+curl https://nano-gpt.com/api/v1/models
 ```
 
 If you want filtered lists:
 
-- `https://api.nano-gpt.com/api/subscription/v1/models` (subscription-only)
-- `https://api.nano-gpt.com/api/paid/v1/models` (paid-only)
+- `https://nano-gpt.com/api/subscription/v1/models` (subscription-only)
+- `https://nano-gpt.com/api/paid/v1/models` (paid-only)
 
 ## Verify Your Setup
 

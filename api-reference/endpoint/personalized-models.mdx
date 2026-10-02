@@ -3,6 +3,10 @@ title: 'Personalized Models'
 openapi: 'GET /personalized/v1/models'
 ---
 
+import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
+
+<ExampleModelHostNotice />
+
 # Personalized Models API
 
 Curated, OpenAI‑compatible model listing scoped to each account’s preferences.
@@ -62,14 +66,14 @@ Basic list:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  https://api.nano-gpt.com/api/personalized/v1/models
+  https://nano-gpt.com/api/personalized/v1/models
 ```
 
 Detailed list with pricing/capabilities:
 
 ```bash
 curl -H "x-api-key: $NANOGPT_API_KEY" \
-  "https://api.nano-gpt.com/api/personalized/v1/models?detailed=true"
+  "https://nano-gpt.com/api/personalized/v1/models?detailed=true"
 ```
 
 Sample detailed item:

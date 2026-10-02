@@ -27,5 +27,8 @@ jobs:
       - name: Validate canonical example text model
         run: node scripts/validate-example-text-model.mjs
 
+      - name: Verify model host and client pricing guard regressions
+        run: node --test scripts/validate-example-text-model.test.mjs
+
       - name: Verify OpenAPI examples use canonical text model
         run: node scripts/sync-example-text-model.mjs --check

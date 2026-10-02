@@ -88,13 +88,13 @@ claude mcp add nanogpt --scope user \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `NANOGPT_TIMEOUT_MS` | `600000` (10 min) | Request timeout in milliseconds |
-| `NANOGPT_DEFAULT_MODEL` | Package-dependent | Default model for chat requests; set to `anthropic/claude-sonnet-5` for our recommended configuration |
+| `NANOGPT_DEFAULT_MODEL` | Package-dependent | Default model for chat requests; set to `anthropic/claude-sonnet-5.5` for our recommended configuration |
 | `NANOGPT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
 | `NANOGPT_BASE_URL` | `https://nano-gpt.com` | Base URL for the NanoGPT API |
 | `NANOGPT_AUTH_MODE` | `bearer` | Auth mode: `bearer`, `x-api-key`, or `both` |
 | `NANOGPT_MAX_RETRIES` | `0` | Number of retry attempts |
 
-Set `NANOGPT_DEFAULT_MODEL=anthropic/claude-sonnet-5` in your MCP client configuration to use Claude Sonnet 5 for chat requests that omit `model`. Installed package versions can have older built-in defaults.
+Set `NANOGPT_DEFAULT_MODEL=anthropic/claude-sonnet-5.5` in your MCP client configuration to use Claude Sonnet 5.5 for chat requests that omit `model`. Installed package versions can have older built-in defaults.
 
 ## Usage Examples
 
