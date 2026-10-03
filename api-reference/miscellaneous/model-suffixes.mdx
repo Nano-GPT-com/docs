@@ -64,7 +64,8 @@ Provider suffixes must match a public user-selectable provider ID. They are case
 
 | Suffix | Meaning |
 | --- | --- |
-| `:online` | Default web search, standard depth. For GPT-5+ / o-series models this may use OpenAI native web search unless a provider is explicit. |
+| `:online` | Default web search, standard depth. GPT-5+ and o-series models use native search unless a provider is explicit; other models use Linkup. |
+| `:online/native` | The model's own search, on GPT-5+ and o-series, Claude 4+, Gemini 3+, and Grok 4.20+ (not image, multi-agent, or `:free` variants). Other models fall back to Linkup. |
 | `:online/linkup` | Linkup standard. |
 | `:online/linkup-deep` | Linkup deep. |
 | `:online/tavily` | Tavily standard. |
@@ -88,8 +89,10 @@ Provider suffixes must match a public user-selectable provider ID. They are case
 | `:online/valyu-deep` | Valyu deep, all sources. |
 | `:online/valyu-web` | Valyu standard, web only. |
 | `:online/valyu-web-deep` | Valyu deep, web only. |
+| `:online/firecrawl` | Firecrawl standard. |
+| `:online/firecrawl-deep` | Firecrawl deep. |
 
-Web search suffixes can compose with memory and reasoning-exclude suffixes. If request body `webSearch.enabled` or legacy `linkup.enabled` is true, body configuration takes precedence over model suffix configuration.
+Web search suffixes can compose with memory and reasoning-exclude suffixes. If request body `web_search.enabled` (or the `webSearch` / legacy `linkup` alias) is true, body configuration takes precedence over model suffix configuration. `web_search: false` does not switch off a suffix's search. See [Web Search](/api-reference/endpoint/chat-completion#web-search).
 
 ## Memory Suffixes
 

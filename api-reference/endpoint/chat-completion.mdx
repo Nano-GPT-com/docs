@@ -68,9 +68,11 @@ Use the jump list below to navigate the long-form reference quickly.
   </Accordion>
   <Accordion title="Web search">
     - [Web Search](#web-search)
+    - [Native search](#native-search)
     - [Option A: model suffixes](#option-a-model-suffixes)
     - [Option B: request body configuration](#option-b-request-body-configuration-recommended)
-    - [Provider-specific options](#provider-specific-options-set-inside-websearch)
+    - [Option C: OpenAI web_search_options](#option-c-openai-web_search_options)
+    - [Provider-specific options](#provider-specific-options-set-inside-the-web-search-object)
     - [Examples](#examples)
     - [Pricing by provider](#pricing-by-provider)
     - [Bring your own key (BYOK)](#bring-your-own-key-byok)
@@ -565,9 +567,25 @@ console.log(object);
 
 ## Web Search
 
-Enable web search in two ways: model suffixes or a `webSearch` object in the request body. The legacy `linkup` object is still supported as an alias. If `webSearch.enabled` (or `linkup.enabled`) is `true`, it takes precedence over any model suffix.
+Enable web search in three ways: a model suffix, a `web_search` field in the request body, or OpenAI's `web_search_options`.
 
-OpenAI native web search: GPT-5+ / o1 / o3 / o4 models use OpenAI's built-in web search automatically. No suffix is required; you can still set `webSearch.search_context_size` and `webSearch.user_location`. To force a different provider, specify a provider or suffix.
+- `web_search` accepts an object or a boolean. `true` turns search on with the default provider.
+- `webSearch` and the legacy `linkup` object are accepted as aliases. If a request sends more than one, `web_search` wins, then `webSearch`, then `linkup`.
+- If the body object has `enabled: true`, its settings override the suffix's settings field by field; settings it leaves out keep the suffix's values.
+- On GPT-5+ and o-series models, an enabled body without `provider` selects native search even when the suffix names another provider. Set `provider` to keep a different one.
+- `web_search: false` (or `enabled: false`) does not switch off search requested by an `:online` suffix. Remove the suffix to turn search off.
+
+### Native search
+
+Native search uses the model's own built-in web search instead of a separate search provider. It is available on GPT-5 and later and o-series (o1, o3, o4) models, Claude 4 and later, Gemini 3 and later, and Grok 4.20 and later. Image, multi-agent, and `:free` variants are not supported.
+
+- GPT-5+ and o-series models use native search by default whenever web search is on. To use another provider, set `provider` or use a suffix such as `:online/linkup`.
+- Other models, including older GPT models, use Linkup by default. Request native search with `"provider": "native"` or the `:online/native` suffix.
+- If you request native search on a model without it, the request searches with the suffix's provider or Linkup instead.
+- Native requests on Claude, Gemini, or Grok can fail with `400` and code `native_web_search_unavailable` when your provider restrictions leave no route that can run native search. On GPT models, such restrictions can instead leave the request answering without a search.
+- With your own provider keys (BYOK), native search runs only on OpenAI keys; other BYOK routes use Linkup instead.
+- The model decides how many searches to run. On Claude, NanoGPT normally caps this at 2 (`low`), 3 (`medium`, the default), or 5 (`high`) searches per request, and skips native search when `tool_choice` is `none` or when you define your own function named `web_search`.
+- Searches are billed at the native rate (see [Pricing by provider](#pricing-by-provider)) using the count the model reports. Where a route reports no count, NanoGPT may bill an estimate: 1 search for `low`, 2 otherwise.
 
 If you need full direct control over the search call itself (`query`, `outputType`, date/domain filters, or structured schema output), use [Direct Web Search API (`POST /api/web`)](/api-reference/endpoint/web-search).
 
@@ -580,7 +598,8 @@ If you need full direct control over the search call itself (`query`, `outputTyp
 
 Append one of these to your `model` value:
 
-- `:online` (default web search, standard depth)
+- `:online` (default web search, standard depth; native search on GPT-5+ and o-series models)
+- `:online/native` (the model's own search; see [Native search](#native-search))
 - `:online/linkup` (Linkup, standard)
 - `:online/linkup-deep` (Linkup, deep)
 - `:online/tavily` (Tavily, standard)
@@ -604,40 +623,69 @@ Append one of these to your `model` value:
 - `:online/valyu-deep` (Valyu, deep, all sources)
 - `:online/valyu-web` (Valyu, standard, web only)
 - `:online/valyu-web-deep` (Valyu, deep, web only)
+- `:online/firecrawl` (Firecrawl, standard)
+- `:online/firecrawl-deep` (Firecrawl, deep)
 
-`:online` without an explicit provider uses the default web search backend (Linkup).
+`:online` without an explicit provider uses the default: native search on GPT-5+ and o-series models, Linkup on other models.
 
 ### Option B: request body configuration (recommended)
 
-Send a `webSearch` object in the request body. The legacy `linkup` object is accepted as an alias. This works with or without a model suffix and controls web search across all providers.
+Send a `web_search` object in the request body. `webSearch` and the legacy `linkup` object are accepted as aliases. This works with or without a model suffix and controls web search across all providers. `"web_search": true` is shorthand for `{ "enabled": true }`.
 
-`webSearch` fields:
+`web_search` fields:
 
 - `enabled` (boolean, required to activate web search)
-- `provider` (string): `linkup` | `tavily` | `brave` | `sofya` | `exa` | `kagi` | `perplexity` | `valyu`
+- `provider` (string): `native` | `linkup` | `tavily` | `brave` | `sofya` | `exa` | `kagi` | `perplexity` | `valyu` | `firecrawl`
 - `depth` (string):
-  - Linkup/Tavily/Brave/Perplexity/Valyu: `standard` or `deep`
+  - Linkup/Tavily/Brave/Perplexity/Valyu/Firecrawl: `standard` or `deep`
   - Sofya: `standard`
   - Exa: `fast`, `auto`, `neural`, `deep`, `instant`, `deep-reasoning` (use `standard` if you want `auto`)
   - Kagi: `standard` or `deep` (`search` source only)
-- `search_context_size` or `searchContextSize` (string, OpenAI native): `low` | `medium` | `high` (default: `medium`)
-- `user_location` or `userLocation` (object, OpenAI native): `{ type: "approximate", country, city, region }`
+- `search_context_size` or `searchContextSize` (string, native search): `low` | `medium` | `high` (default: `medium`; OpenAI deep-research models always use `medium`)
+- `user_location` or `userLocation` (object, native search on GPT-5+ and o-series models): `{ type: "approximate", country, city, region, timezone }`. It may be ignored when a fallback route serves the request.
 - `searchType` (string, Valyu only): `all` | `web`
 - `kagiSource` or `kagi_source` (string, Kagi only): `web` | `news` | `search`
 
-Legacy alias example:
+Shorthand and legacy alias examples:
+
+```json
+{ "web_search": true }
+```
 
 ```json
 {
   "linkup": {
     "enabled": true,
-    "provider": "tavily",
-    "search_context_size": "medium"
+    "provider": "tavily"
   }
 }
 ```
 
-#### Provider-specific options (set inside `webSearch`)
+### Option C: OpenAI `web_search_options`
+
+Requests written for OpenAI's Chat Completions API can send `web_search_options`. It turns on web search with the default provider: native search on GPT-5+ and o-series models, Linkup on other models.
+
+```json
+{
+  "model": "{{example-text-model}}",
+  "messages": [{ "role": "user", "content": "What changed in the news today?" }],
+  "web_search_options": {
+    "search_context_size": "low",
+    "user_location": {
+      "type": "approximate",
+      "approximate": { "country": "US", "city": "Austin", "region": "Texas" }
+    }
+  }
+}
+```
+
+- `search_context_size` (`low` | `medium` | `high`) is passed to native search. It never selects deep search.
+- `user_location` is passed to native search on GPT-5+ and o-series models.
+- If the request also sends `web_search`, `webSearch`, or `linkup`, those settings are used and `web_search_options` is ignored.
+- With an `:online/<provider>` suffix, the suffix's provider is kept.
+- Models that already search on their own, such as search-preview and deep-research models, ignore `web_search_options`. The NanoGPT help model rejects a non-empty `web_search_options` object.
+
+#### Provider-specific options (set inside the web search object)
 
 ##### Perplexity
 
@@ -718,19 +766,23 @@ Limits: `searchDomainFilter` max 20 entries; `searchLanguageFilter` max 10 entri
 
 Sofya search returns extracted page content rather than snippets alone. Chat completions use its Search operation. For explicit query options and Sofya's Fetch, Extract, and Research operations, use the [Direct Web Search API](/api-reference/endpoint/web-search#sofya-operations).
 
-##### OpenAI native (GPT-5.2)
+##### Native search
 
 ```json
 {
+  "provider": "native",
   "search_context_size": "low" | "medium" | "high",
   "user_location": {
     "type": "approximate",
     "country": "US",
     "city": "San Francisco",
-    "region": "California"
+    "region": "California",
+    "timezone": "America/Los_Angeles"
   }
 }
 ```
+
+`user_location` applies to GPT-5+ and o-series models only.
 
 ### Examples
 
@@ -768,7 +820,7 @@ data_search = {
     "messages": [
         {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
     ],
-    "webSearch": {
+    "web_search": {
         "enabled": True,
         "provider": "exa",
         "depth": "neural",
@@ -808,7 +860,7 @@ const searchResponse = await fetch(`${BASE_URL}/chat/completions`, {
         messages: [
             { role: 'user', content: 'Provide a comprehensive analysis of recent AI breakthroughs' }
         ],
-        webSearch: {
+        web_search: {
             enabled: true,
             provider: 'exa',
             depth: 'neural',
@@ -839,7 +891,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
     "messages": [
       {"role": "user", "content": "Provide a comprehensive analysis of recent AI breakthroughs"}
     ],
-    "webSearch": {
+    "web_search": {
       "enabled": true,
       "provider": "exa",
       "depth": "neural",
@@ -863,7 +915,8 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 | Valyu | ~$0.0015/result | Variable | Dynamic pricing |
 | Brave | $0.005 | $0.005 | Flat rate |
 | Sofya | $0.01575 | N/A | Extracted page content; standard depth only |
-| OpenAI Native | $0.01 + tokens | N/A | Per-call fee + model token costs |
+| Firecrawl | ~$0.0105 | ~$0.018 | $0.0015 per Firecrawl credit used; standard is about 7 credits, deep about 12 |
+| Native | Per search + tokens | N/A | GPT and Claude $0.01, Gemini $0.014, Grok $0.005 per search, plus model token costs |
 
 For standard NanoGPT usage, provider credentials are handled automatically.
 
@@ -884,9 +937,9 @@ Web search BYOK availability is provider-dependent and can change over time. See
 
 ### Advanced behavior (optional)
 
-- **Provider routing**: For GPT-5+ / o1 / o3 / o4 models, `:online` without an explicit provider uses OpenAI native web search. If you set `webSearch.provider` or use an explicit `:online/<provider>` suffix, that provider is used instead.
+- **Provider routing**: For GPT-5+ and o-series models, web search without an explicit provider uses native search. If you set `web_search.provider` or use an explicit `:online/<provider>` suffix, that provider is used instead, unless an enabled body without `provider` is also sent (see [Web Search](#web-search)).
 - **Model suffix normalization**: `:online` (and provider/depth suffixes) are stripped from the model name before routing to the base model; the suffix only controls search behavior.
-- **Query formation (non-OpenAI providers)**: The search query is derived from your latest user message and may include the previous user message if the latest is short. If you need full control over the query or raw results, use the Web Search endpoint (`/api/web`).
+- **Query formation (providers other than native)**: The search query is derived from your latest user message and may include the previous user message if the latest is short. If you need full control over the query or raw results, use the Web Search endpoint (`/api/web`).
 - **`scraping: true` URL handling**: When enabled, NanoGPT scans messages for public `http(s)` URLs, ignores local/private URLs, de-duplicates, and caps at 5. If no eligible URLs are found, scraping is skipped. Inline scraping in chat is billed at **\$0.0015 per successfully scraped URL**. For explicit URL lists and the standalone endpoint price (**\$0.001 per URL**), use `/scrape-urls`.
 
 ## Image Input
@@ -1663,4 +1716,4 @@ Request bodies may be sent gzip, deflate, or Brotli compressed by adding a `Cont
 - Web search increases input token count, which affects total cost
 - Models gain access to real-time information published less than a minute ago
 - Internet connectivity can provide up to 10x improvement in factuality
-- All models support web search - append a suffix or send a `webSearch` object (`linkup` is supported as an alias)
+- Almost all models support web search (the NanoGPT help model does not) - append a suffix or send a `web_search` object (`webSearch` and `linkup` are supported as aliases)

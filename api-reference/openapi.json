@@ -6345,6 +6345,73 @@
             "type": "integer",
             "description": "Optional integer forwarded on model/provider routes that support seeded sampling. This may improve reproducibility but does not guarantee identical output. Results can change if NanoGPT selects a different automatic or fallback route, or if the provider changes its backend."
           },
+          "web_search": {
+            "description": "Web search for this request. `true` turns search on with the default provider (native search on GPT-5+ and o-series models, Linkup elsewhere); `false` leaves search off unless an `:online` model suffix turns it on. `webSearch` and the legacy `linkup` object are accepted aliases; when more than one is sent, `web_search` wins, then `webSearch`. See the Web Search section of the chat completion guide for provider-specific options.",
+            "oneOf": [
+              { "type": "boolean" },
+              {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Must be true for the object to turn on search."
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": ["native", "linkup", "tavily", "brave", "sofya", "exa", "kagi", "perplexity", "valyu", "firecrawl"],
+                    "description": "Search provider. `native` uses the model's own search (GPT-5+ and o-series, Claude 4+, Gemini 3+, Grok 4.20+; not image, multi-agent, or `:free` variants). Unsupported models fall back to the suffix's provider, or Linkup."
+                  },
+                  "depth": {
+                    "type": "string",
+                    "description": "Search depth: `standard` or `deep` for most providers; Exa also accepts `fast`, `auto`, `neural`, `instant`, and `deep-reasoning`."
+                  },
+                  "search_context_size": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high"],
+                    "description": "Native search only. How much search context the model uses (default `medium`; OpenAI deep-research models always use `medium`)."
+                  },
+                  "user_location": {
+                    "type": "object",
+                    "description": "Native search on GPT-5+ and o-series models only; may be ignored when a fallback route serves the request. Approximate user location; `userLocation` is accepted as an alias.",
+                    "properties": {
+                      "type": { "type": "string", "enum": ["approximate"] },
+                      "country": { "type": "string", "description": "Two-letter ISO country code, for example `US`." },
+                      "city": { "type": "string" },
+                      "region": { "type": "string" },
+                      "timezone": { "type": "string", "description": "IANA time zone, for example `America/Los_Angeles`." }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "web_search_options": {
+            "type": "object",
+            "description": "OpenAI-compatible web search options. Turns on web search with the default provider (native search on GPT-5+ and o-series models, Linkup elsewhere). Ignored when the request also sends `web_search`, `webSearch`, or `linkup`, and on models that already search on their own. When an `:online/<provider>` suffix is present, its provider and depth are kept. The NanoGPT help model rejects a non-empty object.",
+            "properties": {
+              "search_context_size": {
+                "type": "string",
+                "enum": ["low", "medium", "high"],
+                "description": "Passed to native search. Never selects deep search."
+              },
+              "user_location": {
+                "type": "object",
+                "description": "Approximate user location, passed to native search on GPT-5+ and o-series models.",
+                "properties": {
+                  "type": { "type": "string", "enum": ["approximate"] },
+                  "approximate": {
+                    "type": "object",
+                    "properties": {
+                      "country": { "type": "string" },
+                      "city": { "type": "string" },
+                      "region": { "type": "string" },
+                      "timezone": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "prompt_caching": {
             "type": "object",
             "description": "Helper to tag leading messages for explicit prompt-caching control (primarily Claude flows). Providers with implicit caching support (including OpenAI, Gemini, and many open-source provider routes) do not require this helper. NanoGPT injects cache_control blocks on each message up to the specified index before forwarding upstream. If cut_after_message_index is omitted, NanoGPT selects a cache boundary automatically.",
