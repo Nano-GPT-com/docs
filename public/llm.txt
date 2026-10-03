@@ -61,7 +61,7 @@ GLOSSARY
 
 HARD RULES AND GOTCHAS
 - Set baseURL to https://api.nano-gpt.com/api/v1 for OpenAI-compatible SDKs or https://api.nano-gpt.com/api for the Anthropic SDK, and include Authorization or x-api-key on API-key calls.
-- Check model availability on the host you use with GET https://api.nano-gpt.com/api/v1/models?detailed=true; website and direct API catalogs can differ during rollouts. Jev models currently require nano-gpt.com.
+- Check model availability on the host you use with GET https://api.nano-gpt.com/api/v1/models?detailed=true; website and direct API catalogs can differ during rollouts.
 - Exception to auth: for accountless x402 on supported endpoints, intentionally omit Authorization and x-api-key and include x-x402: true on the initial quote request. Key off the top-level payment object in the 402 response, then call completeUrl for nano/base-usdc, replay the same request with X-PAYMENT for exact schemes including nano-exact, x402-exact, and x402-solana-usdc, or replay the same request with Authorization: L402 <token>:<preimage> for lightning-l402. If the initial quote request returns 401 missing_api_key, check that x-x402: true was included.
 - Do not hardcode model support; call GET /api/v1/models?detailed=true to confirm vision, context length, supported service tiers, and subscription status. Service-tier support is listed in supported_service_tiers; the basic model response intentionally omits this field for OpenAI compatibility.
 - Do not hardcode image model support; call GET /api/v1/images/models and follow the returned endpoints URL for model-specific supported_parameters, public pricing, and image-input constraints.
@@ -387,14 +387,14 @@ console.log(embeddings.data.map((row) => row.embedding.length));
 ```
 
 DECISIONS
-Decision models (TypeSafe Jev, Decider, Liquid D1, Cloudflare Clef) return typed answers with probabilities instead of text; only input tokens are billed. They currently require the website host https://nano-gpt.com/api.
-- POST https://nano-gpt.com/api/v1/decisions with { model, state, questions }. Question types: choice (criteria object), score (criteria array, 2-10 levels), noul (yes/no probability).
+Decision models (TypeSafe Jev, Decider, Liquid D1, Cloudflare Clef) return typed answers with probabilities instead of text; only input tokens are billed. They work on both hosts; use https://api.nano-gpt.com like other inference.
+- POST https://api.nano-gpt.com/api/v1/decisions with { model, state, questions }. Question types: choice (criteria object), score (criteria array, 2-10 levels), noul (yes/no probability).
 - Models: typesafe/jev-1.13, typesafe/jev-latest, llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4, liquid/d1, cloudflare/clef.
 - Chat Completions also works with response_format { type: 'questions', questions }: non-streaming, user text only, no tools or sampling controls; parse choices[0].message.content as JSON.
-- The official TypeSafe SDK works with base URL https://nano-gpt.com/api (it calls /api/v1/systemone).
+- The official TypeSafe SDK works with base URL https://api.nano-gpt.com/api (it calls /api/v1/systemone).
 
 ```ts
-const res = await fetch('https://nano-gpt.com/api/v1/decisions', {
+const res = await fetch('https://api.nano-gpt.com/api/v1/decisions', {
   method: 'POST',
   headers: { Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`, 'Content-Type': 'application/json' },
   body: JSON.stringify({

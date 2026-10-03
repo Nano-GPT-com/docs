@@ -30,7 +30,7 @@ NanoGPT accepts requests in the **Anthropic Messages** format, routes them to th
 For non‑Anthropic models, NanoGPT transparently translates the request to an OpenAI-style chat format internally and then converts the response back to Anthropic Messages format.
 
 <Note>
-  Decision models (Jev, Decider, Liquid D1 and Clef) use `output_config.format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `content[0].text`. They currently require the website host. See [Decisions](/api-reference/endpoint/decisions) for complete examples and limitations.
+  Decision models (Jev, Decider, Liquid D1 and Clef) use `output_config.format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `content[0].text`. See [Decisions](/api-reference/endpoint/decisions) for complete examples and limitations.
 </Note>
 
 This endpoint supports:

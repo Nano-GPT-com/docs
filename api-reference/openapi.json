@@ -846,9 +846,6 @@
       }
     },
     "/v1/decisions": {
-      "servers": [
-        { "url": "https://nano-gpt.com/api", "description": "Decision models currently use the website host" }
-      ],
       "post": {
         "operationId": "createDecision",
         "tags": [
@@ -919,16 +916,13 @@
       }
     },
     "/v1/systemone": {
-      "servers": [
-        { "url": "https://nano-gpt.com/api", "description": "TypeSafe System One currently uses the website host" }
-      ],
       "post": {
         "operationId": "createSystemOneDecision",
         "tags": [
           "Decisions"
         ],
         "summary": "Create a typed decision with the official TypeSafe SDK shape",
-        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://nano-gpt.com/api; the SDK appends /v1/systemone. It accepts every decision model listed for /v1/decisions. Bare model IDs jev-1.13, jev-latest, decider-0.8b-fp8, decider-2b-fp8, decider-4b-nvfp4 and clef are mapped to the matching NanoGPT models. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape.",
+        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://api.nano-gpt.com/api (or https://nano-gpt.com/api); the SDK appends /v1/systemone. It accepts every decision model listed for /v1/decisions. Bare model IDs jev-1.13, jev-latest, decider-0.8b-fp8, decider-2b-fp8, decider-4b-nvfp4 and clef are mapped to the matching NanoGPT models. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape.",
         "security": [
           {
             "bearerAuth": []

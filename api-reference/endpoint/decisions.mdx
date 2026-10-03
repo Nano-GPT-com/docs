@@ -17,7 +17,7 @@ For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If 
 Only input tokens are billed. Browse every decision model, with current pricing, on [nano-gpt.com/models/text?output=decisions](https://nano-gpt.com/models/text?output=decisions).
 
 <Note>
-  Decision models are currently available on `https://nano-gpt.com`, including the Decisions and System One endpoints and decision-model requests through compatible chat APIs. The direct API host does not yet list decision models or serve the Decisions routes. Use the website host for decision models until the direct host is updated.
+  Decision models work on both API hosts. The examples use the direct API host, `https://api.nano-gpt.com`; `https://nano-gpt.com` accepts the same requests. See [API Hosts](/api-reference/miscellaneous/api-hosts).
 </Note>
 
 <Note>
@@ -43,7 +43,7 @@ Decider IDs are also accepted without the `llmtech/` prefix, and Clef accepts `c
 ### Endpoint
 
 ```text
-POST https://nano-gpt.com/api/v1/decisions
+POST https://api.nano-gpt.com/api/v1/decisions
 ```
 
 Authenticate with either `Authorization: Bearer YOUR_API_KEY` or `x-api-key: YOUR_API_KEY`.
@@ -53,7 +53,7 @@ Authenticate with either `Authorization: Bearer YOUR_API_KEY` or `x-api-key: YOU
 <CodeGroup>
 
 ```bash cURL
-curl https://nano-gpt.com/api/v1/decisions \
+curl https://api.nano-gpt.com/api/v1/decisions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -96,7 +96,7 @@ curl https://nano-gpt.com/api/v1/decisions \
 ```
 
 ```javascript JavaScript
-const response = await fetch("https://nano-gpt.com/api/v1/decisions", {
+const response = await fetch("https://api.nano-gpt.com/api/v1/decisions", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
@@ -151,7 +151,7 @@ import os
 import requests
 
 response = requests.post(
-    "https://nano-gpt.com/api/v1/decisions",
+    "https://api.nano-gpt.com/api/v1/decisions",
     headers={
         "Authorization": f"Bearer {os.environ['NANOGPT_API_KEY']}",
         "Content-Type": "application/json",
@@ -296,7 +296,7 @@ import { choice, TypeSafeClient } from "@typesafe-ai/sdk";
 
 const client = new TypeSafeClient({
   apiKey: process.env.NANOGPT_API_KEY!,
-  baseURL: "https://nano-gpt.com/api",
+  baseURL: "https://api.nano-gpt.com/api",
   defaultModel: "jev-latest",
 });
 
@@ -321,7 +321,7 @@ from typesafe_sdk import Choice, TypeSafeClient
 
 with TypeSafeClient(
     api_key=os.environ["NANOGPT_API_KEY"],
-    base_url="https://nano-gpt.com/api",
+    base_url="https://api.nano-gpt.com/api",
     model="jev-latest",
 ) as client:
     result = client.system_one(
@@ -354,7 +354,7 @@ Use these shapes when a decision model must fit into an existing OpenAI- or Anth
 ### Chat Completions
 
 ```bash
-curl https://nano-gpt.com/api/v1/chat/completions \
+curl https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -380,7 +380,7 @@ Parse `choices[0].message.content` as JSON.
 ### Responses API
 
 ```bash
-curl https://nano-gpt.com/api/v1/responses \
+curl https://api.nano-gpt.com/api/v1/responses \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -407,7 +407,7 @@ Parse `output_text` as JSON. The same JSON text is also available in the assista
 ### Anthropic Messages
 
 ```bash
-curl https://nano-gpt.com/api/v1/messages \
+curl https://api.nano-gpt.com/api/v1/messages \
   -H "x-api-key: $NANOGPT_API_KEY" \
   -H "anthropic-version: 2023-06-01" \
   -H "Content-Type: application/json" \
