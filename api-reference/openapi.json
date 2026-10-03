@@ -847,15 +847,15 @@
     },
     "/v1/decisions": {
       "servers": [
-        { "url": "https://nano-gpt.com/api", "description": "Jev Decisions currently uses the website host" }
+        { "url": "https://nano-gpt.com/api", "description": "Decision models currently use the website host" }
       ],
       "post": {
         "operationId": "createDecision",
         "tags": [
           "Decisions"
         ],
-        "summary": "Create typed decisions with TypeSafe Jev",
-        "description": "Evaluates application state with one or more typed Choice, Score, or Noul questions. Jev returns typed answers and calibrated probabilities rather than generated text.",
+        "summary": "Create typed decisions with a decision model",
+        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Mapika's Decider hosted by LLM Tech (llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4), Liquid AI's D1 (liquid/d1) and Cloudflare's Clef (cloudflare/clef). Decider needs 2-255 Choice options or 2-10 Score levels per question and allows at most 1,024 scoring rows per request. Decider and Clef accept only the zdr and data_collection routing controls in provider.",
         "security": [
           {
             "bearerAuth": []
@@ -928,7 +928,7 @@
           "Decisions"
         ],
         "summary": "Create a typed decision with the official TypeSafe SDK shape",
-        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://nano-gpt.com/api; the SDK appends /v1/systemone. Bare model IDs jev-1.13 and jev-latest are mapped to NanoGPT's Jev routes. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape.",
+        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://nano-gpt.com/api; the SDK appends /v1/systemone. It accepts every decision model listed for /v1/decisions. Bare model IDs jev-1.13, jev-latest, decider-0.8b-fp8, decider-2b-fp8, decider-4b-nvfp4 and clef are mapped to the matching NanoGPT models. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape.",
         "security": [
           {
             "bearerAuth": []
@@ -5149,6 +5149,10 @@
           "instructions": {
             "$ref": "#/components/schemas/DecisionsStructuredDescription"
           },
+          "isolated": {
+            "type": "boolean",
+            "description": "Decider only. When true or omitted, each Score level is evaluated as its own row: the question's instructions are repeated per level (more input tokens) and every level counts toward the 1,024-row limit. Set false to evaluate the question as one row."
+          },
           "criteria": {
             "type": "array",
             "minItems": 2,
@@ -5160,10 +5164,53 @@
         }
       },
       "DecisionsNoulQuestion": {
+        "description": "A yes/no question. Jev, Liquid D1 and Clef require instructions and, when criteria is sent, both true and false descriptions. Decider also accepts a question without instructions (omitted, null or empty) when criteria.true or criteria.false describes the answer.",
         "type": "object",
         "required": [
-          "type",
-          "instructions"
+          "type"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "instructions"
+            ],
+            "properties": {
+              "instructions": {
+                "$ref": "#/components/schemas/DecisionsStructuredDescription"
+              }
+            }
+          },
+          {
+            "required": [
+              "criteria"
+            ],
+            "properties": {
+              "criteria": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "true"
+                    ],
+                    "properties": {
+                      "true": {
+                        "$ref": "#/components/schemas/DecisionsStructuredDescription"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "false"
+                    ],
+                    "properties": {
+                      "false": {
+                        "$ref": "#/components/schemas/DecisionsStructuredDescription"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
         ],
         "properties": {
           "type": {
@@ -5171,20 +5218,42 @@
             "const": "noul"
           },
           "instructions": {
-            "$ref": "#/components/schemas/DecisionsStructuredDescription"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DecisionsStructuredDescription"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "maxLength": 0
+              }
+            ]
           },
           "criteria": {
             "type": "object",
-            "required": [
-              "true",
-              "false"
-            ],
+            "minProperties": 1,
             "properties": {
               "true": {
-                "$ref": "#/components/schemas/DecisionsStructuredDescription"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DecisionsStructuredDescription"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "false": {
-                "$ref": "#/components/schemas/DecisionsStructuredDescription"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DecisionsStructuredDescription"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
@@ -5201,10 +5270,20 @@
         "properties": {
           "model": {
             "type": "string",
+            "description": "Decision model ID. Bare Decider IDs and clef are aliases of the prefixed IDs.",
             "enum": [
               "typesafe/jev-1.13",
               "~typesafe/jev-latest",
-              "typesafe/jev-latest"
+              "typesafe/jev-latest",
+              "llmtech/decider-0.8b-fp8",
+              "llmtech/decider-2b-fp8",
+              "llmtech/decider-4b-nvfp4",
+              "decider-0.8b-fp8",
+              "decider-2b-fp8",
+              "decider-4b-nvfp4",
+              "liquid/d1",
+              "cloudflare/clef",
+              "clef"
             ]
           },
           "state": {
@@ -5240,8 +5319,13 @@
               ]
             }
           },
+          "independent": {
+            "type": "boolean",
+            "const": true,
+            "description": "Decider only. Decider always evaluates questions independently, so send true or omit the field; other models reject it."
+          },
           "provider": {
-            "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs.",
+            "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs. Decider and Clef accept only zdr and data_collection.",
             "type": [
               "object",
               "null"
@@ -5273,12 +5357,22 @@
         "properties": {
           "model": {
             "type": "string",
+            "description": "Decision model ID. Bare Decider IDs and clef are aliases of the prefixed IDs.",
             "enum": [
               "jev-1.13",
               "jev-latest",
               "typesafe/jev-1.13",
               "~typesafe/jev-latest",
-              "typesafe/jev-latest"
+              "typesafe/jev-latest",
+              "llmtech/decider-0.8b-fp8",
+              "llmtech/decider-2b-fp8",
+              "llmtech/decider-4b-nvfp4",
+              "decider-0.8b-fp8",
+              "decider-2b-fp8",
+              "decider-4b-nvfp4",
+              "liquid/d1",
+              "cloudflare/clef",
+              "clef"
             ]
           },
           "state": {
@@ -5321,6 +5415,11 @@
                 "criteria": {}
               }
             }
+          },
+          "independent": {
+            "type": "boolean",
+            "const": true,
+            "description": "Decider only. Decider always evaluates questions independently, so send true or omit the field; other models reject it."
           },
           "provider": {
             "type": [

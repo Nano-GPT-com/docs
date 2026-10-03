@@ -1,35 +1,42 @@
 ---
-title: "Jev Decisions"
-description: "Call TypeSafe Jev for typed choices, scores, and yes/no probabilities."
+title: "Decisions"
+description: "Typed choices, scores, and yes/no probabilities from decision models."
 openapi: "POST /v1/decisions"
 ---
 
 ## Overview
 
-TypeSafe Jev is a decision model. Instead of generating prose, Jev answers named, typed questions about the state you provide:
+Decision models answer named, typed questions about the state you provide instead of generating prose:
 
 - `choice` selects one named option and returns a probability for every option.
 - `score` returns an expected score over an ordered rubric.
 - `noul` returns the probability that a yes/no statement is true.
 
-For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If you already use the official TypeSafe SDK, point it at NanoGPT's `POST /api/v1/systemone` compatibility endpoint. Jev is also available through NanoGPT's OpenAI-compatible Chat Completions and Responses APIs and the Anthropic-compatible Messages API.
+For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If you already use the official TypeSafe SDK, point it at NanoGPT's `POST /api/v1/systemone` compatibility endpoint. Decision models are also available through NanoGPT's OpenAI-compatible Chat Completions and Responses APIs and the Anthropic-compatible Messages API.
+
+Only input tokens are billed. Browse every decision model, with current pricing, on [nano-gpt.com/models/text?output=decisions](https://nano-gpt.com/models/text?output=decisions).
 
 <Note>
-  Jev is currently available on `https://nano-gpt.com`, including the Decisions and System One endpoints and Jev requests through compatible chat APIs. The direct API host does not yet list Jev models or serve its dedicated routes. Use the website host for Jev until the direct host is updated.
+  Decision models are currently available on `https://nano-gpt.com`, including the Decisions and System One endpoints and decision-model requests through compatible chat APIs. The direct API host does not yet list decision models or serve the Decisions routes. Use the website host for decision models until the direct host is updated.
 </Note>
 
 <Note>
-  Jev returns calibrated probabilities, not generated text. Use a chat model when you need an explanation or other free-form response.
+  Decision models return calibrated probabilities, not generated text. Use a chat model when you need an explanation or other free-form response.
 </Note>
 
 ## Models
 
-| Model | Use |
-| --- | --- |
-| `typesafe/jev-1.13` | Pinned Jev 1.13 release for integrations that should not follow alias upgrades. |
-| `typesafe/jev-latest` | Moving alias for the latest Jev release. |
+| Model | Context | Use |
+| --- | --- | --- |
+| `typesafe/jev-1.13` | 32K | TypeSafe Jev 1.13, pinned for integrations that should not follow alias upgrades. |
+| `typesafe/jev-latest` | 32K | Moving alias for the latest TypeSafe Jev release. |
+| `llmtech/decider-0.8b-fp8` | 32K | Mapika's Decider 0.8B, quantized and hosted by LLM Tech. |
+| `llmtech/decider-2b-fp8` | 32K | Mapika's Decider 2B, quantized and hosted by LLM Tech. |
+| `llmtech/decider-4b-nvfp4` | 32K | Mapika's Decider 4B, quantized and hosted by LLM Tech. |
+| `liquid/d1` | 64K | Liquid AI's D1. |
+| `cloudflare/clef` | 16K | Cloudflare's open decision model. |
 
-The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. Use the `typesafe/...` names on the native Decisions and OpenAI/Anthropic-compatible endpoints.
+Decider IDs are also accepted without the `llmtech/` prefix, and Clef accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. In `GET /api/v1/models?detailed=true`, decision models have `architecture.output_modalities: ["decisions"]` and a `supported_endpoints` list.
 
 ## Native Decisions API
 
@@ -253,23 +260,33 @@ print(response.json()["answers"])
 
 `instructions` and criterion descriptions can be strings, non-empty JSON objects, or non-empty arrays. A `choice` criterion may also be `null` when its label is self-explanatory. The top-level `state` can be a string, JSON object, or JSON array. Question names become keys in `answers`.
 
+## Model-specific rules
+
+| Rule | Applies to |
+| --- | --- |
+| Choice questions need 2-255 options and Score questions 2-10 levels. A request can contain at most 1,024 scoring rows (otherwise `413 too_many_questions`). | Decider |
+| `isolated` on a Score question (default `true`) evaluates each level as its own row, repeating the instructions per level. Set `false` to evaluate the question as one row. | Decider |
+| A Noul question may omit `instructions` when `criteria.true` or `criteria.false` describes the answer. | Decider |
+| Noul questions need `instructions`, and `criteria` needs both `true` and `false` when it is sent. | Jev, Liquid D1, Clef |
+
 ## Request fields
 
 | Field | Type | Required | Description |
 | --- | --- | ---: | --- |
-| `model` | string | Yes | `typesafe/jev-1.13` or `typesafe/jev-latest`. |
-| `state` | string, object, or array | Yes | Application state for Jev to evaluate. |
+| `model` | string | Yes | A decision model from the table above. |
+| `state` | string, object, or array | Yes | Application state for the model to evaluate. |
 | `questions` | object | Yes | One or more named `choice`, `score`, or `noul` questions. |
 | `user` | string | No | Your end-user identifier, up to 256 characters. |
 | `session_id` | string | No | Your session identifier, up to 256 characters. |
 | `trace` | object | No | Caller-supplied trace metadata. |
+| `independent` | boolean | No | Decider only. Decider always evaluates questions independently, so send `true` or omit it; other models reject the field. |
 | `provider` | object or null | No | Native Decisions routing controls. Usually omit this field. |
 
-The native `provider` object can contain endpoint-level `order`, `only`, `ignore`, `allow_fallbacks`, `require_parameters`, `max_price`, `zdr`, and `data_collection` controls. These names describe native Decisions endpoints such as `TypeSafe`; they are not NanoGPT provider IDs. API-key provider restrictions and zero-data-retention requirements still apply.
+The native `provider` object can contain endpoint-level `order`, `only`, `ignore`, `allow_fallbacks`, `require_parameters`, `max_price`, `zdr`, and `data_collection` controls. These names describe native Decisions endpoints such as `TypeSafe`; they are not NanoGPT provider IDs. API-key provider restrictions and zero-data-retention requirements still apply. Decider and Clef call their decision endpoints directly and accept only `zdr` and `data_collection`.
 
 ## Official TypeSafe SDK
 
-NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call Jev without changing their request types.
+NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call any decision model without changing their request types. Set the model to `jev-latest`, `jev-1.13`, `decider-2b-fp8` (or another Decider), `liquid/d1` or `clef`.
 
 <CodeGroup>
 
@@ -332,7 +349,7 @@ print(result.choices["route"].choice)
 
 ## OpenAI and Anthropic compatibility
 
-Use these shapes when Jev must fit into an existing OpenAI- or Anthropic-compatible client. The answer object is returned as JSON text, so parse the returned string once.
+Use these shapes when a decision model must fit into an existing OpenAI- or Anthropic-compatible client. The answer object is returned as JSON text, so parse the returned string once.
 
 ### Chat Completions
 
@@ -415,16 +432,16 @@ curl https://nano-gpt.com/api/v1/messages \
   }'
 ```
 
-Parse `content[0].text` as JSON. `max_tokens` is accepted for Anthropic SDK compatibility but does not change Jev's fixed typed output.
+Parse `content[0].text` as JSON. `max_tokens` is accepted for Anthropic SDK compatibility but does not change the fixed typed output.
 
 ## Limitations
 
-Jev requests are deliberately narrower than chat generation requests:
+Decision-model requests are deliberately narrower than chat generation requests:
 
 - Only non-streaming text input in `user` messages is supported on compatibility endpoints.
 - System, developer, assistant, tool, image, audio, video, and file input is not supported.
 - Tools, sampling controls, log probabilities, and reasoning generation controls are not supported.
-- Output-token-limit fields are accepted where an SDK requires them, but they do not change Jev's fixed typed output.
+- Output-token-limit fields are accepted where an SDK requires them, but they do not change the fixed typed output.
 - BYOK and accountless x402 payments are not supported.
 - Standard NanoGPT or `X-Provider` provider pins are not supported. Use the native Decisions `provider` object only when you need endpoint-level routing controls.
 

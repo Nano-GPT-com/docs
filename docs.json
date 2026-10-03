@@ -40,7 +40,7 @@
           "api-reference/endpoint/batches-list",
           "api-reference/endpoint/web-search",
           "api-reference/endpoint/data-api",
-          "api-reference/endpoint/jev-decisions",
+          "api-reference/endpoint/decisions",
           "api-reference/endpoint/responses",
           "api-reference/endpoint/messages",
           "api-reference/endpoint/messages-count-tokens",
@@ -239,6 +239,10 @@
     {
       "source": "/integrations/clawdbot",
       "destination": "/integrations/openclaw"
+    },
+    {
+      "source": "/api-reference/endpoint/jev-decisions",
+      "destination": "/api-reference/endpoint/decisions"
     }
   ]
 }

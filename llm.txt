@@ -383,6 +383,26 @@ const embeddings = await client.embeddings.create({
 console.log(embeddings.data.map((row) => row.embedding.length));
 ```
 
+DECISIONS
+Decision models (TypeSafe Jev, Decider, Liquid D1, Cloudflare Clef) return typed answers with probabilities instead of text; only input tokens are billed. They currently require the website host https://nano-gpt.com/api.
+- POST https://nano-gpt.com/api/v1/decisions with { model, state, questions }. Question types: choice (criteria object), score (criteria array, 2-10 levels), noul (yes/no probability).
+- Models: typesafe/jev-1.13, typesafe/jev-latest, llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4, liquid/d1, cloudflare/clef.
+- Chat Completions also works with response_format { type: 'questions', questions }: non-streaming, user text only, no tools or sampling controls; parse choices[0].message.content as JSON.
+- The official TypeSafe SDK works with base URL https://nano-gpt.com/api (it calls /api/v1/systemone).
+
+```ts
+const res = await fetch('https://nano-gpt.com/api/v1/decisions', {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    model: 'typesafe/jev-1.13',
+    state: 'Customer message: I was charged twice.',
+    questions: { team: { type: 'choice', instructions: 'Which team?', criteria: { billing: 'Payments', technical: 'Bugs' } } },
+  }),
+});
+const { answers } = await res.json(); // answers.team.choice, answers.team.probabilities
+```
+
 AUDIO SPEECH
 POST /v1/audio/speech mirrors OpenAI’s text-to-speech API.
 Default behavior is unchanged: omit `stream` (or set `false`) to receive one buffered audio file.
@@ -607,6 +627,7 @@ LINKS
 - api-reference/endpoint/data-api
 - [Advisor](https://docs.nano-gpt.com/api-reference/miscellaneous/advisor.md): Let one model consult a different second model before producing its final answer.
 - [Hosted tool search](https://docs.nano-gpt.com/api-reference/miscellaneous/hosted-tool-search.md): Let compatible models discover relevant functions from large deferred catalogs on demand.
+- [Decisions](https://docs.nano-gpt.com/api-reference/endpoint/decisions.md): Typed Choice, Score and yes/no answers with probabilities from Jev, Decider, Liquid D1 and Clef.
 - docs/reasoning.md
 - docs/v1/models.md
 - memory.md

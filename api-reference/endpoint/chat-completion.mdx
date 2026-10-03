@@ -13,7 +13,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 </Note>
 
 <Note>
-  TypeSafe Jev decision models use `response_format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `choices[0].message.content`. Jev currently requires the website host. See [Jev Decisions](/api-reference/endpoint/jev-decisions) for complete examples and limitations.
+  Decision models (Jev, Decider, Liquid D1 and Clef) use `response_format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `choices[0].message.content`. They currently require the website host. See [Decisions](/api-reference/endpoint/decisions) for complete examples and limitations.
 </Note>
 
 <Note>
@@ -329,6 +329,7 @@ The `/api/v1/chat/completions` endpoint supports OpenAI-compatible structured ou
 | `json_object` | Forces the model to return valid JSON |
 | `json_schema` | Forces the model to return JSON matching a specific schema |
 | `text` | Default text output (no constraint) |
+| `questions` | Decision models only: typed Choice, Score and yes/no answers. See [Decisions](/api-reference/endpoint/decisions). |
 
 ### JSON Object Mode
 
