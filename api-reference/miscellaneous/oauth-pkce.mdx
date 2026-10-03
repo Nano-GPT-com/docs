@@ -7,6 +7,8 @@ description: "Let users sign in with NanoGPT and receive an app-specific API key
 
 NanoGPT supports authorization-code OAuth with PKCE for public clients. The returned credential is a dedicated NanoGPT API key in `sk-nano-...` format, scoped to the approved app/user grant.
 
+Apps can also attach their referral link so new NanoGPT accounts created through their sign-in are referred by them. See [Referral Attribution](#referral-attribution).
+
 Use the returned key as a bearer token against the OpenAI-compatible API:
 
 ```http
@@ -167,6 +169,7 @@ Query parameters:
 | `app_name` | No | Alias for `client_name` |
 | `name` | No | Alias for `client_name` |
 | `title` | No | Alias for `client_name` |
+| `invitation_code` | No | Your referral link code. See [Referral Attribution](#referral-attribution) |
 
 Example:
 
@@ -300,6 +303,7 @@ Query parameters:
 | `code_challenge` | Yes | S256 PKCE challenge |
 | `code_challenge_method` | Yes | Must be `S256` |
 | `prompt` | No | `consent` forces the consent screen |
+| `invitation_code` | No | Your referral link code. See [Referral Attribution](#referral-attribution) |
 
 Example:
 
@@ -309,7 +313,7 @@ https://nano-gpt.com/oauth/authorize?response_type=code&client_id=ngpt_...&redir
 
 The user signs in to NanoGPT if needed and sees a consent screen showing the app name, redirect host, NanoGPT account, balance, requested scopes, spend warning, and optional daily, weekly, or monthly spend cap.
 
-For normal registered web clients, NanoGPT may auto-approve an unchanged active grant. For loopback and callback shortcut clients, the consent screen is shown again.
+For normal registered web clients, NanoGPT may auto-approve an unchanged active grant. For loopback and callback shortcut clients, and for any request that includes `invitation_code`, the consent screen is shown again.
 
 ### 3. Handle the Callback
 
@@ -362,6 +366,27 @@ Success response:
 ```
 
 NanoGPT does not issue refresh tokens in this MVP.
+
+## Referral Attribution
+
+Apps that use Sign in with NanoGPT can attach their NanoGPT referral link, so people who create a NanoGPT account through the app's sign-in are referred by the app developer.
+
+Pass your referral link code as `invitation_code` on either `/auth` or `/oauth/authorize`. The code is the last part of your referral link: for `https://nano-gpt.com/r/abc123`, use `invitation_code=abc123`. Create or copy referral links on the [Invitations page](https://nano-gpt.com/invitations).
+
+```text
+https://nano-gpt.com/auth?callback_url=https%3A%2F%2Fapp.example%2Fcallback&code_challenge=...&code_challenge_method=S256&state=...&client_name=My%20App&invitation_code=abc123
+```
+
+How attribution works:
+
+- **New accounts only.** The referral applies only when the NanoGPT account was created within the hour before the user approves your app, and the account has no referrer yet. A user without a NanoGPT account signs up during your sign-in flow and then approves, so they qualify.
+- **Existing accounts keep their attribution.** Users who already had a NanoGPT account are not attributed to you, and existing referrers are never replaced. This includes people who already used NanoGPT without an account and only create one during your flow.
+- **The user decides.** When the referral applies, the consent screen explains it with an "Accept this referral" checkbox, checked by default. A user who unchecks it still approves your app normally; they just are not referred.
+- **Standard referral terms.** Attributed users get the referred-user discount (currently 5%), and you earn the standard referral share (currently 10%) of their eligible spending, the same as with a normal referral link. Spending through any app or the NanoGPT website counts.
+- **Permanent.** Attribution belongs to the account, not the API key. It stays in place if the user disconnects your app or deletes the key.
+- **Never blocks sign-in.** An invalid, expired, or ineligible code is ignored. The user still receives a normal authorization code, and the callback does not indicate whether a referral was applied. The only exception is a malformed value longer than 256 characters, which is rejected with `invalid_request`.
+
+Invitation codes that carry credit also work: the credit is added to the user's personal balance on approval, whether or not the account is new and whether or not the user accepts the referral. Only the referral part is limited to new accounts and optional for the user.
 
 ## Authenticated Downstream Key Code
 
