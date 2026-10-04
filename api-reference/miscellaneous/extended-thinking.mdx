@@ -60,8 +60,8 @@ Example:
 ### Reasoning Effort
 
 `reasoning_effort` (or `reasoning.effort`) controls reasoning depth and also acts as an explicit reasoning-mode signal.
-Any value other than `none` is treated as a request to enable reasoning/thinking behavior.
-Use `none` to explicitly disable reasoning behavior.
+An accepted value other than `none` requests reasoning/thinking behavior. Available levels and defaults depend on the model.
+Use `none` to request disabled reasoning only on models that support turning it off. Always-thinking models keep their reasoning requirements; Claude Opus 5.5 rejects attempts to disable thinking.
 
 ```json
 {
@@ -79,7 +79,25 @@ Or:
 
 Both formats are accepted. If both are present, top-level `reasoning_effort` is authoritative for Chat Completions request shaping.
 
-Valid values are `none`, `minimal`, `low`, `medium`, `high`, `xhigh`.
+NanoGPT accepts `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`. Not every model supports every level; some routes map an accepted level to the nearest supported effort. `max` is a separate value from `xhigh` where the model supports both.
+
+### Claude Opus 5.5
+
+`anthropic/claude-opus-5.5` uses adaptive thinking by default. You do not need a `:thinking` suffix or an explicit enable flag. Its native effort values are `low`, `medium`, `high`, `xhigh`, and `max`; NanoGPT defaults to `high` when no effort or thinking budget is supplied.
+
+```json
+{
+  "model": "anthropic/claude-opus-5.5",
+  "messages": [{ "role": "user", "content": "Review this design for failure cases." }],
+  "reasoning_effort": "max"
+}
+```
+
+Requests such as `reasoning_effort: "none"` or `thinking.enabled: false` return a `reasoning_required` validation error. To hide returned reasoning while preserving thinking, use `reasoning.exclude: true` instead.
+
+Adaptive thinking also requires compatible tool choice. Use `tool_choice: "auto"` or `"none"`; forcing a tool with `"required"` or a named tool is unsupported for Opus 5.5.
+
+In [OpenCode](/integrations/opencode#opus-55-reasoning-effort), model-level `reasoning: true` describes a capability to the client. A variant's `reasoningEffort` sets the API effort; these settings serve different purposes.
 
 ### Change Effort Within a Conversation
 

@@ -12,6 +12,11 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 
 Use NanoGPT with [OpenCode](https://opencode.ai), the open source AI coding agent for your terminal.
 
+## Requirements
+
+- [OpenCode](https://opencode.ai) installed (`curl -fsSL https://opencode.ai/install | bash`)
+- A NanoGPT account with API access
+
 ## One-Click Setup (Mac/Linux)
 
 Run this command in your terminal:
@@ -154,10 +159,96 @@ Use model IDs **without** the `nano-gpt/` prefix inside `whitelist`, `blacklist`
 
 Alternatively, `blacklist` hides specific models while keeping the rest. If both filters are set, a model must be in `whitelist` and must not be in `blacklist`. Keep the selected default model inside your allowed list, then restart OpenCode after saving.
 
-## Requirements
+## Claude Prompt Caching
 
-- [OpenCode](https://opencode.ai) installed (`curl -fsSL https://opencode.ai/install | bash`)
-- A NanoGPT account with API access
+OpenCode adds explicit `cache_control` markers to Claude requests automatically. Its markers omit the TTL and use the five-minute default unless you request a different TTL. You do not need a `promptCaching` block or an `anthropic-beta` header just to use OpenCode's default Claude caching.
+
+A cache marker requests caching; it does not guarantee a cache hit. The prompt must meet the selected model's minimum cacheable size, and later requests must reuse the same prefix before the cache expires.
+
+<Note>
+  On NanoGPT's Chat Completions endpoint, supported explicit cache controls use pay-as-you-go billing, including markers OpenCode adds automatically. They bypass subscription coverage for that request. See [subscription billing for prompt caching](/api-reference/miscellaneous/prompt-caching#subscription-billing-for-chat-completions).
+</Note>
+
+### One-Hour Caching
+
+To request one-hour caching for Opus 5.5, merge this configuration into your existing `opencode.json`. Keep your NanoGPT authentication in `auth.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "nano-gpt/anthropic/claude-opus-5.5",
+  "provider": {
+    "nano-gpt": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NanoGPT",
+      "options": {
+        "baseURL": "https://nano-gpt.com/api/v1"
+      },
+      "models": {
+        "anthropic/claude-opus-5.5": {
+          "options": {
+            "promptCaching": {
+              "enabled": true,
+              "ttl": "1h"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+OpenCode forwards the model's `options.promptCaching` as the top-level `promptCaching` field in the API request. NanoGPT applies the requested TTL to the cache boundaries, including OpenCode's existing markers. No additional `anthropic-beta` header is required.
+
+One-hour caching has a higher cache-write price than five-minute caching on standard Claude cache pricing. Choose it when you expect to reuse a large prefix after pauses longer than five minutes. See [cache pricing](/api-reference/miscellaneous/prompt-caching#pricing).
+
+The example leaves `stickyProvider` at its default, `false`, so NanoGPT can fail over when a service is unavailable. Adding `"stickyProvider": true` inside `promptCaching` disables failover and can return a `503` instead. It is optional and does not enable caching by itself.
+
+### Which Model Settings Should I Keep?
+
+| Setting | Purpose | When to keep it |
+| --- | --- | --- |
+| `name` | Display label in OpenCode | When you want a custom label or are defining a missing model. |
+| `reasoning: true` | Tells OpenCode that the model supports reasoning; it is capability metadata, not an API instruction to enable thinking. | When defining a missing model or correcting stale catalogue metadata. Usually unnecessary for a correctly listed model. |
+| `variants` | Adds selectable settings such as reasoning effort | When you want custom choices or a choice missing from your OpenCode version. |
+| `options.promptCaching` | Sends NanoGPT cache controls | When overriding the default TTL, disabling explicit caching, or setting other cache controls. |
+| `options.provider.zdr` | A request field forwarded by OpenCode; it is not NanoGPT-wide ZDR enforcement | Keep intentional privacy settings. To require NanoGPT ZDR routing, use your account or API key's **ZDR only** setting. |
+| `promptCaching.stickyProvider` | Prevents failover for explicit caching | Only when preserving the cache matters more than request availability. |
+| `headers.anthropic-beta` | Alternative way to request Claude cache controls | Unnecessary when using the `promptCaching` helper above. |
+
+Removing the entire `options` block also removes your caching and request-level privacy settings. Removing `variants` only removes your custom effort choices.
+
+### Opus 5.5 Reasoning Effort
+
+Opus 5.5 uses adaptive thinking automatically. You do not need `reasoning: true` or custom variants to enable its thinking. Supported effort values are `low`, `medium`, `high`, `xhigh`, and `max`; `none` cannot disable this model's thinking.
+
+If your OpenCode version does not offer the choices you want, merge these variants into `provider.nano-gpt.models["anthropic/claude-opus-5.5"]`, alongside the existing `options`:
+
+```json
+{
+  "reasoning": true,
+  "variants": {
+    "low": { "reasoningEffort": "low" },
+    "medium": { "reasoningEffort": "medium" },
+    "high": { "reasoningEffort": "high" },
+    "xhigh": { "reasoningEffort": "xhigh" },
+    "max": { "reasoningEffort": "max" }
+  }
+}
+```
+
+OpenCode maps the selected variant's `reasoningEffort` to NanoGPT's `reasoning_effort` request field. See [reasoning controls](/api-reference/miscellaneous/extended-thinking#claude-opus-55) for the distinction between generating thinking and displaying it.
+
+The snippet includes `reasoning: true` so OpenCode can expose reasoning choices even with missing or stale catalogue metadata. You can omit it when the catalogue already describes the model correctly.
+
+### Checking Cache Hits
+
+Look for `cache_creation_input_tokens` on an eligible write and `cache_read_input_tokens > 0` on a subsequent request that reuses the prefix. A successful answer alone does not establish a cache hit or the requested TTL. Raw API responses can also include `x_nanogpt_pricing.cacheTTL` for the billing TTL.
+
+If your OpenCode version does not display these fields, use the [API cache verification examples](/api-reference/miscellaneous/prompt-caching#usage-fields-how-to-verify-cache-hits). A short prompt can return zero cached tokens even with a correct configuration.
+
+The request format above was checked with OpenCode 1.14.48 and `@ai-sdk/openai-compatible`. Other SDKs or older client versions can map options differently.
 
 ## Troubleshooting
 
@@ -181,3 +272,11 @@ Install Python 3 when updating existing OpenCode files. The installer reads stri
 **Authentication errors?**
 
 Check that your API key is correctly set in `~/.local/share/opencode/auth.json` (as an object with `type` and `key`) and that the key name matches the provider ID (`nano-gpt`).
+
+**Claude caching is not being used?**
+
+If you configured a TTL override, check that `promptCaching` is inside the selected model's `options`, that `enabled` is `true`, and that the TTL is exactly `"5m"` or `"1h"`. Keep reusable instructions and tool definitions at the beginning of the prompt. Changes to that prefix, insufficient prompt length, expiration, or failover can prevent a cache hit.
+
+**A request returns "temporarily unavailable"?**
+
+If you set `promptCaching.stickyProvider: true`, a `503` can mean failover was prevented to preserve the cache. Privacy and provider restrictions can also reduce the available routes. Keep intentional privacy requirements; a service error alone does not establish that those requirements caused the failure. Retry, and send support the new request ID, model ID, and approximate time if the error continues.

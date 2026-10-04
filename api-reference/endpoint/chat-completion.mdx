@@ -1138,9 +1138,9 @@ The `prompt_caching` / `promptCaching` helper accepts these options:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `enabled` | boolean | — | Enable prompt caching |
-| `ttl` | string | `"5m"` | Cache time-to-live: `"5m"` or `"1h"` |
-| `cut_after_message_index` / `cutAfterMessageIndex` | integer | — | Zero-based index; cache all messages up to and including this index |
+| `enabled` | boolean | — | Set `true` to enable or `false` to disable explicit caching; `ttl` alone does not enable it. |
+| `ttl` | string | `"5m"` | Cache time-to-live: `"5m"` or `"1h"`. Only the exact string `"1h"` selects one hour. |
+| `cut_after_message_index` / `cutAfterMessageIndex` | integer | — | Zero-based last message index eligible for automatic cache-boundary placement. Existing inline markers are preserved. |
 | `stickyProvider` | boolean | `false` | When `true`, disable automatic failover to preserve explicit prompt-cache consistency. Returns 503 error instead of switching services. |
 
 ```python
@@ -1169,17 +1169,18 @@ payload = {
 requests.post("https://nano-gpt.com/api/v1/chat/completions", headers=headers, json=payload)
 ```
 
-- Each `cache_control` marker caches the full prefix up to that block. Place them on every static chunk (system messages, tool definitions, large contexts) you plan to reuse.
+- Each `cache_control` marker caches the full prefix up to that block. Choose reusable prefix boundaries; you do not need a marker on every static chunk. The request supports at most four breakpoints across system, tools, and messages.
 - Explicit TTL controls are `5m` and `1h` for Claude caching flows. See [Prompt Caching](/api-reference/miscellaneous/prompt-caching#pricing).
-- `anthropic-beta: prompt-caching-2024-07-31` is supported for compatibility (and required for Anthropic-native Claude caching flows).
+- `anthropic-beta: prompt-caching-2024-07-31` is an optional compatibility alternative. Callers using the helper or inline markers do not also need this header; NanoGPT handles upstream cache settings.
 - For implicit-caching providers, no explicit `cache_control` markers are required.
+- Supported explicit cache controls on Chat Completions use pay-as-you-go billing, including markers supplied automatically by clients. See [subscription billing for prompt caching](/api-reference/miscellaneous/prompt-caching#subscription-billing-for-chat-completions) and the [OpenCode caching guide](/integrations/opencode#claude-prompt-caching).
 
-For a simpler experience, send the helper fields and NanoGPT will stamp the first _N_ messages for you before forwarding upstream:
+For a simpler experience, send the helper fields and NanoGPT will place cache boundaries before forwarding upstream:
 
 ```ts
 await client.chat.completions.create(
   {
-    model: 'anthropic/claude-opus-4.6',
+    model: 'anthropic/claude-opus-5.5',
     messages: [
       { role: 'system', content: 'Static rubric lives here.' },
       { role: 'user', content: 'Additional reusable context.' },
@@ -1191,13 +1192,10 @@ await client.chat.completions.create(
       cut_after_message_index: 1,
     },
   },
-  {
-    headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' },
-  },
 );
 ```
 
-`cut_after_message_index` is zero-based. If omitted, NanoGPT will select a cache boundary automatically; set it explicitly if you need full control. Switch back to explicit `cache_control` blocks if you need multiple cache breakpoints or mixed TTLs in the same payload.
+`cut_after_message_index` is zero-based and limits automatic boundary placement; it does not remove existing inline markers after that index. If omitted, NanoGPT selects boundaries automatically. Use inline `cache_control` blocks when you need to place individual boundaries. See [Prompt Caching](/api-reference/miscellaneous/prompt-caching) for marker and TTL precedence.
 
 ### Explicit Prompt Cache Consistency
 
@@ -1218,8 +1216,8 @@ If cache consistency is more important than availability for your use case, you 
 ```
 
 **Behavior:**
-- **`stickyProvider: false` (default)** — If the primary service fails, NanoGPT automatically retries with a backup service. Your request succeeds, but the cache may be lost (you'll pay full price for that request and need to rebuild the cache).
-- **`stickyProvider: true`** — If the primary service fails, NanoGPT returns a 503 error instead of failing over. Your cache remains intact for when the service recovers.
+- **`stickyProvider: false` (default)** — If an eligible backup is available, NanoGPT can retry there. That service may need to create its own cache.
+- **`stickyProvider: true`** — NanoGPT returns a 503 instead of failing over. The original cache remains subject to its TTL; this setting does not guarantee it will still exist when the service recovers.
 
 **When to use `stickyProvider: true`:**
 - You have very large cached contexts where cache misses are expensive
@@ -1463,19 +1461,22 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 ### Reasoning Effort
 
 `reasoning_effort` (or `reasoning.effort`) controls reasoning depth and also acts as an explicit reasoning-mode signal.
-Any value other than `"none"` is treated as a request to enable reasoning/thinking behavior.
-Use `"none"` to explicitly disable reasoning behavior.
+An accepted value other than `"none"` requests reasoning/thinking behavior. Available levels and defaults depend on the model.
+Use `"none"` to request disabled reasoning only on models that support turning it off. Always-thinking models keep their reasoning requirements; Claude Opus 5.5 rejects attempts to disable thinking.
 
 #### Parameter: `reasoning_effort`
 
 | Value | Description |
 | --- | --- |
-| `none` | Explicitly disables reasoning |
+| `none` | Requests disabled reasoning where the model supports it |
 | `minimal` | Lowest reasoning depth |
 | `low` | Low reasoning depth |
 | `medium` | Medium reasoning depth |
 | `high` | High reasoning depth |
-| `xhigh` | Maximum reasoning depth |
+| `xhigh` | Extra-high reasoning depth where supported |
+| `max` | Maximum effort where supported; distinct from `xhigh` on models that accept both |
+
+Claude Opus 5.5 uses adaptive thinking automatically, supports `low`, `medium`, `high`, `xhigh`, and `max`, and defaults to `high` when no effort or thinking budget is supplied. See [Opus 5.5 reasoning controls](/api-reference/miscellaneous/extended-thinking#claude-opus-55). `reasoning.exclude` only hides returned reasoning; it never disables thinking generation.
 
 #### Usage
 
