@@ -583,7 +583,7 @@ Native search uses the model's own built-in web search instead of a separate sea
 - Other models, including older GPT models, use Linkup by default. Request native search with `"provider": "native"` or the `:online/native` suffix.
 - If you request native search on a model without it, the request searches with the suffix's provider or Linkup instead.
 - Native requests on Claude, Gemini, or Grok can fail with `400` and code `native_web_search_unavailable` when your provider restrictions leave no route that can run native search. On GPT models, such restrictions can instead leave the request answering without a search.
-- With your own provider keys (BYOK), native search runs only on OpenAI keys; other BYOK routes use Linkup instead.
+- With your own provider keys (BYOK), native search runs on OpenAI keys (GPT and o-series models) and Anthropic keys (Claude). The searches are billed to your provider account, not by NanoGPT. Other BYOK routes use Linkup instead. On Anthropic, an organization admin can turn web search off; requests then fail with Anthropic's `400` error.
 - The model decides how many searches to run. On Claude, NanoGPT normally caps this at 2 (`low`), 3 (`medium`, the default), or 5 (`high`) searches per request, and skips native search when `tool_choice` is `none` or when you define your own function named `web_search`.
 - Searches are billed at the native rate (see [Pricing by provider](#pricing-by-provider)) using the count the model reports. Where a route reports no count, NanoGPT may bill an estimate: 1 search for `low`, 2 otherwise.
 
