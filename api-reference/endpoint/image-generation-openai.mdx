@@ -33,6 +33,12 @@ Generation controls (model-specific):
 - `strength`, `guidance_scale`, `num_inference_steps`, `kontext_max_mode`.
 - `seed` is an optional model-specific hint that may improve reproducibility where supported. Identical results are not guaranteed. Check the selected model's `supported_parameters` metadata before using this field.
 
+GPT Image output controls (`gpt-image-1`, `gpt-image-1.5`, `gpt-image-2`, and the GPT Image 2.5 Flare and Sunburst models):
+- `quality` (string, optional): Model-specific quality level, for example `low`, `medium`, or `high`. GPT Image 2.5 also accepts `xhigh` and `max`.
+- `output_format` (string, optional): `png`, `jpeg`, or `webp`.
+- `output_compression` (integer, optional): `0`–`100`. Applies to `jpeg` and `webp` output only.
+- `background` (string, optional, not supported by `gpt-image-2`): `auto` (default), `opaque`, or `transparent`. `transparent` requires `output_format` `png` or `webp`. If the prompt describes a backdrop, the model may draw it instead of leaving the background transparent. Requests with `opaque` or `transparent` are only routed to providers that support the setting, so they never fall back to one that would ignore it.
+
 See [Supported Parameter Discovery](/api-reference/image-generation#supported-parameter-discovery) for the discovery workflow. If a model/provider route offers a stronger reproducibility guarantee, rely only on documentation for that specific route.
 
 For OpenAI-compatible image editing, use [Image Edits](/api-reference/endpoint/image-edits).
@@ -69,6 +75,20 @@ curl https://api.nano-gpt.com/v1/images/generations \
     "n": 1,
     "size": "1024x1024",
     "response_format": "url"
+  }'
+```
+
+```bash cURL (transparent background)
+curl https://api.nano-gpt.com/v1/images/generations \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-image-2.5/flare/text-to-image",
+    "prompt": "A glossy red game controller icon, isolated object",
+    "n": 1,
+    "size": "1024x1024",
+    "background": "transparent",
+    "output_format": "png"
   }'
 ```
 
