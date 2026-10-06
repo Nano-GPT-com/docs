@@ -260,22 +260,22 @@ Use explicit prompt-caching controls (`prompt_caching`, `promptCaching`, and bod
 }
 ```
 
-By default, `caching: true` enables sticky provider routing. After the first successful matching request, NanoGPT will try to use the same provider for later matching requests from the same API key or session, improving the chance of provider-side cache hits. This does not guarantee that a request will be served from cache.
+For eligible automatic routes, `caching: true` prefers cache-capable providers and enables soft provider affinity: after a successful matching request, later matching requests from the same API key or session try to reuse that provider. Explicit provider or routing preferences can take precedence. Affinity improves the chance of a cache hit; it does not guarantee one.
 
-To require a cache-capable provider without sticky routing, set `stickyprovider: false`:
+`stickyprovider` defaults to `false`. Setting it to `false` does **not** disable this automatic affinity. Set it to `true` when preserving the provider matters more than failover:
 
 ```json
 {
   "model": "model-id",
   "caching": true,
-  "stickyprovider": false,
+  "stickyprovider": true,
   "messages": [
     { "role": "user", "content": "Hello" }
   ]
 }
 ```
 
-Top-level `stickyProvider` is also accepted as a camelCase alias for `stickyprovider`.
+Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`. The nested `prompt_caching.stickyProvider` option controls the same strict behavior; an explicit top-level value wins. Strict mode disables automatic fallback, so a provider failure can return an error instead of switching providers.
 
 Equivalent model suffix:
 
@@ -288,7 +288,7 @@ Equivalent model suffix:
 }
 ```
 
-For `caching: true`, NanoGPT filters to available, non-excluded, prompt-caching-capable providers; prefers the recorded sticky provider when enabled and still usable; otherwise chooses the cheapest cache-capable provider by base input + output price. Cache write/read pricing is used only as a tie-breaker.
+For eligible automatic `caching: true` routes, NanoGPT filters to available, non-excluded, cache-capable providers and prefers a recorded provider when still usable. Otherwise it tries eligible saved provider preferences, then chooses using prices and recent aggregate cache-read observations. Saved restrictions remain binding. A price routing preference ranks candidates again for each request and does not promise cache affinity. See [prompt caching](/api-reference/miscellaneous/prompt-caching) for cache eligibility, affinity lifetime, and provider-specific behavior.
 
 The `prompt_caching` / `promptCaching` helper accepts these options:
 
@@ -412,7 +412,7 @@ If cache consistency is more important than availability for your use case, you 
 
 **Behavior:**
 - **`stickyProvider: false` (default)** — If the primary service fails, NanoGPT automatically retries with a backup service. Your request succeeds, but the cache may be lost (you'll pay full price for that request and need to rebuild the cache).
-- **`stickyProvider: true`** — If the primary service fails, NanoGPT returns a 503 error instead of failing over. Your cache remains intact for when the service recovers.
+- **`stickyProvider: true`** — If the primary service fails, NanoGPT returns a 503 error instead of failing over. An existing cache may still be usable after recovery if it has not expired; strict mode does not extend its TTL.
 
 **When to use `stickyProvider: true`:**
 - You have very large cached contexts where cache misses are expensive

@@ -23,6 +23,12 @@ Use `billing_mode: "paygo"` when:
 
 Explicit per-request provider selection already uses pay-as-you-go billing. If a subscriber sends `X-Provider` for a subscription-included model, the request is charged at the selected provider price and does not need `X-Billing-Mode: paygo`.
 
+## API Key Billing Settings
+
+Open [API keys](https://nano-gpt.com/api), then the key's settings → **Billing**. Subscribers can choose subscription first, subscription only, or pay-as-you-go only. Without an active subscription, the default key uses your balance.
+
+A key saved as **Subscription only** cannot spend your balance. Forcing pay-as-you-go or choosing an explicit provider does not override that key restriction; change the key's billing mode if you want paid routing.
+
 ## Supported Inputs
 
 **Header**

@@ -13,6 +13,16 @@ Provider selection is optional; if you do nothing, the platform picks the provid
 
 This page intentionally documents only public provider IDs returned by the provider-discovery endpoints. Internal routing/provider names are never part of the public API contract.
 
+## Choose Your Routing Goal
+
+| Goal | Use | What to expect |
+| --- | --- | --- |
+| Lowest estimated cost for each request | `provider.sort: "price"` | Recalculates the ranking each request; may switch providers and reduce cache reuse. |
+| Stay with one provider | `provider.only: ["provider-id"]` and `allow_fallbacks: false` | Fails if that provider cannot serve the request. |
+| Reuse a prompt cache when possible | `caching: true` | Prefers a usable provider from previous matching requests, with fallback allowed by default. |
+
+See [examples and precedence](#price-caps-and-cache-reuse) before combining these controls. Cache contents are provider-local; changing providers does not transfer a warm cache.
+
 ## When Provider Selection Applies
 
 - Provider selection only applies when a model reports `supportsProviderSelection: true`.
@@ -37,13 +47,7 @@ This endpoint is not under `/api/v1`. If your base URL is `https://api.nano-gpt.
 GET https://api.nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
 ```
 
-If the model ID contains `/`, URL-encode the slash when placing it in the path:
-
-```http
-GET https://api.nano-gpt.com/api/models/moonshotai%2Fkimi-k2.6/providers
-```
-
-Do not use the unencoded form, because the slash is treated as a path separator:
+URL-encode `/` in the model ID as `%2F`, as shown above. The unencoded slash is treated as a path separator:
 
 ```http
 GET https://api.nano-gpt.com/api/models/moonshotai/kimi-k2.6/providers
@@ -93,7 +97,8 @@ Example response:
 Notes:
 
 - `defaultPrice` is used when you do not select a provider.
-- If `providers[].pricing` is present, it is what you pay when you select that provider (includes the markup).
+- `providers[].pricing` includes provider-selection markup. Fields ending in `Per1kTokens` are **USD per 1,000 tokens**; multiply by 1,000 to compare with `max_price`, which is **USD per 1 million tokens**.
+- When present, `providers[].effectivePricing.effective_price` describes the effective rates used for routing, including current discounts and markup. Prices and availability can change between discovery and the request.
 - Use the exact value from `providers[].provider` in the `X-Provider` header.
 - Provider-specific `distillationPolicy` can differ from the model-level policy. Explicit provider restrictions override model-level allowances.
 - If a model is unsupported, the response includes `supportsProviderSelection: false`.
@@ -161,7 +166,7 @@ Provider entries can use public NanoGPT provider IDs or accepted display names/a
 | `provider.sort` | string | Routing preference. Supported values are `speed`, `throughput`, `latency`, `price`, `auto`, `none`, and `default`. `auto`, `none`, and `default` suppress stored/default routing preferences without requesting a sort. |
 | `provider.quantizations` | string[] | Hard allowlist of model weight quantization levels. Supported values are `int4`, `fp4`, `fp6`, `int8`, `fp8`, `fp16`, `bf16`, `fp32`, and `unknown`. |
 | `provider.min_quantization` | string | Minimum precision floor. Supported values are `int4`, `fp4`, `fp6`, `int8`, `fp8`, `fp16`, `bf16`, and `fp32`. `unknown` is not allowed because it cannot be compared to a precision floor. |
-| `provider.max_price` | object | Optional `prompt` and/or `completion` price caps in USD per 1 million tokens. Pricing checks are best-effort when provider pricing is unknown. |
+| `provider.max_price` | object | Optional `prompt` and/or `completion` caps on provider input/output rates, including selection markup, in USD per 1 million tokens. See [price-cap limits](#price-cap-limits). |
 | `provider.allow_fallbacks` | boolean | When `false`, disables cross-provider fallback for this request. |
 | `provider.require_parameters` | boolean | When `true`, requires the selected provider to support the requested parameters on routes that support parameter-level capability checks. |
 
@@ -240,9 +245,9 @@ Examples:
 - `order` is soft. Use `only` when the request must fail instead of using any provider outside the list.
 - `only` is hard. It restricts routing to the listed providers and disables internal fallback outside the pinned set.
 - `ignore` and `max_price` can resolve to a concrete provider. For direct provider routing, NanoGPT cannot represent "any provider except X" as a multi-provider pool. If filters like `ignore` or `max_price` are provided without `order` or `only`, NanoGPT resolves to one cheapest concrete provider that satisfies those filters. That is treated as explicit provider selection for billing and routing because the request changed the provider candidate set.
-- If `max_price` is provided without `order` or an explicit `sort`, NanoGPT treats it as a request for price-aware routing among providers that satisfy the cap.
+- If `max_price` is provided without `order` or an explicit `sort`, NanoGPT treats it as a request for price-aware routing among providers that satisfy the cap. `only` does not prevent this inference; an `order` does.
 - Quantization filters are hard routing constraints. If no available provider satisfies the requested quantization, provider list, price, fallback, caching, and parameter constraints, the request may fail with a provider-availability error.
-- Per-request `provider` object controls take precedence over saved provider preferences for that request. They are not merged with saved preferences.
+- Per-request controls can change routing order, but saved hard restrictions still apply. Saved provider allowlists are intersected with request allowlists, exclusions remain excluded, and a saved fallback restriction is preserved. A request cannot broaden a saved allowlist by sending `order`, `only`, or `allow_fallbacks: true`.
 
 ### Quantization Filters
 
@@ -333,7 +338,7 @@ Example error:
 
 When you explicitly select a provider with `X-Provider` or body `provider`, NanoGPT routes that request to the selected provider. For consecutive prompts, using the same provider helps keep routing stable, which is the setup you want for provider-side prompt-cache reuse when that provider and model support caching.
 
-For capability-based routing, use top-level `caching: true` or the `:caching` model suffix instead of choosing a specific provider. NanoGPT will route to any available provider that supports prompt/input caching for the requested provider-selection model, and it defaults to sticky provider routing so later matching requests prefer the same provider.
+For capability-based routing, use top-level `caching: true` or the `:caching` model suffix instead of choosing a specific provider. NanoGPT will route to any available provider that supports prompt/input caching for the requested provider-selection model, and later matching requests prefer the same eligible provider through soft affinity.
 
 General automatic routing may use cache-affinity routing for eligible cache-capable providers, but it does not require a cache-capable provider and may still choose different upstream providers when request shape, provider availability, or routing constraints change. For cache-sensitive workflows, either consistently send the same `X-Provider` value or use `caching: true` / `:caching` when any cache-capable provider is acceptable.
 
@@ -353,22 +358,24 @@ Set `caching: true` when you want NanoGPT to route a chat completion request to 
 
 If no usable cache-capable provider exists for the model, the request fails instead of falling back to a non-cache-capable provider.
 
-By default, `caching: true` is sticky. The first successful matching request records the selected provider by API key or session. Later matching requests prefer that same provider when it is still usable, improving the chance of provider-side cache hits. NanoGPT does not guarantee that the request will be served from cache.
+`caching: true` prefers the provider from your previous matching request (soft affinity). `stickyProvider` defaults to `false`; set it to `true` to disable cross-provider fallback. Neither setting guarantees a cache hit.
 
-To require a cache-capable provider without stickiness:
+To prevent cross-provider fallback when preserving the cache route matters more than availability:
 
 ```json
 {
   "model": "model-id",
   "caching": true,
-  "stickyprovider": false,
+  "stickyprovider": true,
   "messages": [
     { "role": "user", "content": "Hello" }
   ]
 }
 ```
 
-Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`.
+Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`. Setting it to `true` disables cross-provider fallback for the caching request. Leaving it `false` allows fallback; it does **not** disable the soft affinity established by explicit caching.
+
+Affinity expires after about one hour without a successful matching request. This is a routing preference lifetime, separate from the provider's cache TTL. Availability, exclusions, price caps, and request compatibility still apply.
 
 The model suffixes `:caching`, `:cache`, and `:cached` request the same cache-capable provider routing:
 
@@ -384,9 +391,78 @@ The model suffixes `:caching`, `:cache`, and `:cached` request the same cache-ca
 Routing order for `caching: true`:
 
 1. Filter to providers that are available, not excluded by preferences, and marked as prompt-caching capable.
-2. If stickiness is enabled, prefer the previously recorded provider for the same cache-relevant request shape when still usable.
-3. Otherwise choose the cheapest cache-capable provider by base input + output price.
-4. Use cache write/read pricing only as tie-breakers.
+2. Prefer the previously recorded provider for the same cache-relevant request shape when still usable.
+3. Try eligible per-model and global provider preferences.
+4. Otherwise use provider prices and recent aggregate cache-read observations to choose a route. A provider with better observed cache reuse may be preferred within a bounded price range.
+
+The model page's cache-hit figures are historical aggregates across requests, not a prediction of your hit rate. Cache reuse also depends on prompt-prefix stability, provider requirements, and cache TTL.
+
+## Price Caps and Cache Reuse
+
+Use public provider IDs from the discovery endpoint and choose caps suitable for that model. The prices below are illustrative.
+
+### Lowest estimated cost with caps
+
+```json
+{
+  "model": "model-id",
+  "provider": {
+    "sort": "price",
+    "max_price": { "prompt": 0.5, "completion": 2 }
+  },
+  "messages": [{ "role": "user", "content": "Hello" }]
+}
+```
+
+The ranking uses estimated input tokens and the output budget when available, with defaults of 3,000 input and 1,000 output tokens for missing estimates. Known cache-write costs may be included, but chat routing does not assume a future cache hit or subtract a predicted cache-read discount. This is an estimate, not a guarantee of the cheapest final bill.
+
+### One provider with caps
+
+```json
+{
+  "model": "model-id",
+  "provider": {
+    "only": ["provider-id"],
+    "allow_fallbacks": false,
+    "max_price": { "prompt": 0.5, "completion": 2 }
+  },
+  "messages": [{ "role": "user", "content": "Hello" }]
+}
+```
+
+Price ranking is inferred here, but `only` leaves a single candidate. This request fails if the provider is unavailable, incompatible, or over the cap. Keeping the provider fixed helps cache reuse, but does not guarantee a cache hit.
+
+### Cache reuse with automatic provider choice
+
+```json
+{
+  "model": "model-id",
+  "caching": true,
+  "messages": [{ "role": "user", "content": "Hello" }]
+}
+```
+
+This prefers the previous eligible cache provider. Use the [prompt-caching helper](/api-reference/miscellaneous/prompt-caching) when the provider also needs explicit cache markers or a TTL.
+
+### Combining controls
+
+| Controls | Routing behavior |
+| --- | --- |
+| `caching: true` alone | Cache-capable selection with soft affinity. |
+| `caching: true` with `stickyProvider: true` | Cache-capable selection with cross-provider fallback disabled. |
+| `max_price` without `order` or an explicit sort override | Infers price ranking, which takes precedence over cache-affinity selection. |
+| `caching: true` with `sort: "price"` | Price ranking takes precedence; this does not mean “cheapest once, then stay there.” |
+| `caching: true` with `order` and `max_price`, without a routing sort | `order` prevents inferred price ranking; caching selection still applies the cap and saved restrictions. |
+
+An ordered provider list is evaluated for each request. It is not a sticky failover session: failure on one request does not permanently advance the list to the next provider. In caching mode, an eligible provider recorded by affinity can take priority over the order.
+
+### Price-cap limits
+
+For requests with a verified provider-selection price, `max_price` restricts retries to routes whose billed base rate NanoGPT can verify against your cap. If the selected provider fails and no such route is available, the request fails instead of being billed at an unverified rate. On models without provider selection, `max_price` only filters routes; billing uses the model's price. An explicitly selected gateway without a verifiable provider price rejects the cap.
+
+`max_price` compares effective provider input/output rates **after provider-selection markup**, so a provider with a raw input rate of $0.06/M and 5% markup requires a prompt cap of at least $0.063/M. The selection markup is already included in provider-discovery prices; do not add it again.
+
+These are token-rate filters, not a total request budget. They do not separately cap cache-read prices, cache-write prices, search fees, or other add-ons. Local comparisons use the provider's base input/output tier, so inspect higher-context tiers separately. Unknown prices cannot be verified locally; gateway routes also pass a price constraint upstream, while direct fallback routes with unknown prices are excluded. For a predictable choice, select a provider with published pricing and disable fallback.
 
 ## Per-Request Routing Preference
 
@@ -395,7 +471,7 @@ For provider-selection-capable models, you can append a routing preference suffi
 - `:speed` / `:fast`: best estimated completion time using TTFT plus TPS.
 - `:throughput`: highest tokens per second.
 - `:latency`: lowest time to first token.
-- `:price` / `:cheap`: lowest base input-plus-output token price.
+- `:price` / `:cheap`: lowest estimated cost for the request’s input and expected output, including selection markup.
 - `:floor`: alias for `:price`.
 - `:tools`: route to a tools-capable provider path when the model supports tools provider selection.
 
@@ -468,27 +544,35 @@ Field details:
 
 - `preferredProviders`: ordered list of allowed providers; the system tries each in order.
 - `excludedProviders`: providers that should never be used.
-- `enableFallback`: when `true` (default), fall back to the platform default if no preferred provider is available.
+- `enableFallback`: when `true` (default), permits retries among eligible providers. A configured `preferredProviders` list remains a hard allowlist; fallback does not escape it to the platform default.
 - `modelOverrides`: optional per-model overrides for the fields above.
 - `availableProviders`: full set of provider IDs available to your account for the model.
 
 ## Resolution Order
 
-When `caching: true` is set, use the routing order in [Cache-Capable Provider Routing](#cache-capable-provider-routing). Otherwise, when multiple selections exist, the system resolves providers in this order:
+When `caching: true` is set without a routing preference, use the routing order in [Cache-Capable Provider Routing](#cache-capable-provider-routing). Otherwise, when multiple selections exist, the system resolves providers in this order:
 
 1. Per-request explicit provider selection (`X-Provider`, body `provider` string/object, or provider suffix)
 2. Per-request routing preference suffix (`:fast`, `:cheap`, etc.)
 3. Per-model `preferredProviders`
 4. Global `preferredProviders`
-5. Platform default (only if `enableFallback` is true)
+5. Platform default when no binding provider allowlist or request constraint selects a route
 
 ## Billing and Markup
 
-- If you explicitly select or constrain providers with `X-Provider` or body `provider`, billing uses the resolved provider-specific price plus a 5% markup and the request is treated as pay-as-you-go.
-- If saved preferences select a provider on pay-as-you-go traffic, billing uses the provider-specific price plus a 5% markup.
+- If you explicitly select or constrain providers with `X-Provider` or body `provider`, billing uses the resolved provider-specific price plus the applicable provider-selection markup (normally 5%) and the request is treated as pay-as-you-go.
+- If saved preferences select a provider on pay-as-you-go traffic, billing uses the provider-specific price plus the applicable provider-selection markup (normally 5%).
 - If you do not select a provider, billing uses the model's default price.
 
+## Which Provider Served My Request?
+
+The [Usage page](https://nano-gpt.com/usage) shows a label such as **Via Cerebras** under the model name, and a Provider row in request details, when public attribution is available. This can include explicit selections, supported BYOK routes, or a public provider used as a fallback. Some automatic requests have no provider label.
+
+Chat responses and the [request billing endpoint](/api-reference/endpoint/request-billing) do not expose the upstream provider. Do not rely on an undocumented response header or infer a provider from timing or price.
+
 ## Error Behavior
+
+- `400` with `error.code: "provider_max_price_unverifiable"` means an explicitly selected gateway has no verifiable provider price for the model. Choose a provider with published pricing, or remove the cap to use normal gateway billing.
 
 - If `enableFallback` is `false` and no preferred provider is available, `/api/v1/chat/completions` returns `400` with `error.code: "no_fallback_available"`.
 - Invalid body `provider` objects return `400` with `error.type: "invalid_request_error"`.

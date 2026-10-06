@@ -1093,15 +1093,15 @@ Top-level `caching: true` is provider routing, not prompt-cache annotation. It r
 }
 ```
 
-By default, `caching: true` also enables sticky provider routing. After the first successful matching request, NanoGPT will try to use the same provider for later matching requests from the same API key or session, improving the chance of provider-side cache hits. This does not guarantee that a request will be served from cache.
+`caching: true` prefers the provider from your previous matching request (soft affinity). `stickyProvider` defaults to `false`; set it to `true` to disable cross-provider fallback. Neither setting guarantees a cache hit.
 
-To require a cache-capable provider without sticky routing, set `stickyprovider: false`:
+To disable cross-provider fallback for a cache-capable request, set `stickyprovider: true`:
 
 ```json
 {
   "model": "model-id",
   "caching": true,
-  "stickyprovider": false,
+  "stickyprovider": true,
   "messages": [
     { "role": "user", "content": "Hello" }
   ]
@@ -1113,7 +1113,7 @@ Top-level fields:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `caching` | boolean | `false` | Require a cache-capable provider for this request. If none is usable for the model, the request fails. |
-| `stickyprovider` | boolean | `true` when `caching: true` | Prefer the previously recorded provider for later matching cache-capable requests. Set `false` to restore non-sticky cache-capable routing. |
+| `stickyprovider` | boolean | `false` | Set `true` to disable cross-provider fallback. `false` allows fallback while keeping soft affinity for explicit cache-capable routing. |
 | `stickyProvider` | boolean | Alias | CamelCase alias for top-level `stickyprovider`. Use `stickyprovider` in examples. |
 
 Equivalent model suffix:
@@ -1130,9 +1130,10 @@ Equivalent model suffix:
 For `caching: true`, routing works as follows:
 
 1. Filter to providers that are available, not excluded by preferences, and marked as prompt-caching capable.
-2. If stickiness is enabled, prefer the previously recorded provider for the same cache-relevant request shape when still usable.
-3. Otherwise choose the cheapest cache-capable provider by base input + output price.
-4. Use cache write/read pricing only as tie-breakers.
+2. Prefer the previously recorded provider for the same cache-relevant request shape when still usable.
+3. Try eligible saved provider preferences, then choose using prices and recent aggregate cache-read observations.
+
+Price ranking takes precedence over cache-affinity selection. See [routing and caching combinations](/api-reference/miscellaneous/provider-selection#price-caps-and-cache-reuse), including how `max_price` can infer price ranking.
 
 The `prompt_caching` / `promptCaching` helper accepts these options:
 

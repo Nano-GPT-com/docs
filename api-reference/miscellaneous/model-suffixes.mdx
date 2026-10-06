@@ -21,7 +21,7 @@ These apply only to provider-selection-capable models.
 | `:fast` | Alias for `:speed`. |
 | `:throughput` | Pick the provider with the highest tokens per second. |
 | `:latency` | Pick the provider with the lowest time to first token. |
-| `:price` | Pick the cheapest provider by base input-plus-output token price. |
+| `:price` | Pick the lowest estimated request cost, based on expected input/output usage and customer-facing rates. |
 | `:cheap` | Alias for `:price`. |
 | `:floor` | Alias for `:price`. |
 | `:tools` | Route to a tools-capable provider path for models that support tools provider selection. |
@@ -45,6 +45,8 @@ Rules:
 - Do not combine `:caching`, `:cache`, or `:cached` with `:tools`, `X-Provider`, body `provider`, a provider model suffix, or another routing preference suffix.
 - Routing preference requests are billed like explicit provider-selection requests.
 - Conflict error codes use the existing `speed_suffix_*` family for API compatibility, even when the suffix is not literally `:speed`.
+
+Price ranking is recalculated for every request and may switch providers, reducing cache reuse. It does not predict future cache hits. See [price routing, caps, and cache reuse](/api-reference/miscellaneous/provider-selection#price-caps-and-cache-reuse).
 
 The caching suffixes are provider-capability routing, not prompt-cache annotation. They do not add Anthropic-style `cache_control` markers, configure cache TTLs, or force a cache write. For details, see [Prompt Caching](/api-reference/miscellaneous/prompt-caching#cache-capable-provider-routing).
 
@@ -93,6 +95,8 @@ Provider suffixes must match a public user-selectable provider ID. They are case
 | `:online/firecrawl-deep` | Firecrawl deep. |
 
 Web search suffixes can compose with memory and reasoning-exclude suffixes. If request body `web_search.enabled` (or the `webSearch` / legacy `linkup` alias) is true, body configuration takes precedence over model suffix configuration. `web_search: false` does not switch off a suffix's search. See [Web Search](/api-reference/endpoint/chat-completion#web-search).
+
+Search has separate charges: see [hosted web search pricing](/api-reference/endpoint/web-search#pricing-hosted-key). Chat requests also incur model token charges.
 
 ## Memory Suffixes
 

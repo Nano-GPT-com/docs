@@ -70,7 +70,7 @@ Each model minimally includes:
 
 ## Provider Selection Discovery
 
-Provider selection support and provider IDs are discovered via `GET /api/models/:canonicalId/providers`. See [Provider Selection](/api-reference/miscellaneous/provider-selection) for details.
+Provider selection support, public provider IDs, and provider-specific prices are discovered via `GET /api/models/:canonicalId/providers`. Its `Per1kTokens` fields are USD per 1,000 tokens and include selection markup; `provider.max_price` uses USD per 1 million tokens. See [Provider Selection](/api-reference/miscellaneous/provider-selection#discover-providers-and-pricing) for details.
 
 ## Query Parameters
 

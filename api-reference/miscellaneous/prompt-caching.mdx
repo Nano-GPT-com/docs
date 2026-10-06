@@ -29,7 +29,7 @@ NanoGPT automatically uses implicit caching on providers/models that support it,
 
 No cache-control flags are required for this mode.
 
-For normal automatic routing, NanoGPT also tries cache-affinity routing when it can help: it hashes the request shape with the user/API-key or session identity and tries to route later matching requests to the same provider. This behavior is always active for eligible automatic routes; it is not controlled by the web UI prompt-caching toggle or by `prompt_caching`.
+For normal automatic routing, NanoGPT also tries cache-affinity routing when it can help: it hashes the request shape with the user/API-key or session identity and tries to route later matching requests to the same provider. This applies only to eligible automatic routes. Explicit provider selection and routing preferences use their own routing rules. Claude routes also need caller cache intent, and `prompt_caching.enabled: false` disables that cache affinity.
 
 If the provider that would be used does not support caching, NanoGPT does not apply cache-affinity routing for that request because there is no provider-side cache to reuse. Cache-affinity routing by itself does not add explicit cache-write annotations. For models/routes that require explicit writes, such as Claude, the request still needs a helper or cache markers, whether supplied by you or your client.
 
@@ -47,22 +47,26 @@ Set top-level `caching: true` when you want NanoGPT to route the request to any 
 }
 ```
 
-By default, `caching: true` also enables sticky provider routing. After the first successful matching request, NanoGPT will try to use the same provider for later matching requests from the same API key or session, improving the chance of provider-side cache hits. This does not guarantee a cache hit.
+`caching: true` prefers the provider from your previous matching request (soft affinity). `stickyProvider` defaults to `false`; set it to `true` to disable cross-provider fallback. Neither setting guarantees a cache hit.
 
-To require a cache-capable provider without stickiness:
+To disable cross-provider fallback for a cache-capable request:
 
 ```json
 {
   "model": "model-id",
   "caching": true,
-  "stickyprovider": false,
+  "stickyprovider": true,
   "messages": [
     { "role": "user", "content": "Hello" }
   ]
 }
 ```
 
-Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`.
+Top-level `stickyProvider` is accepted as a camelCase alias for `stickyprovider`. `true` disables cross-provider fallback. `false` allows fallback, but explicit caching still keeps soft affinity to a previous eligible provider.
+
+The affinity record expires after about one hour without a successful matching request. This is separate from the provider's cache TTL and does not guarantee a warm cache for one hour.
+
+**Price routing is a different goal.** `provider.sort: "price"`, `:price`, or `max_price` without `order` can activate price ranking, which takes precedence over cache-affinity selection and can change providers between requests. See [routing examples and precedence](/api-reference/miscellaneous/provider-selection#price-caps-and-cache-reuse).
 
 You can request the same behavior with a model suffix:
 
@@ -407,7 +411,7 @@ Behavior:
 
 Leave `promptCaching.stickyProvider` unset unless you accept reduced availability to preserve the cache. It does not extend the TTL or guarantee a hit.
 
-This is different from top-level `stickyprovider` / `stickyProvider` used with `caching: true`: the top-level setting prefers a previously recorded cache-capable route, while the nested explicit-caching setting prevents failover. Privacy or provider restrictions further constrain which routes are eligible.
+Top-level `stickyprovider` / `stickyProvider` and nested `promptCaching.stickyProvider` control the same fallback switch. If both are supplied, the top-level value takes precedence. With `caching: true`, soft affinity remains even when the switch is `false`. Privacy, price, and provider restrictions still constrain eligible routes.
 
 ## NanoGPT Web UI
 
