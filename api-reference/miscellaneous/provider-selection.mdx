@@ -471,7 +471,7 @@ For provider-selection-capable models, you can append a routing preference suffi
 - `:speed` / `:fast`: best estimated completion time using TTFT plus TPS.
 - `:throughput`: highest tokens per second.
 - `:latency`: lowest time to first token.
-- `:price` / `:cheap`: lowest estimated cost for the request’s input and expected output, including selection markup.
+- `:price` / `:cheap`: lowest estimated cost for the request’s input and expected output, including selection markup. Opt-in providers that are otherwise used only when selected explicitly are included; when Auto routing is no more expensive, the request stays on Auto and is billed at the Auto price.
 - `:floor`: alias for `:price`.
 - `:tools`: route to a tools-capable provider path when the model supports tools provider selection.
 

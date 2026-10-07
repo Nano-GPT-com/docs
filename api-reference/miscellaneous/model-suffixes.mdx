@@ -21,7 +21,7 @@ These apply only to provider-selection-capable models.
 | `:fast` | Alias for `:speed`. |
 | `:throughput` | Pick the provider with the highest tokens per second. |
 | `:latency` | Pick the provider with the lowest time to first token. |
-| `:price` | Pick the lowest estimated request cost, based on expected input/output usage and customer-facing rates. |
+| `:price` | Pick the lowest estimated request cost, based on expected input/output usage and customer-facing rates, including opt-in providers. Stays on Auto routing, billed at the Auto price, when Auto is no more expensive. |
 | `:cheap` | Alias for `:price`. |
 | `:floor` | Alias for `:price`. |
 | `:tools` | Route to a tools-capable provider path for models that support tools provider selection. |
