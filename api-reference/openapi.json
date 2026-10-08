@@ -4416,6 +4416,470 @@
         }
       }
     },
+    "/v1/messages/batches": {
+      "post": {
+        "operationId": "createAnthropicMessageBatch",
+        "tags": [
+          "Anthropic"
+        ],
+        "summary": "Create an Anthropic Message Batch",
+        "description": "Submit 1–100,000 native Claude requests directly to Anthropic at batch token rates. All requests must use the same supported Claude model and include max_tokens. NanoGPT reserves account balance at creation and settles actual billable usage. Subscription included tokens do not apply. Input and stored normalized input must each fit within 200 MiB. Native custom tools, thinking, prompt caching, images and documents are supported where the model supports them. Streaming generation, provider-hosted tools, MCP servers, containers, provider-managed files and video blocks are rejected. Keys or teams requiring Zero Data Retention cannot create batches. See https://docs.nano-gpt.com/api-reference/endpoint/batches#anthropic-message-batches.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnthropicMessageBatchCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created Message Batch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicMessageBatch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Choose a new value for each batch and reuse it with the same body on retries. A different payload returns 409. Stored creation failures can be replayed.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "anthropic-beta",
+            "in": "header",
+            "required": false,
+            "description": "Comma-separated Anthropic beta flags, forwarded alongside flags required by the request. Does not bypass batch validation.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listAnthropicMessageBatches",
+        "tags": [
+          "Anthropic"
+        ],
+        "summary": "List Anthropic Message Batches",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "after_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message Batch page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicMessageBatchList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "description": "List native Message Batches visible to the supplied API key, newest first. Use after_id with last_id for older pages or before_id with first_id for newer pages; do not combine the cursors."
+      }
+    },
+    "/v1/messages/batches/{id}": {
+      "get": {
+        "operationId": "retrieveAnthropicMessageBatch",
+        "tags": [
+          "Anthropic"
+        ],
+        "summary": "Retrieve an Anthropic Message Batch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "NanoGPT file or batch object ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message Batch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicMessageBatch"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteAnthropicMessageBatch",
+        "tags": [
+          "Anthropic"
+        ],
+        "summary": "Delete an Anthropic Message Batch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "NanoGPT file or batch object ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted Message Batch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicMessageBatchDeleted"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "description": "Processing must have ended; active batches return 409. Deletion hides the batch from the native NanoGPT API. It does not reverse usage charges or promise deletion of Anthropic-retained data."
+      }
+    },
+    "/v1/messages/batches/{id}/cancel": {
+      "post": {
+        "operationId": "cancelAnthropicMessageBatch",
+        "tags": [
+          "Anthropic"
+        ],
+        "summary": "Cancel an Anthropic Message Batch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "NanoGPT file or batch object ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Canceled Message Batch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicMessageBatch"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/messages/batches/{id}/results": {
+      "get": {
+        "operationId": "downloadAnthropicMessageBatchResults",
+        "tags": [
+          "Anthropic"
+        ],
+        "summary": "Download Anthropic Message Batch results",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "NanoGPT file or batch object ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Native Anthropic result JSONL",
+            "content": {
+              "application/jsonl": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Anthropic Messages API error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "description": "Download native Anthropic JSONL when results_url is available. Match each row by custom_id and inspect result.type. Results are not guaranteed to remain available after provider archival."
+      }
+    },
     "/v1/messages": {
       "servers": [
         {
@@ -6839,6 +7303,319 @@
           "source": { "oneOf": [{ "$ref": "#/components/schemas/AnthropicVideoSourceBase64" }, { "$ref": "#/components/schemas/AnthropicVideoSourceUrl" }] }
         },
         "additionalProperties": true
+      },
+      "AnthropicMessageBatchCreate": {
+        "type": "object",
+        "required": [
+          "requests"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "requests": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "type": "object",
+              "required": [
+                "custom_id",
+                "params"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "custom_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "params": {
+                  "$ref": "#/components/schemas/AnthropicMessageBatchRequest"
+                }
+              }
+            }
+          }
+        }
+      },
+      "AnthropicMessageBatch": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "processing_status",
+          "request_counts",
+          "created_at",
+          "expires_at",
+          "ended_at",
+          "archived_at",
+          "cancel_initiated_at",
+          "results_url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "const": "message_batch"
+          },
+          "processing_status": {
+            "type": "string",
+            "enum": [
+              "in_progress",
+              "canceling",
+              "ended"
+            ]
+          },
+          "request_counts": {
+            "$ref": "#/components/schemas/AnthropicMessageBatchRequestCounts"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ended_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "archived_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancel_initiated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "results_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          }
+        }
+      },
+      "AnthropicMessageBatchRequestCounts": {
+        "type": "object",
+        "required": [
+          "processing",
+          "succeeded",
+          "errored",
+          "canceled",
+          "expired"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "processing": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "succeeded": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "errored": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "canceled": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expired": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AnthropicMessageBatchList": {
+        "type": "object",
+        "required": [
+          "object",
+          "data",
+          "has_more",
+          "first_id",
+          "last_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "list"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnthropicMessageBatch"
+            }
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "first_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AnthropicMessageBatchDeleted": {
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "const": "message_batch_deleted"
+          }
+        }
+      },
+      "AnthropicErrorResponse": {
+        "type": "object",
+        "required": [
+          "type",
+          "error"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "error"
+          },
+          "error": {
+            "type": "object",
+            "required": [
+              "type",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "AnthropicMessageBatchRequest": {
+        "type": "object",
+        "required": [
+          "model",
+          "messages",
+          "max_tokens"
+        ],
+        "additionalProperties": true,
+        "description": "Native Messages parameters for one supported Claude model. The first message must be a user turn. Use the top-level system field for a system prompt. Provider-specific generation fields remain subject to model support and native batch restrictions.",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Supported Claude model ID. Use the same model for all requests in the batch.",
+            "example": "anthropic/claude-sonnet-4.5"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "description": "Required output-token cap. The selected model can impose a lower maximum."
+          },
+          "messages": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "role",
+                "content"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant"
+                  ]
+                },
+                "content": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "system": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            ]
+          },
+          "stream": {
+            "type": "boolean",
+            "const": false
+          },
+          "tools": {
+            "type": "array",
+            "description": "Custom tool definitions only; hosted tools are rejected.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "thinking": {
+            "type": "object",
+            "description": "Native thinking generation controls; may vary by request for the same model.",
+            "additionalProperties": true
+          },
+          "output_config": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
       },
       "AnthropicMessageRequest": {
         "type": "object",

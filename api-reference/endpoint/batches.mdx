@@ -1,18 +1,19 @@
 ---
 title: 'Batch API'
-description: 'Run high-volume chat completions and Responses API requests asynchronously'
+description: 'Run Chat Completions, Responses, and native Anthropic Message Batches asynchronously'
 ---
 
 ## Overview
 
 The NanoGPT Batch API runs many independent requests asynchronously at a lower token price than the equivalent synchronous calls. It is a good fit for classification, summarization, evals, synthetic data, document processing, and image analysis where immediate results are not required.
 
-You can submit a batch in either of two ways:
+Choose a workflow:
 
 - **File-backed API:** upload JSONL, create a batch, poll its status, then download output and error files. This OpenAI-compatible workflow is best for large or reusable inputs.
 - **Inline API:** send the requests in the batch creation body and receive the results when polling the completed batch. This is simpler for smaller jobs.
+- **[Anthropic Message Batches](#anthropic-message-batches):** send native Claude requests with the official Anthropic SDK or HTTP API. Requests run directly through Anthropic at batch token rates, with native JSONL results.
 
-Both workflows support rows targeting `/v1/chat/completions` or `/v1/responses`.
+The file-backed and inline workflows support rows targeting `/v1/chat/completions` or `/v1/responses`. Native Message Batches use a separate `/v1/messages/batches` endpoint.
 
 <Note>
   All rows in one batch must use the same endpoint and the same model. Batch requests are non-streaming and the only supported completion window is `24h`.
@@ -32,17 +33,18 @@ Use the dedicated API host for batch operations:
 | --- | --- |
 | File-backed | `https://api.nano-gpt.com/api/v1` |
 | Inline | `https://api.nano-gpt.com/api/beta` |
+| Anthropic SDK | `https://api.nano-gpt.com/api` (the SDK appends `/v1/messages/batches`) |
 
 Use `api.nano-gpt.com` for uploads. The main website host can reject larger multipart requests before they reach the Batch API.
 
 ## Supported row endpoints
 
-Each request in a batch must target one of these endpoints:
+Each row in a file-backed or inline batch must target one of these endpoints:
 
 - `/v1/chat/completions`
 - `/v1/responses`
 
-Completions, embeddings, image generation, audio, video, transcription, TTS, moderation, and other endpoints cannot be used as batch rows.
+Completions, embeddings, image generation, audio, video, transcription, TTS, moderation, and other endpoints cannot be used as batch rows. For native Anthropic request bodies, use [Message Batches](#anthropic-message-batches); `/v1/messages` is not a supported row endpoint for `/api/v1/batches`.
 
 ## Model support
 
@@ -200,7 +202,7 @@ The batch-level model is inherited by every request body. If an inline row omits
 
 ## List batches
 
-Use the authenticated list route for the workflow you want to inspect. Each route returns only batches visible to the supplied API key, ordered newest first.
+Use the authenticated list route for the workflow you want to inspect. Each route returns only batches visible to the supplied API key, ordered newest first. Native Message Batches have their own [list route and cursor names](#list-native-message-batches).
 
 | Workflow | Endpoint |
 | --- | --- |
@@ -293,6 +295,109 @@ Both list routes return:
 - `400` for an unsupported `status` value.
 - `400` for an invalid creation timestamp or a reversed creation-time range.
 
+## Anthropic Message Batches
+
+Use native Anthropic request shapes for asynchronous Claude jobs, including custom tools, thinking, prompt caching, images, and documents where the selected model supports them. Submit up to 100,000 requests for one supported Claude model per batch. Requests go directly to Anthropic and use batch token pricing, paid from your NanoGPT balance.
+
+The official Anthropic SDK works with a NanoGPT API key and `baseURL: 'https://api.nano-gpt.com/api'` (Python: `base_url`). It appends `/v1/messages/batches`. The shorter `/v1/messages/batches` alias also works with `https://api.nano-gpt.com` as the SDK base URL.
+
+### Native endpoints
+
+| Method | URL path | Purpose |
+| --- | --- | --- |
+| POST | `/api/v1/messages/batches` | Create a batch |
+| GET | `/api/v1/messages/batches` | List native Message Batches |
+| GET | `/api/v1/messages/batches/{id}` | Retrieve status and request counts |
+| POST | `/api/v1/messages/batches/{id}/cancel` | Request cancellation |
+| GET | `/api/v1/messages/batches/{id}/results` | Download native result JSONL |
+| DELETE | `/api/v1/messages/batches/{id}` | Delete an ended batch from NanoGPT's native API |
+
+All routes also accept the `/v1/messages/batches` prefix. Authenticate with `x-api-key` or `Authorization: Bearer` using your NanoGPT API key.
+
+### Create a native batch
+
+Send a `requests` array containing `custom_id` and native Messages `params`. No file upload is required.
+
+```bash
+curl https://api.nano-gpt.com/api/v1/messages/batches \
+  -H "x-api-key: $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: example-anthropic-batch-001" \
+  -d '{
+    "requests": [{
+      "custom_id": "summary-1",
+      "params": {
+        "model": "anthropic/claude-sonnet-4.5",
+        "max_tokens": 1024,
+        "messages": [{ "role": "user", "content": "Explain when batch processing is useful." }]
+      }
+    }]
+  }'
+```
+
+Or use `@anthropic-ai/sdk`:
+
+```ts
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({
+  apiKey: process.env.NANOGPT_API_KEY,
+  baseURL: 'https://api.nano-gpt.com/api',
+});
+
+const batch = await client.messages.batches.create({
+  requests: [{
+    custom_id: 'summary-1',
+    params: {
+      model: 'anthropic/claude-sonnet-4.5',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: 'Explain when batch processing is useful.' }],
+    },
+  }],
+}, { headers: { 'Idempotency-Key': 'example-anthropic-batch-001' } });
+
+// Retrieve periodically until processing_status is "ended".
+const current = await client.messages.batches.retrieve(batch.id);
+if (current.processing_status === 'ended' && current.results_url) {
+  for await (const row of await client.messages.batches.results(batch.id)) {
+    console.log(row.custom_id, row.result);
+  }
+}
+```
+
+Choose a new `Idempotency-Key` for each distinct batch. Reuse the same key and body when retrying a submission; a different payload with the same key returns 409. A stored creation failure can also be replayed, so use a new key for a new submission after correcting that failure. The header is optional, but recommended for retries.
+
+### Native request limits and compatibility
+
+- Send 1–100,000 requests with unique, non-empty `custom_id` values.
+- Use the same supported Claude model for every request. Thinking controls may vary by request. Support for a model on synchronous `/v1/messages` does not imply native batch support.
+- Each `params` requires `model`, `messages`, and a positive integer `max_tokens` within the model's output limit. NanoGPT's maximum accepted cap is 1,000,000; model limits can be lower. The first message must have the `user` role; use the top-level `system` field for a system prompt.
+- The request body and stored normalized input must each fit within 200 MiB. Normalization can make the stored input larger than the original body.
+- The completion window is 24 hours. Streaming generation is unsupported; result downloads use JSONL.
+- Native custom tools and tool-result history, thinking, `output_config`, and prompt-cache controls are supported where the selected model supports them. Use native `thinking` controls, not OpenAI `reasoning` or `reasoning_effort` fields.
+- Images accept URL or base64 sources; documents accept URL, base64, or plaintext sources. Provider-managed file references, containers, MCP servers, hosted tools, and video blocks are rejected.
+- URL or base64 documents reserve enough balance for a full context window because their token count is unknown before processing. Final billing still uses actual token usage.
+- Caller `anthropic-beta` flags are forwarded alongside any flags required by the request. A beta header does not enable fields rejected by NanoGPT's batch validation.
+- Keys or teams requiring Zero Data Retention cannot create batches because batch processing retains input.
+
+Native Message Batches use the official Anthropic SDK. NanoGPT's general-purpose SDKs do not expose these batch methods.
+
+### Native status, results, cancellation, and deletion
+
+Creation returns a `message_batch` object. Poll retrieval until `processing_status` is `ended`; the other states are `in_progress` and `canceling`. An ended batch can contain unsuccessful requests, so inspect `request_counts` and each result:
+
+- `request_counts` contains `processing`, `succeeded`, `errored`, `canceled`, and `expired`.
+- `results_url` is available when results can be downloaded. Results are native JSONL rows with `custom_id` and `result`; match by `custom_id` and inspect `result.type`, rather than assuming input order or success.
+- Results requested before they are available return 409. Download available results before provider archival; an ended status alone does not guarantee results remain available.
+- Cancellation is best-effort. Requests that complete can still incur usage charges.
+- Delete only after processing ends. Deletion hides the batch from NanoGPT's native API; it does not reverse billing or promise deletion of Anthropic's retained data.
+
+### List native Message Batches
+
+`GET /api/v1/messages/batches` returns native batches visible to the supplied API key, newest first, with `data`, `has_more`, `first_id`, and `last_id`.
+
+Use `limit` from 1 to 100 (default 20), `after_id=<last_id>` for older batches, or `before_id=<first_id>` for newer batches. Do not combine both cursor parameters. Use the native list for native Message Batches; the `/api/v1/batches` list uses the OpenAI-compatible representation.
+
 ## Responses Batch restrictions
 
 Responses Batch is stateless and executes directly through the upstream batch service. NanoGPT forces `store: false` and rejects:
@@ -313,7 +418,7 @@ Supported batch token usage is priced 50% below the equivalent synchronous reque
 
 ## Common errors
 
-- **Unsupported endpoint:** use `/v1/chat/completions` or `/v1/responses`, consistently across all rows.
+- **Unsupported endpoint:** file-backed and inline rows must use `/v1/chat/completions` or `/v1/responses`, consistently across all rows. Native Claude requests use `/v1/messages/batches`.
 - **Missing output cap:** add `max_tokens` or `max_completion_tokens` for Chat Completions, or `max_output_tokens >= 16` for Responses.
 - **Mixed model:** every row must use the same model.
 - **Streaming unsupported:** remove `stream: true`.

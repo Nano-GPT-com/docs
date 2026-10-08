@@ -43,6 +43,8 @@ This endpoint supports:
 - Prompt caching
 - Token estimates via [`POST /api/v1/messages/count_tokens`](/api-reference/endpoint/messages-count-tokens)
 
+For asynchronous Claude requests at batch token rates, use [Anthropic Message Batches](/api-reference/endpoint/batches#anthropic-message-batches). The native batch API supports create, list, retrieve, cancel, results, and delete through the official Anthropic SDK. It accepts supported Claude models, with one model per batch and a required `max_tokens` for each request; synchronous Messages model support does not imply batch support.
+
 ## Endpoint
 
 ```
