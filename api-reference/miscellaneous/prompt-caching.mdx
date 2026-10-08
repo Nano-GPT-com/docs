@@ -95,6 +95,7 @@ Explicit prompt-caching controls are available on Claude models, including these
 | Claude Sonnet 4 | `claude-sonnet-4-20250514` (and `:thinking` variants) |
 | Claude Sonnet 4.5 | `claude-sonnet-4-5-20250929` (and `:thinking` variants) |
 | Claude Haiku 4.5 | `claude-haiku-4-5-20251001` |
+| Claude Haiku 5.5 | `anthropic/claude-haiku-5.5` (also `anthropic/claude-haiku-latest`) |
 | Claude Opus 4 | `claude-opus-4-20250514` (and `:thinking` variants) |
 | Claude Opus 4.1 | `claude-opus-4-1-20250805` (and `:thinking` variants) |
 | Claude Opus 4.5 | `claude-opus-4-5-20251101` (and `:thinking` variants) |
@@ -366,6 +367,10 @@ The standard Claude cache multipliers are below. Model- or route-specific rates 
 | --- | --- | --- |
 | `5m` | `1.25x` | `0.1x` |
 | `1h` | `2.0x` | `0.1x` |
+
+Claude Sonnet 5.5, including its Thinking and Latest aliases, uses a `0.05x` cache-read multiplier: \$0.10 per million cached input tokens. Cache creation remains `1.25x` for five minutes and `2.0x` for one hour.
+
+Claude Haiku 5.5, including Haiku Latest, charges \$0.01 per million cached input tokens for prompts up to 100K tokens and \$0.05 above 100K. The prompt length determines the pricing tier, including cached tokens.
 
 ## TTL Options (Explicit Claude Controls)
 
