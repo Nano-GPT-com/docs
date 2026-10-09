@@ -390,9 +390,11 @@ console.log(embeddings.data.map((row) => row.embedding.length));
 ```
 
 DECISIONS
-Decision models (TypeSafe Jev, Decider, Liquid D1, Cloudflare Clef) return typed answers with probabilities instead of text; only input tokens are billed. They work on both hosts; use https://api.nano-gpt.com like other inference.
+Decision models (TypeSafe Jev, Decider, Liquid D1, Perplexity PPLX Decider v1.1, Cloudflare Clef and Clef Flash) return typed answers with probabilities instead of text; only input tokens are billed. They work on both hosts; use https://api.nano-gpt.com like other inference, except that PPLX Decider v1.1, Clef Flash, image input and include_usage currently need https://nano-gpt.com.
 - POST https://api.nano-gpt.com/api/v1/decisions with { model, state, questions }. Question types: choice (criteria object), score (criteria array, 2-10 levels), noul (yes/no probability).
-- Models: typesafe/jev-1.13, typesafe/jev-latest, llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4, liquid/d1, cloudflare/clef.
+- Models: typesafe/jev-1.13, typesafe/jev-latest, llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4, liquid/d1, perplexity/pplx-decider-v1.1-27b, cloudflare/clef, cloudflare/clef-flash.
+- Images (PPLX Decider v1.1, Clef, Clef Flash on https://nano-gpt.com): put up to 4 parts like { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,...' } } directly in a state array, alongside plain strings. Static PNG/JPEG/WebP, each at most 512x512, 240,000 base64 characters in total; no remote URLs. Clef and Clef Flash allow at most 1,800 text tokens.
+- usage.estimated_cost is returned by default (billing settles right after the response); send include_usage: true to wait for the exact usage.cost.
 - Chat Completions also works with response_format { type: 'questions', questions }: non-streaming, user text only, no tools or sampling controls; parse choices[0].message.content as JSON.
 - The official TypeSafe SDK works with base URL https://api.nano-gpt.com/api (it calls /api/v1/systemone).
 
@@ -633,7 +635,7 @@ LINKS
 - api-reference/endpoint/data-api
 - [Advisor](https://docs.nano-gpt.com/api-reference/miscellaneous/advisor.md): Let one model consult a different second model before producing its final answer.
 - [Hosted tool search](https://docs.nano-gpt.com/api-reference/miscellaneous/hosted-tool-search.md): Let compatible models discover relevant functions from large deferred catalogs on demand.
-- [Decisions](https://docs.nano-gpt.com/api-reference/endpoint/decisions.md): Typed Choice, Score and yes/no answers with probabilities from Jev, Decider, Liquid D1 and Clef.
+- [Decisions](https://docs.nano-gpt.com/api-reference/endpoint/decisions.md): Typed Choice, Score and yes/no answers with probabilities from Jev, Decider, Liquid D1, PPLX Decider v1.1, Clef and Clef Flash, including image input.
 - docs/reasoning.md
 - docs/v1/models.md
 - memory.md

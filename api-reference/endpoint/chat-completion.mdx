@@ -13,7 +13,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 </Note>
 
 <Note>
-  Decision models (Jev, Decider, Liquid D1 and Clef) use `response_format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `choices[0].message.content`. See [Decisions](/api-reference/endpoint/decisions) for complete examples and limitations.
+  Decision models (Jev, Decider, Liquid D1, PPLX Decider v1.1, Clef and Clef Flash) use `response_format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `choices[0].message.content`. `usage.estimated_cost` is returned by default; send `include_usage: true` for the exact `usage.cost`. See [Decisions](/api-reference/endpoint/decisions) for complete examples and limitations.
 </Note>
 
 <Note>

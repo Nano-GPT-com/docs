@@ -852,7 +852,7 @@
           "Decisions"
         ],
         "summary": "Create typed decisions with a decision model",
-        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Mapika's Decider hosted by LLM Tech (llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4), Liquid AI's D1 (liquid/d1) and Cloudflare's Clef (cloudflare/clef). Decider needs 2-255 Choice options or 2-10 Score levels per question and allows at most 1,024 scoring rows per request. Decider and Clef accept only the zdr and data_collection routing controls in provider.",
+        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Mapika's Decider hosted by LLM Tech (llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.1 (perplexity/pplx-decider-v1.1-27b), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). Decider needs 2-255 Choice options or 2-10 Score levels per question and allows at most 1,024 scoring rows per request. Decider, PPLX Decider v1.1, Clef and Clef Flash accept only the zdr and data_collection routing controls in provider. PPLX Decider v1.1, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. PPLX Decider v1.1, Clef Flash, image input and include_usage are currently available on https://nano-gpt.com only.",
         "security": [
           {
             "bearerAuth": []
@@ -922,7 +922,7 @@
           "Decisions"
         ],
         "summary": "Create a typed decision with the official TypeSafe SDK shape",
-        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://api.nano-gpt.com/api (or https://nano-gpt.com/api); the SDK appends /v1/systemone. It accepts every decision model listed for /v1/decisions. Bare model IDs jev-1.13, jev-latest, decider-0.8b-fp8, decider-2b-fp8, decider-4b-nvfp4 and clef are mapped to the matching NanoGPT models. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape.",
+        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://api.nano-gpt.com/api (or https://nano-gpt.com/api); the SDK appends /v1/systemone. It accepts every decision model listed for /v1/decisions. Bare model IDs jev-1.13, jev-latest, decider-0.8b-fp8, decider-2b-fp8, decider-4b-nvfp4 and clef are mapped to the matching NanoGPT models. Image input and include_usage work as on /v1/decisions. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape.",
         "security": [
           {
             "bearerAuth": []
@@ -5741,11 +5741,13 @@
               "decider-4b-nvfp4",
               "liquid/d1",
               "cloudflare/clef",
-              "clef"
+              "clef",
+              "cloudflare/clef-flash",
+              "perplexity/pplx-decider-v1.1-27b"
             ]
           },
           "state": {
-            "description": "Application state to evaluate.",
+            "description": "Application state to evaluate. On https://nano-gpt.com, PPLX Decider v1.1, Clef and Clef Flash also accept an array that mixes plain strings with up to four image_url parts holding static PNG, JPEG or WebP base64 data URLs, each at most 512x512 pixels (240,000 base64 characters in total). Remote image URLs are not fetched.",
             "oneOf": [
               {
                 "type": "string"
@@ -5783,7 +5785,7 @@
             "description": "Decider only. Decider always evaluates questions independently, so send true or omit the field; other models reject it."
           },
           "provider": {
-            "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs. Decider and Clef accept only zdr and data_collection.",
+            "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs. Decider, PPLX Decider v1.1, Clef and Clef Flash accept only zdr and data_collection; Clef and Clef Flash reject zdr true.",
             "type": [
               "object",
               "null"
@@ -5801,6 +5803,11 @@
           "user": {
             "type": "string",
             "maxLength": 256
+          },
+          "include_usage": {
+            "type": "boolean",
+            "default": false,
+            "description": "Wait for billing to settle and report the exact charge as usage.cost. By default the response returns without waiting and reports usage.estimated_cost. Available on https://nano-gpt.com."
           }
         }
       },
@@ -5830,7 +5837,9 @@
               "decider-4b-nvfp4",
               "liquid/d1",
               "cloudflare/clef",
-              "clef"
+              "clef",
+              "cloudflare/clef-flash",
+              "perplexity/pplx-decider-v1.1-27b"
             ]
           },
           "state": {
@@ -5897,6 +5906,11 @@
           "user": {
             "type": "string",
             "maxLength": 256
+          },
+          "include_usage": {
+            "type": "boolean",
+            "default": false,
+            "description": "Wait for billing to settle and report the exact charge as usage.cost. By default the response returns without waiting and reports usage.estimated_cost. Available on https://nano-gpt.com."
           }
         }
       },
@@ -6000,9 +6014,6 @@
           "model": {
             "type": "string"
           },
-          "provider": {
-            "type": "string"
-          },
           "answers": {
             "type": "object",
             "additionalProperties": {
@@ -6036,7 +6047,13 @@
               },
               "cost": {
                 "type": "number",
-                "minimum": 0
+                "minimum": 0,
+                "description": "Exact charge in USD. Returned when the request sets include_usage to true."
+              },
+              "estimated_cost": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Estimated charge in USD at the model's published input price for the reported input tokens, before account discounts and payment-currency conversion. Returned when include_usage is not set; billing settles right after the response."
               }
             }
           }
