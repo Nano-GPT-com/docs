@@ -7535,7 +7535,7 @@
           "model": {
             "type": "string",
             "description": "Supported Claude model ID. Use the same model for all requests in the batch.",
-            "example": "anthropic/claude-sonnet-4.5"
+            "example": "anthropic/claude-sonnet-5.5"
           },
           "max_tokens": {
             "type": "integer",

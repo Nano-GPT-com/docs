@@ -327,7 +327,7 @@ curl https://api.nano-gpt.com/api/v1/messages/batches \
     "requests": [{
       "custom_id": "summary-1",
       "params": {
-        "model": "anthropic/claude-sonnet-4.5",
+        "model": "anthropic/claude-sonnet-5.5",
         "max_tokens": 1024,
         "messages": [{ "role": "user", "content": "Explain when batch processing is useful." }]
       }
@@ -349,7 +349,7 @@ const batch = await client.messages.batches.create({
   requests: [{
     custom_id: 'summary-1',
     params: {
-      model: 'anthropic/claude-sonnet-4.5',
+      model: 'anthropic/claude-sonnet-5.5',
       max_tokens: 1024,
       messages: [{ role: 'user', content: 'Explain when batch processing is useful.' }],
     },
@@ -371,6 +371,8 @@ Choose a new `Idempotency-Key` for each distinct batch. Reuse the same key and b
 
 - Send 1–100,000 requests with unique, non-empty `custom_id` values.
 - Use the same supported Claude model for every request. Thinking controls may vary by request. Support for a model on synchronous `/v1/messages` does not imply native batch support.
+- Haiku 5.5 accepts `anthropic/claude-haiku-5.5`, `claude-haiku-5-5`, and `anthropic/claude-haiku-latest`. Use `thinking: { "type": "adaptive" }` with `output_config: { "effort": "medium" }` to set its default thinking behavior explicitly; fixed `budget_tokens` controls are unsupported by Haiku 5.5.
+- Haiku 5.5 also accepts `thinking: { "type": "disabled" }` at `low`, `medium`, or `high` effort. Disabled thinking with `xhigh` or `max` is rejected.
 - Each `params` requires `model`, `messages`, and a positive integer `max_tokens` within the model's output limit. NanoGPT's maximum accepted cap is 1,000,000; model limits can be lower. The first message must have the `user` role; use the top-level `system` field for a system prompt.
 - The request body and stored normalized input must each fit within 200 MiB. Normalization can make the stored input larger than the original body.
 - The completion window is 24 hours. Streaming generation is unsupported; result downloads use JSONL.
