@@ -9,27 +9,27 @@ The NanoGPT MCP (Model Context Protocol) server allows you to use NanoGPT's AI c
 
 ## Features
 
-The NanoGPT MCP server provides the following tools:
+The NanoGPT MCP server provides these tools:
 
-| Tool | Description |
-|------|-------------|
-| `nanogpt_chat` | Send chat messages to any AI model available on NanoGPT |
-| `nanogpt_get_balance` | Check your account balance (USD and Nano) |
-| `nanogpt_image_generate` | Generate images using GPT Image 2.5 Flare and other supported models |
-| `nanogpt_web_search` | Search the web for current information |
-| `nanogpt_scrape_urls` | Extract content from web pages |
-| `nanogpt_youtube_transcribe` | Get transcripts from YouTube videos |
-| `nanogpt_list_text_models` | List available text/chat models |
-| `nanogpt_list_image_models` | List available image generation models |
-| `nanogpt_list_audio_models` | List available audio models (TTS/STT) |
-| `nanogpt_list_video_models` | List available video generation models |
-| `nanogpt_vision` | Analyze images with vision-capable models |
+| Area | Tools |
+|------|-------|
+| Account | `nanogpt_get_balance` |
+| Text | `nanogpt_chat`, `nanogpt_vision`, `nanogpt_embeddings`, `nanogpt_ai_detection` |
+| Images | `nanogpt_image_generate`, `nanogpt_image_edit`, `nanogpt_ai_qr` |
+| Video | `nanogpt_video_generate` |
+| 3D | `nanogpt_3d_generate` |
+| Audio | `nanogpt_text_to_speech`, `nanogpt_music_generate`, `nanogpt_audio_transcribe` |
+| Web and research | `nanogpt_web_search`, `nanogpt_scrape_urls`, `nanogpt_firecrawl`, `nanogpt_youtube_transcribe`, `nanogpt_x_research`, `nanogpt_hunter` |
+| Social and maps data | `nanogpt_reddit`, `nanogpt_google_maps_scrape`, `nanogpt_google_maps_reviews_scrape`, `nanogpt_facebook_ads`, `nanogpt_facebook_posts_scrape`, `nanogpt_instagram_profile`, `nanogpt_instagram_posts_scrape`, `nanogpt_instagram_reels`, `nanogpt_linkedin_profile`, `nanogpt_tiktok_scrape` |
+| Model catalogs (free) | `nanogpt_list_text_models`, `nanogpt_list_image_models`, `nanogpt_list_video_models`, `nanogpt_list_3d_models`, `nanogpt_list_audio_models` |
+
+Each tool describes its parameters to your agent through MCP, so the agent can call it without reading the API documentation. The source code is on [GitHub](https://github.com/Nano-GPT-com/nanogpt-mcp).
 
 ## Prerequisites
 
 - A NanoGPT account with an API key ([get one here](https://nano-gpt.com/api))
 - Node.js 22.x or later
-- An MCP-compatible client (Claude Code, Cursor, etc.)
+- An MCP-compatible client (Claude Code, Codex, Cursor, Claude Desktop, etc.)
 
 ## Installation
 
@@ -59,6 +59,26 @@ claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=YOUR_API_KEY -- cmd /c
 >
 > An immediate `Invalid API key` error can be caused by a broken MCP launcher command, not just a bad key value.
 
+#### Codex
+
+```bash
+codex mcp add nanogpt --env NANOGPT_API_KEY=YOUR_API_KEY -- npx -y @nanogpt/mcp
+```
+
+#### Cursor, Claude Desktop and other JSON-configured clients
+
+```json
+{
+  "mcpServers": {
+    "nanogpt": {
+      "command": "npx",
+      "args": ["-y", "@nanogpt/mcp"],
+      "env": { "NANOGPT_API_KEY": "YOUR_API_KEY" }
+    }
+  }
+}
+```
+
 Replace `YOUR_API_KEY` with your actual NanoGPT API key.
 
 ### Option 2: Global Installation
@@ -87,14 +107,14 @@ claude mcp add nanogpt --scope user \
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NANOGPT_TIMEOUT_MS` | `600000` (10 min) | Request timeout in milliseconds |
-| `NANOGPT_DEFAULT_MODEL` | Package-dependent | Default model for chat requests; set to `anthropic/claude-sonnet-5.5` for our recommended configuration |
+| `NANOGPT_TIMEOUT_MS` | `120000` (2 min) | Default HTTP request timeout in milliseconds |
+| `NANOGPT_DEFAULT_MODEL` | None | Default model for chat requests; set to `anthropic/claude-sonnet-5.5` for our recommended configuration |
 | `NANOGPT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
 | `NANOGPT_BASE_URL` | `https://nano-gpt.com` | Base URL for the NanoGPT API |
 | `NANOGPT_AUTH_MODE` | `bearer` | Auth mode: `bearer`, `x-api-key`, or `both` |
 | `NANOGPT_MAX_RETRIES` | `0` | Number of retry attempts |
 
-Set `NANOGPT_DEFAULT_MODEL=anthropic/claude-sonnet-5.5` in your MCP client configuration to use Claude Sonnet 5.5 for chat requests that omit `model`. Installed package versions can have older built-in defaults.
+Set `NANOGPT_DEFAULT_MODEL=anthropic/claude-sonnet-5.5` in your MCP client configuration to use Claude Sonnet 5.5 for chat requests that omit `model`.
 
 ## Usage Examples
 
@@ -122,6 +142,14 @@ The assistant will call `nanogpt_get_balance` and show your USD and Nano balance
 ### Search the Web
 
 > "Use NanoGPT web search to find the latest news about AI"
+
+### Generate Videos
+
+> "Use NanoGPT to generate a 5 second video of a paper boat drifting on a calm pond"
+
+### Generate 3D Models
+
+> "Use NanoGPT to make a 3D model of a wooden rocking chair and give me the GLB link"
 
 ### Get YouTube Transcripts
 
@@ -266,6 +294,64 @@ Get transcripts from YouTube videos.
 }
 ```
 
+### nanogpt_video_generate
+
+Generate videos from a text prompt, an image or a video.
+
+**Parameters:**
+- `operation` (optional): `submit` (default), `submit_and_poll`, `poll` or `status`
+- `model` (required to submit): Video model ID from `nanogpt_list_video_models`
+- `prompt` (optional): Text description of the video
+- `imageUrl` / `imageDataUrl` (optional): Input image as a public URL or data URL
+- `duration`, `resolution`, `aspect_ratio` (optional): Model-dependent settings
+- `runId` (for `poll` and `status`): Job ID returned by a previous call
+- `timeout_ms` (optional): How long to wait for the result (default 50000)
+
+**Example:**
+```json
+{
+  "operation": "submit_and_poll",
+  "model": "bytedance-seedance-v1-pro-fast",
+  "prompt": "A paper boat drifting on a calm pond",
+  "duration": 5,
+  "resolution": "480p"
+}
+```
+
+### nanogpt_3d_generate
+
+Generate a 3D model (GLB and other formats) from a text prompt or an image.
+
+**Parameters:**
+- `operation` (optional): `submit_and_poll` (default), `submit`, `poll` or `status`
+- `model` (required to submit): 3D model ID from `nanogpt_list_3d_models`
+- `prompt` (optional): Text description for text-to-3D models
+- `imageUrl` / `imageDataUrl` (optional): Input image for image-to-3D models
+- `runId` (for `poll` and `status`): Job ID returned by a previous call
+- `timeout_ms` (optional): How long to wait for the result (default 50000)
+
+**Example:**
+```json
+{
+  "model": "hyper3d/rodin-v2.5",
+  "prompt": "A wooden rocking chair"
+}
+```
+
+### Video and 3D jobs
+
+Video and 3D jobs run asynchronously and usually take between 30 seconds and several minutes:
+
+- `operation: "submit_and_poll"` submits the job and waits up to `timeout_ms` (default 50 seconds) for the result. A finished job returns the video or GLB URL. The wait includes the submit request, but a submission that is still in progress is never cut short (aborting it could lose a job that was already accepted), so an unusually slow submission can take longer than `timeout_ms`.
+- If the job is still running, the result contains its `runId`. Call the tool again with `operation: "poll"` and that `runId` to keep waiting, or `operation: "status"` for a single check.
+- `operation: "submit"` only submits the job.
+
+Many MCP clients stop a tool call after 60 seconds, so keep `timeout_ms` below your client's tool timeout and continue long jobs with `poll`. A job is charged when it is submitted, so poll instead of submitting it again.
+
+### Other tools
+
+Image editing, speech, music, transcription, embeddings, AI detection, artistic QR codes, and the research and data tools follow the same pattern: the agent sees each tool's parameters through MCP.
+
 ### nanogpt_list_text_models
 
 List available text/chat models.
@@ -295,12 +381,20 @@ List available video generation models.
 **Parameters:**
 - `detailed` (optional): Include pricing information (default: true)
 
+### nanogpt_list_3d_models
+
+List available 3D generation models with pricing and whether each accepts text, images or both.
+
+**Parameters:**
+- `detailed` (optional): Include pricing information (default: true)
+
 ## Resources
 
 Resources allow agents to access data saved during a session:
 
 - **`nanogpt://raw/{id}`**: Raw JSON response from a previous API call
 - **`nanogpt://image/{id}`**: Generated images stored during the session
+- **`nanogpt://media/{id}`**: Generated audio and other media stored during the session
 
 ## Error Handling
 
@@ -318,7 +412,7 @@ The MCP server provides clear error messages for common issues:
 - All paid tools deduct from your NanoGPT balance
 - Use `nanogpt_get_balance` to check your balance before expensive operations
 - Model listing tools are free to use
-- Failed requests (timeouts, errors) are not charged
+- Video and 3D jobs are charged when submitted; use `poll` to keep waiting instead of submitting again
 
 ## Troubleshooting
 
@@ -367,6 +461,10 @@ claude mcp add nanogpt --scope user \
 ```powershell
 claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=your_key --env NANOGPT_TIMEOUT_MS=900000 -- cmd /c "C:\Program Files\nodejs\npx.cmd" -y @nanogpt/mcp
 ```
+
+### Video or 3D tool calls time out
+
+Many MCP clients stop a tool call after 60 seconds. Keep `timeout_ms` below that limit and continue with `operation: "poll"` and the returned `runId` until the job finishes.
 
 ### MCP server not connecting
 

@@ -7,7 +7,7 @@ description: 'Integrate NanoGPT into your AI workflows via MCP'
 
 The NanoGPT MCP Server allows you to integrate NanoGPT's powerful AI capabilities directly into your favorite AI tools and editors that support the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
 
-With this server, you can give your AI agents access to web search, image generation, URL scraping, and NanoGPT's full library of LLMs.
+With this server, you can give your AI agents access to NanoGPT's full library of LLMs, image, video, 3D, speech and music generation, web search, and scraping. The source code is on [GitHub](https://github.com/Nano-GPT-com/nanogpt-mcp).
 
 ## Installation
 
@@ -38,6 +38,12 @@ claude mcp add nanogpt --scope user --env NANOGPT_API_KEY=YOUR_API_KEY -- cmd /c
 On native Windows, `npx` is usually a `.cmd` shim, so it should be launched through `cmd /c`. If you use WSL, run the macOS/Linux command inside WSL instead of the native Windows one.
 
 Replace `YOUR_API_KEY` with your actual NanoGPT API key.
+
+### Codex
+
+```bash
+codex mcp add nanogpt --env NANOGPT_API_KEY=YOUR_API_KEY -- npx -y @nanogpt/mcp
+```
 
 ### IDE Integration
 
@@ -73,43 +79,31 @@ The server is configured via environment variables.
 
 ## Available Tools
 
-The MCP server exposes several tools that your AI agent can use:
+| Area | Tools |
+|------|-------|
+| Account | `nanogpt_get_balance` |
+| Text | `nanogpt_chat`, `nanogpt_vision`, `nanogpt_embeddings`, `nanogpt_ai_detection` |
+| Images | `nanogpt_image_generate`, `nanogpt_image_edit`, `nanogpt_ai_qr` |
+| Video | `nanogpt_video_generate` |
+| 3D | `nanogpt_3d_generate` |
+| Audio | `nanogpt_text_to_speech`, `nanogpt_music_generate`, `nanogpt_audio_transcribe` |
+| Web and research | `nanogpt_web_search`, `nanogpt_scrape_urls`, `nanogpt_firecrawl`, `nanogpt_youtube_transcribe`, `nanogpt_x_research`, `nanogpt_hunter` |
+| Social and maps data | `nanogpt_reddit`, `nanogpt_google_maps_scrape`, `nanogpt_google_maps_reviews_scrape`, `nanogpt_facebook_ads`, `nanogpt_facebook_posts_scrape`, `nanogpt_instagram_profile`, `nanogpt_instagram_posts_scrape`, `nanogpt_instagram_reels`, `nanogpt_linkedin_profile`, `nanogpt_tiktok_scrape` |
+| Model catalogs (free) | `nanogpt_list_text_models`, `nanogpt_list_image_models`, `nanogpt_list_video_models`, `nanogpt_list_3d_models`, `nanogpt_list_audio_models` |
 
-- **`chat`**: Send messages to any model supported by NanoGPT.
-- **`image-generation`**: Generate images using models like Flux, DALL-E 3, etc.
-- **`web-search`**: Search the web and get back clean, LLM-friendly results.
-- **`scrape-urls`**: Extract content from one or more websites.
-- **`youtube-transcribe`**: Get transcripts from YouTube videos.
-- **`balance`**: Check your current NanoGPT account balance.
-- **`list-models`**: List available text, image, audio, or video models.
-- **`vision`**: Analyze images using vision-capable models.
+Each tool describes its parameters to your agent through MCP, so the agent can call it without reading the API documentation. The source code is on [GitHub](https://github.com/Nano-GPT-com/nanogpt-mcp).
 
-## Tool Parameters
+See the [MCP integration guide](/integrations/mcp#tool-reference) for parameters and examples.
 
-### `chat`
+## Video and 3D Generation
 
-- `messages` (required): Array of message objects (`role` + `content`)
-- `model` (optional): Model ID to use for the request
-- `temperature` (optional): Sampling temperature
-- `max_tokens` (optional): Maximum tokens in the response
+Video and 3D jobs run asynchronously and usually take between 30 seconds and several minutes:
 
-### `image-generation`
+- `operation: "submit_and_poll"` submits the job and waits up to `timeout_ms` (default 50 seconds) for the result. A finished job returns the video or GLB URL. The wait includes the submit request, but a submission that is still in progress is never cut short (aborting it could lose a job that was already accepted), so an unusually slow submission can take longer than `timeout_ms`.
+- If the job is still running, the result contains its `runId`. Call the tool again with `operation: "poll"` and that `runId` to keep waiting, or `operation: "status"` for a single check.
+- `operation: "submit"` only submits the job.
 
-- `prompt` (required): Text description of the image to generate
-- `model` (optional): Image model ID
-- `n` (optional): Number of images to generate (1–10)
-- `size` (optional): Dimensions (e.g., `1024x1024`)
-- `quality` (optional): Quality setting (model-dependent)
-
-### `web-search`
-
-- `query` (required): Search query string
-- `depth` (optional): `standard` or `deep`
-- `fromDate` / `toDate` (optional): Date range filter (`YYYY-MM-DD`)
-
-### `youtube-transcribe`
-
-- `urls` (required): Array of YouTube URLs (up to 10 per request)
+Many MCP clients stop a tool call after 60 seconds, so keep `timeout_ms` below your client's tool timeout and continue long jobs with `poll`. A job is charged when it is submitted, so poll instead of submitting it again.
 
 ## Resources
 
@@ -117,12 +111,13 @@ Resources allow agents to "read" data stored by the server. NanoGPT MCP provides
 
 - **`nanogpt://raw/{id}`**: Access the raw JSON response from a previous API call.
 - **`nanogpt://image/{id}`**: Access an image generated during the session.
+- **`nanogpt://media/{id}`**: Access generated audio or other media from the session.
 
 ## Cost & Billing
 
 - Paid tools deduct from your NanoGPT account balance.
 - Model listing operations are complimentary.
-- Failed requests (timeouts, errors) are not charged.
+- Video and 3D jobs are charged when submitted; use `poll` to keep waiting instead of submitting again.
 
 ## Troubleshooting
 
@@ -134,7 +129,7 @@ Resources allow agents to "read" data stored by the server. NanoGPT MCP provides
 
 ### Timeouts for long operations
 
-Increase the timeout for web search or large jobs with `NANOGPT_TIMEOUT_MS`:
+For video and 3D jobs, keep `timeout_ms` below your MCP client's tool-call timeout (often 60 seconds) and continue with `operation: "poll"`. For slow web searches or other large requests, increase the HTTP timeout with `NANOGPT_TIMEOUT_MS`:
 
 ```json
 {
@@ -168,6 +163,6 @@ node --version
 
 1. Get your API key from the [NanoGPT API dashboard](https://nano-gpt.com/api).
 2. Configure your MCP client (like Claude Desktop) with the server settings.
-3. Start chatting with your agent and ask it to "Search the web for..." or "Generate an image of...".
+3. Start chatting with your agent and ask it to "Search the web for...", "Generate an image of...", "Make a 5 second video of..." or "Create a 3D model of...".
 
 For more details on specific models and pricing, visit the [Pricing Page](/api-reference/miscellaneous/pricing).
