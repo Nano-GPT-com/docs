@@ -73,6 +73,19 @@ print(f"Embedding has {len(embedding)} dimensions")
 | `gemini-embedding-001` | General | 3072 | $0.15 |
 | `doubao-embedding-large-text-240915` | General | 4096 | $0.10 |
 
+### Zero Data Retention (ZDR)
+
+When ZDR-only routing is on for your account, API key, or team, embedding requests are accepted only for models with a Zero Data Retention route:
+
+- `Qwen/Qwen3-Embedding-0.6B`
+- `Qwen/Qwen3-Embedding-4B`
+- `qwen/qwen3-embedding-8b`
+- `BAAI/bge-m3`
+- `BAAI/bge-large-en-v1.5`
+- `BAAI/bge-base-en-v1.5`
+
+These requests use only providers that declare zero data retention. Other embedding models, including the OpenAI and Gemini models, return HTTP 400 with code `zero_data_retention` while ZDR-only routing is on. Without ZDR-only routing, ZDR-capable models may also be served by providers that retain data. [`GET /api/v1/embedding-models`](/api-reference/endpoint/embedding-models) reports this as `zero_data_retention` on each model.
+
 ## API Endpoints
 
 ### Create Embeddings
@@ -393,6 +406,7 @@ Rate limits vary by endpoint and account. See [Rate Limits](/api-reference/misce
 |------|-------------|----------|
 | 401 | Invalid or missing API key | Check your API key |
 | 400 | Invalid request parameters | Verify model name and input format |
+| 400 (`zero_data_retention`) | ZDR-only routing is on and the model has no Zero Data Retention route | Use a model with `zero_data_retention: true` |
 | 429 | Rate limit exceeded | Implement exponential backoff |
 | 500 | Server error | Retry with exponential backoff |
 

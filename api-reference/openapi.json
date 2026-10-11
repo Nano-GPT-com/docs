@@ -11335,6 +11335,11 @@
                   "description": "Maximum input tokens supported",
                   "example": 8191
                 },
+                "zero_data_retention": {
+                  "type": "boolean",
+                  "description": "Whether the model accepts requests while ZDR-only routing is on. Those requests use only providers that declare zero data retention.",
+                  "example": false
+                },
                 "pricing": {
                   "type": "object",
                   "required": ["per_million_tokens", "currency"],

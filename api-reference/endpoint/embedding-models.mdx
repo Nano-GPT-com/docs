@@ -37,6 +37,7 @@ Returns a list of all available embedding models with comprehensive details:
       "max_dimensions": 1536,
       "supports_dimensions": true,
       "max_tokens": 8191,
+      "zero_data_retention": false,
       "pricing": {
         "per_million_tokens": 0.02,
         "currency": "USD"
@@ -53,6 +54,7 @@ Returns a list of all available embedding models with comprehensive details:
       "max_dimensions": 3072,
       "supports_dimensions": true,
       "max_tokens": 8191,
+      "zero_data_retention": false,
       "pricing": {
         "per_million_tokens": 0.13,
         "currency": "USD"
@@ -69,6 +71,7 @@ Returns a list of all available embedding models with comprehensive details:
       "max_dimensions": 1024,
       "supports_dimensions": false,
       "max_tokens": 8192,
+      "zero_data_retention": true,
       "pricing": {
         "per_million_tokens": 0.01,
         "currency": "USD"
@@ -93,6 +96,7 @@ Returns a list of all available embedding models with comprehensive details:
 | `max_dimensions` | number | Maximum embedding vector dimensions supported |
 | `supports_dimensions` | boolean | Whether custom dimensions are supported |
 | `max_tokens` | number | Maximum input tokens supported |
+| `zero_data_retention` | boolean | Whether the model accepts requests while ZDR-only routing is on. Those requests use only providers that declare zero data retention. |
 | `pricing` | object | Pricing information object |
 
 ### Pricing Object Structure
