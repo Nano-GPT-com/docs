@@ -52,7 +52,7 @@ Completions, embeddings, image generation, audio, video, transcription, TTS, mod
 
 `/v1/chat/completions` batches support OpenAI, Claude, and Gemini models, and open-source models such as `openai/gpt-oss-120b`, `moonshotai/kimi-k3`, `z-ai/glm-5.2`, and `deepseek/deepseek-v4-pro`. Always submit the canonical NanoGPT model slug; upstream routing is handled automatically.
 
-Open-source model rows run through NanoGPT's normal routing, one request at a time, so they behave like synchronous requests: they cost the same or less, can choose a provider with the request's `provider` field, and accept `tools` and `response_format`. They do not accept NanoGPT add-ons such as web search, scraping, memory, characters, or BYOK, and every token limit they set must be greater than 0. Rows for OpenAI, Claude, and Gemini models run on the upstream batch API and do not accept `tools`, `functions`, `response_format`, or `structured_outputs`.
+Open-source model rows run through NanoGPT's normal routing as individual requests, started at about one row per second, so they behave like synchronous requests: they cost the same or less, can choose a provider with the request's `provider` field, and accept `tools` and `response_format`. They do not accept NanoGPT add-ons such as web search, scraping, memory, characters, or BYOK, and every token limit they set must be greater than 0. Rows for OpenAI, Claude, and Gemini models run on the upstream batch API and do not accept `tools`, `functions`, `response_format`, or `structured_outputs`.
 
 The `:thinking` suffix is accepted where a thinking variant is configured. Claude thinking aliases are also accepted for compatible models; a numeric thinking budget must be lower than `max_tokens`.
 
