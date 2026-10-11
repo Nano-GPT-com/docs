@@ -50,25 +50,9 @@ Completions, embeddings, image generation, audio, video, transcription, TTS, mod
 
 ### Chat Completions batches
 
-`/v1/chat/completions` batches support selected OpenAI, Claude, Gemini, and additional models. Always submit the canonical NanoGPT model slug; upstream routing is handled automatically.
+`/v1/chat/completions` batches support OpenAI, Claude, and Gemini models, and open-source models such as `openai/gpt-oss-120b`, `moonshotai/kimi-k3`, `z-ai/glm-5.2`, and `deepseek/deepseek-v4-pro`. Always submit the canonical NanoGPT model slug; upstream routing is handled automatically.
 
-Supported canonical model slugs include:
-
-- `deepseek/deepseek-v4-pro`
-- `z-ai/glm-5.2`
-- `openai/gpt-oss-120b`
-- `openai/gpt-oss-20b`
-- `thinkingmachines/inkling`
-- `moonshotai/kimi-k2.6`
-- `moonshotai/kimi-k2.7-code`
-- `moonshotai/kimi-k3`
-- `minimax/minimax-m2.7`
-- `minimax/minimax-m3`
-- `meta/muse-glimmer-30b`
-- `nvidia/nemotron-3.5-lightning`
-- `nvidia/nemotron-3-ultra-550b-a55b`
-- `qwen-3.6-plus`
-- `qwen3.7-plus`
+Open-source model rows run through NanoGPT's normal routing, one request at a time, so they behave like synchronous requests: they cost the same or less, can choose a provider with the request's `provider` field, and accept `tools` and `response_format`. They do not accept NanoGPT add-ons such as web search, scraping, memory, characters, or BYOK, and every token limit they set must be greater than 0. Rows for OpenAI, Claude, and Gemini models run on the upstream batch API and do not accept `tools`, `functions`, `response_format`, or `structured_outputs`.
 
 The `:thinking` suffix is accepted where a thinking variant is configured. Claude thinking aliases are also accepted for compatible models; a numeric thinking budget must be lower than `max_tokens`.
 
@@ -416,7 +400,11 @@ Remote HTTP(S) image URLs and image data URLs are accepted. Structured output th
 
 Batch jobs use NanoGPT account balance and do not use subscription included tokens. At creation, NanoGPT checks the balance against a conservative maximum-liability estimate based on the input and output caps. Completed usage is charged once after the batch reaches a terminal state. If there is no billable usage, no usage charge is created.
 
-Supported batch token usage is priced 50% below the equivalent synchronous request. Non-token charges, where supported, keep their normal rate. Use the live pricing page or pricing API as the source of truth.
+- **OpenAI, Claude, and Gemini models, and some fine-tuned models:** token usage is priced 50% below the equivalent synchronous request. Non-token charges, where supported, keep their normal rate.
+- **Other open-source models:** each row is charged exactly what the same synchronous request costs, including the automatic routing price, your subscriber discount, and the price of any provider you select. Rows are priced in USD, and a batch never costs more than the amount reserved when it was created.
+- **Open-source models with a batch price:** some models, such as `moonshotai/kimi-k3`, have a lower batch price for rows that use automatic routing. An alias such as `moonshotai/kimi-latest` uses the batch price of the model it points to. A row that sets `provider` pays that provider's normal price instead. A row never costs more than the same synchronous request.
+
+Each model page shows its Batch API price. Use the live pricing page or pricing API as the source of truth.
 
 ## Common errors
 
