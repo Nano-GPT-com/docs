@@ -64,7 +64,7 @@ Returns a list of all available embedding models with comprehensive details:
       "id": "BAAI/bge-m3",
       "object": "model",
       "created": 1754480583,
-      "owned_by": "baai",
+      "owned_by": "nanogpt",
       "name": "BGE M3",
       "description": "Multilingual embedding model with excellent performance across languages",
       "dimensions": 1024,
@@ -89,7 +89,7 @@ Returns a list of all available embedding models with comprehensive details:
 | `id` | string | Unique model identifier to use in embedding requests |
 | `object` | string | Always "model" for OpenAI compatibility |
 | `created` | number | Unix timestamp of response creation |
-| `owned_by` | string | Model provider (openai, baai, jina, etc.) |
+| `owned_by` | string | `openai` for OpenAI models, otherwise `nanogpt` |
 | `name` | string | Human-readable model name |
 | `description` | string | Detailed model description and use cases |
 | `dimensions` | number | Default embedding vector dimensions |
@@ -117,26 +117,17 @@ High-quality embeddings with dimension reduction support:
 ### Multilingual Models
 Support for multiple languages:
 - `BAAI/bge-m3` - Excellent multilingual support
-- `jina-clip-v1` - Multimodal CLIP embeddings
 
 ### Language-Specific Models
 Optimized for specific languages:
-- English: `BAAI/bge-base-en-v1.5`, `BAAI/bge-large-en-v1.5`, `jina-embeddings-v2-base-en`
-- Chinese: `BAAI/bge-large-zh-v1.5`, `jina-embeddings-v2-base-zh`, `zhipu-embedding-2`
-- German: `jina-embeddings-v2-base-de`
-- Spanish: `jina-embeddings-v2-base-es`
+- English: `BAAI/bge-base-en-v1.5`, `BAAI/bge-large-en-v1.5`
 
 ### Specialized Models
 Domain-specific embeddings:
-- `jina-embeddings-v2-base-code` - Optimized for code
-- `Baichuan-Text-Embedding` - General purpose
 - `Qwen/Qwen3-Embedding-0.6B` - Efficient with dimension reduction
 - `Qwen/Qwen3-Embedding-4B` - Higher quality Qwen embeddings
 - `Qwen/Qwen3-Embedding-8B` - Long-context Qwen embeddings
-- `BAAI/bge-reranker-large` - Reranking model
-- `jina-embeddings-v3` / `jina-embeddings-v4` - Newer Jina embedding models
 - `gemini-embedding-001` - Gemini embeddings
-- `doubao-embedding-large-text-240915` - High-dimensional embeddings (4096 dims)
 
 ## Usage Examples
 
@@ -186,7 +177,7 @@ console.log("Models with dimension reduction:", flexibleModels.map(m => m.id));
 | General English text | `text-embedding-3-small` | Best price/performance ratio |
 | Maximum accuracy | `text-embedding-3-large` | Highest quality embeddings |
 | Multilingual content | `BAAI/bge-m3` | Excellent cross-language performance |
-| Code embeddings | `jina-embeddings-v2-base-code` | Specialized for programming languages |
+| Code embeddings | `qwen/qwen3-embedding-8b` | Strong code retrieval with a 32K-token context |
 | Budget-conscious | `BAAI/bge-large-en-v1.5` | $0.01/1M tokens |
-| Chinese content | `BAAI/bge-large-zh-v1.5` | Optimized for Chinese |
+| Chinese content | `BAAI/bge-m3` | Strong Chinese and multilingual retrieval |
 | Fast similarity search | Models with `supports_dimensions: true` | Can reduce dimensions for speed |

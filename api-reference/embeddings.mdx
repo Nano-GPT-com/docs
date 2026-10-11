@@ -44,34 +44,20 @@ print(f"Embedding has {len(embedding)} dimensions")
 | Model | Dimensions | Price/1M tokens | Description |
 |-------|------------|-----------------|-------------|
 | `BAAI/bge-m3` | 1024 | $0.01 | Excellent multilingual support |
-| `jina-clip-v1` | 768 | $0.04 | Multimodal CLIP embeddings |
 
 #### Language-Specific Models
 | Model | Language | Dimensions | Price/1M tokens |
 |-------|----------|------------|-----------------|
-| `BAAI/bge-base-en-v1.5` | English | 768 | $0.01 |
+| `BAAI/bge-base-en-v1.5` | English | 768 | $0.005 |
 | `BAAI/bge-large-en-v1.5` | English | 1024 | $0.01 |
-| `BAAI/bge-large-zh-v1.5` | Chinese | 1024 | $0.01 |
-| `jina-embeddings-v2-base-en` | English | 768 | $0.05 |
-| `jina-embeddings-v2-base-de` | German | 768 | $0.05 |
-| `jina-embeddings-v2-base-zh` | Chinese | 768 | $0.05 |
-| `jina-embeddings-v2-base-es` | Spanish | 768 | $0.05 |
 
 #### Specialized Models
 | Model | Use Case | Dimensions | Price/1M tokens |
 |-------|----------|------------|-----------------|
-| `BAAI/bge-reranker-large` | Reranking | 1024 | $0.01 |
-| `jina-embeddings-v2-base-code` | Code | 768 | $0.05 |
-| `Baichuan-Text-Embedding` | General | 1024 | $0.088 |
-| `netease-youdao/bce-embedding-base_v1` | General | 1024 | $0.02 |
-| `zhipu-embedding-2` | Chinese | 1024 | $0.07 |
 | `Qwen/Qwen3-Embedding-0.6B` | General | 1024 | $0.01 |
-| `Qwen/Qwen3-Embedding-4B` | General | 1536 | $0.03 |
-| `Qwen/Qwen3-Embedding-8B` | General | 1536 | $0.05 |
-| `jina-embeddings-v3` | General | 1024 | $0.10 |
-| `jina-embeddings-v4` | General | 2048 | $0.10 |
+| `Qwen/Qwen3-Embedding-4B` | General | 2560 | $0.02 |
+| `Qwen/Qwen3-Embedding-8B` | General | 4096 | $0.01 |
 | `gemini-embedding-001` | General | 3072 | $0.15 |
-| `doubao-embedding-large-text-240915` | General | 4096 | $0.10 |
 
 ### Zero Data Retention (ZDR)
 
@@ -286,9 +272,9 @@ def find_duplicates(texts, threshold=0.95):
 | General English text | `text-embedding-3-small` | Best price/performance ratio |
 | Maximum accuracy | `text-embedding-3-large` | Highest quality embeddings |
 | Multilingual content | `BAAI/bge-m3` | Excellent cross-language performance |
-| Code embeddings | `jina-embeddings-v2-base-code` | Specialized for programming languages |
+| Code embeddings | `qwen/qwen3-embedding-8b` | Strong code retrieval with a 32K-token context |
 | Budget-conscious | `BAAI/bge-large-en-v1.5` | Just $0.01/1M tokens |
-| Chinese content | `BAAI/bge-large-zh-v1.5` | Optimized for Chinese |
+| Chinese content | `BAAI/bge-m3` | Strong Chinese and multilingual retrieval |
 | Fast similarity search | Models with dimension reduction | Can reduce dimensions for speed |
 
 ### By Requirements
@@ -305,11 +291,11 @@ def find_duplicates(texts, threshold=0.95):
 
 **Processing many languages?**
 - Use `BAAI/bge-m3` for general multilingual
-- Use language-specific Jina models for best per-language performance
+- Use `qwen/qwen3-embedding-8b` for higher-quality multilingual retrieval
 
 **Working with code?**
-- Use `jina-embeddings-v2-base-code`
-- Optimized for programming language semantics
+- Use `qwen/qwen3-embedding-8b`
+- Strong code retrieval with a 32K-token context
 
 ## Best Practices
 
@@ -446,12 +432,11 @@ client = OpenAI(
 
 | Price Range | Models | Best For |
 |-------------|---------|----------|
-| $0.01/1M | BAAI models, Qwen | Budget applications |
-| $0.02/1M | text-embedding-3-small, netease-youdao | Balanced performance |
-| $0.04-0.05/1M | Jina models | Specialized use cases |
-| $0.07-0.088/1M | zhipu, Baichuan | Specific requirements |
+| $0.005-0.02/1M | BAAI models, Qwen3 | Budget applications |
+| $0.02/1M | text-embedding-3-small | Balanced performance |
 | $0.10/1M | ada-002 | Legacy compatibility |
 | $0.13/1M | text-embedding-3-large | Maximum performance |
+| $0.15-0.20/1M | Gemini embeddings | Image input with Gemini Embedding 2 |
 
 ## Additional Resources
 
