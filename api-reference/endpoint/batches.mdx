@@ -71,8 +71,10 @@ Responses rows support function and custom tools, structured text output, and re
 ### Endpoints
 
 - `POST /files`
+- `GET /files`
 - `GET /files/{file_id}`
 - `GET /files/{file_id}/content`
+- `DELETE /files/{file_id}`
 - `POST /batches`
 - `GET /batches`
 - `GET /batches/{batch_id}`
@@ -148,6 +150,22 @@ curl https://api.nano-gpt.com/api/v1/files/file_output123/content \
 ```
 
 Batch statuses are `validating`, `in_progress`, `finalizing`, `completed`, `failed`, `expired`, `cancelling`, and `cancelled`. A completed batch normally has an `output_file_id`; row failures may also produce an `error_file_id`.
+
+### List and delete files
+
+Uploaded input files count toward a staged storage allowance of 1 GiB and 100 files per API key until a batch starts from them. An upload that would exceed it returns `429` with `batch_file_storage_quota_exceeded` and the space in use. Delete input files you no longer need, and output or error files you have downloaded:
+
+```bash
+# List files, newest first (purpose, limit 1-10000, order asc|desc, after=<last_id>)
+curl "https://api.nano-gpt.com/api/v1/files?purpose=batch&limit=100" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+
+# Delete a file
+curl -X DELETE https://api.nano-gpt.com/api/v1/files/file_abc123 \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
+```
+
+The list follows the OpenAI format (`object`, `data`, `first_id`, `last_id`, `has_more`), so `client.files.list()` and `client.files.delete()` in the OpenAI SDKs work with these routes. Deletion returns `{"id": "file_abc123", "object": "file", "deleted": true}` and removes the file's stored content; batches keep the file ID, but the file can no longer be retrieved, downloaded, or used to create a batch. A file used by a batch that is still running or settling returns `409` with `file_in_use`; retry after the batch finishes, or cancel it first. Files of inline batches and native Message Batches stay with their batch and also return `409`.
 
 ## Inline API
 
