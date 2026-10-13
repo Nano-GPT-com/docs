@@ -133,7 +133,7 @@ For [inline reasoning effort updates](/api-reference/miscellaneous/inline-reason
 | `advisor` | object | No | NanoGPT extension that lets the executor consult one different, client-selected model. Initially limited to non-streaming, pay-as-you-go API-key requests. See [Advisor](/api-reference/miscellaneous/advisor). |
 | `instructions` | string | No | System instructions for the model |
 | `max_output_tokens` | integer | No | Maximum tokens in the response (minimum: 16) |
-| `max_tool_calls` | integer | No | Maximum number of tool calls allowed |
+| `max_tool_calls` | integer | No | Maximum number of built-in tool calls, such as web searches and page opens, in one response. Support depends on the route. On GPT and o-series models with built-in tools such as `{ "type": "web_search" }`, calls past the cap are not run or billed; requests that use an `:online` suffix instead ignore it |
 | `temperature` | number | No | Sampling temperature (0-2). If omitted, NanoGPT does not force a value and the routed provider/model default applies (OpenAI defaults to 1.0). Not supported by reasoning-capable models |
 | `top_p` | number | No | Nucleus sampling parameter. Not supported by reasoning-capable models |
 | `presence_penalty` | number | No | Presence penalty for sampling (-2.0 to 2.0) |

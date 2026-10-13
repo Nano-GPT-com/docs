@@ -49,7 +49,7 @@ CORE CONCEPTS
 
 GLOSSARY
 - Linkup search: NanoGPT web search triggered by :online suffix; prepends fresh results and bills $0.006 (standard) or $0.06 (deep).
-- Native search: the model's own built-in web search; billed per search ($0.01 GPT and Claude, $0.014 Gemini, $0.005 Grok) plus model tokens.
+- Native search: the model's own built-in web search; billed per search ($0.01 GPT and Claude, $0.014 Gemini, $0.005 Grok) plus model tokens, including the search results it reads. On direct OpenAI routes, including GPT-5+ and o-series native search on chat completions, max_tool_calls caps built-in tool calls; /v1/responses requests converted to chat completions (such as an :online suffix) discard it. Page opens are not billed as searches.
 - Data API endpoint IDs: stable tool IDs such as web.search, url.scrape, google_maps.search, reddit.scrape, x.read, and hunter.domain_search for dynamic clients that choose data tools at runtime.
 - Sofya: web search with extracted page content via :online/sofya ($0.01575); POST /api/web also supports Sofya search, URL fetch, field extraction, and multi-source research operations.
 - Polychat memory: hierarchical compression invoked by :memory suffix or memory header; stores 1-365 day summaries and replaces conversation history.

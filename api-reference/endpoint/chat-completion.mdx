@@ -69,6 +69,7 @@ Use the jump list below to navigate the long-form reference quickly.
   <Accordion title="Web search">
     - [Web Search](#web-search)
     - [Native search](#native-search)
+    - [Limit native search](#limit-native-search)
     - [Option A: model suffixes](#option-a-model-suffixes)
     - [Option B: request body configuration](#option-b-request-body-configuration-recommended)
     - [Option C: OpenAI web_search_options](#option-c-openai-web_search_options)
@@ -124,6 +125,7 @@ The `/api/v1/chat/completions` endpoint supports OpenAI-compatible function call
 - `tools` (optional array): Each entry must be `{ "type": "function", "function": { "name": string, "description"?: string, "parameters"?: JSON-Schema object } }`. Only `function` tools are accepted. The serialized `tools` payload is limited to 200 KB (overrides via `TOOL_SPEC_MAX_BYTES`); violating the shape or size yields a 400 with `tool_spec_too_large`, `invalid_tool_spec`, or `invalid_tool_spec_parse`.
 - `tool_choice` (optional string or object): Defaults to `auto`. Set `"none"` to guarantee no tool calls (the server also drops the `tools` payload upstream), `"required"` to force the next response to be a tool call, or `{ "type": "function", "function": { "name": "your_function" } }` to pin the exact function.
 - `parallel_tool_calls` (optional boolean): When `true` the flag is forwarded to providers that support issuing multiple tool calls in a single turn. Models that ignore the flag fall back to sequential calls.
+- `max_tool_calls` (optional integer): Caps the built-in tool calls, such as [native web search](#limit-native-search), that the model makes in one response. It applies to requests NanoGPT sends to OpenAI's Responses API, which includes GPT-5+ and o-series native search; other routes ignore it.
 - `messages[].tool_calls` (assistant role): Persist the tool call metadata returned by the model so future turns can see which functions were invoked. Each item uses the OpenAI shape `{ id, type: "function", function: { name, arguments } }`.
 - `messages[]` with `role: "tool"`: Respond to the model by sending `{ "role": "tool", "tool_call_id": "<assistant tool_calls id>", "content": "<JSON or text payload>" }`. The server drops any tool response that references an unknown `tool_call_id`, so keep the IDs in sync.
 - Validation behavior: If you send `tool_choice: "none"` with a `tools` array the request is accepted but the tools are omitted before hitting the model; invalid schemas or oversize payloads return the error codes above.
@@ -584,8 +586,27 @@ Native search uses the model's own built-in web search instead of a separate sea
 - If you request native search on a model without it, the request searches with the suffix's provider or Linkup instead.
 - Native requests on Claude, Gemini, or Grok can fail with `400` and code `native_web_search_unavailable` when your provider restrictions leave no route that can run native search. On GPT models, such restrictions can instead leave the request answering without a search.
 - With your own provider keys (BYOK), native search runs on OpenAI keys (GPT and o-series models) and Anthropic keys (Claude). The searches are billed to your provider account, not by NanoGPT. Other BYOK routes use Linkup instead. On Anthropic, an organization admin can turn web search off; requests then fail with Anthropic's `400` error.
-- The model decides how many searches to run. On Claude, NanoGPT normally caps this at 2 (`low`), 3 (`medium`, the default), or 5 (`high`) searches per request, and skips native search when `tool_choice` is `none` or when you define your own function named `web_search`.
-- Searches are billed at the native rate (see [Pricing by provider](#pricing-by-provider)) using the count the model reports. Where a route reports no count, NanoGPT may bill an estimate: 1 search for `low`, 2 otherwise.
+- The model decides how many searches to run. GPT-5+ and o-series models have no default limit; set `max_tool_calls` to cap them (see [Limit native search](#limit-native-search)). On Claude, NanoGPT normally caps this at 2 (`low`), 3 (`medium`, the default), or 5 (`high`) searches per request, and skips native search when `tool_choice` is `none` or when you define your own function named `web_search`.
+- Each search the model runs is billed once at the native rate (see [Pricing by provider](#pricing-by-provider)), even when it covers several queries. On GPT-5+ and o-series models, NanoGPT does not bill opening a page, searching within a page, or calls stopped by `max_tool_calls`, and waives the search fee when the answer shows no source links. With your own OpenAI key (BYOK), OpenAI bills the searches to your account instead. Where a route reports no count, NanoGPT may bill an estimate: 1 search for `low`, 2 otherwise.
+- The search results are added to the model's input and billed at the model's input token rate, on top of the search fees. On larger models this is often most of the cost: a GPT-5.5 answer that searches several times can read tens of thousands of input tokens.
+
+#### Limit native search
+
+On GPT-5+ and o-series models, the top-level `max_tool_calls` field caps how many built-in tool calls the model can make while answering. Searches, page opens, and searches within a page all count toward the cap. Once it is reached, the model answers with what it has found; further calls are not run and not billed.
+
+The cap applies when NanoGPT sends the request straight to OpenAI, which is the usual route for these models, including with your own OpenAI key (BYOK). Requests that NanoGPT reroutes, such as Auto Model or a fallback attempt, may not apply it.
+
+```json
+{
+  "model": "openai/gpt-5.5:online",
+  "max_tool_calls": 3,
+  "messages": [
+    { "role": "user", "content": "Which commercial cleaning companies in Leeds would you recommend?" }
+  ]
+}
+```
+
+`max_tool_calls` has no effect on Claude, Gemini, or Grok native search; on Claude, `search_context_size` sets the cap. For a fixed search fee per request, use another provider, such as `:online/linkup`; model token charges still apply.
 
 If you need full direct control over the search call itself (`query`, `outputType`, date/domain filters, or structured schema output), use [Direct Web Search API (`POST /api/web`)](/api-reference/endpoint/web-search).
 
@@ -916,7 +937,7 @@ curl -X POST https://nano-gpt.com/api/v1/chat/completions \
 | Brave | $0.005 | $0.005 | Flat rate |
 | Sofya | $0.01575 | N/A | Extracted page content; standard depth only |
 | Firecrawl | ~$0.0105 | ~$0.018 | $0.0015 per Firecrawl credit used; standard is about 7 credits, deep about 12 |
-| Native | Per search + tokens | N/A | GPT and Claude $0.01, Gemini $0.014, Grok $0.005 per search, plus model token costs |
+| Native | Per search + tokens | N/A | GPT and Claude $0.01, Gemini $0.014, Grok $0.005 per search, plus model token costs. Cap GPT searches with `max_tool_calls` |
 
 For standard NanoGPT usage, provider credentials are handled automatically.
 

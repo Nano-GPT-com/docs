@@ -6887,6 +6887,10 @@
               }
             }
           },
+          "max_tool_calls": {
+            "type": "integer",
+            "description": "Maximum number of built-in tool calls, such as native web searches, page opens and searches within a page, the model can make in one response. Applies to requests NanoGPT sends to OpenAI's Responses API, including GPT-5+ and o-series native search and your own OpenAI key (BYOK); calls past the cap are not run or billed. Other routes, and rerouted requests such as Auto Model, ignore it."
+          },
           "prompt_caching": {
             "type": "object",
             "description": "Helper to tag leading messages for explicit prompt-caching control (primarily Claude flows). Providers with implicit caching support (including OpenAI, Gemini, and many open-source provider routes) do not require this helper. NanoGPT injects cache_control blocks on each message up to the specified index before forwarding upstream. If cut_after_message_index is omitted, NanoGPT selects a cache boundary automatically.",
