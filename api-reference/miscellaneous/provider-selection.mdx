@@ -74,6 +74,13 @@ Example response:
     {
       "provider": "novita",
       "available": true,
+      "maxInputTokens": 262144,
+      "maxOutputTokens": 262144,
+      "features": {
+        "toolCalling": true,
+        "imageInput": true,
+        "promptCaching": true
+      },
       "distillationPolicy": {
         "status": "allowed",
         "label": "License permits distillation",
@@ -102,6 +109,20 @@ Notes:
 - Use the exact value from `providers[].provider` in the `X-Provider` header.
 - Provider-specific `distillationPolicy` can differ from the model-level policy. Explicit provider restrictions override model-level allowances.
 - If a model is unsupported, the response includes `supportsProviderSelection: false`.
+
+### Provider row fields
+
+Optional fields are omitted when NanoGPT has no reliable value for that provider.
+
+| Field | Meaning |
+| --- | --- |
+| `maxInputTokens` | Context window on this provider, in tokens. |
+| `maxOutputTokens` | Largest output budget this provider accepts. A request whose `max_tokens` is larger skips this provider; see [output limits](#output-limits). |
+| `quantization` | Weight precision served by this provider, such as `fp8` or `bf16`. |
+| `tps` | Recent average output speed, in tokens per second. |
+| `ttftMs` | Recent average time to first token, in milliseconds. |
+| `features` | What a request can use through this provider: `toolCalling`, `structuredOutput`, `imageInput` and `promptCaching` booleans, `reasoningEfforts` (accepted `reasoning_effort` levels), and `reasoningAlwaysOn` (thinking cannot be turned off). A feature the model does not support is omitted. |
+| `uptime` | Recent success rate of requests on this model through this provider. `hourly` has one value per hour, oldest first, covering `windowHours` hours that end with the hour starting at `lastHourStart`. Each value is the percentage of attempts that succeeded, or `null` when the hour had too few requests to rate. `uptimePct` covers the whole window and is omitted when there were too few requests. Client errors, cancellations and requests NanoGPT stopped before contacting the provider do not count as failures. |
 
 ## Per-Request Provider Override
 
@@ -246,6 +267,7 @@ Examples:
 - `only` is hard. It restricts routing to the listed providers and disables internal fallback outside the pinned set.
 - `ignore` and `max_price` can resolve to a concrete provider. For direct provider routing, NanoGPT cannot represent "any provider except X" as a multi-provider pool. If filters like `ignore` or `max_price` are provided without `order` or `only`, NanoGPT resolves to one cheapest concrete provider that satisfies those filters. That is treated as explicit provider selection for billing and routing because the request changed the provider candidate set.
 - If `max_price` is provided without `order` or an explicit `sort`, NanoGPT treats it as a request for price-aware routing among providers that satisfy the cap. `only` does not prevent this inference; an `order` does.
+- The request's output budget (`max_tokens`, `max_completion_tokens` or `max_output_tokens`) is a hard routing constraint too; see [output limits](#output-limits).
 - Quantization filters are hard routing constraints. If no available provider satisfies the requested quantization, provider list, price, fallback, caching, and parameter constraints, the request may fail with a provider-availability error.
 - Per-request controls can change routing order, but saved hard restrictions still apply. Saved provider allowlists are intersected with request allowlists, exclusions remain excluded, and a saved fallback restriction is preserved. A request cannot broaden a saved allowlist by sending `order`, `only`, or `allow_fallbacks: true`.
 
@@ -307,6 +329,12 @@ You may combine exact and minimum filters. NanoGPT uses the overlap:
 If the filters do not overlap, the request is rejected as invalid. For example, `quantizations: ["fp4"]` with `min_quantization: "fp8"` is invalid because `fp4` is below the requested minimum.
 
 Use NanoGPT's canonical quantization values in API requests. Provider metadata may use different internal labels, but request parameters must use the supported canonical values listed above.
+
+### Output limits
+
+Providers can accept different maximum output budgets for the same model. A provider whose `maxOutputTokens` is lower than the request's `max_tokens`, `max_completion_tokens` or `max_output_tokens` is skipped, including under `sort: "price"` and `max_price` routing. NanoGPT does not lower your budget to fit a provider.
+
+For example, with `max_tokens: 131072`, a provider whose `maxOutputTokens` is `128000` is never chosen, even when it is the cheapest. To keep a provider eligible, send a budget at or below its `maxOutputTokens`, or omit `max_tokens`. Check `providers[].maxOutputTokens` from the [discovery endpoint](#discover-providers-and-pricing) before sending large budgets.
 
 ### Validation
 

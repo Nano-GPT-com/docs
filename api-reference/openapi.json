@@ -11808,6 +11808,87 @@
             "description": "Whether the provider is currently available",
             "example": true
           },
+          "maxInputTokens": {
+            "type": "integer",
+            "description": "Context window on this provider, in tokens",
+            "example": 262144
+          },
+          "maxOutputTokens": {
+            "type": "integer",
+            "description": "Largest output budget this provider accepts. Requests whose max_tokens, max_completion_tokens or max_output_tokens is larger skip this provider.",
+            "example": 131072
+          },
+          "quantization": {
+            "type": "string",
+            "description": "Weight precision served by this provider",
+            "example": "fp8"
+          },
+          "tps": {
+            "type": "number",
+            "description": "Recent average output speed, in tokens per second"
+          },
+          "ttftMs": {
+            "type": "number",
+            "description": "Recent average time to first token, in milliseconds"
+          },
+          "features": {
+            "type": "object",
+            "description": "What a request can use through this provider. A feature the model does not support is omitted.",
+            "properties": {
+              "toolCalling": {
+                "type": "boolean"
+              },
+              "structuredOutput": {
+                "type": "boolean"
+              },
+              "imageInput": {
+                "type": "boolean"
+              },
+              "promptCaching": {
+                "type": "boolean"
+              },
+              "reasoningEfforts": {
+                "type": "array",
+                "description": "Accepted reasoning_effort levels",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reasoningAlwaysOn": {
+                "type": "boolean",
+                "description": "Thinking cannot be turned off on this provider"
+              }
+            }
+          },
+          "uptime": {
+            "type": "object",
+            "description": "Recent success rate of requests on this model through this provider. Client errors, cancellations and requests stopped before contacting the provider do not count as failures.",
+            "required": ["hourly", "windowHours"],
+            "properties": {
+              "uptimePct": {
+                "type": "number",
+                "description": "Percentage of attempts that succeeded over the window; omitted when there were too few requests",
+                "example": 99.42
+              },
+              "hourly": {
+                "type": "array",
+                "description": "One value per hour, oldest first: the percentage of attempts that succeeded, or null when the hour had too few requests",
+                "items": {
+                  "type": ["number", "null"]
+                }
+              },
+              "windowHours": {
+                "type": "integer",
+                "description": "Hours covered by hourly",
+                "example": 72
+              },
+              "lastHourStart": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Start of the newest hour in hourly"
+              }
+            }
+          },
           "distillationPolicy": {
             "$ref": "#/components/schemas/DistillationPolicy"
           }
