@@ -17,7 +17,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 </Note>
 
 <Note>
-  If you are on a NanoGPT subscription and want to keep requests limited to subscription-included models (or you have no prepaid balance), use the subscription base URL: `https://nano-gpt.com/api/subscription/v1/chat/completions` (swap `/api/v1` for `/api/subscription/v1`).
+  The subscription base URL, `https://nano-gpt.com/api/subscription/v1/chat/completions` (swap `/api/v1` for `/api/subscription/v1`), is billed the same way as `/api/v1`: subscription-included models use your subscription, and requests it does not cover can be billed to your balance. To keep an API key limited to your subscription, save the key as **Subscription only** in its [billing mode](/api-reference/miscellaneous/billing-override#api-key-billing-settings); requests the subscription does not cover are then rejected instead of billed.
 </Note>
 
 <Note>
