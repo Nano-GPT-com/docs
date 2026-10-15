@@ -397,6 +397,24 @@ An eagerly loaded function catalog is part of the initial prompt prefix. Adding,
 
 On compatible Responses models, [hosted tool search](/api-reference/miscellaneous/hosted-tool-search) keeps a small search-tool definition in the initial prefix and reveals relevant functions later. This can reduce initial input tokens and improve the opportunity for cache reuse across catalog changes. It does not guarantee a cache hit: exact-prefix rules, minimum token thresholds, TTLs, and the selected model route still apply.
 
+### Gemini implicit caching
+
+Gemini caches automatically, but it does not reuse every shared prefix. In our tests with Gemini 4 Argon and Gemini 3.8 Flash, Google reused checkpoints from recent requests, and the results were the same on every route to Google we tried:
+
+- **Appending reuses everything.** When a request resends the previous request unchanged and adds the model's reply plus a new user message, the whole previous input is reused.
+- **An identical repeat reuses most of the prompt.** Expect all but roughly the last 2,000 tokens to be reported as cached.
+- **Rewriting the end of the previous request falls back to an earlier checkpoint.** If content near the end of the previous request changes, such as the previous assistant reply or a large block in the latest user message, reuse drops to an earlier checkpoint like the start of the previous request's final user message. A shared prefix followed by a different ending of several thousand tokens can get no reuse at all.
+- **Every system message counts as part of the opening instructions.** Gemini places all system messages in its system instruction, which comes before the conversation. Changing any system message, even one placed after the conversation history, invalidates the whole cached prefix.
+- **There is no explicit cache for Gemini 4 Argon.** Google supports only implicit caching for this model, and `cache_control` markers have no effect on it.
+
+To get consistent reuse with Gemini:
+
+- Keep every system message fixed across turns. Put per-turn instructions or notes at the end of the latest user message.
+- Build each request as an extension of the previous one: resend earlier messages exactly as sent, including the assistant reply exactly as the model returned it, and append the new turn.
+- Keep content that changes every turn small and at the end of the request.
+
+The first request with a new prefix is always uncached, and an individual request can occasionally miss even when it is identical to a recent one. Check `prompt_tokens_details.cached_tokens` over several turns rather than a single request.
+
 ## Cache Consistency with `stickyProvider` (Explicit Caching)
 
 Each provider keeps its own cache. If a request fails over to another provider, the previous cache may be unavailable.
@@ -429,3 +447,4 @@ In the NanoGPT web UI, models with explicit prompt-caching controls show a promp
 - Some models report aggregate prompt usage differently; use `cache_creation_input_tokens` and `cache_read_input_tokens` for authoritative cached token counts.
 - On cache hits, a small non-zero `cache_creation_input_tokens` can appear due to per-request overhead and does not necessarily indicate a cache miss.
 - Implicit caching behavior (eligibility, TTL behavior, and exact discounts) is provider-dependent.
+- Gemini 4 Argon supports implicit caching only. See [Gemini implicit caching](#gemini-implicit-caching) for the request shapes that reuse cached input.

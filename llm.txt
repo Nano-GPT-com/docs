@@ -343,6 +343,8 @@ Set top-level caching: true, or append :caching/:cache/:cached to the model, whe
 
 Use prompt_caching / promptCaching / cache_control (body-level alias) when you need explicit Claude cache controls.
 
+Gemini implicit caching reuses checkpoints from recent requests, not every shared prefix. Appending to the previous request (resending it unchanged, including the assistant reply exactly as returned) reuses the whole previous input; rewriting content near the end of the previous request falls back to an earlier checkpoint or no reuse. All system messages, wherever they appear, belong to Gemini's opening system instruction, so changing any system message invalidates the cached prefix: keep system messages fixed and put per-turn notes at the end of the latest user message. Gemini 4 Argon supports implicit caching only; cache_control markers have no effect on it.
+
 ```ts
 await client.chat.completions.create({
   model: 'model-id',
