@@ -36,10 +36,27 @@ Examples below include canonical IDs and public moving aliases; legacy compatibi
 - **Moonshot Kimi**: `moonshotai/kimi-k3`, `moonshotai/kimi-latest`
 - **Z.AI GLM**: `z-ai/glm-5.3`, `z-ai/glm-5.3:thinking`, `z-ai/glm-5.3-flash`
 - **Xiaomi MiMo**: `xiaomi/mimo-v2.5-pro`, `xiaomi/mimo-v2.5-pro:thinking`
-- **DeepSeek V4**: `deepseek/deepseek-v4.1-flash`, `deepseek/deepseek-v4-flash`, `deepseek/deepseek-latest`
+- **DeepSeek**: `deepseek/deepseek-v4.1-flash-1017`, `deepseek/deepseek-v4-flash-latest`, `deepseek/deepseek-latest`
 - **MiniMax**: `minimax/minimax-m3`, `minimax/minimax-latest`
 - **Qwen**: `qwen/qwen3.8-max`, `qwen/qwen3-coder-next`
 {/* AUTO-GENERATED: notable-model-ids:end */}
+
+### DeepSeek Flash Latest
+
+`deepseek/deepseek-v4-flash-latest` follows the current recommended Flash snapshot,
+DeepSeek V4.1 Flash 1017. Append `:thinking` to enable reasoning by default; the
+base alias defaults to non-thinking. Both remain included in subscriptions.
+
+The current snapshot accepts text and images, with a shared 1,048,576-token context
+window and up to 393,216 output tokens within the remaining context. JSON object
+output is supported; JSON Schema output and strict zero data retention are not
+currently available on this route.
+
+Standard prices per million tokens are $0.15 input, $0.60 output and $0.003 cached
+input off-peak, and $0.30, $1.20 and $0.006 during weekday peaks (01:00–04:00 and
+06:00–10:00 UTC). Read the detailed catalog's effective pricing for the current rate.
+For a fixed checkpoint and the older price/capability contract, select
+`deepseek/deepseek-v4-flash-0731` explicitly instead of the moving alias.
 
 ## Compatibility
 
