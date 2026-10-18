@@ -49,12 +49,17 @@ base alias defaults to non-thinking. Both remain included in subscriptions.
 
 The current snapshot accepts text and images, with a shared 1,048,576-token context
 window and up to 393,216 output tokens within the remaining context. JSON object
-output is supported; JSON Schema output and strict zero data retention are not
-currently available on this route.
+output is supported; JSON Schema output is not currently supported. Zero data
+retention is available on eligible routes. Output limits and supported reasoning
+levels depend on the selected route, so the model-wide maximum is not available
+on every provider.
 
-Standard prices per million tokens are $0.15 input, $0.60 output and $0.003 cached
-input off-peak, and $0.30, $1.20 and $0.006 during weekday peaks (01:00–04:00 and
-06:00–10:00 UTC). Read the detailed catalog's effective pricing for the current rate.
+Auto prices follow the current eligible routes and can differ from the snapshot's
+peak/off-peak schedule. Read `pricing` and `effective_pricing` in
+`/api/v1/models?detailed=true` for the current Auto tariff, or the model's
+[provider pricing](https://nano-gpt.com/api/models/deepseek%2Fdeepseek-v4-flash-latest/providers)
+for Auto prices by privacy mode and provider-specific prices. Selecting a provider
+can change the price, including any applicable schedule and provider-selection markup.
 For a fixed checkpoint and the older price/capability contract, select
 `deepseek/deepseek-v4-flash-0731` explicitly instead of the moving alias.
 
