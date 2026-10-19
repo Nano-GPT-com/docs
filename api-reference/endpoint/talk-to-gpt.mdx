@@ -13,6 +13,8 @@ The Talk to GPT endpoint is our legacy text generation API that also supports we
 
 The legacy endpoint supports the same model suffix parser for web search and provider routing as Chat Completions, but new integrations should use `/api/v1/chat/completions`. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
 
+API keys with spending or usage limits, a billing mode, a model allowlist or a provider allowlist can't use this endpoint. Requests with such a key return `403` with the error code `api_key_restrictions_unsupported`. Send them to `/api/v1/chat/completions`, which applies all of these settings. A key's PII redaction default applies here as it does on Chat Completions.
+
 The body `provider` field accepts either the existing provider ID string or a structured routing object with fields such as `order`, `only`, `ignore`, `sort`, `max_price`, `allow_fallbacks`, and `require_parameters`. See [Provider Selection > Provider Routing Object](/api-reference/miscellaneous/provider-selection#provider-routing-object).
 
 ## Web Search
