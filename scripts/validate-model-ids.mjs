@@ -14,6 +14,7 @@ const DOC_FILES = [
   'api-reference/miscellaneous/inline-reasoning-effort.mdx',
   'api-reference/miscellaneous/provider-selection.mdx',
   'api-reference/miscellaneous/pricing.mdx',
+  'api-reference/miscellaneous/prompt-caching.mdx',
 ];
 
 const MODEL_FAMILY_RE = /(gpt|claude|gemini|grok|kimi|glm|deepseek|qwen|hermes)/i;

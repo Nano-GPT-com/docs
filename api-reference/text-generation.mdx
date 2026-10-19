@@ -302,7 +302,7 @@ The `prompt_caching` / `promptCaching` helper accepts these options:
 #### Explicit `cache_control` markers
 
 ```python
-def chat_completion_with_prompt_cache(messages, model="anthropic/claude-sonnet-4.5"):
+def chat_completion_with_prompt_cache(messages, model="anthropic/claude-sonnet-5.5"):
     """
     Attach cache_control directly to the static prompt blocks you want reused.
     """
@@ -400,7 +400,7 @@ If cache consistency is more important than availability for your use case, you 
 
 ```json
 {
-  "model": "anthropic/claude-sonnet-4.5",
+  "model": "anthropic/claude-sonnet-5.5",
   "messages": [...],
   "prompt_caching": {
     "enabled": true,

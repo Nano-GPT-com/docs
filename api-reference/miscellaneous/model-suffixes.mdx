@@ -166,7 +166,7 @@ Rules:
 | --- | --- |
 | `:thinking` | Model-specific thinking/reasoning variant when that exact ID or documented alias exists. |
 | `-thinking` | Legacy alias pattern for some model families only, not universal. |
-| `:<number>` on Anthropic thinking IDs | Thinking budget suffix for mapped Anthropic thinking aliases, for example `claude-sonnet-4-thinking:8192`. |
+| `:<number>` on Anthropic thinking IDs | Thinking budget suffix for mapped Anthropic thinking aliases, for example `anthropic/claude-sonnet-4.5:thinking:8192`. Adaptive-thinking models such as Claude Sonnet 5.5 use reasoning effort instead of this legacy budget syntax. |
 | `:reasoning-exclude` | Equivalent to `reasoning: { "exclude": true }`; hides reasoning fields/blocks and strips the suffix before routing. |
 
 `:reasoning-exclude` works on Chat Completions and Text Completions. It composes with other suffixes such as `:thinking`, `:online`, and `:memory`. `:thinking` is model identity, not provider routing, and is not universal.
