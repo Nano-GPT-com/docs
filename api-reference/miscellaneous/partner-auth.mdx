@@ -154,7 +154,6 @@ The response includes the linked user's balance and deposit details.
 Partner-authenticated top-ups are not limited to Nano. The same linked NanoGPT account can be funded through enabled NanoGPT deposit methods, including:
 
 - Native Nano direct deposits: read the linked user's `nanoDepositAddress` from the balance response and show that address to the user. No deposit call is needed; incoming Nano credits automatically. See [Check User Balance](#check-user-balance).
-- Stablecoins and major chains (`usdc`, `usdt`, `sol`, `eth`, `base`, `arbitrum`, `polygon`, `bnb`, `trx`): call `POST /api/transaction/create/boomfi/{ticker}` to create a hosted payment for the linked user.
 - Crypto invoice or swap deposits (`btc`, `btc-ln`, `ltc`, `ltc-mweb`, `xmr`, `doge`, `dash`, `zec`): call `POST /api/transaction/create/{ticker}`.
 - Card deposits where enabled for the partner integration.
 
