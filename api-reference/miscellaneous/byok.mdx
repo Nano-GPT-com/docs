@@ -27,7 +27,7 @@ When you use BYOK:
 
 ## Configure Keys
 
-### Web UI (Recommended)
+### Web UI
 
 Manage BYOK keys in the NanoGPT web app:
 
@@ -37,25 +37,25 @@ Keys are never shown again after saving (only a short suffix is displayed), so t
 
 ### API (NanoGPT key required)
 
-If you prefer managing keys programmatically, use these endpoints (not OpenAI-compatible):
+API keys can list and remove saved provider keys (not OpenAI-compatible):
 
 ```http
-POST   /api/user/provider-keys
 GET    /api/user/provider-keys
 DELETE /api/user/provider-keys?provider=<provider-slug>
 ```
 
-Example: add/update a provider key
+Adding or replacing a key and changing a ZDR declaration require the [web app](https://nano-gpt.com/byok). If your account has a sign-in factor, sign in with an identity linked to the account and confirm it's you. Guest accounts with no sign-in factor can continue using their session.
+
+API-key POST and PATCH requests return HTTP 403 with code `owner_login_required`, including restricted API keys. DELETE remains available so scripts can quickly remove a leaked provider key.
+
+Example: remove a provider key
 
 ```bash
-curl -X POST "https://nano-gpt.com/api/user/provider-keys" \
-  -H "Authorization: Bearer YOUR_NANOGPT_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "openai",
-    "key": "YOUR_PROVIDER_API_KEY"
-  }'
+curl -X DELETE "https://nano-gpt.com/api/user/provider-keys?provider=openai" \
+  -H "Authorization: Bearer YOUR_NANOGPT_API_KEY"
 ```
+
+Key additions, replacements, removals and ZDR declaration changes send a security notice to the account's stored email addresses, when available.
 
 ## Use BYOK On A Request
 
@@ -166,8 +166,11 @@ GET   /api/teams/{teamUuid}/byok-settings
 PATCH /api/teams/{teamUuid}/byok-settings
 GET   /api/teams/{teamUuid}/provider-keys
 POST  /api/teams/{teamUuid}/provider-keys
+PATCH /api/teams/{teamUuid}/provider-keys
 DELETE /api/teams/{teamUuid}/provider-keys?provider=<provider-slug>
 ```
+
+Team key additions, replacements and ZDR changes require the acting member's account confirmation under the same rule. Key changes notify the team owner's stored email addresses. Existing team permissions still apply.
 
 BYOK modes:
 
@@ -182,4 +185,4 @@ Important behavior:
 ## Security Notes
 
 - Never put provider keys in client-side code or public repos.
-- Prefer storing keys once (UI or the `/api/user/provider-keys` endpoints) and then enabling BYOK per request.
+- Store keys once in the web app and then enable BYOK per request.

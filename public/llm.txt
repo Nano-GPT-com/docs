@@ -461,11 +461,11 @@ while (true) {
 BYOK (BRING YOUR OWN KEY)
 Store provider keys once, then enable per request to route through your credentials.
 
+Add or replace BYOK keys and change ZDR declarations at https://nano-gpt.com/byok. Accounts with a sign-in factor must sign in and confirm it's them; guests without factors can use their session. The API supports GET /api/user/provider-keys to list and DELETE /api/user/provider-keys?provider=<slug> to remove keys. API-key POST and PATCH return 403 owner_login_required. Changes notify stored owner email addresses when available.
+
 ```bash
-curl -X POST https://nano-gpt.com/api/user/provider-keys \
-  -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"provider":"openai","key":"sk-live-..."}'
+curl -X DELETE 'https://nano-gpt.com/api/user/provider-keys?provider=openai' \
+  -H "Authorization: Bearer $NANOGPT_API_KEY"
 ```
 
 ```ts
