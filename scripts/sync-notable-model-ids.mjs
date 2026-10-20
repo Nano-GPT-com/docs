@@ -20,7 +20,7 @@ function getFamilyConfig(exampleTextModel) {
     { label: 'Z.AI GLM', ids: ['z-ai/glm-5.3', 'z-ai/glm-5.3:thinking', 'z-ai/glm-5.3-flash'] },
     { label: 'Xiaomi MiMo', ids: ['xiaomi/mimo-v2.5-pro', 'xiaomi/mimo-v2.5-pro:thinking'] },
     { label: 'DeepSeek', ids: ['deepseek/deepseek-v4.1-flash-1017', 'deepseek/deepseek-v4-flash-latest', 'deepseek/deepseek-latest'] },
-    { label: 'MiniMax', ids: ['minimax/minimax-m3', 'minimax/minimax-latest'] },
+    { label: 'MiniMax', ids: ['minimax/minimax-m3.1-flash', 'minimax/minimax-m3', 'minimax/minimax-latest'] },
     { label: 'Qwen', ids: ['qwen/qwen3.8-max', 'qwen/qwen3-coder-next'] },
   ];
 }
