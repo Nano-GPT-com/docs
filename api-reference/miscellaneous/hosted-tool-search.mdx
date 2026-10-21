@@ -113,7 +113,7 @@ If you use `allowed_tools`, the allowlist must remain consistent with the functi
 | Tool names | Unique, case-insensitively |
 | Background requests | `background: true` is not supported |
 | Other hosted tools | Cannot be mixed with web search, X search, MCP, namespace, or other hosted built-ins in the pilot |
-| Model support | Capability-dependent; unsupported models fail explicitly |
+| Model support | Capability-dependent; unsupported models return `tool_search_model_not_supported`. These OpenAI models don't support it: GPT-4o, GPT-4o Mini, GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, o1, o1-pro, o3, o3-mini, o4-mini, GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-5.1 and GPT-5.4 Nano |
 
 The search entry itself cannot set `defer_loading: true`. Chat Completions and Anthropic Messages do not support this NanoGPT hosted-search contract and return `tool_search_api_not_supported` when it is requested.
 
