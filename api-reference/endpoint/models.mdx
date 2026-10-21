@@ -77,6 +77,9 @@ remaining context. Thinking is always enabled; `reasoning_effort` accepts `low`,
 count toward the output limit. Hiding reasoning with `reasoning.exclude` does
 not disable thinking or its token usage.
 
+M3.1 Flash uses a fixed `temperature` of `1` and `top_p` of `0.95`. Custom
+values have no effect; omit these parameters from requests.
+
 M3.1 Flash currently does not support `response_format` JSON modes, forced
 `tool_choice`, or disabling thinking. Keep an explicit M3 model for integrations
 that need these controls. Use the detailed model catalog for current prices and
