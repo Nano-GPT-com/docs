@@ -477,6 +477,8 @@ Define functions that the model can call:
 }
 ```
 
+A request can declare up to 1,024 tools, counting `tools` and any `additional_tools` input items, with up to 1 MiB (1,048,576 bytes) of tool JSON. Larger catalogs return a 400 with `too_many_tools` or `tool_spec_too_large`. For bigger catalogs, use hosted tool search.
+
 ### Hosted Tool Search
 
 For large function catalogs, add one `nanogpt:tool_search` entry (or its `tool_search` alias) and mark discoverable functions with `defer_loading: true`:
@@ -503,7 +505,7 @@ For large function catalogs, add one `nanogpt:tool_search` entry (or its `tool_s
 }
 ```
 
-The search activity is returned as `tool_search_call`. A selected function is still returned as a normal `function_call`; your client executes it and sends `function_call_output`. See [Hosted tool search](/api-reference/miscellaneous/hosted-tool-search) for limits, billing, authorization, and compatibility.
+The search activity is returned as `tool_search_call`. A selected function is still returned as a normal `function_call`; your client executes it and sends `function_call_output`. Deferred functions don't count toward the 1,024-tool and 1 MiB limits; the whole `tools` array can hold up to 2,000 entries. See [Hosted tool search](/api-reference/miscellaneous/hosted-tool-search) for limits, billing, authorization, and compatibility.
 
 ### Web Search Tool
 

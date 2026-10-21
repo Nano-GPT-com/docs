@@ -52,6 +52,11 @@ The request uses Anthropic message format and supports:
 - `tools`
 - `tool_choice`
 
+## Limits
+
+- `tools` can hold up to 1,024 tools and 1 MiB (1,048,576 bytes) of JSON. Requests over a limit return a 400 `invalid_request_error`.
+- A request body over 1.5 MiB returns `413`.
+
 ## Response
 
 ```json

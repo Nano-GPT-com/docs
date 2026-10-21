@@ -108,6 +108,7 @@ If you use `allowed_tools`, the allowlist must remain consistent with the functi
 | Search entries | Exactly one when deferred functions are present |
 | Deferred functions | At least one |
 | Complete `tools` array | Maximum 2,000 entries |
+| Eagerly loaded tools | Up to 1,024 tools and 1 MiB of tool JSON, as on other requests; deferred functions don't count |
 | `max_results` | Integer from 1 to 50; default 5 |
 | Tool names | Unique, case-insensitively |
 | Background requests | `background: true` is not supported |
