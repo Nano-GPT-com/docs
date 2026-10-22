@@ -12,7 +12,7 @@ Decision models answer named, typed questions about the state you provide instea
 - `score` returns an expected score over an ordered rubric.
 - `noul` returns the probability that a yes/no statement is true.
 
-PPLX Decider v1.1, Clef and Clef Flash can also evaluate images: send up to four photos with your questions and get the same typed answers. See [Image input](#image-input).
+PPLX Decider v1.2, Clef and Clef Flash can also evaluate images: send up to four photos with your questions and get the same typed answers. See [Image input](#image-input).
 
 For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If you already use the official TypeSafe SDK, point it at NanoGPT's `POST /api/v1/systemone` compatibility endpoint. Decision models are also available through NanoGPT's OpenAI-compatible Chat Completions and Responses APIs and the Anthropic-compatible Messages API.
 
@@ -21,7 +21,7 @@ Only input tokens are billed. Browse every decision model, with current pricing,
 <Note>
   Decision models work on both API hosts. The text examples use the direct API host, `https://api.nano-gpt.com`; `https://nano-gpt.com` accepts the same requests. See [API Hosts](/api-reference/miscellaneous/api-hosts).
 
-  PPLX Decider v1.1, Clef Flash, image input and `include_usage` are currently available only on `https://nano-gpt.com`. The direct API host does not support them yet and still serves Clef as a 16K text-only model, so the image examples use `https://nano-gpt.com`.
+  The image examples use `https://nano-gpt.com`. Before using a model on either host, check that host’s `GET /api/v1/models?detailed=true` catalog for the model, its `supported_endpoints`, and its `decision_input` capabilities and limits. Catalogs can differ during rollouts.
 </Note>
 
 <Note>
@@ -38,9 +38,11 @@ Only input tokens are billed. Browse every decision model, with current pricing,
 | `llmtech/decider-2b-fp8` | 32K | No | Mapika's Decider 2B, quantized and hosted by LLM Tech. |
 | `llmtech/decider-4b-nvfp4` | 32K | No | Mapika's Decider 4B, quantized and hosted by LLM Tech. |
 | `liquid/d1` | 64K | No | Liquid AI's D1. |
-| `perplexity/pplx-decider-v1.1-27b` | 262K | Yes | Perplexity's PPLX Decider v1.1 27B. Supports zero data retention. |
+| `perplexity/pplx-decider-v1.2` | 262K | Yes | Perplexity's PPLX Decider v1.2. Supports zero data retention. |
 | `cloudflare/clef` | 1,800 text tokens | Yes | Cloudflare's open decision model. |
 | `cloudflare/clef-flash` | 1,800 text tokens | Yes | Lower-cost Clef variant. |
+
+Use `perplexity/pplx-decider-v1.2` for new PPLX integrations. The retired `perplexity/pplx-decider-v1.1-27b` ID remains accepted as a compatibility alias and runs v1.2; the native Decisions response `model` field identifies the version that answered. The price remains $0.02 per million input tokens, with free output.
 
 Decider IDs are also accepted without the `llmtech/` prefix, and Clef accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. In `GET /api/v1/models?detailed=true`, decision models have `architecture.output_modalities: ["decisions"]`, a `supported_endpoints` list, and a `decision_input` object. `decision_input.image_input` is `true` for the image-capable models, and `decision_input.image_limits` lists their limits.
 
@@ -276,7 +278,7 @@ To get the exact amount charged instead, send `"include_usage": true`. The respo
 
 ### Image input
 
-`perplexity/pplx-decider-v1.1-27b`, `cloudflare/clef` and `cloudflare/clef-flash` accept images on the native `POST /api/v1/decisions` endpoint and the `POST /api/v1/systemone` compatibility endpoint. Use them to classify photos, score visual content, or answer yes/no questions about an image.
+`perplexity/pplx-decider-v1.2`, `cloudflare/clef` and `cloudflare/clef-flash` accept images on the native `POST /api/v1/decisions` endpoint and the `POST /api/v1/systemone` compatibility endpoint. Use them to classify photos, score visual content, or answer yes/no questions about an image.
 
 Make `state` an array, and put each image directly in it as an `image_url` part with a base64 data URL. Plain strings in the same array add text context. The optional `image_url.detail` field accepts `auto`, `low` or `high`.
 
@@ -290,7 +292,7 @@ curl https://nano-gpt.com/api/v1/decisions \
   -H "Content-Type: application/json" \
   -d @- <<EOF
 {
-  "model": "perplexity/pplx-decider-v1.1-27b",
+  "model": "perplexity/pplx-decider-v1.2",
   "state": [
     "Return claim photo.",
     { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,$IMAGE" } }
@@ -326,7 +328,7 @@ const response = await fetch("https://nano-gpt.com/api/v1/decisions", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    model: "perplexity/pplx-decider-v1.1-27b",
+    model: "perplexity/pplx-decider-v1.2",
     state: [
       "Return claim photo.",
       { type: "image_url", image_url: { url: `data:image/jpeg;base64,${image}` } },
@@ -365,7 +367,7 @@ response = requests.post(
     "https://nano-gpt.com/api/v1/decisions",
     headers={"Authorization": f"Bearer {os.environ['NANOGPT_API_KEY']}"},
     json={
-        "model": "perplexity/pplx-decider-v1.1-27b",
+        "model": "perplexity/pplx-decider-v1.2",
         "state": [
             "Return claim photo.",
             {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}},
@@ -409,7 +411,7 @@ Images are billed as input tokens at the model's normal input price; `usage.inpu
 
 Privacy rules for image requests:
 
-- PPLX Decider v1.1 supports zero data retention: set `provider.zdr` to `true`, or use an API key with a ZDR policy.
+- PPLX Decider v1.2 supports zero data retention: set `provider.zdr` to `true`, or use an API key with a ZDR policy.
 - Clef and Clef Flash do not support zero data retention. On these models, requests that require ZDR, and image requests with `provider.data_collection: "deny"`, return `400`.
 - Image input cannot be combined with PII redaction.
 
@@ -441,8 +443,8 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 | Choice questions need 2-255 options and Score questions 2-10 levels. A request can contain at most 1,024 scoring rows (otherwise `413 too_many_questions`). | Decider |
 | `isolated` on a Score question (default `true`) evaluates each level as its own row, repeating the instructions per level. Set `false` to evaluate the question as one row. | Decider |
 | A Noul question may omit `instructions` when `criteria.true` or `criteria.false` describes the answer. | Decider |
-| Noul questions need `instructions`, and `criteria` needs both `true` and `false` when it is sent. | Jev, Liquid D1, PPLX Decider v1.1, Clef, Clef Flash |
-| A request can contain at most 128 questions. | PPLX Decider v1.1, Clef, Clef Flash |
+| Noul questions need `instructions`, and `criteria` needs both `true` and `false` when it is sent. | Jev, Liquid D1, PPLX Decider v1.2, Clef, Clef Flash |
+| A request can contain at most 128 questions. | PPLX Decider v1.2, Clef, Clef Flash |
 | Text input, including questions and request overhead, is limited to 1,800 tokens. | Clef, Clef Flash |
 
 ## Request fields
@@ -459,11 +461,11 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 | `provider` | object or null | No | Native Decisions routing controls. Usually omit this field. |
 | `include_usage` | boolean | No | Wait for billing to settle and report the exact charge as `usage.cost`. Defaults to `false`, which returns `usage.estimated_cost` without waiting. See [Usage and cost](#usage-and-cost). |
 
-The native `provider` object can contain endpoint-level `order`, `only`, `ignore`, `allow_fallbacks`, `require_parameters`, `max_price`, `zdr`, and `data_collection` controls. These names describe native Decisions endpoints such as `TypeSafe`; they are not NanoGPT provider IDs. API-key provider restrictions and zero-data-retention requirements still apply. Decider, PPLX Decider v1.1, Clef and Clef Flash use fixed decision endpoints and accept only `zdr` and `data_collection`. Clef and Clef Flash reject `zdr: true`.
+The native `provider` object can contain endpoint-level `order`, `only`, `ignore`, `allow_fallbacks`, `require_parameters`, `max_price`, `zdr`, and `data_collection` controls. These names describe native Decisions endpoints such as `TypeSafe`; they are not NanoGPT provider IDs. API-key provider restrictions and zero-data-retention requirements still apply. Decider, PPLX Decider v1.2, Clef and Clef Flash use fixed decision endpoints and accept only `zdr` and `data_collection`. Clef and Clef Flash reject `zdr: true`.
 
 ## Official TypeSafe SDK
 
-NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call any decision model without changing their request types. Set the model to `jev-latest`, `jev-1.13`, `decider-2b-fp8` (or another Decider), `liquid/d1`, `perplexity/pplx-decider-v1.1-27b`, `clef` or `cloudflare/clef-flash`. Image input and `include_usage` work the same way as on the native endpoint.
+NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call any decision model without changing their request types. Set the model to `jev-latest`, `jev-1.13`, `decider-2b-fp8` (or another Decider), `liquid/d1`, `perplexity/pplx-decider-v1.2`, `clef` or `cloudflare/clef-flash`. Image input and `include_usage` work the same way as on the native endpoint.
 
 <CodeGroup>
 
@@ -617,7 +619,7 @@ Parse `content[0].text` as JSON. `max_tokens` is accepted for Anthropic SDK comp
 
 Decision-model requests are deliberately narrower than chat generation requests:
 
-- Only non-streaming text input in `user` messages is supported on compatibility endpoints. Image input is available only on the native Decisions and System One endpoints, for PPLX Decider v1.1, Clef and Clef Flash.
+- Only non-streaming text input in `user` messages is supported on compatibility endpoints. Image input is available only on the native Decisions and System One endpoints, for PPLX Decider v1.2, Clef and Clef Flash.
 - System, developer, assistant, tool, audio, video, and file input is not supported. Compatibility endpoints also reject images.
 - Tools, sampling controls, log probabilities, and reasoning generation controls are not supported.
 - Output-token-limit fields are accepted where an SDK requires them, but they do not change the fixed typed output.

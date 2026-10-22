@@ -852,7 +852,7 @@
           "Decisions"
         ],
         "summary": "Create typed decisions with a decision model",
-        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Mapika's Decider hosted by LLM Tech (llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.1 (perplexity/pplx-decider-v1.1-27b), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). Decider needs 2-255 Choice options or 2-10 Score levels per question and allows at most 1,024 scoring rows per request. Decider, PPLX Decider v1.1, Clef and Clef Flash accept only the zdr and data_collection routing controls in provider. PPLX Decider v1.1, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. PPLX Decider v1.1, Clef Flash, image input and include_usage are currently available on https://nano-gpt.com only.",
+        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Mapika's Decider hosted by LLM Tech (llmtech/decider-0.8b-fp8, llmtech/decider-2b-fp8, llmtech/decider-4b-nvfp4), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.2 (perplexity/pplx-decider-v1.2), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). Decider needs 2-255 Choice options or 2-10 Score levels per question and allows at most 1,024 scoring rows per request. Decider, PPLX Decider v1.2, Clef and Clef Flash accept only the zdr and data_collection routing controls in provider. PPLX Decider v1.2, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. Check GET /api/v1/models?detailed=true on your chosen host for model availability, supported_endpoints and decision_input capabilities. The retired perplexity/pplx-decider-v1.1-27b ID remains accepted as an alias for v1.2; the native Decisions response model field identifies the version that answered.",
         "security": [
           {
             "bearerAuth": []
@@ -5728,7 +5728,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Decision model ID. Bare Decider IDs and clef are aliases of the prefixed IDs.",
+            "description": "Decision model ID. Bare Decider IDs and clef are aliases of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX; perplexity/pplx-decider-v1.1-27b remains accepted as a compatibility alias for v1.2.",
             "enum": [
               "typesafe/jev-1.13",
               "~typesafe/jev-latest",
@@ -5743,11 +5743,12 @@
               "cloudflare/clef",
               "clef",
               "cloudflare/clef-flash",
+              "perplexity/pplx-decider-v1.2",
               "perplexity/pplx-decider-v1.1-27b"
             ]
           },
           "state": {
-            "description": "Application state to evaluate. On https://nano-gpt.com, PPLX Decider v1.1, Clef and Clef Flash also accept an array that mixes plain strings with up to four image_url parts holding static PNG, JPEG or WebP base64 data URLs, each at most 512x512 pixels (240,000 base64 characters in total). Remote image URLs are not fetched.",
+            "description": "Application state to evaluate. PPLX Decider v1.2, Clef and Clef Flash also accept an array that mixes plain strings with up to four image_url parts holding static PNG, JPEG or WebP base64 data URLs, each at most 512x512 pixels (240,000 base64 characters in total). Remote image URLs are not fetched.",
             "oneOf": [
               {
                 "type": "string"
@@ -5785,7 +5786,7 @@
             "description": "Decider only. Decider always evaluates questions independently, so send true or omit the field; other models reject it."
           },
           "provider": {
-            "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs. Decider, PPLX Decider v1.1, Clef and Clef Flash accept only zdr and data_collection; Clef and Clef Flash reject zdr true.",
+            "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs. Decider, PPLX Decider v1.2, Clef and Clef Flash accept only zdr and data_collection; Clef and Clef Flash reject zdr true.",
             "type": [
               "object",
               "null"
@@ -5807,7 +5808,7 @@
           "include_usage": {
             "type": "boolean",
             "default": false,
-            "description": "Wait for billing to settle and report the exact charge as usage.cost. By default the response returns without waiting and reports usage.estimated_cost. Available on https://nano-gpt.com."
+            "description": "Wait for billing to settle and report the exact charge as usage.cost. By default the response returns without waiting and reports usage.estimated_cost."
           }
         }
       },
@@ -5822,7 +5823,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Decision model ID. Bare Decider IDs and clef are aliases of the prefixed IDs.",
+            "description": "Decision model ID. Bare Decider IDs and clef are aliases of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX; perplexity/pplx-decider-v1.1-27b remains accepted as a compatibility alias for v1.2.",
             "enum": [
               "jev-1.13",
               "jev-latest",
@@ -5839,6 +5840,7 @@
               "cloudflare/clef",
               "clef",
               "cloudflare/clef-flash",
+              "perplexity/pplx-decider-v1.2",
               "perplexity/pplx-decider-v1.1-27b"
             ]
           },
@@ -5910,7 +5912,7 @@
           "include_usage": {
             "type": "boolean",
             "default": false,
-            "description": "Wait for billing to settle and report the exact charge as usage.cost. By default the response returns without waiting and reports usage.estimated_cost. Available on https://nano-gpt.com."
+            "description": "Wait for billing to settle and report the exact charge as usage.cost. By default the response returns without waiting and reports usage.estimated_cost."
           }
         }
       },
