@@ -234,7 +234,7 @@
   "redirects": [
     {
       "source": "/llm.txt",
-      "destination": "/public/llm.txt"
+      "destination": "/llms-full.txt"
     },
     {
       "source": "/integrations/clawdbot",
