@@ -322,6 +322,8 @@ const visionReply = await client.chat.completions.create({
 console.log(visionReply.choices[0]?.message.content);
 ```
 
+For many or large images, send public HTTPS URLs rather than base64 data URLs. A data URL puts the whole image in the request body, about a third larger than the file, and request bodies are limited to 32 MB. Use data URLs for private images and for models that accept only inline images. Resize large images first; most vision models scale them down anyway.
+
 VIDEO INPUT
 Video understanding is supported on /api/v1/chat/completions, /api/v1/responses, and /api/v1/messages when the selected text or multimodal model advertises video input. This is unrelated to video generation.
 

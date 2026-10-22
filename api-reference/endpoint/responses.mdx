@@ -353,6 +353,8 @@ Content can be a string or an array of content parts:
 
 The `detail` parameter can be: `auto`, `low`, or `high`.
 
+For many or large images, prefer public HTTPS URLs over inline base64 data. See [Image Input](/api-reference/endpoint/chat-completion#image-input) for the 32 MB request limit and when to send images inline.
+
 #### Video Input
 
 Use `input_video` for video understanding on a model that advertises video input:

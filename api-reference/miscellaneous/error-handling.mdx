@@ -84,7 +84,7 @@ This table covers the most common HTTP error statuses you may encounter.
 | `404` | Resource not found | Check the model/resource ID |
 | `408` / `504` | Timeout | Retry with backoff |
 | `409` | Conflict | Resolve state (duplicate/redeemed/already processed) |
-| `413` | Payload too large | Reduce payload size and retry |
+| `413` | Payload too large | Reduce payload size and retry; for images, send HTTPS URLs or resize them |
 | `429` | Rate limited | Wait (use `Retry-After` if present), then retry. This can be a per-second throughput limit or a per-key daily limit. |
 | `500` | Server error | Retry with backoff |
 | `503` | Temporarily unavailable | Retry with backoff; consider changing model if persistent |

@@ -973,7 +973,11 @@ Send images using the OpenAI‑compatible chat format. Provide image parts along
 - Base64 data URL: `{"type":"image_url","image_url":{"url":"data:image/png;base64,...."}}`
 
 Notes:
-- Prefer HTTPS URLs; some upstreams reject non‑HTTPS. If in doubt, use base64 data URLs.
+- For many or large images, send HTTPS URLs. A base64 data URL puts the whole image in the request body, about a third larger than the image file. Request bodies are limited to 32 MB, and large bodies take longer to upload and process before the model starts. A URL keeps the request small; the image is fetched separately.
+- URLs must be public HTTPS addresses that load without a login or cookies. Some upstreams reject non‑HTTPS URLs.
+- Use base64 data URLs for local or private images, and for models that accept only inline images. Those models return an `unsupported_parameter` error saying that no available route supports remote image URLs.
+- Resize large images before sending them. Most vision models scale images down before reading them, so full-resolution photos, screenshots and video frames mostly add upload time. About 1,500 pixels on the longest side, saved as JPEG or WebP, is usually enough.
+- For video, send the clip as [`video_url`](#video-input) to a model that supports video input, or sample fewer frames, instead of sending hundreds of frames as images.
 - Accepted mime types: `image/png`, `image/jpeg`, `image/jpg`, `image/webp`.
 - Inline markdown images in plain text (e.g., `![alt](data:image/...;base64,...)`) are auto‑normalized into structured parts server‑side.
 
@@ -1018,7 +1022,7 @@ Embed your image as a data URL. Replace `...BASE64...` with your image bytes.
 ```bash
 curl -sS \
   -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type": "application/json" \
+  -H "Content-Type: application/json" \
   -X POST https://nano-gpt.com/api/v1/chat/completions \
   --data '{
     "model": "google/gemini-3-flash-preview",
@@ -1267,6 +1271,7 @@ If cache consistency is more important than availability for your use case, you 
 ### Troubleshooting
 
 - 400 unsupported image: ensure the image is a valid PNG/JPEG/WebP, not a tiny 1×1 pixel, and either HTTPS URL or a base64 data URL.
+- 413 request body too large: send images as HTTPS URLs or resize them. Request bodies are limited to 32 MB.
 - 503 after fallbacks: try a different model, verify API key/session, and prefer base64 data URL for local or protected assets.
 - Missing usage events: confirm `include_usage` is `true` in the payload or that prompt caching is enabled.
 
