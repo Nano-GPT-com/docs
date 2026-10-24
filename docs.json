@@ -19,7 +19,8 @@
         "pages": [
           "introduction",
           "authentication",
-          "quickstart"
+          "quickstart",
+          "volume-pricing"
         ]
       },
       {
@@ -136,13 +137,6 @@
         ]
       },
       {
-        "group": "Partner",
-        "pages": [
-          "partner/overview",
-          "api-reference/miscellaneous/partner-auth"
-        ]
-      },
-      {
         "group": "Integrations",
         "pages": [
           "integrations",
@@ -199,8 +193,8 @@
   "navbar": {
     "links": [
       {
-        "label": "Partner",
-        "href": "/partner/overview"
+        "label": "Volume Pricing",
+        "href": "/volume-pricing"
       },
       {
         "label": "Support",
@@ -243,6 +237,14 @@
     {
       "source": "/api-reference/endpoint/jev-decisions",
       "destination": "/api-reference/endpoint/decisions"
+    },
+    {
+      "source": "/partner/overview",
+      "destination": "/volume-pricing"
+    },
+    {
+      "source": "/api-reference/miscellaneous/partner-auth",
+      "destination": "/volume-pricing"
     }
   ]
 }
