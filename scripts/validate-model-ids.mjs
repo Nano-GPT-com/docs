@@ -7,6 +7,7 @@ const MODELS_URL = 'https://nano-gpt.com/api/v1/models';
 
 // Scope this guardrail to public text-model docs where IDs must match /api/v1/models.
 const DOC_FILES = [
+  'integrations/openwebui.mdx',
   'api-reference/endpoint/models.mdx',
   'api-reference/endpoint/chat-completion.mdx',
   'api-reference/endpoint/messages.mdx',

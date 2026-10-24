@@ -3,6 +3,8 @@ title: 'OpenWebUI'
 description: 'Using NanoGPT with OpenWebUI for an open-source ChatGPT-like interface'
 ---
 
+import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
+
 ## Quick Setup Guide
 
 1. Get your API key from [nano-gpt.com/api](https://nano-gpt.com/api)
@@ -13,15 +15,16 @@ description: 'Using NanoGPT with OpenWebUI for an open-source ChatGPT-like inter
    - Prefix ID: (Optional) Leave empty or add a custom prefix
    - Model IDs: Leave empty to include all available models
 
-That's it! Once you save the connection, you'll have access to all NanoGPT models through OpenWebUI.
+Once you save the connection, choose a text model from NanoGPT's catalog in OpenWebUI.
 
 ## Available Models
 
-You can access all our models through this integration, including:
-- ChatGPT
-- Claude 3.7 Sonnet
-- Gemini 2.0 Pro
-- Perplexity
-- And many more!
+Current model choices include:
+
+- {exampleTextModelName}: <code>{exampleTextModel}</code>
+- Claude Sonnet 5.5: `anthropic/claude-sonnet-5.5`
+- Gemini Flash Latest: `google/gemini-flash-latest`
+
+Use the exact model ID shown in the catalog.
 
 For a complete list of available models and their pricing, visit our [pricing page](https://nano-gpt.com/pricing).
