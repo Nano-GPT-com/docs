@@ -183,6 +183,16 @@ Settings > Privacy > PII redaction for chats
 
 When this setting is enabled, web chat messages and chat titles are redacted automatically. While it is on, cloud quick replies and cloud memory suggestions are paused (local models still work), and web app tools that call outside services (web search, image search, reading links, YouTube transcripts, GitHub, AI-writing detection, image generation) receive placeholders.
 
+### Redact on this device
+
+With PII redaction for chats on, you can also turn on:
+
+```text
+Settings > Privacy > Redact on this device
+```
+
+Your browser then verifies Tinfoil's privacy-filter enclave itself and encrypts the text to it; NanoGPT only relays the ciphertext. Your browser replaces the values, sends NanoGPT only placeholders, and restores the answer as it streams, so for regular chats NanoGPT never receives your personal data or the mapping. Multi-model chats, Fusion, chat titles and uploaded documents are still redacted on NanoGPT's servers. The setting is saved on that device only. Pricing is the same.
+
 ## API Default Settings
 
 Users can enable redaction by default for API requests from:
