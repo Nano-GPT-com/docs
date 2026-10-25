@@ -12,9 +12,11 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 
 Use NanoGPT with [OpenCode](https://opencode.ai), the open source AI coding agent for your terminal.
 
+This guide covers OpenCode 1 and OpenCode 2. They store API keys in different places, so run `opencode --version` to check which one you have.
+
 ## Requirements
 
-- [OpenCode](https://opencode.ai) installed (`curl -fsSL https://opencode.ai/install | bash`)
+- [OpenCode](https://opencode.ai) installed. OpenCode 1: `curl -fsSL https://opencode.ai/install | bash`. OpenCode 2: `curl -fsSL https://opencode.ai/v2/install | bash`.
 - A NanoGPT account with API access
 
 ## One-Click Setup (Mac/Linux)
@@ -27,31 +29,49 @@ curl -fsSL "https://nano-gpt.com/install/opencode_nanogpt.sh" | bash
 
 This will:
 1. Open your browser to authenticate with NanoGPT (or let you paste an API key)
-2. Configure OpenCode to use NanoGPT as your AI provider
-3. Add starter model definitions while preserving existing model selections, filters, and connection options
+2. Save the key where your OpenCode reads it: `auth.json` for OpenCode 1, and OpenCode 2's credential store when `opencode` or `opencode2` is OpenCode 2
+3. Configure OpenCode to use NanoGPT as your AI provider
+4. Add starter model definitions while preserving existing model selections, filters, and connection options
 
 OpenCode also includes NanoGPT models from its built-in [Models.dev](https://models.dev) catalogue. You do not need to define each of those models manually. The installer adds starter model definitions; these do not restrict the model list.
 
 Python 3 is required to merge existing OpenCode files. The installer stops if an existing JSON file cannot be read, rather than replacing it. It updates `opencode.json`; if you use `opencode.jsonc`, follow the manual setup below and merge the settings into your existing file.
 
-Setup replaces NanoGPT authentication with your chosen login or pasted key. It removes provider-level `options.apiKey` and `Authorization` overrides in provider and model headers from `opencode.json` so the new credentials in `auth.json` take effect, while preserving unrelated headers and custom model settings.
+Setup replaces NanoGPT authentication with your chosen login or pasted key. It removes provider-level `options.apiKey` and `Authorization` overrides in provider and model headers from `opencode.json` so the new credentials take effect, while preserving unrelated headers and custom model settings. In OpenCode 2, it adds a credential named `NanoGPT installer` with the date and time, and makes it the active NanoGPT credential. Earlier credentials remain listed in `opencode auth list`.
+
+If you install OpenCode 2 after running setup, run setup again or follow [Add your API key](#1-add-your-api-key).
 
 ## Manual Setup
 
 If you prefer to configure manually:
 
-### 1. Create the auth file
+### 1. Add your API key
 
-Add your NanoGPT API key to `~/.local/share/opencode/auth.json`. If the file already exists, merge the `nano-gpt` entry into it and keep your other authentication entries:
+<Tabs>
+  <Tab title="OpenCode 2">
+    Run this command and paste your NanoGPT API key when prompted:
 
-```json
-{
-  "nano-gpt": {
-    "type": "api",
-    "key": "your-nano-gpt-api-key"
-  }
-}
-```
+    ```bash
+    opencode auth login nano-gpt
+    ```
+
+    OpenCode 2 keeps API keys in its own credential store. It reads `auth.json` only once, when it first opens a database that OpenCode 1 created, and ignores later changes to the file. On a new OpenCode 2 installation, it never reads `auth.json`. Run `opencode auth list` to see your saved NanoGPT credentials.
+  </Tab>
+  <Tab title="OpenCode 1">
+    Run `opencode auth login --provider nano-gpt` and paste your key, or add it to `~/.local/share/opencode/auth.json` yourself. If the file already exists, merge the `nano-gpt` entry into it and keep your other authentication entries:
+
+    ```json
+    {
+      "nano-gpt": {
+        "type": "api",
+        "key": "your-nano-gpt-api-key"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Both versions also read `NANO_GPT_API_KEY` from the environment of the terminal that starts OpenCode. A saved key takes precedence over that variable: the `auth.json` entry in OpenCode 1, or the active credential in OpenCode 2.
 
 ### 2. Create the config file
 
@@ -161,17 +181,19 @@ Alternatively, `blacklist` hides specific models while keeping the rest. If both
 
 ## Claude Prompt Caching
 
-OpenCode adds explicit `cache_control` markers to Claude requests automatically. Its markers omit the TTL and use the five-minute default unless you request a different TTL. You do not need a `promptCaching` block or an `anthropic-beta` header just to use OpenCode's default Claude caching.
+OpenCode 1 adds explicit `cache_control` markers to Claude requests automatically. Its markers omit the TTL and use the five-minute default unless you request a different TTL. You do not need a `promptCaching` block or an `anthropic-beta` header just to use OpenCode 1's default Claude caching.
+
+OpenCode 2 does not add these markers (checked with OpenCode 2.1.4), so its Claude requests are not cached by default. To enable caching, add `promptCaching` to the model's `options` as shown in [One-Hour Caching](#one-hour-caching), with `"ttl": "5m"` for five-minute caching or `"ttl": "1h"` for one hour.
 
 A cache marker requests caching; it does not guarantee a cache hit. The prompt must meet the selected model's minimum cacheable size, and later requests must reuse the same prefix before the cache expires.
 
 <Note>
-  On NanoGPT's Chat Completions endpoint, supported explicit cache controls use pay-as-you-go billing, including markers OpenCode adds automatically. They bypass subscription coverage for that request. See [subscription billing for prompt caching](/api-reference/miscellaneous/prompt-caching#subscription-billing-for-chat-completions).
+  On NanoGPT's Chat Completions endpoint, supported explicit cache controls use pay-as-you-go billing, including the markers OpenCode 1 adds automatically and the `promptCaching` helper. They bypass subscription coverage for that request. See [subscription billing for prompt caching](/api-reference/miscellaneous/prompt-caching#subscription-billing-for-chat-completions).
 </Note>
 
 ### One-Hour Caching
 
-To request one-hour caching for Opus 5.5, merge this configuration into your existing `opencode.json`. Keep your NanoGPT authentication in `auth.json`:
+To request one-hour caching for Opus 5.5, merge this configuration into your existing `opencode.json`. Keep your API key where you saved it in [Add your API key](#1-add-your-api-key), not in this file:
 
 ```json
 {
@@ -199,7 +221,7 @@ To request one-hour caching for Opus 5.5, merge this configuration into your exi
 }
 ```
 
-OpenCode forwards the model's `options.promptCaching` as the top-level `promptCaching` field in the API request. NanoGPT applies the requested TTL to the cache boundaries, including OpenCode's existing markers. No additional `anthropic-beta` header is required.
+OpenCode forwards the model's `options.promptCaching` as the top-level `promptCaching` field in the API request. NanoGPT applies the requested TTL to the cache boundaries, including the markers OpenCode 1 adds. With OpenCode 2, which adds no markers, NanoGPT places the cache boundaries itself. No additional `anthropic-beta` header is required.
 
 One-hour caching has a higher cache-write price than five-minute caching on standard Claude cache pricing. Choose it when you expect to reuse a large prefix after pauses longer than five minutes. See [cache pricing](/api-reference/miscellaneous/prompt-caching#pricing).
 
@@ -212,7 +234,7 @@ The example leaves `stickyProvider` at its default, `false`, so NanoGPT can fail
 | `name` | Display label in OpenCode | When you want a custom label or are defining a missing model. |
 | `reasoning: true` | Tells OpenCode that the model supports reasoning; it is capability metadata, not an API instruction to enable thinking. | When defining a missing model or correcting stale catalogue metadata. Usually unnecessary for a correctly listed model. |
 | `variants` | Adds selectable settings such as reasoning effort | When you want custom choices or a choice missing from your OpenCode version. |
-| `options.promptCaching` | Sends NanoGPT cache controls | When overriding the default TTL, disabling explicit caching, or setting other cache controls. |
+| `options.promptCaching` | Sends NanoGPT cache controls | Always for Claude caching in OpenCode 2. In OpenCode 1, when overriding the default TTL, disabling explicit caching, or setting other cache controls. |
 | `options.provider.zdr` | A request field forwarded by OpenCode; it is not NanoGPT-wide ZDR enforcement | Keep intentional privacy settings. To require NanoGPT ZDR routing, use your account or API key's **ZDR only** setting. |
 | `promptCaching.stickyProvider` | Prevents failover for explicit caching | Only when preserving the cache matters more than request availability. |
 | `headers.anthropic-beta` | Alternative way to request Claude cache controls | Unnecessary when using the `promptCaching` helper above. |
@@ -248,7 +270,7 @@ Look for `cache_creation_input_tokens` on an eligible write and `cache_read_inpu
 
 If your OpenCode version does not display these fields, use the [API cache verification examples](/api-reference/miscellaneous/prompt-caching#usage-fields-how-to-verify-cache-hits). A short prompt can return zero cached tokens even with a correct configuration.
 
-The request format above was checked with OpenCode 1.14.48 and `@ai-sdk/openai-compatible`. Other SDKs or older client versions can map options differently.
+The request format above was checked with OpenCode 1.14.48, 1.19.4 and 2.1.4 using `@ai-sdk/openai-compatible`. All of them forward `promptCaching` and the selected variant's `reasoningEffort`; only OpenCode 1 adds cache markers. Other SDKs or older client versions can map options differently.
 
 ## Troubleshooting
 
@@ -269,13 +291,18 @@ Check that `whitelist` is inside `provider.nano-gpt`, not inside `models`. Defin
 
 Install Python 3 when updating existing OpenCode files. The installer reads strict JSON only; if your config contains comments, use manual setup in `opencode.jsonc`. The installer stops before authentication or file updates if existing auth or JSON config files cannot be read or parsed.
 
-**Authentication errors?**
+**"Invalid Authentication" or another authentication error?**
 
-Check that your API key is correctly set in `~/.local/share/opencode/auth.json` (as an object with `type` and `key`) and that the key name matches the provider ID (`nano-gpt`).
+"Invalid Authentication" means OpenCode sent the request without an API key. Run `opencode --version`:
+
+- **OpenCode 2:** run `opencode auth login nano-gpt` and paste your key, or run the one-click setup again. OpenCode 2 ignores keys added to `auth.json`. Run `opencode auth list` to see your saved NanoGPT credentials, and `opencode auth switch nano-gpt` to choose the active one. The active credential is used instead of `NANO_GPT_API_KEY` and any `apiKey` in `opencode.json`.
+- **OpenCode 1:** check that `~/.local/share/opencode/auth.json` has a `nano-gpt` entry with `type` and `key`. Remove any `apiKey` under `provider.nano-gpt.options` in `opencode.json`: it replaces the `auth.json` key, and an `{env:...}` value whose variable is unset sends no key at all.
+
+"Invalid session" means OpenCode sent a key that NanoGPT does not accept. Copy an active key from [nano-gpt.com/api](https://nano-gpt.com/api) and save it again.
 
 **Claude caching is not being used?**
 
-If you configured a TTL override, check that `promptCaching` is inside the selected model's `options`, that `enabled` is `true`, and that the TTL is exactly `"5m"` or `"1h"`. Keep reusable instructions and tool definitions at the beginning of the prompt. Changes to that prefix, insufficient prompt length, expiration, or failover can prevent a cache hit.
+OpenCode 2 caches Claude requests only when you configure `promptCaching`; see [Claude Prompt Caching](#claude-prompt-caching). If you configured `promptCaching`, check that it is inside the selected model's `options`, that `enabled` is `true`, and that the TTL is exactly `"5m"` or `"1h"`. Keep reusable instructions and tool definitions at the beginning of the prompt. Changes to that prefix, insufficient prompt length, expiration, or failover can prevent a cache hit.
 
 **A request returns "temporarily unavailable"?**
 

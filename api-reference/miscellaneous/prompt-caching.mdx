@@ -17,7 +17,7 @@ NanoGPT supports two caching modes:
 - **Implicit caching (default):** For providers/models that support provider-native prompt reuse (including OpenAI, Gemini, and many open-source provider routes), caching is applied automatically when eligible. No extra request fields are required.
 - **Explicit prompt caching (Claude):** Claude caching uses request controls (`prompt_caching`/`promptCaching`/body-level `cache_control`, or inline `cache_control`) to mark reusable prefixes and select TTLs. You can add these yourself, or your client can supply them automatically.
 
-[OpenCode adds Claude cache markers automatically](/integrations/opencode#claude-prompt-caching). Its default markers use a five-minute TTL. To request one-hour caching, set `enabled: true` and `ttl: "1h"` in the helper; you do not also need an `anthropic-beta` header.
+[OpenCode 1 adds Claude cache markers automatically](/integrations/opencode#claude-prompt-caching). Its default markers use a five-minute TTL. To request one-hour caching, set `enabled: true` and `ttl: "1h"` in the helper; you do not also need an `anthropic-beta` header. OpenCode 2 adds no markers, so set the helper with `enabled: true` to cache Claude requests there.
 
 NanoGPT also supports **cache-capable provider routing** with top-level `caching: true`. This is not a prompt annotation mode. It only requires routing to a provider that supports prompt/input caching and, by default, tries to keep later matching requests on the same provider.
 
