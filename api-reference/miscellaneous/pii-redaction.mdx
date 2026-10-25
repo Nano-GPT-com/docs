@@ -5,17 +5,24 @@ description: 'Optional PII redaction for API and web chat requests.'
 
 # PII Redaction
 
-NanoGPT supports optional PII redaction for API and web chat requests. When redaction is enabled, NanoGPT replaces personal information in your request with placeholders before any later step uses it, and puts the real values back into the response.
+NanoGPT supports optional PII redaction for API and web chat requests. When redaction is enabled, personal information in your request is replaced with placeholders and the real values are put back into the response.
 
-Detection runs in Tinfoil's privacy-filter enclave. Before sending any text, NanoGPT verifies the enclave's attestation (its hardware report and the published, signed code it runs) and encrypts the text so that only that code can read it. Everything after detection works on placeholders: the model provider, context memory, web search, moderation, fallbacks and retries.
+PII redaction is opt-in. You choose between two providers:
+
+| | Tinfoil | Grepture |
+| --- | --- | --- |
+| Price | **$0.00525 per detection call** (text already scanned earlier in a conversation is not scanned or charged again) | **$0.0005 per request** |
+| What sees placeholders | Everything after detection: the model provider, context memory, web search, moderation, fallbacks and retries | The model provider only; context memory and web search receive the original text |
+| Where detection runs | Tinfoil's privacy-filter enclave. NanoGPT verifies the enclave's attestation (its hardware report and the published, signed code it runs) and encrypts the text so that only that code can read it | Grepture's proxy, which receives the request and response |
+| Detection | More thorough, plus deterministic checks for emails, IBANs, cards, IP addresses, profile links and secrets | Fewer categories caught |
+
+Redaction that does not name a provider uses Grepture unless you chose Tinfoil in your settings, so existing setups keep their price.
 
 This is useful when you want to keep personal or sensitive data away from model providers and other services while still getting a useful final answer.
 
-PII redaction is opt-in and costs **$0.005 per detection call**. Text that was already scanned earlier in a conversation is not scanned or charged again.
-
 ## How Redaction Works
 
-When redaction is enabled:
+With Tinfoil:
 
 1. The user sends a request to NanoGPT.
 2. NanoGPT sends the request's text, encrypted, to the attested Tinfoil privacy filter, which returns where personal information appears.
@@ -34,6 +41,8 @@ User <- restored response <- NanoGPT
 
 NanoGPT's own servers still receive your request as you sent it, as they do without redaction.
 
+With Grepture, NanoGPT sends the provider request through Grepture's proxy, which replaces personal information before the model provider sees it and restores it in the response. Context memory and web search run on the original text.
+
 Credential-like secrets are handled differently from normal PII. API keys, tokens, private keys, passwords and similar secrets are replaced with placeholders and are not restored into the response. This is intentional: a credential should never reach a provider, and the model's output should not echo it.
 
 ## Supported API Endpoints
@@ -45,7 +54,7 @@ PII redaction can be enabled on:
 - `POST /v1/messages`
 - `POST /v1/responses`
 
-Responses API requests that need OpenAI's built-in tools (web search, file search, computer use and similar) are still redacted through our previous provider, Grepture, which applies its own detection.
+Responses API requests that need OpenAI's built-in tools (web search, file search, computer use and similar) are always redacted through Grepture, whichever provider you chose.
 
 ## Enable With API Headers
 
@@ -64,12 +73,16 @@ Truthy values accepted by the API:
 - `1`
 - `yes`
 - `on`
+- `tinfoil` (also chooses Tinfoil for this request)
+- `grepture` (also chooses Grepture for this request)
 
 Recommended header:
 
 ```http
-redaction: true
+redaction: tinfoil
 ```
+
+`true` and the other truthy values use the provider set on your API key, then your account (`Settings > Privacy`), then Grepture.
 
 ### Chat Completions Example
 
@@ -77,7 +90,7 @@ redaction: true
 curl https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
-  -H "redaction: true" \
+  -H "redaction: tinfoil" \
   -d '{
     "model": "openai/gpt-5.5",
     "messages": [
@@ -153,7 +166,7 @@ Example:
 }
 ```
 
-NanoGPT strips the redaction suffix before sending the request onward, so the model is still resolved as the base model. The suffix is only used to turn redaction on for that request.
+NanoGPT strips the redaction suffix before sending the request onward, so the model is still resolved as the base model. The suffix is only used to turn redaction on for that request; the provider comes from a `redaction: tinfoil` or `redaction: grepture` header if you send one, else from your API key or account setting.
 
 Redaction suffixes can be combined with other supported NanoGPT model routing suffixes. For example:
 
@@ -181,11 +194,11 @@ In the NanoGPT web app, users can enable PII redaction from:
 Settings > Privacy > PII redaction for chats
 ```
 
-When this setting is enabled, web chat messages and chat titles are redacted automatically. While it is on, cloud quick replies and cloud memory suggestions are paused (local models still work), and web app tools that call outside services (web search, image search, reading links, YouTube transcripts, GitHub, AI-writing detection, image generation) receive placeholders.
+When this setting is enabled, web chat messages and chat titles are redacted automatically, with the provider you pick under **Redaction provider for chats**. While it is on, cloud quick replies and cloud memory suggestions are paused (local models still work). With Tinfoil, web app tools that call outside services (web search, image search, reading links, YouTube transcripts, GitHub, AI-writing detection, image generation) receive placeholders.
 
 ### Redact on this device
 
-With PII redaction for chats on, you can also turn on:
+With PII redaction for chats on and Tinfoil as the provider, you can also turn on:
 
 ```text
 Settings > Privacy > Redact on this device
@@ -201,7 +214,7 @@ Users can enable redaction by default for API requests from:
 Settings > Privacy > PII redaction for API requests
 ```
 
-When this account-level API setting is enabled, supported API text requests are redacted by default. Users can still opt out per request with `redaction: false`.
+When this account-level API setting is enabled, supported API text requests are redacted by default. Users can still opt out per request with `redaction: false`. **Redaction provider for API requests** sets the provider for API requests that do not name one.
 
 API keys can also be configured individually from the API key settings modal:
 
@@ -210,6 +223,9 @@ API keys can also be configured individually from the API key settings modal:
 | Inherit account | Use the account-level API default. |
 | Always redact | Redact requests made with this API key unless the request opts out. |
 | Never redact | Do not apply the account-level API redaction default to this API key. |
+| Redaction provider | Inherit account, Tinfoil or Grepture, for this key's redacted requests. |
+
+The provider is chosen in this order: the request header (`redaction: tinfoil` or `redaction: grepture`), the API key, the account, then Grepture.
 
 Explicit per-request headers and model suffixes are still the clearest way to control redaction for a single request.
 
@@ -233,7 +249,7 @@ All message text is scanned: system, developer, user, assistant and tool message
 
 These values are replaced with placeholders before reaching the model and restored in the response.
 
-In addition to the enclave model, NanoGPT runs deterministic checks for email addresses, IBANs (with checksum), payment cards (with checksum), IP addresses, profile links and common secret formats.
+With Tinfoil, in addition to the enclave model, NanoGPT runs deterministic checks for email addresses, IBANs (with checksum), payment cards (with checksum), IP addresses, profile links and common secret formats. Grepture applies its own detection.
 
 ### Secrets And Credentials
 
@@ -246,13 +262,14 @@ In addition to the enclave model, NanoGPT runs deterministic checks for email ad
 
 ## Pricing
 
-PII redaction costs **$0.005 per detection call**.
+- **Tinfoil: $0.00525 per detection call.** A normal message needs one call. Text that was already scanned earlier in the conversation is not scanned or charged again, so a request whose text was all scanned before costs nothing for redaction. One call scans up to about 3,000 tokens of new text; longer requests are split into several calls that run in parallel.
+- **Grepture: $0.0005 per request.**
 
-A normal message needs one call. Text that was already scanned earlier in the conversation is not scanned or charged again, so a request whose text was all scanned before costs nothing for redaction. Very long requests are split into several calls that run in parallel. The charge appears as a separate PII redaction add-on in usage details.
+The charge appears as a separate PII redaction add-on in usage details. Balance checks before a request reserve the Tinfoil price of one call.
 
 ## Failure Behavior
 
-Redaction is fail-closed. If the detector cannot be reached, its attestation does not verify, or it does not answer in time, NanoGPT refuses the request with HTTP 503 and code `pii_redaction_unavailable` instead of sending it unredacted. A request with more text than redaction can scan at once is refused with HTTP 413 and code `pii_redaction_too_large`.
+Redaction is fail-closed. With Tinfoil, if the detector cannot be reached, its attestation does not verify, or it does not answer in time, NanoGPT refuses the request with HTTP 503 and code `pii_redaction_unavailable` instead of sending it unredacted. A request with more new text than redaction can scan at once (about 160,000 tokens) is refused with HTTP 413 and code `pii_redaction_too_large`.
 
 Private (TEE) models already keep your prompt confidential from the provider; requests for them with redaction enabled are refused with HTTP 400 and code `pii_redaction_unsupported_model`.
 
