@@ -414,6 +414,7 @@ Privacy rules for image requests:
 - PPLX Decider v1.2 supports zero data retention: set `provider.zdr` to `true`, or use an API key with a ZDR policy.
 - Clef and Clef Flash do not support zero data retention. On these models, requests that require ZDR, and image requests with `provider.data_collection: "deny"`, return `400`.
 - Image input cannot be combined with PII redaction.
+- PII redaction uses the provider you chose (Tinfoil or Grepture; see [PII Redaction](/api-reference/miscellaneous/pii-redaction)). Tinfoil-hosted decision models do not support it.
 
 Image errors use these codes:
 
