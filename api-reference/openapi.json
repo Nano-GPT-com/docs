@@ -11891,6 +11891,58 @@
               }
             }
           },
+          "verification": {
+            "type": "object",
+            "description": "NanoGPT's own checks of what this provider serves (currently GLM 5.3 only); omitted for models NanoGPT does not check.",
+            "required": [
+              "tokenizer"
+            ],
+            "properties": {
+              "tokenizer": {
+                "type": "object",
+                "description": "At random times NanoGPT sends every provider of the model the same text and compares the prompt token counts they report. A different count means a different tokenizer, usually a different model.",
+                "required": [
+                  "status",
+                  "checks",
+                  "matches",
+                  "windowDays"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "passed",
+                      "failed",
+                      "rechecking",
+                      "unchecked"
+                    ],
+                    "description": "passed: the latest check matched. failed: two or more checks in a row did not match. rechecking: the latest check did not match and is being repeated. unchecked: no check with a result in the window.",
+                    "example": "passed"
+                  },
+                  "lastCheckedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Latest check with a result"
+                  },
+                  "checks": {
+                    "type": "integer",
+                    "description": "Checks with a result in the window",
+                    "example": 24
+                  },
+                  "matches": {
+                    "type": "integer",
+                    "description": "How many of those checks matched",
+                    "example": 24
+                  },
+                  "windowDays": {
+                    "type": "integer",
+                    "description": "Days covered by checks and matches",
+                    "example": 7
+                  }
+                }
+              }
+            }
+          },
           "distillationPolicy": {
             "$ref": "#/components/schemas/DistillationPolicy"
           }
