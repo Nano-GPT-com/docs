@@ -11,7 +11,7 @@ PII redaction is opt-in. You choose between two providers:
 
 | | Tinfoil | Grepture |
 | --- | --- | --- |
-| Price | **$0.00525 per detection call**. One call scans up to about 7,000 tokens of new text, so a typical chat turn is one call; text already scanned earlier in a conversation is not scanned or charged again | **$0.0005 per request** |
+| Price | **$0.00525 per detection call**, so the charge depends on how much new text a request carries. One call scans up to about 7,000 tokens (about 5,000 words); a short message is one call, a 10,000-word document two. Text scanned in the last 3 days is not scanned or charged again. See [Pricing](#pricing) | **$0.0005 per request**, whatever its size |
 | What sees placeholders | Everything after detection: the model provider, context memory, web search, moderation, fallbacks and retries | The model provider only; context memory and web search receive the original text |
 | Where detection runs | Tinfoil's privacy-filter enclave. NanoGPT verifies the enclave's attestation (its hardware report and the published, signed code it runs) and encrypts the text so that only that code can read it | Grepture's proxy, which receives the request and response |
 | Detection | More thorough, plus deterministic checks for emails, IBANs, cards, IP addresses, profile links and secrets | Fewer categories caught |
@@ -265,10 +265,20 @@ With Tinfoil, in addition to the enclave model, NanoGPT runs deterministic check
 
 ## Pricing
 
-- **Tinfoil: $0.00525 per detection call.** A normal message needs one call. Text that was already scanned earlier in the conversation is not scanned or charged again, so a request whose text was all scanned before costs nothing for redaction. One call scans up to about 3,000 tokens of new text; longer requests are split into several calls that run in parallel.
-- **Grepture: $0.0005 per request.**
+**Tinfoil: $0.00525 per detection call.** The charge depends on how much new text a request carries, so Tinfoil has no fixed price per request. One call scans up to about 7,000 tokens, about 5,000 words of English. Longer text is split into several calls that run in parallel, and short texts in one request share a call. Text scanned in the last 3 days is not scanned or charged again, so in a conversation each turn usually pays only for its new message and the previous reply.
 
-The charge appears as a separate PII redaction add-on in usage details. Balance checks before a request reserve the Tinfoil price of one call.
+| New text in the request | Calls | Redaction charge |
+| --- | --- | --- |
+| A short chat message | 1 | $0.00525 |
+| A 10,000-word document | 2 | $0.0105 |
+| A 20,000-word document | 4 | $0.021 |
+| None (all scanned in the last 3 days) | 0 | $0 |
+
+Code, JSON and text in other languages use more tokens per word, so they need more calls for the same number of words.
+
+**Grepture: $0.0005 per request**, whatever its size.
+
+The charge appears as a separate PII redaction add-on in usage details, with the number of Tinfoil detection calls. Before any text is sent to Tinfoil, NanoGPT checks that your balance covers the calls the request needs; if it does not, the request is refused for insufficient balance and nothing is charged.
 
 ## Failure Behavior
 
