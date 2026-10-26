@@ -55,7 +55,7 @@ PII redaction can be enabled on:
 - `POST /v1/responses`
 - `POST /v1/decisions`
 
-On Decisions, Tinfoil redaction covers `state` and each question's instructions and criteria, including choice option names, and answers come back with the original names. Tinfoil-hosted decision models (`decision-large`, `decision-medium`, `decision-small`) already run in an attested enclave and do not support redaction.
+On Decisions, Tinfoil redaction covers `state` and each question's instructions and criteria, including choice option names, and answers come back with the original names. Tinfoil-hosted decision models (`vllm-sr/decision-large`, `vllm-sr/decision-medium`, `vllm-sr/decision-small`; the earlier `decision-large`, `decision-medium` and `decision-small` IDs remain accepted) already run in an attested enclave and do not support redaction.
 
 Responses API requests that need OpenAI's built-in tools (web search, file search, computer use and similar) are always redacted through Grepture and billed at its price, whichever provider you chose.
 
