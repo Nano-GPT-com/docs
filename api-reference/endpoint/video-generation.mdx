@@ -46,7 +46,7 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | `enable_prompt_expansion` | boolean | no | Prompt booster for Wan/Seedance/Minimax variants. Disabled by default. |
 | `enable_safety_checker` | boolean | no | Optional safety checker toggle (supported by select models). |
 | `camera_fix` / `camera_fixed` / `cameraFixed` | boolean | no | Locks the virtual camera for Seedance and Wan variants. |
-| `seed` | number or string | no | Optional seed forwarded on model/provider routes that support it. This may improve reproducibility but does not guarantee identical output. |
+| `seed` | number or string | no | Optional seed forwarded on model/provider routes that support it. For Wan 3.0 models, omit it, leave it blank or send `-1` for a random seed: NanoGPT picks one from 0 to 2147483647 and returns it as `seed` in the submission response. This may improve reproducibility but does not guarantee identical output. |
 | `voiceId` | string | conditional | Alternate voice selector for lipsync models. |
 | `voice_id` | string | conditional | Required by `kling-lipsync-t2v`. |
 | `voice_language` | string | conditional | `en` or `zh` for `kling-lipsync-t2v`. |
@@ -110,6 +110,7 @@ Notes:
 ## Async Processing & Status Polling
 
 - The submission response includes `{ runId, id, model, status: "pending" }` where `id` and `runId` are identical.
+- Wan 3.0 submissions also return `seed`: the seed NanoGPT sent to the provider, including one it picked for a random request. Send it back as `seed` to reuse it; identical output is not guaranteed.
 - Poll `/api/video/status?requestId=<runId>` (or `runId`) until the job reaches `status: "COMPLETED"` or `status: "FAILED"`. The legacy `/api/generate-video/status` endpoint is deprecated.
 - Many jobs emit intermediate states (`queued`, `processing`, `generating`, `delivering`). Persist them if you need audit trails.
 - Failed jobs include an `error` object. Surface the message and adjust prompts or inputs before retrying.

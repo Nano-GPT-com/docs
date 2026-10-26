@@ -9275,7 +9275,7 @@
           },
           "seed": {
             "type": "integer",
-            "description": "Optional seed forwarded on model/provider routes that support it. This may improve reproducibility but does not guarantee identical output."
+            "description": "Optional seed forwarded on model/provider routes that support it. For Wan 3.0 models, omit it, leave it blank or send -1 for a random seed: NanoGPT picks one from 0 to 2147483647, sends it to the provider and returns it as `seed`. This may improve reproducibility but does not guarantee identical output."
           },
           "enable_safety_checker": {
             "type": "boolean",
@@ -9367,6 +9367,10 @@
             "type": "string",
             "description": "The model used for generation"
           },
+          "seed": {
+            "type": "integer",
+            "description": "The seed NanoGPT sent to the provider, returned for Wan 3.0 models. Send it back as `seed` to request the same seed again; identical output is not guaranteed."
+          },
           "cost": {
             "type": "number",
             "description": "Cost of the video generation"
@@ -9420,6 +9424,10 @@
       "GenerateVideoStatusResponse": {
         "type": "object",
         "properties": {
+          "seed": {
+            "type": "integer",
+            "description": "The seed NanoGPT sent to the provider. Returned on completed Wan 3.0 results when the account saves request context (the default); omitted otherwise. Identical output is not guaranteed when the seed is reused."
+          },
           "data": {
             "type": "object",
             "properties": {
@@ -9683,6 +9691,10 @@
           "requestId": {
             "type": "string",
             "description": "The unique request ID for the video generation"
+          },
+          "seed": {
+            "type": "integer",
+            "description": "The seed NanoGPT sent to the provider. Returned on completed Wan 3.0 results when the account saves request context (the default); omitted otherwise. Identical output is not guaranteed when the seed is reused."
           },
           "status": {
             "type": "string",
