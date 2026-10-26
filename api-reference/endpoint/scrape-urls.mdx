@@ -68,6 +68,7 @@ x-api-key: YOUR_API_KEY
 |-----------|------|----------|-------------|
 | urls | string[] | Yes | Array of URLs to scrape. Maximum 5 URLs per request. |
 | stealthMode | boolean | No | Optional. Default `false`. When `true`, multiplies the upfront per-URL charge by 5 and routes requests through the stealth proxy. |
+| provider | string | No | Optional. `"auto"` (default) or `"linkup"`. `"linkup"` reads pages with Linkup and does not support `stealthMode`. |
 
 #### Stealth scraping (optional)
 
@@ -162,6 +163,14 @@ Summary statistics for the request:
 }
 ```
 
+### 409 Conflict
+```json
+{
+  "error": "Your saved firecrawl key could not be read. Save it again on the BYOK page or remove it.",
+  "code": "byok_credential_unreadable"
+}
+```
+
 ### 429 Too Many Requests
 ```json
 {
@@ -181,6 +190,7 @@ Summary statistics for the request:
 - **Cost**: \$0.001 per successfully scraped URL
 - **Billing**: You are only charged for URLs that are successfully scraped
 - **Payment Methods**: USD balance or Nano (XNO) cryptocurrency
+- **Your own key**: If you save a Firecrawl, Berrycrawl or Linkup key on the [BYOK page](https://nano-gpt.com/byok), reads it serves are free on NanoGPT and your provider bills you directly. Balance checks skip them. See [Page reading keys](/api-reference/miscellaneous/byok#page-reading-keys).
 - **Note (inline chat scraping)**: Inline URL scraping inside `POST /api/v1/chat/completions` (via `scraping: true`) is billed separately at **\$0.0015 per successfully scraped URL**. Use this endpoint when you want explicit URL lists and the lower standalone price.
 
 ## Rate Limits

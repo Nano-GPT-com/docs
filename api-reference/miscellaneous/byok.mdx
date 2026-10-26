@@ -1,11 +1,11 @@
 ---
 title: "Bring Your Own Key (BYOK)"
-description: "Route chat completions through your own provider API keys."
+description: "Route chat completions and page reading through your own provider API keys."
 ---
 
 ## Overview
 
-BYOK (Bring Your Own Key) lets you store API credentials for supported upstream providers and then opt-in per request to route through your own keys.
+BYOK (Bring Your Own Key) lets you store API credentials for supported upstream providers and then opt-in per request to route through your own keys. Page reading keys work differently: once saved, they are used automatically (see [Page reading keys](#page-reading-keys)).
 
 Typical reasons to use BYOK:
 
@@ -18,12 +18,16 @@ BYOK is currently supported on:
 
 - `POST /api/v1/chat/completions`
 
+Page reading keys are also used by chat in the web app, `scraping` on `POST /api/v1/chat/completions`, `POST /api/scrape-urls` and `POST /api/v1/data/url/scrape`.
+
 ## Pricing
 
 When you use BYOK:
 
 - Your provider bills you directly for usage on their side.
 - NanoGPT charges a **5% platform fee** on top for routing and platform features.
+
+Page reads served by your own key are free on NanoGPT; your crawler provider bills you directly. No platform fee applies to them.
 
 ## Configure Keys
 
@@ -154,6 +158,51 @@ These providers are BYOK for web search enhancements, not chat model execution:
 | Kagi | `kagi` |
 | Perplexity | `perplexity` |
 | Valyu | `valyu` |
+
+### Page reading providers
+
+These providers read web pages for URL scraping, not chat model execution:
+
+| Provider | Slug | Reads |
+| --- | --- | --- |
+| Firecrawl | `firecrawl` | Web pages, PDFs and documents, and stealth mode |
+| Berrycrawl | `berrycrawl` | Web pages |
+| Linkup | `linkup` | Web pages, when Linkup is the selected page reader |
+
+## Page Reading Keys
+
+Save a Firecrawl, Berrycrawl or Linkup key at https://nano-gpt.com/byok, and NanoGPT reads pages with it. You don't need `x-use-byok` or `byok.enabled`.
+
+Which key a page read uses:
+
+- **Standard reads** use your Berrycrawl or Firecrawl key. If you saved both, NanoGPT tries one and falls back to the other, both on your keys.
+- **PDFs and documents** are parsed with your Firecrawl key. In web app chat and on `/api/scrape-urls`, a document URL fails if you saved only a Berrycrawl key, with a message asking you to add a Firecrawl key.
+- **Stealth mode** (`stealthMode: true`) uses your Firecrawl key. Without one, stealth reads use NanoGPT's Firecrawl key and are billed as usual.
+- **Linkup** keys are used only when Linkup is the selected page reader: `provider: "linkup"` on `/api/scrape-urls`, or `scraping: { "enabled": true, "provider": "linkup" }` in chat.
+
+If you have no key for a read, NanoGPT reads the page with its own key and bills it as usual.
+
+### No fallback to NanoGPT keys
+
+Your key replaces NanoGPT's. If a page can't be read with your key, for example because your provider account is out of credits, that URL fails; NanoGPT does not retry it with a paid key. If a saved key can no longer be read, the request fails with HTTP 409 and code `byok_credential_unreadable`. Save the key again on the BYOK page or remove it.
+
+### Balance and spending limits
+
+Balance checks and API key spending limits don't count page reads your own key will serve. Request limits still apply, and model usage in chat is billed as usual.
+
+### When your keys are not used
+
+- **Zero Data Retention:** requests that require ZDR always read pages with NanoGPT's Linkup key under NanoGPT's ZDR agreement, never with your keys.
+- **x402 payments:** requests paid with x402 never use saved keys.
+- **Per chat request:** send `scraping: { "enabled": true, "byok": false }` to read pages with NanoGPT's keys for that request. On `/api/scrape-urls`, remove the key to stop using it.
+
+### Teams
+
+Team-billed requests use the team's saved page reading keys when the team has BYOK enabled (`prefer_team` or `require_team`). A member's personal key never serves a team-billed request. Without a matching team key, team-billed page reads use NanoGPT's keys and are billed to the team as usual, in every team BYOK mode.
+
+<Note>
+Saving a Berrycrawl key runs one test page read with it, which uses one Berrycrawl credit. Firecrawl and Linkup keys are checked without using credits.
+</Note>
 
 ## Teams (BYOK)
 

@@ -464,6 +464,8 @@ Store provider keys once, then enable per request to route through your credenti
 
 Add or replace BYOK keys and change ZDR declarations at https://nano-gpt.com/byok. Accounts with a sign-in factor must sign in and confirm it's them; guests without factors can use their session. The API supports GET /api/user/provider-keys to list and DELETE /api/user/provider-keys?provider=<slug> to remove keys. API-key POST and PATCH return 403 owner_login_required. Changes notify stored owner email addresses when available.
 
+Page reading keys (firecrawl, berrycrawl, linkup) need no opt-in: once saved, URL scraping in chat, /api/scrape-urls and /api/v1/data/url/scrape reads pages with them at no NanoGPT charge, with no fallback to NanoGPT keys. Firecrawl covers PDFs and stealth mode; Linkup is used only when Linkup is the selected page reader. ZDR and x402 requests never use them; scraping.byok: false opts a chat request out. An unreadable saved key returns 409 byok_credential_unreadable. Team-billed requests use only the team's keys, never a member's.
+
 ```bash
 curl -X DELETE 'https://nano-gpt.com/api/user/provider-keys?provider=openai' \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
