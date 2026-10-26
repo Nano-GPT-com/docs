@@ -152,6 +152,6 @@ done
 
 - Polling this endpoint is free; submission endpoints are rate limited.
 - The final video URL is returned in `data.output.video.url` when status is `COMPLETED`.
-- Completed Wan 3.0 results also include top-level `seed`, the seed NanoGPT sent to the provider, when the account saves request context (the default). Send it back as `seed` to reuse it; identical output is not guaranteed.
+- Completed results from [models with returned seeds](/api-reference/endpoint/video-generation#returned-seeds) also include top-level `seed`, the seed NanoGPT sent to the provider, when the account saves request context (the default). Send it back as `seed` to reuse it; identical output is not guaranteed.
 - `cost` is returned once the generation is complete.
 - `request_id` may be a NanoGPT job ID (`vid_...`) or a legacy provider request ID.
