@@ -33,7 +33,7 @@ Examples below include canonical IDs and public moving aliases; legacy compatibi
 - **Anthropic**: `anthropic/claude-opus-5.5`, `anthropic/claude-sonnet-5.5`, `anthropic/claude-fable-5.1`
 - **Google Gemini**: `google/gemini-flash-latest`, `google/gemini-3.8-flash`, `google/gemini-3.1-pro-preview`
 - **SpaceXAI Grok**: `x-ai/grok-4.7`, `x-ai/grok-latest`
-- **Moonshot Kimi**: `moonshotai/kimi-k3`, `moonshotai/kimi-latest`
+- **Moonshot Kimi**: `moonshotai/kimi-k3.1-pro`, `moonshotai/kimi-k3`, `moonshotai/kimi-latest`
 - **Z.AI GLM**: `z-ai/glm-5.3`, `z-ai/glm-5.3:thinking`, `z-ai/glm-5.3-flash`
 - **Xiaomi MiMo**: `xiaomi/mimo-v2.5-pro`, `xiaomi/mimo-v2.5-pro:thinking`
 - **DeepSeek**: `deepseek/deepseek-v4.1-flash-1017`, `deepseek/deepseek-v4-flash-latest`, `deepseek/deepseek-latest`
@@ -65,15 +65,26 @@ For a fixed checkpoint and the older price/capability contract, select
 
 ### Kimi Latest and K3.1 Pro
 
-`moonshotai/kimi-latest` currently resolves to `moonshotai/kimi-k3`. It does not
-automatically select the newer K3.1 Pro models. To use them, choose
-`moonshotai/kimi-k3.1-pro` or `moonshotai/kimi-k3.1-pro-highspeed` explicitly.
+`moonshotai/kimi-latest` follows the newest recommended Kimi model, currently
+`moonshotai/kimi-k3.1-pro`. The faster, more expensive
+`moonshotai/kimi-k3.1-pro-highspeed` remains a separate selection. Choose
+`moonshotai/kimi-k3` explicitly to retain the K3 checkpoint and its pricing.
 
-The Pro variants have different prices, always enable thinking, and are not
-included in subscriptions. Check `/api/v1/models?detailed=true` on your chosen
-API host for availability and current prices. For K3 Auto prices by privacy mode
-and provider-specific prices, use the
-[provider endpoint](https://nano-gpt.com/api/models/moonshotai%2Fkimi-k3/providers).
+K3.1 Pro supports text, image and video input, tool calling, structured output,
+and a shared 1,048,576-token context window. Output limits depend on the route
+and remaining context. Thinking is always enabled with `low`, `high`, or `max`
+effort; NanoGPT defaults to `max`. Hiding reasoning does not disable thinking or
+its token usage. Start a new conversation when switching from K3 to K3.1 Pro.
+
+K3.1 Pro currently costs $2 per million input tokens, $10 per million output
+tokens, and $0.20 per million cached-input tokens. K3 Auto prices vary by route;
+check current pricing before switching. K3.1 Pro does not support the Batch API
+and is excluded from subscriber discounts. It does not inherit K3-specific
+discounts, and neither model is included in subscriptions. Keep explicit K3
+for integrations that need its batch support. Availability, privacy options and route limits can differ;
+check `/api/v1/models?detailed=true` and the
+[provider endpoint](https://nano-gpt.com/api/models/moonshotai%2Fkimi-latest/providers)
+on your chosen API host for current information.
 
 ### MiniMax Latest and M3.1 Flash
 
