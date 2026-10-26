@@ -63,6 +63,18 @@ can change the price, including any applicable schedule and provider-selection m
 For a fixed checkpoint and the older price/capability contract, select
 `deepseek/deepseek-v4-flash-0731` explicitly instead of the moving alias.
 
+### Kimi Latest and K3.1 Pro
+
+`moonshotai/kimi-latest` currently resolves to `moonshotai/kimi-k3`. It does not
+automatically select the newer K3.1 Pro models. To use them, choose
+`moonshotai/kimi-k3.1-pro` or `moonshotai/kimi-k3.1-pro-highspeed` explicitly.
+
+The Pro variants have different prices, always enable thinking, and are not
+included in subscriptions. Check `/api/v1/models?detailed=true` on your chosen
+API host for availability and current prices. For K3 Auto prices by privacy mode
+and provider-specific prices, use the
+[provider endpoint](https://nano-gpt.com/api/models/moonshotai%2Fkimi-k3/providers).
+
 ### MiniMax Latest and M3.1 Flash
 
 `minimax/minimax-latest` currently resolves to MiniMax M3 Thinking. This
