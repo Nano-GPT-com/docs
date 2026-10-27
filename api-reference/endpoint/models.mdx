@@ -41,6 +41,23 @@ Examples below include canonical IDs and public moving aliases; legacy compatibi
 - **Qwen**: `qwen/qwen3.8-max`, `qwen/qwen3-coder-next`
 {/* AUTO-GENERATED: notable-model-ids:end */}
 
+### GPT Terra Latest
+
+`openai/gpt-terra-latest` follows GPT-6.1 Terra. It supports text and image input,
+tools, structured output, a 1,050,000-token context window, and up to 128,000 output
+tokens. Reasoning levels are `none`, `low`, `medium`, `high`, `xhigh`, and `max`;
+NanoGPT defaults to `medium`. Batch requests with tools must use `/v1/responses`;
+Chat Completions batches do not support tools for this model.
+
+Standard pricing is $1/M input, $5/M output, $0.05/M cached input, and $1.25/M
+cache writes. Requests above 272,000 input tokens use higher long-context rates.
+It is a paid model; use the [live model pricing and privacy metadata](https://nano-gpt.com/api/models/openai%2Fgpt-6.1-terra/providers)
+for the current route details.
+
+GPT-6.1 Terra has no Pro preset. Choose `openai/gpt-5.6-terra` or
+`openai/gpt-5.6-terra-pro` explicitly to retain those models and their behavior.
+The general chat default and the examples on this site remain GPT-6.1 Sol.
+
 ### DeepSeek Flash Latest
 
 `deepseek/deepseek-v4-flash-latest` follows the current recommended Flash snapshot,
