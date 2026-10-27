@@ -131,7 +131,7 @@ a temporary failure with `503`. Do not decide whether to retry by code alone.
 | `404` | `feedback_not_found` | No report is accessible with this API key. Check the receipt ID and submitting key, then stop automatic retries. This response does not reveal whether another key owns a report. |
 | `410` | `feedback_unavailable` | The report was deleted or archived. Stop polling; this response does not include retry advice. |
 | `429` | `rate_limit_exceeded` | A feedback request quota was reached. Honor `Retry-After`. |
-| `429` | `authentication_rate_limited` | Repeated invalid credentials triggered a temporary block. Correct the credentials and honor `Retry-After`. |
+| `429` | `authentication_rate_limited` | This credential was rejected repeatedly and is temporarily refused (per credential, not per IP). Correct the credentials and honor `Retry-After`. |
 | `500` or `503` | `internal_error` | Authentication encountered a server failure. Retry with bounded backoff; `Retry-After` may be absent. |
 | `503` | `feedback_unavailable` | A temporary feedback failure. Honor `Retry-After: 30` and retain `X-Request-ID` for support. |
 | `503` | `rate_limit_unavailable` | The rate-limit service could not check the request. Honor `Retry-After`. |

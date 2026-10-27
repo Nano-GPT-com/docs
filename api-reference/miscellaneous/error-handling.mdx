@@ -85,7 +85,7 @@ This table covers the most common HTTP error statuses you may encounter.
 | `408` / `504` | Timeout | Retry with backoff |
 | `409` | Conflict | Resolve state (duplicate/redeemed/already processed) |
 | `413` | Payload too large | Reduce payload size and retry; for images, send HTTPS URLs or resize them |
-| `429` | Rate limited | Wait (use `Retry-After` if present), then retry. This can be a per-second throughput limit or a per-key daily limit. |
+| `429` | Rate limited | Wait (use `Retry-After` if present), then retry. This can be a per-second throughput limit, a per-key daily limit, or an authentication throttle after a credential was rejected repeatedly (see [Authentication rate limiting](#authentication-rate-limiting)). |
 | `500` | Server error | Retry with backoff |
 | `503` | Temporarily unavailable | Retry with backoff; consider changing model if persistent |
 
@@ -153,6 +153,36 @@ Common codes include:
 - `rate_limit_exceeded`
 - `daily_rpd_limit_exceeded`
 - `daily_usd_limit_exceeded`
+- `authentication_rate_limited` (see [Authentication rate limiting](#authentication-rate-limiting))
+
+## Authentication Rate Limiting
+
+A credential that keeps being rejected (an unknown, expired or revoked key, or a key whose account is blocked) is temporarily refused before it is checked again. The response is `429` with `code: "authentication_rate_limited"`, `type: "authentication_error"` and a `Retry-After` header in seconds. No model provider is contacted and nothing is charged.
+
+```json
+{
+  "error": {
+    "message": "This API key was rejected repeatedly and is temporarily rate limited. Check that the key is correct and still active. No model provider was contacted. Retry after 59 seconds.",
+    "type": "authentication_error",
+    "code": "authentication_rate_limited",
+    "status": 429,
+    "retry_after": 59
+  }
+}
+```
+
+`POST /api/v1/messages` returns the same code inside the Anthropic-style wrapper.
+
+How the throttle works:
+
+- It is applied **per credential**, not per IP address. Other keys sent from the same address, network or cloud egress keep working, and a key that authenticates successfully is never affected by other clients' failures.
+- An address is only restricted as a whole when it presents many different invalid credentials within a few minutes. Even then, keys that recently authenticated successfully keep working; only credentials that have not been seen succeeding are refused from that address until the restriction lapses.
+- Requests that carry no credential at all are limited per address, separately.
+- A key that keeps tripping the throttle is refused for longer each time, up to 15 minutes.
+
+Endpoints on the shared chat authentication path (for example `POST /api/v1/chat/completions`) also set `x-nanogpt-auth-rate-limit-reason` on these responses: `credential_blocked` (this key), `ip_restricted` (this address presented many invalid keys) or `missing_credential_throttled` (too many requests without a credential).
+
+Client action: stop retrying with that key until `Retry-After` has elapsed, and check the key itself. Retrying with the same key does not shorten the wait; rotating IP addresses does not help and is unnecessary. A `429` with this code is not a throughput or daily limit, so it does not mean your traffic volume is too high.
 
 ## Streaming Errors
 

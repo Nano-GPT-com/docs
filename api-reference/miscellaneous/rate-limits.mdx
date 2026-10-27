@@ -60,3 +60,7 @@ Error codes:
 | --- | --- |
 | `daily_rpd_limit_exceeded` | Request count limit reached |
 | `daily_usd_limit_exceeded` | Spend limit reached |
+
+## Authentication Throttle (Repeated Rejected Credentials)
+
+Separately from the limits above, a credential that keeps being rejected is temporarily refused with `429` and `code: "authentication_rate_limited"`, plus a `Retry-After` header. This throttle is **per credential**: other API keys from the same IP address are unaffected, and valid keys never trip it. Fix the key rather than retrying; see [Authentication rate limiting](/api-reference/miscellaneous/error-handling#authentication-rate-limiting) for the response shape and the `x-nanogpt-auth-rate-limit-reason` header.
