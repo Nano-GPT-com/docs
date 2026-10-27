@@ -282,7 +282,7 @@ The charge appears as a separate PII redaction add-on in usage details, with the
 
 ## Failure Behavior
 
-Redaction is fail-closed. With Tinfoil, if the detector cannot be reached, its attestation does not verify, or it does not answer in time, NanoGPT refuses the request with HTTP 503 and code `pii_redaction_unavailable` instead of sending it unredacted. A request with more new text than redaction can scan at once (about 160,000 tokens) is refused with HTTP 413 and code `pii_redaction_too_large`. Tinfoil charges for each detection call, including calls for requests that are then refused or fail; once an account has 100 such unpaid calls in a day, further detection is refused with HTTP 429 and code `pii_redaction_unbilled_limit` until the day's count resets.
+Redaction is fail-closed. With Tinfoil, if the detector cannot be reached, its attestation does not verify, or it does not answer in time, NanoGPT refuses the request with HTTP 503 and code `pii_redaction_unavailable` instead of sending it unredacted. A request with more new text than redaction can scan at once (about 160,000 tokens) is refused with HTTP 413 and code `pii_redaction_too_large`. Tinfoil charges for each detection call, including calls for requests that are then refused, fail or end without an answer (for example, a stream stopped before its first token); once an account has 100 such unpaid calls in a day, further detection is refused with HTTP 429 and code `pii_redaction_unbilled_limit` until the day's count resets.
 
 Private (TEE) models already keep your prompt confidential from the provider; requests for them with redaction enabled are refused with HTTP 400 and code `pii_redaction_unsupported_model`.
 
