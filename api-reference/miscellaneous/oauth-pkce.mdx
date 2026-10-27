@@ -371,7 +371,7 @@ NanoGPT does not issue refresh tokens in this MVP.
 
 Apps that use Sign in with NanoGPT can attach their NanoGPT referral link, so people who create a NanoGPT account through the app's sign-in are referred by the app developer.
 
-Pass your referral link code as `invitation_code` on either `/auth` or `/oauth/authorize`. The code is the last part of your referral link: for `https://nano-gpt.com/r/abc123`, use `invitation_code=abc123`. Create or copy referral links on the [Invitations page](https://nano-gpt.com/invitations).
+Pass your referral link code as `invitation_code` on either `/auth` or `/oauth/authorize`. The code is the last part of your referral link: for `https://nano-gpt.com/r/abc123`, use `invitation_code=abc123`. Create or copy referral links on the [Referrals page](https://nano-gpt.com/invitations).
 
 ```text
 https://nano-gpt.com/auth?callback_url=https%3A%2F%2Fapp.example%2Fcallback&code_challenge=...&code_challenge_method=S256&state=...&client_name=My%20App&invitation_code=abc123
