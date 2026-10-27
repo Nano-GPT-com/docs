@@ -180,7 +180,7 @@ How the throttle works:
 - Requests that carry no credential at all are limited per address, separately.
 - A key that keeps tripping the throttle is refused for longer each time, up to 15 minutes.
 
-Endpoints on the shared chat authentication path (for example `POST /api/v1/chat/completions`) also set `x-nanogpt-auth-rate-limit-reason` on these responses: `credential_blocked` (this key), `ip_restricted` (this address presented many invalid keys) or `missing_credential_throttled` (too many requests without a credential).
+Every endpoint that accepts an API key applies this throttle and sets `x-nanogpt-auth-rate-limit-reason` on these responses: `credential_blocked` (this key), `ip_restricted` (this address presented many invalid keys) or `missing_credential_throttled` (too many requests without a credential). `POST /api/v1/responses` returns the same code and headers in its own error format.
 
 Client action: stop retrying with that key until `Retry-After` has elapsed, and check the key itself. Retrying with the same key does not shorten the wait; rotating IP addresses does not help and is unnecessary. A `429` with this code is not a throughput or daily limit, so it does not mean your traffic volume is too high.
 
