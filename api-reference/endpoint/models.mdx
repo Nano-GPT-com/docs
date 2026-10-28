@@ -54,8 +54,11 @@ cache writes. Requests above 272,000 input tokens use higher long-context rates.
 It is a paid model; use the [live model pricing and privacy metadata](https://nano-gpt.com/api/models/openai%2Fgpt-6.1-terra/providers)
 for the current route details.
 
-GPT-6.1 Terra has no Pro preset. Choose `openai/gpt-5.6-terra` or
-`openai/gpt-5.6-terra-pro` explicitly to retain those models and their behavior.
+For Pro reasoning mode, choose `openai/gpt-6.1-terra-pro` explicitly. It uses the
+same base model and per-token rates, but performs more model work, increasing token
+usage, cost, and latency. The Latest alias continues to select standard Terra by default.
+Choose `openai/gpt-5.6-terra` or `openai/gpt-5.6-terra-pro` explicitly to retain
+those models and their behavior.
 The general chat default and the examples on this site remain GPT-6.1 Sol.
 
 ### DeepSeek Flash Latest
