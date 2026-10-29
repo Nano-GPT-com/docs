@@ -19,6 +19,249 @@
     }
   ],
   "paths": {
+    "/deposit/create": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api"
+        }
+      ],
+      "post": {
+        "operationId": "createPolygonDeposit",
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Create a native POL payment window",
+        "description": "Create an API-key-authenticated native POL top-up on Polygon PoS. amount is USD, token POL or POLYGON. The address is reused but monitoring requires a new active request for each transfer. A quote is not a locked exchange rate. Use one transfer per request and keep a wallet-side payment record to avoid sending twice. Other deposit/create network flows are outside this documented POL contract. Requests with Idempotency-Key, including replays, are limited to 30 per 10 minutes per account and tenant. Follow Retry-After and bounded backoff.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Recommended unique key per logical top-up, 8-128 visible ASCII characters without spaces. Receipts last 24 hours. Retry with the same key and unchanged amount/token/expiry after a timeout. Changed payload returns 409. Replays verify current status and never create a new window. Uncertain attempts remain claimed; repeated idempotency_in_progress requires investigation rather than a new key or another transfer. Never reuse keys for later payments. Does not deduplicate wallet transfers. Supported only for native POL.",
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[\\x21-\\x7e]{8,128}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolygonDepositRequest"
+              },
+              "example": {
+                "network": "polygon",
+                "token": "POL",
+                "amount": 150
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment instructions, or a replay refreshed with current status. Send only if this logical top-up has not already been paid and its window is active.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDeposit"
+                }
+              }
+            },
+            "headers": {
+              "Idempotency-Replayed": {
+                "description": "true when returning a retained receipt refreshed with current status.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body, expiry or idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "deposit_already_pending includes the existing transaction; it can be for another requested amount. deposit_creation_in_progress or idempotency_in_progress means retry unchanged, with backoff. idempotency_key_mismatch means the same key was used with different input. Do not send a second payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Suggested delay in seconds when provided.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Monitoring, creation, or replay verification is unavailable or uncertain. Preserve the same key and any returned txId; do not assume no window exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Suggested delay in seconds when provided.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Account creation/replay rate limit exceeded. Retain the same key and retry after Retry-After seconds.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Seconds to wait before retrying."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transaction/status/polygon/{txId}": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api"
+        }
+      ],
+      "get": {
+        "operationId": "getPolygonDepositStatus",
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Verify a Polygon deposit and its credited balance",
+        "description": "Poll with the original account API key and complete URL-encoded txId. Unknown or foreign IDs return 404, not an inferred PENDING state. COMPLETED and balanceCredited true require a matching completed ledger deposit. EXPIRED means the acceptance window closed; it does not prove that no transfer was sent or rule out later reconciliation. Never resend solely because polling failed or the window expired.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "txId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Complete opaque txId returned by create. Encode the entire value as one URL path segment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current owner-scoped deposit state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDeposit"
+                }
+              }
+            },
+            "headers": {
+              "X-Poll-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Recommended seconds before another poll (currently 2)."
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed txId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No matching deposit for this account, network and address.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Status could not be verified; retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/usage/requests/{request_id}": {
       "get": {
         "operationId": "retrieveRequestBilling",
@@ -5542,6 +5785,316 @@
   },
   "components": {
     "schemas": {
+      "PolygonDepositRequest": {
+        "type": "object",
+        "required": [
+          "network",
+          "token",
+          "amount"
+        ],
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "polygon"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "POLYGON"
+            ],
+            "description": "Native POL on Polygon PoS (chain ID 137). POLYGON is the compatibility alias."
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 25000,
+            "description": "Requested gross USD estimate, not a number of POL. The minimum applies before conversion spread and bonus."
+          },
+          "expires_at": {
+            "type": "integer",
+            "description": "Optional future Unix timestamp in seconds, at most 30 minutes from now. Omit to use the default 30-minute window. Keep unchanged on idempotent retries."
+          }
+        },
+        "additionalProperties": true
+      },
+      "PolygonDepositCreditEstimate": {
+        "type": "object",
+        "description": "Indicative USD breakdown: conversion spread, consolidation fee, then bonus. Final credit uses actual POL received and settlement pricing. Never treat this as a locked exchange rate.",
+        "required": [
+          "grossUsdExact",
+          "conversionSpreadRateExact",
+          "conversionSpreadUsdExact",
+          "consolidationFeeUsdExact",
+          "netBeforeBonusUsdExact",
+          "bonusRateExact",
+          "bonusUsdExact",
+          "estimatedCreditedUsdExact",
+          "basis"
+        ],
+        "properties": {
+          "grossUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "conversionSpreadRateExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "conversionSpreadUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "consolidationFeeUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "netBeforeBonusUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "bonusRateExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "bonusUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "estimatedCreditedUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "requested_usd_at_quote_price"
+            ]
+          }
+        }
+      },
+      "PolygonDeposit": {
+        "type": "object",
+        "description": "Creation instructions or current status. Original quote fields can be absent on historical/settled records. Monetary fields labeled quoted or estimated are not settled credit.",
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "polygon"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "description": "POL for current native deposits."
+          },
+          "chainId": {
+            "type": "integer",
+            "enum": [
+              137
+            ]
+          },
+          "tokenDecimals": {
+            "type": "integer",
+            "enum": [
+              18
+            ]
+          },
+          "address": {
+            "type": "string",
+            "description": "Receiving address; create a fresh payment window before every transfer despite address reuse."
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string",
+            "description": "Opaque status identifier: address:jobId:expiry. Persist exactly and URL-encode when polling."
+          },
+          "statusUrl": {
+            "type": "string",
+            "description": "Relative URL to poll on https://nano-gpt.com with the same account API key."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CONFIRMING",
+              "PROCESSING",
+              "COMPLETED",
+              "EXPIRED",
+              "FAILED"
+            ]
+          },
+          "balanceCredited": {
+            "type": "boolean",
+            "description": "True only when the status endpoint verifies a completed account-owned ledger deposit. Present in status responses."
+          },
+          "creditedUsd": {
+            "type": "number",
+            "description": "Final credited USD when balanceCredited is true; prefer settlement.creditedUsdExact for exact accounting."
+          },
+          "requestedUsd": {
+            "type": "number",
+            "description": "Original requested gross USD estimate."
+          },
+          "quotedTokenAmount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Quoted POL quantity as a decimal string, not a guaranteed final USD credit."
+          },
+          "quotedTokenAmountAtomic": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Quoted POL quantity in atomic units (18 decimals). Parse as BigInt or another exact integer, never a floating-point Number."
+          },
+          "quotedTokenUsdPrice": {
+            "type": "number",
+            "description": "Indicative quote price, not a locked settlement price."
+          },
+          "priceLocked": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "creditEstimate": {
+            "$ref": "#/components/schemas/PolygonDepositCreditEstimate"
+          },
+          "expiresAt": {
+            "type": "integer",
+            "description": "Payment-window expiry as Unix seconds. Do not send against expired or cancelled requests."
+          },
+          "remainingTime": {
+            "type": "integer",
+            "description": "Seconds remaining when this response was built."
+          },
+          "minimumDepositUsd": {
+            "type": "number",
+            "description": "Minimum requested gross USD estimate."
+          },
+          "consolidationFeeUsd": {
+            "type": "number"
+          },
+          "consolidationFeeUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "estimatedCreditUsd": {
+            "type": "number",
+            "description": "Legacy estimate after conversion spread and consolidation fee, before bonus."
+          },
+          "amountCrypto": {
+            "deprecated": true,
+            "description": "Ambiguous legacy field. Creation responses contain the USD estimate, NOT POL. Use quotedTokenAmount; status may use this legacy field for an observed amount.",
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "quotedEthAmount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Legacy alias for quotedTokenAmount on native POL.",
+            "deprecated": true
+          },
+          "quotedEthAmountWei": {
+            "type": "string",
+            "deprecated": true,
+            "description": "Legacy alias for quotedTokenAmountAtomic on native POL."
+          },
+          "txHash": {
+            "type": "string"
+          },
+          "paidTokenAmount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "paidTokenAmountAtomic": {
+            "type": "string"
+          },
+          "settlement": {
+            "type": "object",
+            "description": "Only returned for verified COMPLETED ledger rows. Historical bonus components are null if unavailable or inconsistent; no bonus is inferred.",
+            "required": [
+              "creditedUsdExact",
+              "baseUsdExact",
+              "bonusUsdExact",
+              "bonusRateExact",
+              "breakdownSource"
+            ],
+            "properties": {
+              "creditedUsdExact": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d+)?$",
+                "description": "Exact decimal string. Use decimal arithmetic."
+              },
+              "baseUsdExact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bonusUsdExact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bonusRateExact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "breakdownSource": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "cryptoBonus",
+                  null
+                ]
+              }
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "PolygonDepositError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/PolygonDeposit"
+          }
+        },
+        "additionalProperties": true
+      },
       "DecisionsStructuredDescription": {
         "description": "A non-empty string, JSON object, or JSON array used to describe a question or outcome.",
         "oneOf": [

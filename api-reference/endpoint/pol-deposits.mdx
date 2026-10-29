@@ -1,0 +1,219 @@
+---
+title: 'Automating POL deposits'
+description: 'Create native POL payment windows on Polygon, retry safely, and verify credited USD'
+---
+
+Native **POL on Polygon PoS (chain ID 137)** can fund your NanoGPT USD balance.
+Use the canonical host `https://nano-gpt.com` and an API key belonging to the
+account you want to credit. This flow accepts native POL, not wrapped POL or an
+asset on another chain.
+
+## Payment lifecycle
+
+1. Persist a unique top-up identifier in your application.
+2. Create a payment window with that identifier as `Idempotency-Key`.
+3. Persist the returned `txId`, address, amount and expiry before sending funds.
+4. Send **one transfer** during the active window, recording the wallet's transaction hash.
+5. Poll the returned `statusUrl` until you verify credited balance or need to investigate an unresolved payment.
+
+The receiving address is normally reused for the account. **It is not an
+always-on deposit address:** create a new payment window before each transfer.
+A successful HTTP retry must never trigger a second wallet transfer. API
+idempotency protects payment-window creation, not your wallet's sending operation.
+
+## Create a payment window
+
+`POST https://nano-gpt.com/api/deposit/create`
+
+Authenticate with `Authorization: Bearer <API_KEY>` or `x-api-key: <API_KEY>`.
+
+| Field | Meaning |
+| --- | --- |
+| `network` | `polygon` |
+| `token` | `POL`; the existing `POLYGON` alias is also accepted |
+| `amount` | Requested gross **USD** estimate, not a POL quantity |
+| `expires_at` | Optional future Unix timestamp in **seconds**, at most 30 minutes from now. Omit for the default 30-minute window. |
+
+The requested gross minimum is currently **$0.10** and maximum **$25,000**.
+`minimumDepositUsd` in the response reports the current minimum. This is a
+minimum request size before conversion spread and bonus, not a guaranteed net
+USD credit or a fixed POL amount.
+
+Use a new idempotency key for each logical top-up and keep it unchanged on retries:
+
+```bash
+curl https://nano-gpt.com/api/deposit/create \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: your-persisted-topup-0001" \
+  --data '{"network":"polygon","token":"POL","amount":150}'
+```
+
+### Read the amount fields correctly
+
+| Response field | Meaning |
+| --- | --- |
+| `address` | Destination for this request, on Polygon PoS |
+| `requestedUsd` | Original requested USD estimate |
+| `quotedTokenAmount` | Quoted **POL quantity as a decimal string** |
+| `quotedTokenAmountAtomic` | Exact atomic-unit integer string; POL has 18 decimals |
+| `quotedTokenUsdPrice` | Indicative quote price |
+| `chainId`, `tokenDecimals` | `137`, `18` |
+| `priceLocked` | `false`: settlement uses the amount received and settlement pricing |
+| `jobId` | Payment-window identifier |
+| `txId` | Opaque status identifier; save the complete value |
+| `statusUrl` | Relative status URL on `https://nano-gpt.com` |
+| `expiresAt` | Payment-window expiry as Unix seconds |
+| `creditEstimate` | Itemized estimated USD credit, including bonus |
+
+Use decimal arithmetic or integer atomic units. Do not convert
+`quotedTokenAmountAtomic` to a JavaScript `Number`; use `BigInt` or the exact
+integer type expected by your wallet library.
+
+<Warning>
+  `amountCrypto` is a deprecated, ambiguous legacy field. In creation responses
+  it contains the USD estimate, not the POL amount. Use `quotedTokenAmount` or
+  `quotedTokenAmountAtomic`. The legacy `quotedEthAmount` and
+  `quotedEthAmountWei` aliases remain for compatibility and represent POL in
+  this flow, despite their names.
+</Warning>
+
+## Matching and settlement
+
+The native POL flow matches the receiving address, network, asset and active
+payment window. The displayed decimal quantity is a quote, not an account
+identifier. Ordinary native POL payments do not have to match the quote exactly:
+a somewhat smaller or larger transfer is valued from the amount actually received.
+Use one transfer per request; do not split it into multiple payments.
+
+The quote is not a fixed-price invoice. Final credit can change because the POL
+quantity received or the settlement price differs from the estimate.
+
+The settlement order is:
+
+1. Convert the received POL to USD using settlement pricing and a **1% conversion spread**.
+2. Deduct any applicable consolidation fee. The current Polygon consolidation fee is **$0.00**.
+3. Add the **3% crypto bonus** to the resulting base credit for eligible NanoGPT deposits.
+
+The bonus is applied with the credit, including API-initiated deposits. Your
+wallet pays the sending network fee separately. Partner deployments may have
+different bonus eligibility; use the returned `bonusRateExact`.
+
+For a $150 request, the quote-based estimate with zero consolidation fee is:
+
+```json
+{
+  "basis": "requested_usd_at_quote_price",
+  "grossUsdExact": "150.00000000",
+  "conversionSpreadRateExact": "0.01",
+  "conversionSpreadUsdExact": "1.50000000",
+  "consolidationFeeUsdExact": "0.00000000",
+  "netBeforeBonusUsdExact": "148.50000000",
+  "bonusRateExact": "0.03",
+  "bonusUsdExact": "4.45500000",
+  "estimatedCreditedUsdExact": "152.95500000"
+}
+```
+
+These are exact decimal strings describing an **estimate**, not an assurance of
+$152.955 final credit. The legacy `estimatedCreditUsd` field is the estimate
+after spread and consolidation fee but **before** bonus.
+
+## Retry creation without duplicating a payment
+
+`Idempotency-Key` is optional but recommended for automation. It must contain
+8-128 visible ASCII characters without spaces. Records are scoped to the
+account and tenant and retained for **24 hours**. Never reuse a key for another
+payment, including after that retention period.
+
+Retry with the **same key and unchanged request** after a timeout. Keep the
+amount and any explicit `expires_at` unchanged. `POL` and `POLYGON` normalize
+to the same request asset. A successful replay returns
+`Idempotency-Replayed: true` and refreshes the original deposit's current status;
+it does not open another window or extend its expiry. A replay can already be
+`COMPLETED` or `EXPIRED`. A cancelled or expired deposit keeps its original
+key; a later, separate top-up needs a new key after you have reconciled any
+previous transfer.
+
+| Response/code | Action |
+| --- | --- |
+| `200` | Save the response. Send only if this logical top-up has not already been paid and its payment window is active. |
+| `409 deposit_already_pending` | Inspect the existing `transaction`. It may have a different requested amount. Do not send against the new amount or pay the same request twice. This key stays bound to that window; use a new key only for a separate, reconciled top-up. |
+| `409 deposit_creation_in_progress` | Another creation is being prepared. Retry unchanged with backoff; no payment instructions are available yet. |
+| `409 idempotency_in_progress` | The original attempt is running or its outcome is uncertain. Preserve the key; do not use a new key to bypass it. |
+| `409 idempotency_key_mismatch` | The key was used with different input. Restore the original request when retrying. |
+| `400` | Correct invalid input. Do not change an already-used key's payload. |
+| `429 rate_limit_exceeded` | Keep the same key and wait for `Retry-After` before retrying. |
+| `503` | Creation or verification is unavailable or uncertain. Keep the original key and any returned `txId`; do not assume no payment window exists. |
+
+Keyed creation requests, including replays, are limited to **30 per 10 minutes**
+per account and tenant. Poll the status URL to track a known deposit instead of
+repeatedly calling creation. Errors known to occur before monitor creation can
+be retried with the same key; an uncertain dispatched attempt stays reserved.
+The header is supported only for native POL; other deposit flows reject it.
+
+Follow `Retry-After` where present and use bounded exponential backoff with
+jitter. Do not retry forever. An interrupted attempt can remain uncertain for
+the receipt's retention period: contact [support](https://nano-gpt.com/support)
+with the top-up identifier, `txId` and transaction hash if available. Do not send
+another transfer to resolve an uncertain outcome.
+
+Without `Idempotency-Key`, the active-payment check normally returns HTTP 409
+while another window is pending, but it is not durable request deduplication.
+
+## Verify credit
+
+Use `GET https://nano-gpt.com` plus the returned `statusUrl`, authenticated as
+the original account. Equivalently, poll
+`/api/transaction/status/polygon/{txId}`, URL-encoding the **complete** `txId`
+as one path segment. A bare address or bare job ID is insufficient.
+
+```javascript
+// Persist these from the original creation response. Do not create again here.
+const response = await fetch(`https://nano-gpt.com${deposit.statusUrl}`, {
+  headers: { Authorization: `Bearer ${apiKey}` },
+});
+if (!response.ok) {
+  // Handle 401/404 separately; back off on 429/5xx. Never resend funds here.
+  throw new Error(`Deposit status HTTP ${response.status}`);
+}
+const current = await response.json();
+if (current.status === 'COMPLETED' && current.balanceCredited === true) {
+  console.log('Credited USD:', current.settlement?.creditedUsdExact);
+}
+// Wait at least X-Poll-After seconds before the next poll.
+```
+
+| Status | Meaning |
+| --- | --- |
+| `PENDING` | An owned request is retained; payment/credit has not been verified. |
+| `CONFIRMING` | An observed transfer is waiting for confirmations. |
+| `PROCESSING` | Processing is underway or completion has not yet been verified against the ledger. |
+| `COMPLETED` | A matching completed deposit exists in the account ledger; `balanceCredited` is `true`. |
+| `EXPIRED` | The acceptance window closed or was cancelled/replaced. This is not proof that no money was sent. |
+| `FAILED` | Processing failed. Retain the transaction hash and investigate before another payment. |
+
+An unknown ID or one belonging to another account/network/address returns
+**404**, regardless of the expiry encoded in the supplied ID. A status outage
+is not proof of failure. Follow `X-Poll-After` (currently two seconds) and use
+backoff for temporary errors.
+
+On a completed POL deposit, `settlement.creditedUsdExact` is the ledger credit.
+The optional recorded base/bonus breakdown is returned as `baseUsdExact`,
+`bonusUsdExact`, and `bonusRateExact`; those fields are null for old or
+inconsistent records instead of guessing a bonus. Quote fields can be absent
+from historical or settled responses, so keep the original creation response.
+
+## Expired or late payments
+
+The default window is 30 minutes. Send promptly enough for the transfer to be
+included on-chain within the window; signing or broadcasting before the deadline
+alone is not sufficient. Use the returned expiry, not a hard-coded local timer.
+
+A transfer observed in time can continue confirming afterward. `EXPIRED` does
+not reverse a blockchain transfer and does not prove that credit cannot appear
+later through reconciliation. Transfers arriving after the window are not
+guaranteed automatic credit. If you already sent funds, keep polling with
+backoff for a bounded period, then contact support with the original `txId` and
+transaction hash. Do not send again merely because the request expired or a
+poll failed.
