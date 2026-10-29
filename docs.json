@@ -81,8 +81,7 @@
           "api-reference/endpoint/invitations-create",
           "api-reference/endpoint/subscription-usage",
           "api-reference/endpoint/receive-nano",
-          "api-reference/endpoint/crypto-deposits",
-          "api-reference/endpoint/pol-deposits"
+          "api-reference/endpoint/crypto-deposits"
         ]
       },
       {
@@ -246,6 +245,10 @@
     {
       "source": "/api-reference/miscellaneous/partner-auth",
       "destination": "/volume-pricing"
+    },
+    {
+      "source": "/api-reference/endpoint/pol-deposits",
+      "destination": "/api-reference/endpoint/crypto-deposits"
     }
   ]
 }

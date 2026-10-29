@@ -14,15 +14,70 @@ NanoGPT supports multiple deposit methods (crypto, stablecoins, and cards). This
 
 Deposits are credited automatically after payment confirmation.
 
-## Native POL on Polygon
+## Automating deposits
 
-For native POL automation, use `POST /api/deposit/create` with `network: "polygon"`
-and `token: "POL"` (or the compatibility alias `POLYGON`). The amount is in USD.
-This is a separate payment-window flow from the invoice endpoint below.
+1. Choose a payment method and create its invoice or payment window using your
+   account API key. Check the endpoint's amount units and current limits.
+2. Save the complete response, including the transaction ID, destination, amount
+   and expiry, before sending funds. Use the specified asset and network.
+3. Send the payment once. A reused address does not necessarily mean continuous
+   monitoring; methods with payment windows require a new window for each top-up.
+4. Poll the method's status endpoint until balance credit is confirmed. Payment
+   detection or blockchain confirmation alone is not proof of credited balance.
+5. On a timeout or expired window, reconcile the original request and wallet
+   transaction before trying again. Do not resend funds merely because polling
+   failed. Keep the transaction ID and blockchain hash for support.
 
-See [Automating POL deposits](/api-reference/endpoint/pol-deposits) for exact token
-amounts, idempotent retries, the conversion spread and bonus, expiry, and verified
-credit polling. Address reuse does not mean continuous monitoring.
+Retry protection, amount matching, expiry and fees differ by method. Only send an
+`Idempotency-Key` where the endpoint explicitly supports it. Follow `Retry-After`
+and polling headers, and use bounded backoff for temporary failures.
+
+## Monitored deposits
+
+`POST /api/deposit/create` creates a network-specific payment window, separate
+from the invoice endpoints below. Authenticate with the same account API key.
+The following native-asset contract is available for POL on Polygon PoS:
+
+| Request or response | Native POL |
+| --- | --- |
+| Request | `network: "polygon"`, `token: "POL"` (`POLYGON` is also accepted), `amount` in gross USD |
+| Network | Polygon PoS, chain ID `137`; native POL only |
+| Limits | Currently $0.10-$25,000 USD per request; check `minimumDepositUsd` in the response |
+| Amount to send | `quotedTokenAmount` (decimal string) or `quotedTokenAmountAtomic` (integer string, 18 decimals) |
+| Destination and expiry | Use the returned `address` and `expiresAt` (Unix seconds); the default window is 30 minutes |
+| Optional expiry | `expires_at`, a future Unix timestamp in seconds, at most 30 minutes from creation |
+| Status | Poll the returned `statusUrl`, or `/api/transaction/status/polygon/{txId}` with the complete ID URL-encoded |
+| Confirmed credit | `status: "COMPLETED"` and `balanceCredited: true`; actual USD credit is `settlement.creditedUsdExact` |
+
+Save atomic amounts as integers or strings, never floating-point numbers.
+For this flow, the legacy `amountCrypto` creation field contains the USD estimate,
+not the token quantity. The quote is not price-locked: one slightly smaller or
+larger transfer is valued from the amount actually received. Do not split a
+payment across multiple transfers.
+
+Native POL supports an optional `Idempotency-Key` of 8-128 visible ASCII characters
+without spaces, retained for 24 hours. Use a unique key per top-up and keep the key
+and request unchanged on retries. A replay neither extends expiry nor authorizes
+another wallet transfer. If creation returns an existing pending payment or an
+uncertain outcome (`409`/`503`), reconcile that request before sending. Other
+methods do not inherit this support.
+
+Send early enough for inclusion on-chain within the window. Confirmation can
+continue afterward, but late arrivals are not guaranteed automatic credit.
+An expired status does not mean that a transfer was reversed or that no funds
+were sent. Contact support with the original transaction ID and hash if needed.
+
+## Deposit fees and credit
+
+Review the payment quote for conversion spreads, consolidation fees and bonus
+eligibility. Your wallet pays any sending network fee separately. Do not treat
+an estimated credit as a guaranteed final amount.
+
+For native POL, settlement applies a 1% conversion spread, the current $0.00
+consolidation fee, then the 3% bonus for eligible deposits. The bonus is included
+with the credit for API-created deposits too. `creditEstimate` itemizes the quote;
+`settlement.creditedUsdExact` reports the completed ledger credit. Other methods
+can have different fees and settlement rules.
 
 ## Supported Payment Methods
 
@@ -77,7 +132,7 @@ See: [Check Balance](/api-reference/endpoint/check-balance) and [Receive Nano](/
 
 ## Authentication
 
-All `/api/transaction/*` endpoints require API key authentication using one of these methods:
+The deposit creation and status endpoints require API key authentication using one of these methods:
 
 ```bash
 # Method 1: Authorization header
@@ -91,6 +146,7 @@ curl -H "x-api-key: YOUR_API_KEY"
 
 Pick the endpoint based on the payment method:
 
+- Monitored native deposits: `POST /api/deposit/create` (see [Monitored deposits](#monitored-deposits))
 - Crypto invoice / swap deposits: `POST /api/transaction/create/{ticker}`
 - Daimo Pay (multi-chain): `POST /api/transaction/create/daimo/{ticker}`
 - Card (Stripe): `POST /api/transaction/create/usd`
@@ -426,8 +482,10 @@ Example responses:
 
 ## Rate Limits
 
-- **10 requests per 10 minutes** per IP address or API key
-- Rate limit applies to all deposit creation endpoints
+Limits vary by endpoint. Native POL creation with `Idempotency-Key`, including
+replays, is limited to **30 requests per 10 minutes** per account and tenant.
+Use status polling for known payments and follow `Retry-After` on rate-limit
+responses; follow `X-Poll-After` where provided for polling.
 
 ## Payment Flow
 
