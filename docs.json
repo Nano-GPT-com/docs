@@ -146,6 +146,7 @@
           "integrations/grok-cli",
           "integrations/gemini-cli",
           "integrations/claude-code",
+          "integrations/deepseek-harness",
           "integrations/roocode",
           "integrations/kilocode",
           "integrations/cursor",

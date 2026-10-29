@@ -1,0 +1,182 @@
+---
+title: 'DeepSeek Harness'
+description: 'Use DeepSeek Harness (dsh) with DeepSeek V4 and other NanoGPT models'
+---
+
+# DeepSeek Harness Integration
+
+Use NanoGPT with [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`), DeepSeek's open source agent harness. Add NanoGPT as a custom model API to run DeepSeek V4 Pro, V4 Flash, V4.1 Flash, or any other NanoGPT text model, billed to your NanoGPT balance or subscription.
+
+<Note>
+  DeepSeek Harness is in developer preview and its settings can change between releases. This guide was tested with `@deepseek-ai/dsh` 0.2.1-rc.2. Read DeepSeek's [safety notice](https://github.com/deepseek-ai/deepseek-harness/blob/master/SAFETY.md) before you let it run commands on your machine.
+</Note>
+
+## Requirements
+
+- [Node.js](https://nodejs.org/en/download/) 24 or newer
+- A NanoGPT API key from [nano-gpt.com/api](https://nano-gpt.com/api)
+
+## Start DeepSeek Harness
+
+```bash
+npx @deepseek-ai/dsh web
+```
+
+This starts the web UI at `http://127.0.0.1:3080` and opens it in your browser.
+
+## Add NanoGPT as a Model Provider
+
+<Steps>
+  <Step title="Open the custom provider form">
+    Go to **Settings → Models**, choose **Add model provider**, and switch the card to **Custom model API**. NanoGPT is not in DeepSeek Harness's built-in provider list, so do not look for it under **Third-party model provider**.
+  </Step>
+
+  <Step title="Enter the connection details">
+    | Field | Value |
+    |-------|-------|
+    | Provider ID | `nanogpt` |
+    | Display name | `NanoGPT` |
+    | Base URL | `https://api.nano-gpt.com/api/v1legacy` |
+    | API protocol | **OpenAI Chat Completions** |
+    | API key | Your NanoGPT API key |
+
+    The Provider ID cannot be changed later, because saved sessions refer to it.
+
+    Use the `v1legacy` base URL. It returns DeepSeek's reasoning in the `reasoning_content` field, which is DeepSeek's own field name, and DeepSeek Harness can send it back in that field on the next turn. When a response also carries structured `reasoning_details`, DeepSeek Harness may send those back instead. More of NanoGPT's DeepSeek routes pass `reasoning_content` back to the model than the `reasoning` field that the standard `/api/v1` endpoint returns, so earlier thinking is kept across tool calls more often. Whether it is kept still depends on the route that serves the request.
+  </Step>
+
+  <Step title="Add the DeepSeek models">
+    Under the model catalog, choose **Fetch available models**, search for `deepseek`, tick the models you want, and add them. You can also type the model IDs by hand:
+
+    - `deepseek/deepseek-v4-pro`
+    - `deepseek/deepseek-v4-flash`
+    - `deepseek/deepseek-v4.1-flash`
+
+    Use these base IDs rather than the `:thinking` variants. The **Effort** menu in DeepSeek Harness turns thinking on and off.
+  </Step>
+
+  <Step title="Set each model's options">
+    In the model list, expand each model's **Model options** and enter:
+
+    | Model ID | Context window | Max output tokens | Reasoning levels (level → API value) | Input types |
+    |----------|----------------|-------------------|---------------------------------------|-------------|
+    | `deepseek/deepseek-v4-pro` | `1048576` | `65536` | Off → `none`, High → `high`, Max → `max` | Text |
+    | `deepseek/deepseek-v4-flash` | `1048576` | `65536` | Off → `none`, High → `high`, Max → `max` | Text |
+    | `deepseek/deepseek-v4.1-flash` | `1000000` | `65536` | Off → `none`, Low → `low`, High → `high`, Max → `max` | Text, Image |
+
+    Turn on **Reasoning levels** to edit the levels. Delete the rows the model does not list, and use **Add level** to add **Max**. Type `none` as the API value for **Off**, so that choosing Off sends `reasoning_effort: "none"` and switches thinking off on every route.
+
+    Choose **Create provider**. To change these settings later, edit the provider and open **Customized settings**.
+  </Step>
+
+  <Step title="Pick a model">
+    Select a NanoGPT model in the model picker and choose an **Effort** level. The model you pick becomes the default for new sessions.
+  </Step>
+</Steps>
+
+### Why these values
+
+- **Max output tokens:** DeepSeek Harness sends this value as `max_completion_tokens` on every request. For pay-as-you-go requests, NanoGPT reserves enough balance to cover it, so a smaller limit keeps more of your balance available for parallel requests and subagents. 65,536 tokens covers almost every agent step. The models allow up to 384,000 output tokens, so raise it if long answers stop early. Thinking tokens count toward this limit.
+- **Context window:** **Fetch available models** reads NanoGPT's plain model list, which does not include context sizes, so enter them yourself. Otherwise this release of DeepSeek Harness assumes 262,144 context tokens and 32,768 output tokens, and starts compacting the conversation long before DeepSeek's 1M-token limit.
+- **Image input:** DeepSeek V4.1 Flash accepts images on NanoGPT, so DeepSeek Harness's image reading works with it. V4 Pro and V4 Flash are text only.
+
+## Configure with a File
+
+You can make the same settings in `~/.dsh/profiles/web/cordis.patch.yml` instead of the web form (use `$DSH_HOME` instead of `~/.dsh` if you set it). The web UI reads this file on the next request. This example takes the key from the `NANOGPT_API_KEY` environment variable:
+
+```yaml
+- id: llm-pi-ai
+  config:
+    providers:
+      nanogpt:
+        displayName: NanoGPT
+        apiKeyEnv: NANOGPT_API_KEY
+        api: openai-completions
+        baseURL: https://api.nano-gpt.com/api/v1legacy
+        models:
+          - id: deepseek/deepseek-v4-pro
+            name: DeepSeek V4 Pro
+            contextWindow: 1048576
+            maxTokens: 65536
+            reasoningEfforts:
+              "off": none
+              high: high
+              max: max
+          - id: deepseek/deepseek-v4-flash
+            name: DeepSeek V4 Flash
+            contextWindow: 1048576
+            maxTokens: 65536
+            reasoningEfforts:
+              "off": none
+              high: high
+              max: max
+          - id: deepseek/deepseek-v4.1-flash
+            name: DeepSeek V4.1 Flash
+            contextWindow: 1000000
+            maxTokens: 65536
+            input: [text, image]
+            reasoningEfforts:
+              "off": none
+              low: low
+              high: high
+              max: max
+```
+
+Start `dsh web` from a shell where `NANOGPT_API_KEY` is set, or leave out `apiKeyEnv` and save the key on the Models page. Quote `"off"` as shown. Thinking stays off until you choose an effort in the model picker.
+
+If the file already has an `llm-pi-ai` entry, add `nanogpt` under its existing `providers`. The configuration you write for `llm-pi-ai` replaces that plugin's whole configuration, so keep your other providers in the same list.
+
+### Headless runs
+
+`dsh headless` answers one task and exits. It uses its own profile, so put the same `llm-pi-ai` entry in `~/.dsh/profiles/headless/cordis.patch.yml` and add the default model below it:
+
+```yaml
+- id: agent-default-model
+  config:
+    provider: nanogpt
+    model: deepseek/deepseek-v4-flash
+    reasoningEffort: high
+```
+
+`reasoningEffort` must be one of the model's reasoning levels. Leave it out to run with thinking off.
+
+Then run:
+
+```bash
+export NANOGPT_API_KEY="your-nano-gpt-api-key"
+npx @deepseek-ai/dsh headless "run the tests and fix any failures"
+```
+
+## Other NanoGPT Models
+
+Any NanoGPT text model with tool calling can be added to the same provider. Find model IDs, context sizes, output limits, and supported reasoning levels with:
+
+```bash
+curl "https://nano-gpt.com/api/v1/models?detailed=true"
+```
+
+Use each model's `context_length` and `max_output_tokens` for the model options, and its `reasoning_efforts` list for the reasoning levels. NanoGPT's `none` effort maps to the Off level. Leave reasoning levels off for models that do not list any.
+
+Do not add a provider-wide `reasoning` setting to the `nanogpt` provider when it includes models without reasoning levels. DeepSeek Harness applies it to every model on the provider and rejects requests to the others with `UNSUPPORTED_REASONING_EFFORT`.
+
+## Do Not Point the DeepSeek Card at NanoGPT
+
+The built-in **DeepSeek** card on the Models page is made for DeepSeek's own API, so changing its base URL to NanoGPT does not work:
+
+- It uses DeepSeek's model IDs, such as `deepseek-flash`, which NanoGPT rejects with `model_not_supported`.
+- It requests thinking without a token budget, which NanoGPT's Anthropic-compatible endpoint rejects with `Invalid thinking.budget_tokens`.
+
+Use the custom model API described above.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `401` or `invalid_api_key` | Check the API key on the provider. Leave the key field blank when editing to keep the saved key. |
+| The **Effort** menu is missing | Turn on **Reasoning levels** in the model's **Model options**. |
+| Thinking stays on when Off is selected | Set the **Off** level's API value to `none`. |
+| `402` `insufficient_balance` while you still have some balance | Lower **Max output tokens**. NanoGPT reserves balance for the full limit before each pay-as-you-go request. |
+| An answer or tool call is cut off after long thinking | Raise **Max output tokens** or choose a lower effort. Thinking and the answer share the limit. |
+| An image is refused | Only DeepSeek V4.1 Flash takes images. Tick **Image** under its **Input types**. |
+| **Fetch available models** lists hundreds of models | Search for the model name, or type the model IDs by hand. |
+| `TRANSPORT: Connection error` | On some networks, Node.js's default 250 ms limit per address attempt can cause this error when connecting to `api.nano-gpt.com`. Start DeepSeek Harness with `NODE_OPTIONS=--network-family-autoselection-attempt-timeout=2000 npx @deepseek-ai/dsh web`, or use `https://nano-gpt.com/api/v1legacy` as the base URL. |
