@@ -7,6 +7,7 @@ const MODELS_URL = 'https://nano-gpt.com/api/v1/models';
 
 // Scope this guardrail to public text-model docs where IDs must match /api/v1/models.
 const DOC_FILES = [
+  'integrations/grok-cli.mdx',
   'integrations/openwebui.mdx',
   'api-reference/endpoint/models.mdx',
   'api-reference/endpoint/chat-completion.mdx',
@@ -75,6 +76,8 @@ function looksLikeModelId(token) {
   if (!token) return false;
   if (token.length < 3 || token.length > 120) return false;
   if (/\s/.test(token)) return false;
+  // Scoped npm packages in installation commands are not model IDs.
+  if (token.startsWith('@')) return false;
   if (token.startsWith('http://') || token.startsWith('https://')) return false;
   if (token.startsWith('/')) return false;
   if (!MODEL_FAMILY_RE.test(token)) return false;

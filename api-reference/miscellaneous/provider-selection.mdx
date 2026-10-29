@@ -276,11 +276,13 @@ Examples:
 
 Use quantization filters when you need to avoid lower-precision provider routes for a model.
 
+Choose a model with provider selection and published quantization metadata, such as `deepseek/deepseek-v4.1-flash-1017` in the examples below.
+
 `provider.quantizations` is an exact allowlist. It must be a non-empty array:
 
 ```json
 {
-  "model": "deepseek/deepseek-v3-0324",
+  "model": "deepseek/deepseek-v4.1-flash-1017",
   "messages": [
     { "role": "user", "content": "Hello" }
   ],
@@ -304,7 +306,7 @@ When an exact quantization filter is supplied, providers without matching known 
 
 ```json
 {
-  "model": "deepseek/deepseek-v3-0324",
+  "model": "deepseek/deepseek-v4.1-flash-1017",
   "messages": [
     { "role": "user", "content": "Hello" }
   ],

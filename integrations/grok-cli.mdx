@@ -1,6 +1,6 @@
 ---
 title: 'Grok CLI'
-description: 'Use Grok CLI with NanoGPT and Grok + 50 other models'
+description: 'Use Grok CLI with NanoGPT and current Grok models'
 ---
 
 import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
@@ -9,7 +9,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 
 # Grok CLI
 
-> Use Grok CLI with NanoGPT to access Grok models and 50+ other models through a single API key.
+> Use Grok CLI with NanoGPT to access Grok and other available models through a single API key.
 
 <Tip>
   [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees.
@@ -96,16 +96,15 @@ grok --version
 Launch Grok CLI with a specific model:
 
 ```bash
-grok --model grok-3
+grok --model x-ai/grok-latest
 ```
 
 Since you are connected to NanoGPT, you can use any available model:
 
 ```bash
 # Grok models
-grok --model grok-3
-grok --model grok-3-fast
-grok --model grok-3-mini
+grok --model x-ai/grok-latest
+grok --model x-ai/grok-4.7
 
 # Other providers through NanoGPT
 grok --model {{example-text-model}}
@@ -119,15 +118,18 @@ Model names are listed on our [pricing page](https://nano-gpt.com/pricing).
 
 | Model | Description |
 |-------|-------------|
-| `grok-3` | xAI flagship model |
-| `grok-3-fast` | Faster, more cost-effective version |
-| `grok-3-mini` | Lightweight version |
+| `x-ai/grok-latest` | Moving alias for the newest Grok model, currently Grok 4.7 |
+| `x-ai/grok-4.7` | Grok 4.7; use this versioned ID to keep the model selection fixed |
+
+Grok 4.7 is a paid model and is not included in the subscription. Check the
+[live token, cache, and long-context pricing](https://nano-gpt.com/api/models/x-ai%2Fgrok-4.7/providers)
+before starting a long session.
 
 ## Known Limitations
 
-Grok CLI has limited compatibility with thinking or reasoning models. When you use a thinking model, the full reasoning content may be shown in the output.
+Grok 4.7 always uses reasoning. Grok CLI may show reasoning content in terminal output; hiding that content does not turn off reasoning or its token cost.
 
-If you want first-party CLI support for NanoGPT, consider [Claude Code](https://docs.nano-gpt.com/integrations/claude-code) or [Codex CLI](https://docs.nano-gpt.com/integrations/codex-cli).
+For other coding clients supported by NanoGPT, see [Claude Code](https://docs.nano-gpt.com/integrations/claude-code) or [Codex CLI](https://docs.nano-gpt.com/integrations/codex-cli).
 
 ## Troubleshooting
 
@@ -137,7 +139,7 @@ If you want first-party CLI support for NanoGPT, consider [Claude Code](https://
 | `GROK_BASE_URL not set` | Ensure the environment variable is exported |
 | `Model not found` | Verify the model name at [nano-gpt.com/pricing](https://nano-gpt.com/pricing) |
 | `Command not found: grok` | Run `npm install -g @vibe-kit/grok-cli` again |
-| Thinking content flooding output | Use a non-thinking model variant |
+| Thinking content flooding output | Grok 4.7 always reasons; choose a different model with reasoning disabled if you need non-thinking generation |
 
 ## FAQ
 
@@ -165,7 +167,7 @@ curl -X POST "https://nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer sk-nano-YOUR-API-KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "grok-3-fast",
+    "model": "x-ai/grok-latest",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
