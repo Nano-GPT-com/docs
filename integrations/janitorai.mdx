@@ -51,3 +51,5 @@ The most common causes are:
 - You used a paid model that is not included in your subscription and your NanoGPT account has no balance.
 - The model ID is outdated, misspelled, or unavailable. A `404` response usually means you should copy the model's current ID from the [NanoGPT pricing page](https://nano-gpt.com/pricing).
 - The proxy configuration is wrong. Re-check that **Proxy URL** is `https://api.nano-gpt.com/api/v1/chat/completions` or `https://api.nano-gpt.com/api/v1thinking/chat/completions`, and that your API key has no extra spaces.
+
+If replies have missing letters or misspelled words, or repeat the same phrase without stopping, check **Rep. penalty** in JanitorAI's generation settings. 1 turns it off. Values below 1 make the model repeat itself, and on long chats they can produce garbled text and endless loops. If changing it fixes one chat but not another, check the other chat's generation settings too.

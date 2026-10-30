@@ -7249,9 +7249,10 @@
           },
           "repetition_penalty": {
             "type": "number",
-            "description": "Provider-agnostic repetition modifier (distinct from OpenAI penalties). Values >1 discourage repetition",
-            "minimum": -2.0,
-            "maximum": 2.0
+            "description": "Penalizes tokens that already appear in the conversation, on most providers including the prompt. 1 turns it off and values above 1 discourage repetition. Values below 1 encourage repetition and can cause misspelled words and endless loops, especially with long prompts. Unlike frequency_penalty and presence_penalty, the neutral value is 1, not 0",
+            "minimum": 0,
+            "maximum": 2.0,
+            "default": 1
           },
           "top_k": {
             "type": "integer",
@@ -8519,9 +8520,10 @@
           },
           "repetition_penalty": {
             "type": "number",
-            "description": "Provider-agnostic repetition modifier (distinct from OpenAI penalties). Values >1 discourage repetition",
-            "minimum": -2.0,
-            "maximum": 2.0
+            "description": "Penalizes tokens that already appear in the conversation, on most providers including the prompt. 1 turns it off and values above 1 discourage repetition. Values below 1 encourage repetition and can cause misspelled words and endless loops, especially with long prompts. Unlike frequency_penalty and presence_penalty, the neutral value is 1, not 0",
+            "minimum": 0,
+            "maximum": 2.0,
+            "default": 1
           },
           "top_k": {
             "type": "integer",

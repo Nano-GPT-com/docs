@@ -263,7 +263,7 @@ The `/api/v1/chat/completions` endpoint accepts a full set of sampling and decod
 | --- | --- | --- |
 | `frequency_penalty` | -2 – 2 (default 0) | Penalize tokens proportional to prior frequency. |
 | `presence_penalty` | -2 – 2 (default 0) | Penalize tokens based on whether they appeared at all. |
-| `repetition_penalty` | -2 – 2 | Provider-agnostic repetition modifier; >1 discourages repeats. |
+| `repetition_penalty` | 0–2 (default 1) | Penalize tokens that already appear in the conversation, on most providers including the prompt. 1 turns it off and values above 1 discourage repeats. Values below 1 encourage repetition and can cause misspelled words and endless loops, especially with long prompts. Unlike the two penalties above, the neutral value is 1, not 0. |
 | `no_repeat_ngram_size` | 0+ | Forbid repeating n-grams of the given size (limited support). |
 | `custom_token_bans` | int[] | Fully block listed token IDs. |
 
