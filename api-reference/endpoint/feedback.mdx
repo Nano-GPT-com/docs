@@ -5,9 +5,13 @@ openapi: 'GET /v1/feedback/{id}'
 ---
 
 Use the Feedback API to report a reproducible bug, documentation issue, missing
-feature, or model-quality problem. Reports remain private. Integrations should
-submit reports only when explicitly requested, rather than automatically
-reporting transient errors.
+feature, or model-quality problem. Reports remain private. Submit a report when
+the user asks, or when a NanoGPT problem is reproducible and blocks the task.
+Don't report transient errors, timeouts, rate limits or insufficient balance.
+
+MCP clients get the same operations as `nanogpt_send_feedback` and
+`nanogpt_get_feedback` in [`@nanogpt/mcp`](https://github.com/Nano-GPT-com/nanogpt-mcp)
+1.6.0 or later.
 
 | Operation | Endpoint |
 | --- | --- |

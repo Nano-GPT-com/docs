@@ -22,6 +22,7 @@ The NanoGPT MCP server provides these tools:
 | Web and research | `nanogpt_web_search`, `nanogpt_scrape_urls`, `nanogpt_firecrawl`, `nanogpt_youtube_transcribe`, `nanogpt_x_research`, `nanogpt_hunter` |
 | Social and maps data | `nanogpt_reddit`, `nanogpt_google_maps_scrape`, `nanogpt_google_maps_reviews_scrape`, `nanogpt_facebook_ads`, `nanogpt_facebook_posts_scrape`, `nanogpt_instagram_profile`, `nanogpt_instagram_posts_scrape`, `nanogpt_instagram_reels`, `nanogpt_linkedin_profile`, `nanogpt_tiktok_scrape` |
 | Model catalogs (free) | `nanogpt_list_text_models`, `nanogpt_list_image_models`, `nanogpt_list_video_models`, `nanogpt_list_3d_models`, `nanogpt_list_audio_models` |
+| Feedback (free) | `nanogpt_send_feedback`, `nanogpt_get_feedback` |
 
 Each tool describes its parameters to your agent through MCP, so the agent can call it without reading the API documentation. The source code is on [GitHub](https://github.com/Nano-GPT-com/nanogpt-mcp).
 
@@ -126,6 +127,12 @@ Ask your AI assistant:
 > "Check my NanoGPT balance"
 
 The assistant will call `nanogpt_get_balance` and show your USD and Nano balances.
+
+### Tell NanoGPT About a Problem
+
+> "Report to NanoGPT that streaming tool calls stop before the arguments finish"
+
+The assistant will call `nanogpt_send_feedback` and return a report ID. Later, ask it to check the report; it calls `nanogpt_get_feedback` for the status and the team's latest reply.
 
 ### Chat with AI Models
 
@@ -347,6 +354,25 @@ Video and 3D jobs run asynchronously and usually take between 30 seconds and sev
 - `operation: "submit"` only submits the job.
 
 Many MCP clients stop a tool call after 60 seconds, so keep `timeout_ms` below your client's tool timeout and continue long jobs with `poll`. A job is charged when it is submitted, so poll instead of submitting it again.
+
+### nanogpt_send_feedback
+
+Send a bug report, feature request, documentation issue or model-quality report to the NanoGPT team. Agents use it when you ask, or when a NanoGPT problem is reproducible and blocks their task; they skip transient errors, timeouts, rate limits and low balance. Reports are private and free, but the account (or the team that pays for it) needs a balance or an active subscription, and each account can send 20 a day. See the [Feedback API](/api-reference/endpoint/feedback).
+
+**Parameters:**
+- `type` (required): `bug`, `feature_request`, `documentation` or `model_quality`
+- `title` (required): 4-200 characters
+- `description` (required): 10-8,000 characters
+- `request_id`, `endpoint`, `model`, `expected`, `actual`, `steps` (optional)
+
+**Returns:** the report `id`, `status` and `created_at`.
+
+### nanogpt_get_feedback
+
+Read a report's status (`pending`, `accepted`, `in-progress`, `done` or `rejected`) and the team's latest reply. Only the API key that sent the report can read it.
+
+**Parameters:**
+- `id` (required): the report ID from `nanogpt_send_feedback`
 
 ### Other tools
 
