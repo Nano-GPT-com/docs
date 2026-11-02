@@ -20,6 +20,9 @@ For non-text model catalogs, use the dedicated catalog endpoints:
 - [Video models](/api-reference/endpoint/video-models)
 - [Audio models](/api-reference/endpoint/audio-models)
 - [Embedding models](/api-reference/endpoint/embedding-models)
+- [Decision models](/api-reference/endpoint/decisions#models): `GET /api/v1/decision-models`
+
+Decision models answer typed questions through the [Decisions API](/api-reference/endpoint/decisions) and reject plain chat requests, so the text model lists leave them out unless you ask for them with `output_modalities`.
 
 For API-only distillation metadata and filtering, see [Distillation Policy](/api-reference/miscellaneous/distillation-policy).
 
@@ -166,6 +169,7 @@ Provider selection support, public provider IDs, and provider-specific prices ar
 |-----------|------|---------|-------------|
 | `detailed` | boolean | `false` | Returns detailed model information including capabilities, supported service tiers, and pricing |
 | `sort` | string | none | Values: `favorites`, `mostused`. Reorders the returned model list. Sorting only affects models that would already be visible to the caller. It does not add or hide models. |
+| `output_modalities` | string | none | `decisions` lists only decision models; `text,decisions` lists chat models and decision models together. Without it, decision models are left out. Also accepted by the subscription, paid and personalized lists. |
 
 When `detailed=true`, additional fields may be included per model:
 
@@ -596,5 +600,5 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 
 ## Notes
 
-- Scope: These endpoints list text-chat models. For image, video, audio, and embedding catalogs, use the dedicated model catalog pages linked above.
+- Scope: These endpoints list text-chat models. For image, video, audio, embedding and decision catalogs, use the dedicated model catalog pages linked above.
 - Fields are subject to change as new capabilities or providers are added. We aim to remain OpenAI-API compatible for basic consumers (`id`/`object`/`created`/`owned_by`).

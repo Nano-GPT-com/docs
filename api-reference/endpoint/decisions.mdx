@@ -16,12 +16,12 @@ PPLX Decider v1.2, Clef and Clef Flash can also evaluate images: send up to four
 
 For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If you already use the official TypeSafe SDK, point it at NanoGPT's `POST /api/v1/systemone` compatibility endpoint. Decision models are also available through NanoGPT's OpenAI-compatible Chat Completions and Responses APIs and the Anthropic-compatible Messages API.
 
-Only input tokens are billed. Browse every decision model, with current pricing, on [nano-gpt.com/models/text?output=decisions](https://nano-gpt.com/models/text?output=decisions).
+Only input tokens are billed. Browse every decision model, with current pricing, on [nano-gpt.com/models/decisions](https://nano-gpt.com/models/decisions), or list them with `GET /api/v1/decision-models`.
 
 <Note>
   Decision models work on both API hosts. The text examples use the direct API host, `https://api.nano-gpt.com`; `https://nano-gpt.com` accepts the same requests. See [API Hosts](/api-reference/miscellaneous/api-hosts).
 
-  The image examples use `https://nano-gpt.com`. Before using a model on either host, check that host’s `GET /api/v1/models?detailed=true` catalog for the model, its `supported_endpoints`, and its `decision_input` capabilities and limits. Catalogs can differ during rollouts.
+  The image examples use `https://nano-gpt.com`. Before using a model on either host, check that host’s `GET /api/v1/models?detailed=true&output_modalities=decisions` catalog for the model, its `supported_endpoints`, and its `decision_input` capabilities and limits. Catalogs can differ during rollouts.
 </Note>
 
 <Note>
@@ -44,7 +44,7 @@ Only input tokens are billed. Browse every decision model, with current pricing,
 
 Use `perplexity/pplx-decider-v1.2` for new PPLX integrations. The retired `perplexity/pplx-decider-v1.1-27b` ID remains accepted as a compatibility alias and runs v1.2; the native Decisions response `model` field identifies the version that answered. The price remains $0.02 per million input tokens, with free output.
 
-Decider IDs are also accepted without the `llmtech/` prefix, and Clef accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. In `GET /api/v1/models?detailed=true`, decision models have `architecture.output_modalities: ["decisions"]`, a `supported_endpoints` list, and a `decision_input` object. `decision_input.image_input` is `true` for the image-capable models, and `decision_input.image_limits` lists their limits.
+Decider IDs are also accepted without the `llmtech/` prefix, and Clef accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. `GET /api/v1/models` leaves decision models out, because they reject plain chat requests. List them with `GET /api/v1/decision-models`, which returns detailed entries by default (`detailed=false` for IDs only), or add `output_modalities=decisions` to `/api/v1/models` and its subscription, paid and personalized variants. Each entry has `architecture.output_modalities: ["decisions"]`, a `supported_endpoints` list, and a `decision_input` object. `decision_input.image_input` is `true` for the image-capable models, and `decision_input.image_limits` lists their limits.
 
 For Clef and Clef Flash, the 1,800-token limit covers all text in the request, including `state` text, `questions` and request overhead. Images are counted separately; see [Image input](#image-input).
 

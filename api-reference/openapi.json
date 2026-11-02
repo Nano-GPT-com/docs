@@ -1400,6 +1400,16 @@
               ],
               "example": "favorites"
             }
+          },
+          {
+            "name": "output_modalities",
+            "in": "query",
+            "description": "Decision models are left out of this list by default because they reject plain chat requests. `decisions` lists only decision models; `text,decisions` lists chat models and decision models together.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "decisions"
+            }
           }
         ],
         "responses": {
@@ -4461,6 +4471,53 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmbeddingModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/decision-models": {
+      "get": {
+        "description": "List decision models, with pricing, `decision_input` and `supported_endpoints`. Same as `GET /v1/models?output_modalities=decisions`, except entries are detailed by default; pass `detailed=false` for IDs only.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "detailed",
+            "in": "query",
+            "description": "Set to false for IDs only.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available decision models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsResponse"
                 }
               }
             }
