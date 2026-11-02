@@ -6217,10 +6217,6 @@
           "instructions": {
             "$ref": "#/components/schemas/DecisionsStructuredDescription"
           },
-          "isolated": {
-            "type": "boolean",
-            "description": "Decider only. When true or omitted, each Score level is evaluated as its own row: the question's instructions are repeated per level (more input tokens) and every level counts toward the 1,024-row limit. Set false to evaluate the question as one row."
-          },
           "criteria": {
             "type": "array",
             "minItems": 2,
@@ -6232,53 +6228,11 @@
         }
       },
       "DecisionsNoulQuestion": {
-        "description": "A yes/no question. Jev, Liquid D1 and Clef require instructions and, when criteria is sent, both true and false descriptions. Decider also accepts a question without instructions (omitted, null or empty) when criteria.true or criteria.false describes the answer.",
+        "description": "A yes/no question. Instructions are required and, when criteria is sent, both true and false descriptions.",
         "type": "object",
         "required": [
-          "type"
-        ],
-        "anyOf": [
-          {
-            "required": [
-              "instructions"
-            ],
-            "properties": {
-              "instructions": {
-                "$ref": "#/components/schemas/DecisionsStructuredDescription"
-              }
-            }
-          },
-          {
-            "required": [
-              "criteria"
-            ],
-            "properties": {
-              "criteria": {
-                "anyOf": [
-                  {
-                    "required": [
-                      "true"
-                    ],
-                    "properties": {
-                      "true": {
-                        "$ref": "#/components/schemas/DecisionsStructuredDescription"
-                      }
-                    }
-                  },
-                  {
-                    "required": [
-                      "false"
-                    ],
-                    "properties": {
-                      "false": {
-                        "$ref": "#/components/schemas/DecisionsStructuredDescription"
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
+          "type",
+          "instructions"
         ],
         "properties": {
           "type": {
@@ -6286,42 +6240,20 @@
             "const": "noul"
           },
           "instructions": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/DecisionsStructuredDescription"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string",
-                "maxLength": 0
-              }
-            ]
+            "$ref": "#/components/schemas/DecisionsStructuredDescription"
           },
           "criteria": {
             "type": "object",
-            "minProperties": 1,
+            "required": [
+              "true",
+              "false"
+            ],
             "properties": {
               "true": {
-                "oneOf": [
-                  {
-                    "$ref": "#/components/schemas/DecisionsStructuredDescription"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/components/schemas/DecisionsStructuredDescription"
               },
               "false": {
-                "oneOf": [
-                  {
-                    "$ref": "#/components/schemas/DecisionsStructuredDescription"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/components/schemas/DecisionsStructuredDescription"
               }
             }
           }
@@ -6383,11 +6315,6 @@
                 }
               ]
             }
-          },
-          "independent": {
-            "type": "boolean",
-            "const": true,
-            "description": "Decider only. Decider always evaluates questions independently, so send true or omit the field; other models reject it."
           },
           "provider": {
             "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs. Decider, PPLX Decider v1.2, Clef and Clef Flash accept only zdr and data_collection; Clef and Clef Flash reject zdr true.",
@@ -6482,11 +6409,6 @@
                 "criteria": {}
               }
             }
-          },
-          "independent": {
-            "type": "boolean",
-            "const": true,
-            "description": "Decider only. Decider always evaluates questions independently, so send true or omit the field; other models reject it."
           },
           "provider": {
             "type": [
