@@ -1,0 +1,117 @@
+---
+title: 'Model Presets'
+description: 'Save a model with its settings and call it by name'
+---
+
+# Model Presets
+
+A preset saves a model together with its system prompt and generation settings. Call it by name instead of repeating them in every request:
+
+```bash
+curl https://api.nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "presets/production-chat",
+    "messages": [{ "role": "user", "content": "Hello" }]
+  }'
+```
+
+Preset names aren't case-sensitive. The API key must belong to the account that owns the preset.
+
+## Where presets work
+
+| Endpoint | Support |
+| --- | --- |
+| `POST /api/v1/chat/completions` | Yes |
+| `POST /api/v1/messages` | Yes, through the Chat Completions route |
+| `POST /api/v1/responses` | Ordinary requests, through the Chat Completions route. Features that need a native Responses route aren't available through a preset |
+| `POST /api/v1/completions` | No |
+
+## Create a preset
+
+### In the dashboard
+
+Open the [Presets page](https://nano-gpt.com/presets) and choose **Create preset**. Names can't be empty or contain `/` or `\`.
+
+### With the Management API
+
+Create a [Management API](/api-reference/management-api) token with `model_presets:write`, which also allows reading, or `model_presets:read` for read-only access. Inference API keys can't manage presets.
+
+```bash
+curl -X PUT https://nano-gpt.com/api/management/v1/model-presets/production-chat \
+  -H "Authorization: Bearer $NANOGPT_MANAGEMENT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "{{example-text-model}}",
+    "system_prompt": "You are a concise assistant.",
+    "temperature": 0.2,
+    "provider_routing_preference": "latency"
+  }'
+```
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/management/v1/model-presets` | List presets created through this API |
+| GET | `/api/management/v1/model-presets/{name}` | Read one preset |
+| PUT | `/api/management/v1/model-presets/{name}` | Create or completely replace one preset |
+| DELETE | `/api/management/v1/model-presets/{name}` | Delete a preset. Returns 204 even if it's already gone |
+
+Rules for this API:
+
+- Names use letters, digits, hyphens and underscores, start with a letter or digit, and are at most 80 characters.
+- `PUT` replaces the whole preset, so any field you leave out resets to `null`.
+- You can create up to 100 presets this way, and each request body can be up to 16 KiB.
+- These presets show as read-only on the Presets page. A name already used by a dashboard preset can't be overwritten.
+
+### Fields
+
+| Field | Values |
+| --- | --- |
+| `model` | Required. A model ID, not another preset |
+| `system_prompt` | Up to 12,000 characters |
+| `max_tokens` | Integer |
+| `response_format_type` | `text` or `json_object` |
+| `structured_outputs` | Boolean. Requires `response_format_type: "json_object"` |
+| `temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `repetition_penalty`, `min_p`, `top_a` | Numbers |
+| `reasoning_effort` | `none`, `minimal`, `low`, `medium`, `high`, `xhigh` or `max` |
+| `reasoning_summary` | `auto`, `concise` or `detailed` |
+| `verbosity` | `low`, `medium` or `high` |
+| `thinking` | Boolean, or `{ "type": "enabled", "budget_tokens": 1024 }` |
+| `prompt_caching` | Boolean, or `{ "enabled": true, "ttl": "5m" }`. `ttl` is `5m` or `1h` |
+| `provider_routing_preference` | `auto`, `speed`, `throughput`, `latency`, `price` or `caching` |
+| `service_tier` | `auto`, `default`, `flex`, `priority` or `ultrafast`. `flex`, `priority` and `ultrafast` can't be combined with `speed`, `throughput`, `latency` or `price` routing |
+
+Provider objects, BYOK credentials and fallback model lists can't be saved in a preset. Whether a model supports a given setting is checked when you make the request.
+
+## How a preset combines with your request
+
+Preset values are defaults, and fields you send in the request win:
+
+- A field sent as `null` counts as not sent, so the preset value applies.
+- Sending `max_tokens`, `max_completion_tokens` or `max_output_tokens` replaces the preset's output limit.
+- `thinking` objects are merged, and your keys win.
+- Provider or routing choices in your request win over the preset's routing preference.
+
+Some settings depend on the endpoint:
+
+| Setting | `/v1/chat/completions` | `/v1/messages` | `/v1/responses` |
+| --- | --- | --- | --- |
+| Override the preset's caching | `promptCaching`. Objects are merged and your keys win. `prompt_caching` doesn't override it | `promptCaching` or `prompt_caching` | Not possible. Use another preset |
+| Replace the preset's system prompt | `systemPrompt`. An empty string removes it | `system`, unless the request uses prompt caching | Not possible. Use another preset |
+
+On `/v1/chat/completions`, a system message doesn't remove the preset's system prompt, and on `/v1/responses` neither do `instructions`. On some routes the preset's prompt can take the place of your own, so use a preset without a system prompt if you need full control.
+
+Presets are defaults, not a security control. Existing key, team and privacy restrictions still apply.
+
+## Errors
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `model_preset_requires_api_key` | 400 | The request has no authenticated API key |
+| `model_preset_not_found` | 400 (inference), 404 (Management API) | No preset with that name on this account |
+| `service_unavailable` | 503 | Preset lookup is temporarily unavailable. Retry |
+| `invalid_preset_name` | 400 | The name doesn't follow the rules above |
+| `invalid_preset` | 400 | A field is unknown or invalid |
+| `preset_name_conflict` | 409 | A dashboard preset already uses that name |
+| `preset_limit_reached` | 409 | You've reached the 100-preset limit |

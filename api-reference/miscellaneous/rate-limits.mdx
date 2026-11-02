@@ -1,17 +1,15 @@
 ---
 title: 'Rate Limits'
-description: 'Information about API rate limits'
+description: 'Spending and usage limits you can set, and the limits NanoGPT applies by endpoint'
 ---
 
 # Rate Limits
 
-NanoGPT enforces a mix of global throughput limits and (optionally) per-key daily limits.
+NanoGPT doesn't have one global requests-per-second limit. Limits depend on the endpoint, how the request is billed and the account, and defaults can change. Upstream provider capacity also applies.
 
-## Global Throughput Limits (Per-Second)
+Handle every `429` by waiting for the time in `Retry-After` if the response has one, then retrying with backoff.
 
-The NanoGPT API currently imposes a limit of **25 requests per second**.
-
-If you need a higher limit, email support@nano-gpt.com with:
+If you need sustained high throughput, email support@nano-gpt.com with:
 
 - which model(s) you need
 - your target RPS / peak traffic patterns
@@ -19,48 +17,82 @@ If you need a higher limit, email support@nano-gpt.com with:
 
 If your use case requires more than **1 billion tokens/day** of a specific model, contact support. We can usually support it, and may be able to offer better pricing.
 
-## Per-Key Daily Limits (Optional)
+## Limits you set on an API key
 
-NanoGPT supports **per-API-key daily limits** to help you cap usage and spend. You can set these when creating or editing an API key in the NanoGPT dashboard.
+You can cap each API key by day, week and month, in the key's settings in the dashboard or through the [Management API](/api-reference/management-api). Each key has its own counters. If a limit isn't set, that dimension is unlimited for the key.
 
-Available limits:
+| Limit | Daily | Weekly | Monthly |
+| --- | --- | --- | --- |
+| Requests | `daily_rpd_limit` | `weekly_request_limit` | `monthly_request_limit` |
+| USD spend | `daily_usd_limit` | `weekly_usd_limit` | `monthly_usd_limit` |
+| Input token units | `daily_input_token_limit` | `weekly_input_token_limit` | `monthly_input_token_limit` |
+| Subscription input token allowance | `daily_subscription_input_token_limit` | `weekly_subscription_input_token_limit` | `monthly_subscription_input_token_limit` |
 
-| Limit | Description | Reset |
-| --- | --- | --- |
-| Requests per Day (RPD) | Maximum number of API requests the key can make per day (across endpoints) | Midnight UTC |
-| USD per Day | Maximum estimated USD spend the key can incur per day | Midnight UTC |
+These are the Management API field names. USD values are dollars. `null` means unlimited, and `0` is a real limit.
+
+Limits use calendar windows in UTC, not rolling windows:
+
+| Period | Resets |
+| --- | --- |
+| Daily | 00:00 UTC |
+| Weekly | Monday 00:00 UTC |
+| Monthly | The first of the month, 00:00 UTC |
 
 Notes:
 
-- Limits are enforced **per API key**, not per user. Multiple keys have independent counters.
-- If a limit is not set, that dimension is unlimited for the key.
-- Counters reset at **00:00 UTC** every day.
-- USD/day uses **cost estimation at request time**. Actual cost can differ slightly, so the effective cap is approximate.
-- Subscription-covered requests (models included in your subscription plan) can bypass the USD/day limit since no balance is spent, but they still count toward RPD.
+- Limits count metered usage, so not every HTTP call counts. Reading the model catalog or your balance doesn't.
+- USD limits use an estimate when the request starts, plus spend still being settled. Actual cost can differ, and concurrent requests can go slightly over a limit.
+- Input token units can count some models at a multiple. For example, a 2× model counts each input token twice.
+- Requests covered by a subscription skip USD limits because no balance is spent. Request and input token limits still apply.
+- The subscription allowance is a soft limit, and in-flight requests can go over it. When it runs out, a subscription-only key stops. A subscription-first key moves to balance only if balance use after limits and paid API models are both enabled for the key.
 
-## When A Daily Limit Is Exceeded
+## Account-wide monthly limit
 
-When a per-key daily limit is exceeded, NanoGPT returns an **OpenAI-compatible** `429` error and includes a `Retry-After` header (seconds until the next reset at midnight UTC).
+Set this in Settings → Payment & notifications. It covers metered API and web spend across your account, including requests made without an API key, and applies on top of per-key limits. Setting it to `0` allows no paid metered spend.
 
-Example response:
+## When a limit is reached
+
+The API returns `429` with `type: "rate_limit_error"` and a `Retry-After` header giving the seconds until the limit resets.
 
 ```json
 {
   "error": {
     "message": "Daily request limit exceeded (1000/1000). Resets at midnight UTC.",
-    "code": "daily_rpd_limit_exceeded",
+    "code": "api_key_rpd_limit",
     "type": "rate_limit_error"
   }
 }
 ```
 
-Error codes:
+| Limit | Daily | Weekly | Monthly |
+| --- | --- | --- | --- |
+| Requests | `api_key_rpd_limit` | `api_key_weekly_request_limit` | `api_key_monthly_request_limit` |
+| USD spend | `api_key_usd_limit` | `api_key_weekly_usd_limit` | `api_key_monthly_usd_limit` |
+| Input token units | `api_key_input_token_limit` | `api_key_weekly_input_token_limit` | `api_key_monthly_input_token_limit` |
+| Subscription allowance | `api_key_daily_subscription_token_limit` | `api_key_weekly_subscription_token_limit` | `api_key_monthly_subscription_token_limit` |
 
-| Code | Description |
+Other codes:
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `api_account_monthly_usd_limit` | 429 | The account-wide monthly limit was reached |
+| `api_key_usage_unavailable` | 429 | Usage couldn't be checked for this key. Retry after five seconds |
+| `account_usage_unavailable` | 503 | Usage couldn't be checked for this account. Retry shortly |
+| `rate_limit_exceeded` | 429 | An endpoint limit was reached |
+
+## Endpoint limits
+
+These are the current defaults for the most commonly used routes.
+
+| Endpoint | Default limit |
 | --- | --- |
-| `daily_rpd_limit_exceeded` | Request count limit reached |
-| `daily_usd_limit_exceeded` | Spend limit reached |
+| `POST /api/v1/embeddings` | 100 per second per IP, 3,000 per minute per caller |
+| `POST /api/v1/rerank` | 100 per second per IP, 3,000 per minute per caller |
+| `POST /api/v1/moderations` | 100 per second per IP, 3,000 per minute per caller |
+| `POST /api/v1/messages/count_tokens` | 120 per minute per caller |
+| `GET /api/v1/usage`, `GET /api/v1/usage/requests/{id}` | 60 per minute per API key, 300 per minute per IP |
+| `POST /api/check-balance` | 60 per minute per IP |
+| Crypto deposit creation | 10 per 10 minutes for each IP and `X-API-Key` pair. Requests from one IP using a Bearer key share one allowance |
+| Crypto deposit status | 120 per minute per caller, 600 per minute per IP |
 
-## Authentication Throttle (Repeated Rejected Credentials)
-
-Separately from the limits above, a credential that keeps being rejected is temporarily refused with `429` and `code: "authentication_rate_limited"`, plus a `Retry-After` header. This throttle is **per credential**: other API keys from the same IP address are unaffected, and valid keys never trip it. Fix the key rather than retrying; see [Authentication rate limiting](/api-reference/miscellaneous/error-handling#authentication-rate-limiting) for the response shape and the `x-nanogpt-auth-rate-limit-reason` header.
+Text inference has further safeguards that depend on billing. Requests covered by a subscription have concurrency and burst limits, and free models have their own per-minute and per-day limits.

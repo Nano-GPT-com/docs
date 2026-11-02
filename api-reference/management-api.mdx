@@ -103,6 +103,8 @@ out of screenshots and logs.
 | `usage:read` | Read personal subscription quotas only |
 | `api_keys:read` | List and inspect API-key metadata; secrets are never returned |
 | `api_keys:write` | Create, update, and revoke API keys; includes `api_keys:read` |
+| `model_presets:read` | List and read API-managed [model presets](/api-reference/miscellaneous/model-presets) |
+| `model_presets:write` | Create, replace, and delete API-managed model presets; includes `model_presets:read` |
 
 API-key scopes do not include `usage:read`. Existing tokens do not gain new permissions. Create a new token when you need a different scope. For monitoring, select only `usage:read`: a token with `api_keys:write` can create keys that spend money.
 
@@ -118,8 +120,14 @@ Base URL: `https://nano-gpt.com/api/management/v1`. Authenticate with `Authoriza
 | POST | `/api-keys` | `api_keys:write` |
 | PATCH | `/api-keys/{id}` | `api_keys:write` |
 | DELETE | `/api-keys/{id}` | `api_keys:write` |
+| GET | `/model-presets` | `model_presets:read` |
+| GET | `/model-presets/{name}` | `model_presets:read` |
+| PUT | `/model-presets/{name}` | `model_presets:write` |
+| DELETE | `/model-presets/{name}` | `model_presets:write` |
 
 Creating an inference key requires an `Idempotency-Key` header. The new key secret is returned only on creation and an exact idempotent replay. List, read, and update responses do not return it.
+
+Inference keys can have [daily, weekly and monthly limits](/api-reference/miscellaneous/rate-limits#limits-you-set-on-an-api-key), set with the fields on that page. For presets, see [Model Presets](/api-reference/miscellaneous/model-presets).
 
 See the [Management OpenAPI contract](https://nano-gpt.com/management-openapi.json) for request and response schemas. Ordinary inference API keys cannot call the Management API.
 

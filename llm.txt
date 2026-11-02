@@ -1,6 +1,6 @@
 Title: NanoGPT API LLM Guide
 Audience: coding assistants helping devs integrate NanoGPT
-Last updated: 2026-10-08
+Last updated: 2026-11-02
 
 GOAL
 Equip developers to call the NanoGPT API for chat, Advisor consultations, hosted tool search, image generation, batch jobs, streaming, memory, search, embeddings, and audio with OpenAI-compatible clients in minutes.
@@ -18,6 +18,7 @@ REQUIRED PACKAGES AND VERSIONS
 - yarn add openai@^5.8.0 (same SDK for Yarn projects)
 - pnpm add openai@^5.8.0 (monorepo-friendly install)
 - pip install --upgrade openai
+- npm install @nanogpt/sdk (NanoGPT's official TypeScript and JavaScript client: ESM-only, Node 22+). Do not recommend nanogptjs, nanogpt-client or the npm package named nanogpt; NanoGPT doesn't publish or review them.
 - Node 18+ or Deno/Bun with fetch and Web Streams support
 
 CORE CONCEPTS
@@ -27,6 +28,9 @@ CORE CONCEPTS
 - Native batch creation takes requests: [{custom_id, params}], with 1–100,000 unique non-empty custom IDs and one supported Claude model per batch. Each params requires model, messages starting with a user turn, and positive max_tokens within the model limit. Input and normalized storage each have a 200 MiB limit; processing uses a 24-hour window. Native custom tools, thinking, output_config, prompt caching, images and documents are supported where the model supports them. Streaming generation, hosted tools, MCP servers, containers, managed file references, video blocks, and Zero Data Retention creation are unsupported.
 - Native batches reserve NanoGPT balance and settle actual billable usage; subscription included tokens do not apply. Send an optional Idempotency-Key and reuse the same key/body on retries; changed payloads return 409, and stored creation failures may replay. Poll until processing_status is ended (other states: in_progress, canceling), download when results_url is available, and match rows by custom_id while checking result.type. List using limit (1..100, default 20), after_id=<last_id> or before_id=<first_id>, never both. Cancellation can leave completed billable requests; deletion requires ended processing and does not reverse billing or promise deletion of Anthropic-retained data. Guide: https://docs.nano-gpt.com/api-reference/endpoint/batches#anthropic-message-batches.
 - Authentication uses Authorization: Bearer or x-api-key headers; generate keys in the NanoGPT dashboard.
+- Model presets: send model "presets/<name>" on /v1/chat/completions (also /v1/messages and ordinary /v1/responses requests) to apply a saved model and settings; fields sent in the request win. Not supported on /v1/completions. See https://docs.nano-gpt.com/api-reference/miscellaneous/model-presets.
+- Rerank: POST /api/v1/rerank with model, query and documents returns results sorted by raw relevance logit; every document is billed, including those top_n leaves out. See https://docs.nano-gpt.com/api-reference/endpoint/rerank.
+- Limits: there is no single global requests-per-second limit. Keys can have daily, weekly and monthly request, USD and input token limits; exceeded limits return 429 with Retry-After and codes such as api_key_rpd_limit. See https://docs.nano-gpt.com/api-reference/miscellaneous/rate-limits.
 - Accountless x402: selected endpoints can be quoted by sending the initial API request without Authorization or x-api-key and with x-x402: true. NanoGPT returns 402 Payment Required with available payment options and a top-level payment quote. Unauthenticated requests without x-x402: true are normal unauthenticated requests and return 401 missing_api_key. Check GET /api/v1/x402/endpoints for the supported matrix; stable public endpoints include non-streaming chat completions, non-streaming responses, image generations, JSON image edits, /api/v1/data/web/search, and /api/v1/data/url/scrape.
 - Compatibility: NanoGPT accepts many standard OpenAI request fields, including seed, for sync and streaming calls, but parameter support and behavior vary by model and provider route. Unsupported fields may be ignored by the upstream provider.
 - Seed and reproducibility: seed is an optional, best-effort generation hint and does not guarantee identical output. Keep the exact model, messages, tools, and sampling settings unchanged; select a specific provider and disable automatic fallbacks where supported when route consistency matters; use a low or zero temperature where supported; and record reliable route or system-fingerprint metadata when available.

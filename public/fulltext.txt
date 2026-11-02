@@ -701,64 +701,37 @@ Image inputs must be inspectable HTTP(S) URLs or `data:image/...` URLs. Unsuppor
 
 ### Client Libraries
 
-#### JavaScript - NanoGPTJS
+#### TypeScript and JavaScript - @nanogpt/sdk
 
-[NanoGPTJS](https://github.com/kilkelly/nanogptjs) is a Node.js library to interact with NanoGPT's API. The NanoGPT service enables pay-per-prompt interaction with chat and image generation models. You will need a prefilled NanoGPT wallet and API key to use this library effectively.
-
-**Installation:**
-```bash
-npm install nanogptjs
-```
-
-**Basic Usage:**
-```javascript
-const NanoGPT = require('nanogptjs');
-const nanogpt = new NanoGPT('your-api-key');
-
-async function chatExample() {
-  const response = await nanogpt.chat({
-    model: 'openai/gpt-chat-latest',
-    messages: [
-      { role: 'user', content: 'Hello!' }
-    ]
-  });
-  console.log(response);
-}
-```
-
-#### TypeScript - NanoGPT-client
-
-[NanoGPT-client](https://github.com/aspic/nanogpt-client) is an unofficial implementation of the NanoGPT API. This library aims to provide a TypeScript client for both browser and node environments. It's built on the inferred OpenAPI spec.
+`@nanogpt/sdk` is NanoGPT's official client. It is ESM-only and needs Node.js 22 or later.
 
 **Installation:**
 ```bash
-npm install nanogpt-client
+npm install @nanogpt/sdk
 ```
 
 **Basic Usage:**
 ```typescript
-import { NanoGPTClient } from 'nanogpt-client';
+import { NanoGPT } from '@nanogpt/sdk';
 
-const client = new NanoGPTClient({
-  apiKey: 'your-api-key'
+const client = new NanoGPT({ apiKey: process.env.NANOGPT_API_KEY });
+
+const completion = await client.chat.completions.create({
+  model: 'openai/gpt-6.1-sol',
+  messages: [{ role: 'user', content: 'Hello!' }],
 });
-
-async function main() {
-  const response = await client.chatCompletions.create({
-    model: 'openai/gpt-chat-latest',
-    messages: [
-      { role: 'user', content: 'Hello!' }
-    ]
-  });
-  console.log(response.choices[0].message.content);
-}
+console.log(completion.choices[0]?.message?.content);
 ```
+
+The official OpenAI SDKs also work with baseURL https://api.nano-gpt.com/api/v1.
+
+`nanogptjs`, `nanogpt-client` and the npm package named `nanogpt` aren't published or reviewed by NanoGPT.
 
 ### Rate Limits
 
-The NanoGPT API currently does not impose any rate limits on API requests. You can make as many requests as needed without worrying about hitting artificial limits.
+NanoGPT doesn't have one global requests-per-second limit. Limits depend on the endpoint, how the request is billed and the account, and defaults can change. Handle every 429 by waiting for the time in `Retry-After` if the response has one, then retrying with backoff.
 
-However, we recommend implementing reasonable request patterns in your applications to ensure optimal performance and fairness for all users.
+You can cap each API key's requests, USD spend and input token units by day, week and month. See https://docs.nano-gpt.com/api-reference/miscellaneous/rate-limits.
 
 ### Pricing
 

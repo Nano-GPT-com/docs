@@ -1,0 +1,76 @@
+---
+title: 'Rerank'
+description: 'Order text documents by relevance to a query'
+---
+
+`POST /api/v1/rerank` scores each document against a query and returns them from most to least relevant. List the available models with `GET /api/v1/rerank-models`.
+
+```bash
+curl https://api.nano-gpt.com/api/v1/rerank \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "nvidia/Nemotron-3.5-Rerank-8B-BF16",
+    "query": "How do I reset my password?",
+    "documents": [
+      "Open Settings and choose Reset password.",
+      "Our office is closed on Sundays."
+    ],
+    "top_n": 1,
+    "return_documents": true
+  }'
+```
+
+```json
+{
+  "id": "rerank-393a019d-e3f5-4c06-af5b-65a89e6cfd73",
+  "model": "nvidia/Nemotron-3.5-Rerank-8B-BF16",
+  "results": [
+    {
+      "index": 0,
+      "relevance_score": -1.8285,
+      "document": { "text": "Open Settings and choose Reset password." }
+    }
+  ],
+  "usage": { "prompt_tokens": 38, "total_tokens": 38 }
+}
+```
+
+## Request
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `model` | string | Yes | `nvidia/Nemotron-3.5-Rerank-8B-BF16` |
+| `query` | string | Yes | Non-empty text |
+| `documents` | string[] | Yes | 1 to 1,024 non-empty text strings. Images aren't supported |
+| `top_n` | integer | No | How many results to return, from 1 to the number of documents. Defaults to all |
+| `return_documents` | boolean | No | Include each document's text in the results. Defaults to `false` |
+
+Other fields are rejected. Streaming isn't supported.
+
+Each query and document pair can use up to 32,768 tokens, and a request up to 300,000. These checks are a conservative estimate based on text size in bytes.
+
+## Response
+
+| Field | Description |
+| --- | --- |
+| `results[].index` | The document's zero-based position in your `documents` array |
+| `results[].relevance_score` | A raw score where higher means more relevant. It's a logit, not a probability, and can be negative |
+| `results[].document.text` | The document's text, if you set `return_documents` |
+| `usage` | `prompt_tokens` and `total_tokens` |
+
+Results are sorted by descending score, and tied scores keep their original order.
+
+## Pricing
+
+$0.05 per million input tokens. Every document is scored and billed, including those `top_n` leaves out. The `x-nanogpt-cost-usd` response header shows the cost of the request.
+
+## Errors
+
+| Status | Meaning |
+| --- | --- |
+| 400 | An invalid parameter, or `context_length_exceeded` or `input_batch_too_large` when a limit above is exceeded |
+| 401 | The API key is missing or invalid |
+| 404 | The model wasn't found |
+| 429 | A [rate limit](/api-reference/miscellaneous/rate-limits) was reached |
+| 503 | The service is temporarily unavailable. Retry |
