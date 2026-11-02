@@ -31,6 +31,19 @@ See [examples and precedence](#price-caps-and-cache-reuse) before combining thes
 - If a model does not support provider selection, the request ignores provider preferences.
 - You cannot currently force a provider and have that same request count as subscription-included usage.
 
+## Google Vertex and Google AI Studio
+
+Gemini models can be served by two separate Google services, and each is its own provider:
+
+| Provider | ID | Also accepted | Zero data retention |
+|---|---|---|---|
+| Google Vertex | `google-vertex` | `google` | Only on routes marked zero data retention |
+| Google AI Studio | `google-ai-studio` | `googlenative` | No |
+
+- `google` means Google Vertex in `provider.only`, `provider.order` and `X-Provider`. Nobody is moved to AI Studio without choosing it.
+- `provider.ignore: ["google"]` removes both services. Use `google-vertex` or `google-ai-studio` to remove just one.
+- Vertex no longer serves the Gemini 2.5 text models. A request that allows only Vertex for one of them gets an error naming Google AI Studio instead of being moved there.
+
 ## Discover Providers and Pricing
 
 Use this endpoint to list available providers and the pricing you will pay when selecting one.
