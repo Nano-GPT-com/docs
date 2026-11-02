@@ -171,11 +171,11 @@ When `detailed=true`, additional fields may be included per model:
 
 - `name` — display name
 - `description` — short model description
-- `context_length` — max input tokens (if known)
+- `context_length` — total context window shared by input and generated output (if known)
 - `max_output_tokens` — max output tokens (if known)
 - `capabilities` — feature flags (see below)
 - `supported_service_tiers` — alternate `service_tier` values accepted by the model (`flex`, `fast`, and/or the legacy `priority` alias); an empty array means only the default tier is available
-- `pricing.prompt` and `pricing.completion` — at-cost per-million-token pricing in USD
+- `pricing.prompt` and `pricing.completion` — current per-million-token prices in USD
 - `pricing.unit` — `per_million_tokens`
 - `icon_url` — small icon representing the provider
 - `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
@@ -402,7 +402,7 @@ Enhanced format with model descriptions, context lengths, and pricing:
 |-------|------|-------------|
 | `name` | string | Human-readable model name |
 | `description` | string | Detailed model description |
-| `context_length` | number | Maximum input tokens (null if not available) |
+| `context_length` | number or null | Total context window shared by input and generated output (null if not available) |
 | `max_output_tokens` | number | Maximum output tokens (null if not available) |
 | `capabilities` | object | Feature flags (e.g., `vision: boolean`) |
 | `supported_service_tiers` | string[] | Alternate service tiers accepted by the model. An empty array means only the default tier is available. |
@@ -532,7 +532,7 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 
 - Always returns only models included in the NanoGPT subscription (equivalent to our `isTextEligible(modelId)` filter).
 - Ignores the user’s “Also show paid models” preference; it is always subscription-only.
-- Supports `?detailed=true` and API key–aware, at-cost pricing metadata.
+- Supports `?detailed=true` and API key–aware pricing metadata.
 
 Examples:
 
@@ -548,7 +548,7 @@ curl -H "x-api-key: $NANOGPT_API_KEY" \
 ### 3) GET /api/paid/v1/models (paid/extras)
 
 - Returns only models that are NOT part of the subscription (paid/premium/extras).
-- Supports `?detailed=true` and API key–aware, at-cost pricing metadata.
+- Supports `?detailed=true` and API key–aware pricing metadata.
 
 Examples:
 

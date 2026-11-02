@@ -9090,6 +9090,22 @@
             "description": "List of available models",
             "items": {
               "type": "object",
+              "example": {
+                "id": "openai/gpt-6.1-sol",
+                "object": "model",
+                "created": 1790640000,
+                "owned_by": "openai",
+                "name": "GPT 6.1 Sol",
+                "description": "GPT-6.1 Sol supports complex coding and professional work with text and image input.",
+                "context_length": 1050000,
+                "max_output_tokens": 128000,
+                "pricing": {
+                  "prompt": 2,
+                  "completion": 10,
+                  "currency": "USD",
+                  "unit": "per_million_tokens"
+                }
+              },
               "properties": {
                 "id": {
                   "type": "string",
@@ -9113,22 +9129,22 @@
                 "name": {
                   "type": "string",
                   "description": "Human-readable model name (detailed mode only)",
-                  "example": "GPT-4o Mini"
+                  "example": "GPT 6.1 Sol"
                 },
                 "description": {
                   "type": "string",
                   "description": "Detailed model description (detailed mode only)",
-                  "example": "OpenAI's affordable and intelligent small model for fast, lightweight tasks"
+                  "example": "GPT-6.1 Sol supports complex coding and professional work with text and image input."
                 },
                 "context_length": {
-                  "type": "integer",
-                  "description": "Maximum input tokens (detailed mode only, null if not available)",
-                  "example": 128000
+                  "type": ["integer", "null"],
+                  "description": "Total context window shared by input and generated output (detailed mode only, null if not available)",
+                  "example": 1050000
                 },
                 "max_output_tokens": {
                   "type": ["integer", "null"],
                   "description": "Maximum generated output tokens (detailed mode only, null if no serving-route limit is known)",
-                  "example": 16384
+                  "example": 128000
                 },
                 "capabilities": {
                   "type": "object",
@@ -9154,12 +9170,12 @@
                     "prompt": {
                       "type": "number",
                       "description": "Cost per million input tokens in USD",
-                      "example": 0.00015
+                      "example": 2
                     },
                     "completion": {
                       "type": "number",
                       "description": "Cost per million output tokens in USD",
-                      "example": 0.0006
+                      "example": 10
                     },
                     "currency": {
                       "type": "string",
