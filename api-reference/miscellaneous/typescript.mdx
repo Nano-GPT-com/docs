@@ -70,6 +70,16 @@ To cancel a request or set a timeout, pass an `AbortSignal` as `signal`. To read
 
 The client defaults to `https://api.nano-gpt.com`, the [direct API host](/api-reference/miscellaneous/api-hosts). Set `baseURL` to use another host.
 
+### Intermittent `fetch failed` errors in Node.js
+
+The direct API host has both IPv4 and IPv6 addresses. By default, Node.js gives each address 250 ms to connect. On a network without working IPv6 and with a slower connection, this can cause occasional `fetch failed` errors with the code `ETIMEDOUT`. It affects any Node.js client calling this host, including the OpenAI SDK.
+
+To fix it, allow more time per address:
+
+```bash
+NODE_OPTIONS=--network-family-autoselection-attempt-timeout=1000 node app.js
+```
+
 ## Using the OpenAI SDK instead
 
 NanoGPT is OpenAI-compatible, so the official OpenAI SDK also works:
