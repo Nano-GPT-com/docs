@@ -34,9 +34,6 @@ Only input tokens are billed. Browse every decision model, with current pricing,
 | --- | --- | --- | --- |
 | `typesafe/jev-1.13` | 32K | No | TypeSafe Jev 1.13, pinned for integrations that should not follow alias upgrades. |
 | `typesafe/jev-latest` | 32K | No | Moving alias for the latest TypeSafe Jev release. |
-| `llmtech/decider-0.8b-fp8` | 32K | No | Mapika's Decider 0.8B, quantized and hosted by LLM Tech. |
-| `llmtech/decider-2b-fp8` | 32K | No | Mapika's Decider 2B, quantized and hosted by LLM Tech. |
-| `llmtech/decider-4b-nvfp4` | 32K | No | Mapika's Decider 4B, quantized and hosted by LLM Tech. |
 | `liquid/d1` | 64K | No | Liquid AI's D1. |
 | `perplexity/pplx-decider-v1.2` | 262K | Yes | Perplexity's PPLX Decider v1.2. Supports zero data retention. |
 | `cloudflare/clef` | 1,800 text tokens | Yes | Cloudflare's open decision model. |
@@ -44,7 +41,7 @@ Only input tokens are billed. Browse every decision model, with current pricing,
 
 Use `perplexity/pplx-decider-v1.2` for new PPLX integrations. The retired `perplexity/pplx-decider-v1.1-27b` ID remains accepted as a compatibility alias and runs v1.2; the native Decisions response `model` field identifies the version that answered. The price remains $0.02 per million input tokens, with free output.
 
-Decider IDs are also accepted without the `llmtech/` prefix, and Clef accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. `GET /api/v1/models` leaves decision models out, because they reject plain chat requests. List them with `GET /api/v1/decision-models`, which returns detailed entries by default (`detailed=false` for IDs only), or add `output_modalities=decisions` to `/api/v1/models` and its subscription, paid and personalized variants. Each entry has `architecture.output_modalities: ["decisions"]`, a `supported_endpoints` list, and a `decision_input` object. `decision_input.image_input` is `true` for the image-capable models, and `decision_input.image_limits` lists their limits.
+Clef also accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. `GET /api/v1/models` leaves decision models out, because they reject plain chat requests. List them with `GET /api/v1/decision-models`, which returns detailed entries by default (`detailed=false` for IDs only), or add `output_modalities=decisions` to `/api/v1/models` and its subscription, paid and personalized variants. Each entry has `architecture.output_modalities: ["decisions"]`, a `supported_endpoints` list, and a `decision_input` object. `decision_input.image_input` is `true` for the image-capable models, and `decision_input.image_limits` lists their limits.
 
 For Clef and Clef Flash, the 1,800-token limit covers all text in the request, including `state` text, `questions` and request overhead. Images are counted separately; see [Image input](#image-input).
 
@@ -441,9 +438,6 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 
 | Rule | Applies to |
 | --- | --- |
-| Choice questions need 2-255 options and Score questions 2-10 levels. A request can contain at most 1,024 scoring rows (otherwise `413 too_many_questions`). | Decider |
-| `isolated` on a Score question (default `true`) evaluates each level as its own row, repeating the instructions per level. Set `false` to evaluate the question as one row. | Decider |
-| A Noul question may omit `instructions` when `criteria.true` or `criteria.false` describes the answer. | Decider |
 | Noul questions need `instructions`, and `criteria` needs both `true` and `false` when it is sent. | Jev, Liquid D1, PPLX Decider v1.2, Clef, Clef Flash |
 | A request can contain at most 128 questions. | PPLX Decider v1.2, Clef, Clef Flash |
 | Text input, including questions and request overhead, is limited to 1,800 tokens. | Clef, Clef Flash |
@@ -458,7 +452,6 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 | `user` | string | No | Your end-user identifier, up to 256 characters. |
 | `session_id` | string | No | Your session identifier, up to 256 characters. |
 | `trace` | object | No | Caller-supplied trace metadata. |
-| `independent` | boolean | No | Decider only. Decider always evaluates questions independently, so send `true` or omit it; other models reject the field. |
 | `provider` | object or null | No | Native Decisions routing controls. Usually omit this field. |
 | `include_usage` | boolean | No | Wait for billing to settle and report the exact charge as `usage.cost`. Defaults to `false`, which returns `usage.estimated_cost` without waiting. See [Usage and cost](#usage-and-cost). |
 
@@ -466,7 +459,7 @@ The native `provider` object can contain endpoint-level `order`, `only`, `ignore
 
 ## Official TypeSafe SDK
 
-NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call any decision model without changing their request types. Set the model to `jev-latest`, `jev-1.13`, `decider-2b-fp8` (or another Decider), `liquid/d1`, `perplexity/pplx-decider-v1.2`, `clef` or `cloudflare/clef-flash`. Image input and `include_usage` work the same way as on the native endpoint.
+NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call any decision model without changing their request types. Set the model to `jev-latest`, `jev-1.13`, `liquid/d1`, `perplexity/pplx-decider-v1.2`, `clef` or `cloudflare/clef-flash`. Image input and `include_usage` work the same way as on the native endpoint.
 
 <CodeGroup>
 
