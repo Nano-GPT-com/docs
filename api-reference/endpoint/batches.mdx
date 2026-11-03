@@ -13,7 +13,7 @@ Choose a workflow:
 - **Inline API:** send the requests in the batch creation body and receive the results when polling the completed batch. This is simpler for smaller jobs.
 - **[Anthropic Message Batches](#anthropic-message-batches):** send native Claude requests with the official Anthropic SDK or HTTP API. Requests run directly through Anthropic at batch token rates, with native JSONL results.
 
-The file-backed and inline workflows support rows targeting `/v1/chat/completions` or `/v1/responses`. Native Message Batches use a separate `/v1/messages/batches` endpoint.
+The file-backed and inline workflows support rows targeting `/v1/chat/completions`, `/v1/responses`, or `/v1/embeddings`. Native Message Batches use a separate `/v1/messages/batches` endpoint.
 
 <Note>
   All rows in one batch must use the same endpoint and the same model. Batch requests are non-streaming and the only supported completion window is `24h`.
@@ -43,8 +43,9 @@ Each row in a file-backed or inline batch must target one of these endpoints:
 
 - `/v1/chat/completions`
 - `/v1/responses`
+- `/v1/embeddings`
 
-Completions, embeddings, image generation, audio, video, transcription, TTS, moderation, and other endpoints cannot be used as batch rows. For native Anthropic request bodies, use [Message Batches](#anthropic-message-batches); `/v1/messages` is not a supported row endpoint for `/api/v1/batches`.
+Completions, image generation, audio, video, transcription, TTS, moderation, and other endpoints cannot be used as batch rows. For native Anthropic request bodies, use [Message Batches](#anthropic-message-batches); `/v1/messages` is not a supported row endpoint for `/api/v1/batches`.
 
 ## Model support
 
@@ -66,6 +67,16 @@ Model availability changes. Validate a small batch before submitting a large job
 
 Responses rows support function and custom tools, structured text output, and remote or data-URL image inputs. Provider-hosted tools and stateful Responses features are not supported in batches.
 
+### Embeddings batches
+
+`/v1/embeddings` batches support `text-embedding-3-small`, `text-embedding-3-large`, and `text-embedding-ada-002`. The `openai/` prefix is accepted. Other embedding models return an `unsupported_model` error that names the supported models.
+
+For the live list, call `GET /api/v1/embedding-models` and select models whose `supported_batch_endpoints` include `/v1/embeddings`.
+
+Embedding batches with content moderation accept at most 10,000 rows, though a row can hold several inputs.
+
+Embedding inputs are checked by the same content moderation as other OpenAI-model batches. One flagged line rejects the whole batch with a 400 that names the lines. Zero Data Retention keys and teams, and EU inference keys, cannot create batches. An API key's model and provider allowlists also apply: a key whose allowlist does not permit these models, or the provider that serves them, gets a 403.
+
 ## File-backed API
 
 ### Endpoints
@@ -86,7 +97,7 @@ Each non-empty line must be a JSON object with:
 
 - a unique, non-empty `custom_id`
 - `method: "POST"`
-- `url` set to `/v1/chat/completions` or `/v1/responses`
+- `url` set to `/v1/chat/completions`, `/v1/responses`, or `/v1/embeddings`
 - a `body` object containing the model and endpoint-specific input
 
 All rows must use the same endpoint and model. `stream: true` is rejected.
@@ -94,6 +105,12 @@ All rows must use the same endpoint and model. `stream: true` is rejected.
 Chat Completions rows require a non-empty `messages` array and a positive `max_tokens` or `max_completion_tokens`. They support text and compatible `image_url` content. Image URLs may use HTTP, HTTPS, or base64 data URLs for PNG, JPEG, GIF, and WebP images.
 
 Responses rows require a non-empty `input` and an integer `max_output_tokens` of at least `16`.
+
+Embeddings rows require `model` and `input`, and take no output cap. `input` is a string or an array of up to 2,048 strings; token arrays and multimodal input are rejected. Rows may also set `dimensions` (`text-embedding-3-small` and `text-embedding-3-large` only), `encoding_format` (`float` or `base64`), and `user`. NanoGPT does not forward `user`. Any other field is rejected.
+
+Each input can be at most 8,191 tokens, and each row at most 300,000 tokens. One batch can hold at most 50,000 inputs across all of its rows.
+
+Embedding results are much larger than their input, and result files can be at most 200 MiB. NanoGPT estimates the size at upload and rejects a batch that would not fit with an `embedding_result_too_large` error. At full size, that is about 5,600 inputs per batch with `text-embedding-3-small` or `text-embedding-ada-002` and about 2,800 with `text-embedding-3-large`. To fit more, use `encoding_format: "base64"`, which makes results about 4.5 times smaller, or request fewer `dimensions`, or split the job into several batches.
 
 ### Chat Completions example
 
@@ -107,6 +124,19 @@ Responses rows require a non-empty `input` and an integer `max_output_tokens` of
 ```jsonl
 {"custom_id":"response-1","method":"POST","url":"/v1/responses","body":{"model":"gpt-4.1-mini","input":"Extract three keywords from: Batch APIs process independent prompts asynchronously.","max_output_tokens":64}}
 {"custom_id":"response-2","method":"POST","url":"/v1/responses","body":{"model":"gpt-4.1-mini","input":"Reply with a JSON object containing a one-sentence summary.","text":{"format":{"type":"json_schema","name":"summary","strict":true,"schema":{"type":"object","properties":{"summary":{"type":"string"}},"required":["summary"],"additionalProperties":false}}},"max_output_tokens":128}}
+```
+
+### Embeddings example
+
+```jsonl
+{"custom_id":"doc-1","method":"POST","url":"/v1/embeddings","body":{"model":"text-embedding-3-small","input":"Batch APIs process independent requests asynchronously."}}
+{"custom_id":"doc-2","method":"POST","url":"/v1/embeddings","body":{"model":"text-embedding-3-small","input":["First passage.","Second passage."],"dimensions":512,"encoding_format":"base64"}}
+```
+
+Each successful output row holds a standard embeddings response in `response.body`. Match rows by `custom_id`, and use each item's `index` to match vectors to the strings in that row's `input`.
+
+```json
+{"id":"batch_req_abc","custom_id":"doc-1","response":{"status_code":200,"request_id":"req_abc","body":{"object":"list","data":[{"object":"embedding","index":0,"embedding":[0.0023,-0.0093]}],"model":"text-embedding-3-small","usage":{"prompt_tokens":8,"total_tokens":8}}},"error":null}
 ```
 
 ### Upload the file
@@ -169,7 +199,7 @@ The list follows the OpenAI format (`object`, `data`, `first_id`, `last_id`, `ha
 
 ## Inline API
 
-Inline batches accept up to 10,000 requests, 20 MiB of normalized input, and 250,000 aggregate requested output tokens. Use the file-backed API for larger inputs.
+Inline batches accept up to 10,000 requests, 20 MiB of normalized input, and 250,000 aggregate requested output tokens. Embeddings batches have no output tokens; their estimated results must instead fit in 50 MiB, or about 1,400 inputs at full size with `text-embedding-3-small`, and more with `encoding_format: "base64"` or fewer `dimensions`. Use the file-backed API for larger inputs.
 
 ### Endpoints
 
@@ -200,7 +230,21 @@ curl https://api.nano-gpt.com/api/beta/batches \
 
 Creation returns `202 Accepted`. Poll `GET /api/beta/batches/{batch_id}` and read `results` after completion. Cancel an active job with `POST /api/beta/batches/{batch_id}/cancel`.
 
-The batch-level model is inherited by every request body. If an inline row omits its endpoint-specific output cap, NanoGPT applies a 4096-token default. File-backed rows must always include the output cap explicitly.
+The batch-level model is inherited by every request body. If an inline row omits its endpoint-specific output cap, NanoGPT applies a 4096-token default. File-backed rows must always include the output cap explicitly. Embeddings rows have no output cap, so no default is applied.
+
+```bash
+curl https://api.nano-gpt.com/api/beta/batches \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint": "/v1/embeddings",
+    "model": "text-embedding-3-small",
+    "requests": [
+      { "custom_id": "doc-1", "body": { "input": "First passage." } },
+      { "custom_id": "doc-2", "body": { "input": ["Second passage.", "Third passage."] } }
+    ]
+  }'
+```
 
 ## List batches
 
@@ -421,14 +465,17 @@ Batch jobs use NanoGPT account balance and do not use subscription included toke
 - **OpenAI, Claude, and Gemini models, and some fine-tuned models:** token usage is priced 50% below the equivalent synchronous request. Non-token charges, where supported, keep their normal rate.
 - **Other open-source models:** each row is charged exactly what the same synchronous request costs, including the automatic routing price, your subscriber discount, and the price of any provider you select. Rows are priced in USD, and a batch never costs more than the amount reserved when it was created.
 - **Open-source models with a batch price:** some models, such as `moonshotai/kimi-k3`, have a lower batch price for rows that use automatic routing. An alias such as `moonshotai/kimi-latest` uses the batch price of the model it points to. A row that sets `provider` pays that provider's normal price instead. A row never costs more than the same synchronous request.
+- **Embedding models:** input tokens are priced 50% below the synchronous embedding price: $0.01, $0.065, and $0.05 per million tokens for `text-embedding-3-small`, `text-embedding-3-large`, and `text-embedding-ada-002`. There are no output tokens. At creation, NanoGPT holds the estimated input cost plus 20%, with a $0.0001 minimum, then charges the tokens reported for successful rows. Failed rows are not charged.
 
 Each model page shows its Batch API price. Use the live pricing page or pricing API as the source of truth.
 
 ## Common errors
 
-- **Unsupported endpoint:** file-backed and inline rows must use `/v1/chat/completions` or `/v1/responses`, consistently across all rows. Native Claude requests use `/v1/messages/batches`.
+- **Unsupported endpoint:** file-backed and inline rows must use `/v1/chat/completions`, `/v1/responses`, or `/v1/embeddings`, consistently across all rows. Native Claude requests use `/v1/messages/batches`.
 - **Missing output cap:** add `max_tokens` or `max_completion_tokens` for Chat Completions, or `max_output_tokens >= 16` for Responses.
 - **Mixed model:** every row must use the same model.
 - **Streaming unsupported:** remove `stream: true`.
 - **Unsupported Responses model:** choose a direct OpenAI model supported by the upstream Batch API.
 - **Unsupported Responses field:** remove stateful features, provider-hosted tools, file references, or NanoGPT-only extensions.
+- **Unsupported embeddings input:** `input` must be a string or an array of strings. Token arrays and multimodal input return `unsupported_input_format`.
+- **Embedding results too large:** `embedding_result_too_large` (file-backed) or `inline_result_too_large` (inline). Use `encoding_format: "base64"`, fewer `dimensions`, or smaller batches.
