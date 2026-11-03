@@ -452,10 +452,14 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 | `user` | string | No | Your end-user identifier, up to 256 characters. |
 | `session_id` | string | No | Your session identifier, up to 256 characters. |
 | `trace` | object | No | Caller-supplied trace metadata. |
-| `provider` | object or null | No | Native Decisions routing controls. Usually omit this field. |
+| `provider` | object or null | No | Model-specific routing controls, described below. Usually omit this field. |
 | `include_usage` | boolean | No | Wait for billing to settle and report the exact charge as `usage.cost`. Defaults to `false`, which returns `usage.estimated_cost` without waiting. See [Usage and cost](#usage-and-cost). |
 
-The native `provider` object can contain endpoint-level `order`, `only`, `ignore`, `allow_fallbacks`, `require_parameters`, `max_price`, `zdr`, and `data_collection` controls. These names describe native Decisions endpoints such as `TypeSafe`; they are not NanoGPT provider IDs. API-key provider restrictions and zero-data-retention requirements still apply. Decider, PPLX Decider v1.2, Clef and Clef Flash use fixed decision endpoints and accept only `zdr` and `data_collection`. Clef and Clef Flash reject `zdr: true`.
+For Jev 1.13, Jev Latest and Liquid D1, the `provider` object can contain endpoint-level `order`, `only`, `ignore`, `allow_fallbacks`, `require_parameters`, `max_price`, `zdr`, and `data_collection` controls. These names describe native Decisions endpoints such as `TypeSafe`; they are not NanoGPT provider IDs.
+
+PPLX Decider v1.2 uses a fixed decision endpoint and accepts only `zdr` and `data_collection`. Clef and Clef Flash support [NanoGPT provider selection](/api-reference/miscellaneous/provider-selection), including `only`, `order`, `ignore`, `allow_fallbacks`, `max_price`, and `sort` (`price` or `auto`). Clef and Clef Flash reject `zdr: true`.
+
+API-key provider restrictions and zero-data-retention requirements apply to every model.
 
 ## Official TypeSafe SDK
 

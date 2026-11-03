@@ -1095,7 +1095,7 @@
           "Decisions"
         ],
         "summary": "Create typed decisions with a decision model",
-        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.2 (perplexity/pplx-decider-v1.2), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). Decider needs 2-255 Choice options or 2-10 Score levels per question and allows at most 1,024 scoring rows per request. Decider, PPLX Decider v1.2, Clef and Clef Flash accept only the zdr and data_collection routing controls in provider. PPLX Decider v1.2, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. Check GET /api/v1/models?detailed=true on your chosen host for model availability, supported_endpoints and decision_input capabilities. The retired perplexity/pplx-decider-v1.1-27b ID remains accepted as an alias for v1.2; the native Decisions response model field identifies the version that answered.",
+        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.2 (perplexity/pplx-decider-v1.2), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). PPLX Decider v1.2 accepts only the zdr and data_collection routing controls in provider. Clef and Clef Flash support NanoGPT provider selection and reject zdr true. PPLX Decider v1.2, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. Check GET /api/v1/decision-models on your chosen host for model availability, supported_endpoints and decision_input capabilities. The retired perplexity/pplx-decider-v1.1-27b ID remains accepted as an alias for v1.2; the native Decisions response model field identifies the version that answered.",
         "security": [
           {
             "bearerAuth": []
@@ -6317,7 +6317,7 @@
             }
           },
           "provider": {
-            "description": "Optional native Decisions endpoint-routing controls. These are not NanoGPT provider IDs. Decider, PPLX Decider v1.2, Clef and Clef Flash accept only zdr and data_collection; Clef and Clef Flash reject zdr true.",
+            "description": "Optional model-specific routing controls. Jev 1.13, Jev Latest and Liquid D1 use native Decisions endpoint names. PPLX Decider v1.2 accepts only zdr and data_collection. Clef and Clef Flash support NanoGPT provider selection and reject zdr true.",
             "type": [
               "object",
               "null"
