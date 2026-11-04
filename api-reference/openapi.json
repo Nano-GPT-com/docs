@@ -2808,7 +2808,8 @@
         "description": "Fetch TEE attestation report for a model",
         "security": [ { "bearerAuth": [] } ],
         "parameters": [
-          { "name": "model", "in": "query", "description": "TEE model to attest", "required": true, "schema": { "type": "string" } }
+          { "name": "model", "in": "query", "description": "TEE model to attest", "required": true, "schema": { "type": "string" } },
+          { "name": "nonce", "in": "query", "description": "A fresh nonce of 64 lowercase hex characters", "required": false, "schema": { "type": "string" } }
         ],
         "responses": {
           "200": {
@@ -2826,10 +2827,10 @@
         { "url": "https://api.nano-gpt.com", "description": "Root server for TEE endpoints" }
       ],
       "get": {
-        "description": "Fetch ECDSA signature for a chat request",
+        "description": "Fetch the signed receipt for a chat request, using its X-Receipt-Id value or response body id. The key must belong to the account that made the request.",
         "security": [ { "bearerAuth": [] } ],
         "parameters": [
-          { "name": "requestId", "in": "path", "description": "Chat request ID", "required": true, "schema": { "type": "string" } },
+          { "name": "requestId", "in": "path", "description": "Receipt ID (X-Receipt-Id) or the response body id", "required": true, "schema": { "type": "string" } },
           { "name": "model", "in": "query", "description": "TEE model to attest", "required": true, "schema": { "type": "string" } },
           { "name": "signing_algo", "in": "query", "description": "Signing algorithm to use", "required": false, "schema": { "type": "string" }, "example": "ecdsa" }
         ],
@@ -10200,18 +10201,42 @@
       "TEEAttestationResponse": {
         "type": "object",
         "properties": {
-          "attestation": {
+          "api_version": {
             "type": "string",
-            "description": "The attestation report"
+            "description": "The report format version, for example aci/1"
+          },
+          "workload_keyset_digest": {
+            "type": "string",
+            "description": "The sha256 digest of attestation.workload_keyset"
+          },
+          "attestation": {
+            "type": "object",
+            "description": "The gateway's attestation evidence and signing keys"
           }
         }
       },
       "TEESignatureResponse": {
         "type": "object",
         "properties": {
+          "receipt": {
+            "type": "object",
+            "description": "The signed receipt, with its event_log, key_id and signature"
+          },
+          "text": {
+            "type": "string",
+            "description": "The request and response hashes, as <request hash>:<response hash>"
+          },
           "signature": {
             "type": "string",
-            "description": "The ECDSA signature"
+            "description": "An ECDSA signature over text"
+          },
+          "signing_address": {
+            "type": "string",
+            "description": "The address of the key that signed text"
+          },
+          "signing_algo": {
+            "type": "string",
+            "description": "The algorithm of signature"
           }
         }
       },

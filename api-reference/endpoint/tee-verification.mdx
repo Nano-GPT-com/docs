@@ -1,127 +1,184 @@
 ---
- title: 'TEE Verification'
+title: "TEE Verification"
+description: "Check that a TEE-backed response came from an attested gateway and a verified upstream."
 ---
 
 ## Overview
 
-NanoGPT supports TEE-backed models with attestation/signature verification for stronger integrity and data-in-use isolation. Confidentiality/logging outcomes are provider-specific, and plaintext may still exist at gateway/proxy layers outside the enclave depending on transport and provider architecture. Use these endpoints to verify enclave attestation and signatures for chat completions.
+This guide covers TEE models served through RedPill. Each request requires a verified upstream: if none is available, the request fails with a `503` instead of being served. Other TEE routes, such as Tinfoil and Chutes TEE, don't have these receipts.
 
-### Fetch Attestation Report
+RedPill signs a receipt for each response. A receipt records what its gateway received, which upstream it verified and what it returned, with a hash of each body, and is signed with a key from the gateway's attestation report.
+
+Confidentiality and logging outcomes are provider-specific, and plaintext may still exist at gateway or proxy layers outside the enclave.
+
+## Response headers
+
+| Header | Meaning |
+| --- | --- |
+| `X-TEE-Signature-Available` | `true` when the response has a signed receipt. |
+| `X-Receipt-Id` | The receipt ID (`rcpt-...`). |
+| `X-TEE-Signature-ID` | The same receipt ID. |
+| `X-TEE-Completion-ID` | Non-streaming only. The response body `id`, which also finds the receipt. |
+| `X-Aci-Version`, `X-Aci-Keyset-Digest` | The receipt format version and the digest of the gateway's signing keys. |
+
+Receipts are available on Chat Completions. Non-streaming Responses API replies don't include one, and the Messages API and streaming Responses API reject these models.
+
+## What a receipt can prove
+
+| Check | Streaming | Non-streaming |
+| --- | --- | --- |
+| The receipt was signed by a key in the attestation report | Yes | Yes |
+| The upstream was verified | Yes | Yes |
+| `response.returned` matches the bytes you received | Yes, except on `TEE/gemma-4-31b-it` | No |
+| `request.received` matches the bytes you sent | No | No |
+
+NanoGPT rebuilds non-streaming replies and `TEE/gemma-4-31b-it` streams from the upstream response, so their bytes differ from what the receipt covers. Use streaming on another model to check the response bytes. NanoGPT also adapts each request before forwarding it, so `request.received` covers the request NanoGPT sent.
+
+## Fetch a receipt
+
+Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. For streams, fetch it after the stream ends.
 
 ```bash
-curl "https://api.nano-gpt.com/v1/tee/attestation?model=TEE/llama-3.3-70b-instruct" \
+curl "https://nano-gpt.com/api/v1/tee/signature/{receiptId}?model=TEE/glm-5.3-flash" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
-### Fetch ECDSA Signature
+The response contains:
+
+- `receipt`: the signed receipt. Its `event_log` holds the `request.received`, `response.returned` and `upstream.verified` events, and `signature` is signed over the rest of the receipt.
+- `text`, `signature`, `signing_address`, `signing_algo`: an older ECDSA signature over `<request hash>:<response hash>`.
+
+NanoGPT allows lookups for 7 days after the request, as long as RedPill still holds the receipt. `X-Request-ID` values aren't accepted.
+
+If a chat response has an `X-TEE-Verification-Route` header, also send that header on this request and on the attestation request below. Its value expires after one hour.
+
+## Fetch the attestation report
+
+Send a fresh nonce of 64 lowercase hex characters.
 
 ```bash
-curl "https://api.nano-gpt.com/v1/tee/signature/{requestId}?model=TEE/llama-3.3-70b-instruct&signing_algo=ecdsa" \
+curl "https://nano-gpt.com/api/v1/tee/attestation?model=TEE/glm-5.3-flash&nonce=$(openssl rand -hex 32)" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
-## Python Example
+The report attests the gateway. `attestation.workload_keyset` holds its signing keys and `attestation.evidence.quote` its TDX quote. Evidence for the upstream is in the session the receipt names in `upstream.verified.session_id`, at `https://api.redpill.ai/v1/aci/sessions/{session_id}`.
 
-Save the following as `test_tee.py` and run:
+Don't pin `workload_keyset_digest`: it changes when the gateway renews its keys.
+
+## Python example
 
 ```bash
-python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/llama-3.3-70b-instruct
+pip install requests cryptography
+NANOGPT_API_KEY=YOUR_API_KEY python3 test_tee.py
 ```
 
 ```python
 #!/usr/bin/env python3
-"""
-TEE Attestation & Signature Verification Example for NanoGPT.
-
-Usage:
-    python3 test_tee.py --api-key YOUR_API_KEY --base-url https://nano-gpt.com --model TEE/llama-3.3-70b-instruct
-"""
-import argparse
-import requests
+"""Check a NanoGPT TEE response against its signed receipt."""
+import hashlib
 import json
+import os
+import secrets
+import time
+
+import requests
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+BASE_URL = "https://nano-gpt.com/api"
+MODEL = "TEE/glm-5.3-flash"
+HEADERS = {"Authorization": f"Bearer {os.environ['NANOGPT_API_KEY']}"}
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Verify TEE attestation & signatures for NanoGPT TEE models.")
-    parser.add_argument("--api-key", required=True, help="NanoGPT API key")
-    parser.add_argument("--base-url", default="https://nano-gpt.com", help="NanoGPT server base URL")
-    parser.add_argument("--model", required=True, help="TEE model identifier (e.g. TEE/llama-3.3-70b-instruct)")
-    return parser.parse_args()
+def digest(data: bytes) -> str:
+    return "sha256:" + hashlib.sha256(data).hexdigest()
 
 
-def fetch_attestation(base_url, api_key, model):
-    url = f"{base_url}/v1/tee/attestation"
-    headers = {"Authorization": f"Bearer {api_key}"}
-    params = {"model": model}
-    resp = requests.get(url, headers=headers, params=params)
-    print("=== Attestation Report ===")
-    print(f"Status: {resp.status_code}")
-    try:
-        print(json.dumps(resp.json(), indent=2))
-    except ValueError:
-        print(resp.text)
+def canonical(value) -> bytes:
+    # JSON Canonicalization Scheme (RFC 8785), which is this simple here
+    # because these documents hold only ASCII keys, strings and integers.
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
 
 
-def chat_completion(base_url, api_key, model, stream=False):
-    url = f"{base_url}/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": model,
-        "stream": stream,
-        "messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user",   "content": "What is your model name?"}
-        ]
-    }
-    if stream:
-        resp = requests.post(url, headers=headers, json=payload, stream=True)
-        print("=== Streaming Chat Completion ===")
-        request_id = None
-        for line in resp.iter_lines(decode_unicode=True):
-            if line.startswith("data: "):
-                data_str = line[len("data: "):]
-                if data_str == "[DONE]":
-                    print("[DONE]")
-                    break
-                chunk = json.loads(data_str)
-                print(json.dumps(chunk, indent=2))
-                if not request_id and "id" in chunk:
-                    request_id = chunk["id"]
-        return request_id
-    else:
-        resp = requests.post(url, headers=headers, json=payload)
-        print("=== Chat Completion ===")
-        result = resp.json()
-        print(json.dumps(result, indent=2))
-        return result.get("id")
+def stream_completion() -> tuple[str, bytes]:
+    response = requests.post(
+        f"{BASE_URL}/v1/chat/completions",
+        headers=HEADERS,
+        json={
+            "model": MODEL,
+            "stream": True,
+            "messages": [{"role": "user", "content": "Reply with the single word: ok"}],
+        },
+        stream=True,
+        timeout=120,
+    )
+    response.raise_for_status()
+    receipt_id = response.headers["X-Receipt-Id"]
+    # The receipt covers the exact bytes of the stream, so don't reassemble them.
+    return receipt_id, b"".join(response.iter_content(chunk_size=None))
 
 
-def fetch_signature(base_url, api_key, model, request_id, algo="ecdsa"):
-    url = f"{base_url}/v1/tee/signature/{request_id}"
-    headers = {"Authorization": f"Bearer {api_key}"}
-    params = {"model": model, "signing_algo": algo}
-    resp = requests.get(url, headers=headers, params=params)
-    print("=== Signature ===")
-    print(f"Status: {resp.status_code}")
-    try:
-        print(json.dumps(resp.json(), indent=2))
-    except ValueError:
-        print(resp.text)
+def fetch_receipt(receipt_id: str) -> dict:
+    # A stream's receipt is complete shortly after the stream ends.
+    for _ in range(10):
+        response = requests.get(
+            f"{BASE_URL}/v1/tee/signature/{receipt_id}",
+            headers=HEADERS,
+            params={"model": MODEL},
+            timeout=30,
+        )
+        if response.status_code == 200:
+            return response.json()["receipt"]
+        if response.status_code not in (404, 502, 503):
+            response.raise_for_status()
+        time.sleep(2)
+    raise RuntimeError(f"Receipt {receipt_id} not available: {response.text}")
 
 
-def main():
-    args = parse_args()
-    fetch_attestation(args.base_url, args.api_key, args.model)
-    request_id = chat_completion(args.base_url, args.api_key, args.model, stream=False)
-    if request_id:
-        fetch_signature(args.base_url, args.api_key, args.model, request_id)
-    stream_id = chat_completion(args.base_url, args.api_key, args.model, stream=True)
-    if stream_id:
-        fetch_signature(args.base_url, args.api_key, args.model, stream_id)
+def fetch_workload_keyset(expected_digest: str) -> dict:
+    report = requests.get(
+        f"{BASE_URL}/v1/tee/attestation",
+        headers=HEADERS,
+        params={"model": MODEL, "nonce": secrets.token_hex(32)},
+        timeout=30,
+    )
+    report.raise_for_status()
+    keyset = report.json()["attestation"]["workload_keyset"]
+    if digest(canonical(keyset)) != expected_digest:
+        raise RuntimeError("The attested keyset does not match the receipt's workload_keyset_digest")
+    return keyset
+
+
+def verify_signature(receipt: dict, keyset: dict) -> None:
+    unsigned = {key: value for key, value in receipt.items() if key != "signature"}
+    key = next(k for k in keyset["receipt_signing_keys"] if k["key_id"] == receipt["key_id"])
+    public_key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(key["public_key"].removeprefix("0x")))
+    # Raises InvalidSignature when the receipt was not signed by the attested key.
+    public_key.verify(bytes.fromhex(receipt["signature"].removeprefix("0x")), canonical(unsigned))
+
+
+def main() -> None:
+    receipt_id, body = stream_completion()
+    receipt = fetch_receipt(receipt_id)
+    events = {event["type"]: event for event in receipt["event_log"]}
+
+    keyset = fetch_workload_keyset(receipt["workload_keyset_digest"])
+    verify_signature(receipt, keyset)
+    print("Receipt signature verified against the attested keyset")
+
+    if events["response.returned"]["body_hash"] != digest(body):
+        raise RuntimeError("The receipt does not cover the bytes this client received")
+    print("Response bytes match the receipt")
+
+    upstream = events["upstream.verified"]
+    if upstream["result"] != "verified" or upstream["required"] is not True:
+        raise RuntimeError(f"The upstream was not verified: {upstream}")
+    print(f"Upstream verified, session {upstream['session_id']}")
 
 
 if __name__ == "__main__":
-    main() 
+    main()
+```
+
+## What this example doesn't check
+
+The example trusts the attestation report it fetches. For a full check, also verify the TDX quote and its nonce binding, the release measurements and the upstream session evidence. See [RedPill's verification guide](https://docs.redpill.ai/guides/verify-a-response).
