@@ -1,0 +1,356 @@
+---
+title: "Webhooks"
+description: "Get a signed HTTP request when a batch or video job finishes, or when something changes on a team."
+---
+
+NanoGPT can send a signed `POST` request to your HTTPS endpoint when a batch or video job finishes, and when a team's members, usage or status change. Webhooks follow the [Standard Webhooks](https://www.standardwebhooks.com/) format, so you can verify them with its libraries.
+
+<Note>
+Webhooks are available for nano-gpt.com accounts. Partner domains don't support them.
+</Note>
+
+There are two kinds of webhook:
+
+| | Job webhooks | Team webhooks |
+| --- | --- | --- |
+| Events | One event when a batch or video job finishes | Member, usage limit and status events |
+| Where you set the URL | `callback_url` on each request | Once per team |
+| Signing secret | One per account | One per team |
+| Who can manage it | The account holder, signed in to the website | Team owners and admins, signed in to the website |
+
+Webhooks tell you that something happened. They don't carry results: fetch those with your API key, as you would without a webhook. A delivery can fail or repeat, and there's no API to list or replay events, so keep polling the status endpoints as a fallback and treat them as the source of truth.
+
+## Job webhooks
+
+### 1. Generate a signing secret
+
+Open **Settings**, find **Webhook signing secret**, and choose **Generate secret**. The secret starts with `whsec_` and is shown once, so copy it then.
+
+A request with a `callback_url` is refused until your account has a secret.
+
+The same action is available at `/api/user/webhook-secret`. It accepts a signed-in browser session only, so an API key can't read or replace the secret.
+
+| Method | What it does | Response |
+| --- | --- | --- |
+| `GET` | Shows whether a secret exists | `{ "configured": true, "rotatedAt": "2026-11-04T06:00:00.000Z" }` |
+| `POST` | Creates a secret, or replaces the current one | `{ "secret": "whsec_..." }` |
+
+### 2. Send a `callback_url`
+
+Add `callback_url` to the request body:
+
+| Endpoint | Notes |
+| --- | --- |
+| `POST /api/v1/batches` | File-backed batches |
+| `POST /api/beta/batches` | Inline batches |
+| `POST /api/generate-video` | API keys only. Requests authenticated any other way, including x402 payments, are refused |
+
+Anthropic-format Message Batches at `/api/v1/messages/batches` don't support `callback_url`.
+
+```bash
+curl https://api.nano-gpt.com/api/v1/batches \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_file_id": "file_abc123",
+    "endpoint": "/v1/chat/completions",
+    "completion_window": "24h",
+    "callback_url": "https://example.com/webhooks/nanogpt"
+  }'
+```
+
+A `callback_url` must:
+
+- be an `https` URL of at most 2,048 characters
+- have no username, password or `#fragment`
+- use a host that resolves only to public addresses
+
+The URL is checked when you send the request and again before every delivery attempt. It's saved in normalized form, and it can't be changed once the job has started.
+
+Don't put secrets in the URL, because it's stored as it is. Check the signature instead.
+
+### Errors
+
+| Status | `code` | Meaning |
+| --- | --- | --- |
+| 400 | `invalid_callback_url` | The URL doesn't meet the rules above |
+| 400 | `webhook_signing_secret_required` | Generate a signing secret first |
+| 400 | `callback_url_requires_api_key` | Video only: the request didn't use an API key |
+| 429 | `webhook_limit_exceeded` | Your account has too many unfinished webhooks. See [Limits](#limits) |
+| 503 | `webhooks_unavailable` | Webhooks are temporarily unavailable. Nothing was charged for a video request |
+
+The `param` field is `callback_url` on all of these. Batch errors use the `{ "error": { "message", "type", "code", "param" } }` format. Video errors use `{ "error": "...", "code", "param" }`.
+
+### When a job event is sent
+
+Each job sends at most one event, when it reaches a final status.
+
+- A batch event can be held for up to 15 minutes after the batch finishes, while billing settles. Delivery can add further delay.
+- If your create request returned an error, its webhook is normally removed, because you have no job ID to match an event to. An interrupted request can still leave one behind, so ignore events for job IDs you don't recognize.
+- A job that still hasn't finished after about eight days stops being tracked, and no event is sent.
+- Each video job creates at most one final event, and its delivery can fail or repeat. A rare later change to the job doesn't create another event, so the status endpoint stays authoritative.
+- A `video.generation.failed` event can arrive before any refund has landed.
+
+## Team webhooks
+
+Team owners and admins can set one HTTPS URL per team under **Teams**, then **Settings**, then **Webhook**. The URL follows the same rules as `callback_url`.
+
+The same actions are available at `/api/teams/{teamUuid}/webhook`. It accepts a signed-in browser session only, so an API key can't read or change a team's webhook.
+
+| Method | What it does | Response |
+| --- | --- | --- |
+| `GET` | Shows the current setup | `{ "configured": true, "url": "https://...", "rotatedAt": "..." }` |
+| `PUT` | Sets the URL. Send `{ "url": "https://..." }` | `{ "url": "https://...", "secret": "whsec_..." }` |
+| `POST` | Replaces the signing secret | `{ "secret": "whsec_..." }` |
+| `DELETE` | Removes the webhook | `{ "ok": true }` |
+
+- The first `PUT` creates the team's secret and returns it once. Later `PUT` calls keep the secret and leave `secret` out of the response.
+- Changing the URL moves undelivered events to the new URL.
+- Removing the webhook cancels undelivered events.
+- An attempt already in progress can still reach the old URL after either change.
+- A suspended team can read or remove its webhook, but not change it.
+- A `POST` before any URL is set returns 404.
+
+Errors use the team API format, `{ "code", "message" }`. A URL that fails validation returns `INVALID_CALLBACK_URL`. Someone without permission gets 403, and someone outside the team gets 404. If your sign-in changes while the request is in progress, the response is 409 with `SESSION_CHANGED`.
+
+Anyone who has seen the team's secret can sign events. Replace it when someone with access leaves.
+
+## Events
+
+Every event has the same shape:
+
+```json
+{
+  "id": "evt_8f14e45fceea4a6b9f0d3c1b2a7e6d55",
+  "object": "event",
+  "type": "batch.completed",
+  "created_at": 1793772000,
+  "data": {
+    "id": "batch_abc123",
+    "status": "completed"
+  }
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | The event ID, the same as the `webhook-id` header |
+| `object` | string | Always `event` |
+| `type` | string | The event type |
+| `created_at` | integer | When the event was created, in Unix seconds |
+| `data` | object | Details that depend on the type |
+
+Job events carry IDs and status. Team events carry IDs and, depending on the event, a role, status or period. No event contains prompts, outputs or file contents. Parse them so that fields added later don't break your handler.
+
+### Batch events
+
+| Event | `data.status` |
+| --- | --- |
+| `batch.completed` | `completed` |
+| `batch.failed` | `failed` |
+| `batch.expired` | `expired` |
+| `batch.cancelled` | `cancelled` |
+
+`data.id` is the batch ID. Use it with `GET /api/v1/batches/{id}`, and use the API key that created the batch to read its status and files.
+
+### Video events
+
+| Event | `data.status` |
+| --- | --- |
+| `video.generation.completed` | `completed` |
+| `video.generation.failed` | `failed` |
+| `video.generation.cancelled` | `canceled` |
+| `video.generation.expired` | `timed_out` |
+
+`data.id` is the job's `runId` (`vid_...`). Use it with `GET /api/video/status?requestId={id}`.
+
+<Warning>
+A video job ID is enough to read that job's status and output URLs. Keep webhook bodies and any logs of them private.
+</Warning>
+
+### Team events
+
+| Event | `data` fields | Sent when |
+| --- | --- | --- |
+| `team.member.joined` | `team_id`, `member_id`, `role` | A member joins |
+| `team.member.removed` | `team_id`, `member_id`, `role` | A member leaves or is removed |
+| `team.status.changed` | `team_id`, `status` | The team's status changes |
+| `team.usage.limit_reached` | `team_id`, `period` | Monthly team spend reaches the team's limit |
+
+| Field | Description |
+| --- | --- |
+| `team_id` | The team's UUID |
+| `member_id` | The membership's public ID. Team events never include names or email addresses |
+| `role` | `owner`, `admin` or `member` |
+| `status` | `active`, `paused`, `suspended` or `deleted` |
+| `period` | The month, as `YYYY-MM` |
+
+```json
+{
+  "id": "evt_1b2a7e6d558f14e45fceea4a6b9f0d3c",
+  "object": "event",
+  "type": "team.member.joined",
+  "created_at": 1793772000,
+  "data": {
+    "team_id": "11111111-1111-4111-8111-111111111111",
+    "member_id": "22222222-2222-4222-8222-222222222222",
+    "role": "member"
+  }
+}
+```
+
+- Role changes don't send an event.
+- When two memberships merge into one, the one that ends sends `team.member.removed`.
+- Deleting a team sends `team.member.removed` for each member and `team.status.changed` with `deleted`.
+
+`team.usage.limit_reached` needs an active team with an enforced team limit, and it's sent at most once per team per month. Spend is normally checked about every five minutes, using settled usage, and it can take longer when many teams are due. So requests can be refused before the event arrives, because enforcement also counts spend still in progress. A limit reached in the last minutes of a month may never send an event. Member limits don't send it.
+
+## The request
+
+Each delivery is a `POST` with a JSON body and these headers:
+
+| Header | Description |
+| --- | --- |
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Webhook-Delivery/1.0` |
+| `webhook-id` | The event ID. It stays the same across retries |
+| `webhook-timestamp` | The time of this attempt, in Unix seconds |
+| `webhook-signature` | One or more signatures, separated by spaces |
+
+## Verifying a webhook
+
+Verify every request before you act on it. Use the raw request body: parsing and re-serializing the JSON changes the bytes and the signature won't match.
+
+The [Standard Webhooks libraries](https://github.com/standard-webhooks/standard-webhooks/tree/main/libraries) check the signature and the timestamp for you, and reject a timestamp more than five minutes from the current time.
+
+<CodeGroup>
+
+```javascript Node.js
+import express from 'express';
+import { Webhook } from 'standardwebhooks';
+
+const app = express();
+const webhook = new Webhook(process.env.NANOGPT_WEBHOOK_SECRET);
+
+app.post('/webhooks/nanogpt', express.raw({ type: 'application/json' }), (req, res) => {
+  let event;
+  try {
+    event = webhook.verify(req.body.toString('utf8'), req.headers);
+  } catch {
+    return res.sendStatus(400);
+  }
+  // Save or queue the event before responding. A 2xx ends the retries, and the
+  // same event can arrive twice, so ignore an event.id you've already saved.
+  res.sendStatus(200);
+});
+```
+
+```python Python
+import os
+from flask import Flask, request
+from standardwebhooks.webhooks import Webhook
+
+app = Flask(__name__)
+webhook = Webhook(os.environ["NANOGPT_WEBHOOK_SECRET"])
+
+@app.post("/webhooks/nanogpt")
+def receive():
+    try:
+        event = webhook.verify(request.get_data(as_text=True), request.headers)
+    except Exception:
+        return "", 400
+    # Save or queue the event before responding. A 2xx ends the retries, and the
+    # same event can arrive twice, so ignore an event["id"] you've already saved.
+    return "", 200
+```
+
+</CodeGroup>
+
+### Verifying without a library
+
+1. Remove the `whsec_` prefix from your secret, then base64-decode the rest to get the key.
+2. Build the signed content: `{webhook-id}.{webhook-timestamp}.{raw body}`.
+3. Compute HMAC-SHA256 of that content with the key, and base64-encode the result.
+4. Split `webhook-signature` on spaces. Each entry looks like `v1,<signature>`. Accept the request if any `v1` signature matches, using a constant-time comparison.
+5. Reject the request if `webhook-timestamp` is too far from the current time.
+
+```javascript
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+const TOLERANCE_SECONDS = 300;
+
+export function verifyWebhook(rawBody, headers, secret) {
+  const id = headers['webhook-id'];
+  const timestamp = headers['webhook-timestamp'];
+  const signatures = headers['webhook-signature'];
+  if (!id || !timestamp || !signatures) return false;
+  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > TOLERANCE_SECONDS) return false;
+
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+  const expected = createHmac('sha256', key).update(`${id}.${timestamp}.${rawBody}`).digest();
+
+  return signatures.split(' ').some((entry) => {
+    const [version, signature] = entry.split(',');
+    if (version !== 'v1' || !signature) return false;
+    const actual = Buffer.from(signature, 'base64');
+    return actual.length === expected.length && timingSafeEqual(actual, expected);
+  });
+}
+```
+
+The timestamp check limits how long a captured request can be replayed. To block replays within that window too, keep the `webhook-id` values you've processed and ignore repeats.
+
+## Rotating a secret
+
+Generating a new secret doesn't cut off the old one straight away:
+
+1. Generate the new secret. The old secret keeps signing for up to 24 hours.
+2. During that time, each request carries a signature from both, so your endpoint can verify with either one.
+3. Update your endpoint to the new secret.
+
+NanoGPT keeps the five most recent replaced secrets. If you rotate more than five times in 24 hours, the oldest stops signing early.
+
+When accounts are merged, jobs started on the merged account are signed with its own secret and the surviving account's secret.
+
+## Retries
+
+An attempt succeeds when your endpoint returns any `2xx` status within 10 seconds. That time includes connecting, and your response body is ignored. A `2xx` ends the retries, so finish the work or save the event somewhere durable before you respond, and leave anything slow until after.
+
+Anything else counts as a failure, including a timeout or a redirect. Redirects aren't followed.
+
+After a failed attempt, NanoGPT tries again after these delays:
+
+| Retry | Delay |
+| --- | --- |
+| 1 | 1 minute |
+| 2 | 5 minutes |
+| 3 | 15 minutes |
+| 4 | 1 hour |
+| 5 | 3 hours |
+| 6 | 6 hours |
+| 7 | 12 hours |
+| 8 | 24 hours |
+
+That's nine attempts over about two days. These delays are minimums: attempts run from a job that starts once a minute, and they can take longer when many events are waiting. Every attempt has the same `webhook-id` and body, with a new timestamp and signature. After the last attempt, the event is dropped.
+
+Retries stop early in these cases:
+
+- **Your endpoint returns `410 Gone`.** This fails that event and every other pending event from the same account or team for that URL, including ones not yet attempted. It doesn't disable the URL: events that become ready later are still sent.
+- **The URL now points somewhere that isn't allowed**, such as a private address.
+- **The signing secret no longer exists**, for example because the team's webhook was removed.
+
+A host that can't be found is retried on the normal schedule.
+
+Events can arrive more than once and in any order. Use `webhook-id` to ignore repeats, and don't rely on delivery order.
+
+## Limits
+
+- When an account has 2,000 unfinished webhooks, counting jobs still running and events still being delivered, new requests with a `callback_url` return 429 until some finish. Requests sent at the same moment can each pass the check and go over that number.
+- A team can create up to 500 events per hour. Events over the limit aren't sent, though the change on the team still happens. A single bulk change, such as deleting a team, can go past the limit.
+- Deliveries are shared between accounts and destination hosts, so a large backlog for one account or host can take a while to clear.
+
+## Data and retention
+
+A webhook record holds the callback URL, job or team IDs, the event type and body, and the delivery state. It doesn't hold prompts or outputs. Finished records are removed by periodic cleanup, not straight away.
+
+Batches aren't available with zero data retention, so `callback_url` doesn't apply to them. Video webhooks can be used with it, and the record above is still kept.

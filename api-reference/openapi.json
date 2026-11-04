@@ -9425,6 +9425,12 @@
         "type": "object",
         "required": ["model"],
         "properties": {
+          "callback_url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "description": "Public HTTPS URL that receives a signed webhook when the job reaches a final status. Delivery can fail or repeat, so keep polling as a fallback. Needs an API key and a webhook signing secret, generated in Settings. See the Webhooks page."
+          },
           "model": {
             "type": "string",
             "description": "The video model to use for generation. See the docs for the current model list and required inputs."

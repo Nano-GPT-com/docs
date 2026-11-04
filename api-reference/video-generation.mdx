@@ -321,6 +321,10 @@ Pricing structures vary by model:
 - **Duration-Based**: step pricing (5s vs 10s)
 - **Mode-Based**: different rates for T2V vs I2V
 
+## Getting Notified When a Job Finishes
+
+API-key requests can send a `callback_url` to get a signed notification when the job reaches a final status. Delivery can fail or repeat, so keep polling as a fallback. See [Webhooks](/api-reference/miscellaneous/webhooks).
+
 ## Polling for Status
 
 After receiving a `runId`, poll the status endpoint until completion.
