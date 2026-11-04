@@ -36,7 +36,7 @@ NanoGPT rebuilds non-streaming replies and `TEE/gemma-4-31b-it` streams from the
 
 ## Fetch a receipt
 
-Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. For streams, fetch it after the stream ends.
+Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. For streams, fetch it after the stream ends, because the receipt covers the whole stream.
 
 ```bash
 curl "https://nano-gpt.com/api/v1/tee/signature/{receiptId}?model=TEE/glm-5.3-flash" \
