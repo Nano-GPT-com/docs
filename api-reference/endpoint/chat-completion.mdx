@@ -47,6 +47,7 @@ Use the jump list below to navigate the long-form reference quickly.
     - [Overview](#overview)
     - [Provider Routing Suffixes](#provider-routing-suffixes)
     - [Provider Routing Object](#provider-routing-object)
+    - [Model Fallbacks](#model-fallbacks)
   </Accordion>
   <Accordion title="Sampling & decoding">
     - [Sampling & Decoding Controls](#sampling-decoding-controls)
@@ -225,7 +226,11 @@ The `provider` request body field accepts either a provider ID string or a struc
 }
 ```
 
-Use [Provider Selection > Provider Routing Object](/api-reference/miscellaneous/provider-selection#provider-routing-object) for field semantics, validation behavior, and provider discovery.
+Use [Provider Selection > Provider Routing Object](/api-reference/miscellaneous/provider-selection#provider-routing-object) for field semantics, validation behavior, and provider discovery. That page also covers [performance cutoffs](/api-reference/miscellaneous/provider-selection#performance-cutoffs).
+
+## Model Fallbacks
+
+Send `models` to list other models to try if one fails before any output is sent. `model` goes first, and `models` can also be sent alone. A request can try at most 4 models. The model that answered is billed, and so is a failed attempt its provider charged for. See [Model fallbacks](/api-reference/miscellaneous/provider-selection#model-fallbacks).
 
 ## Sampling & Decoding Controls
 

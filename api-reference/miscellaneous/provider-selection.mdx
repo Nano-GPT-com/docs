@@ -166,7 +166,7 @@ Notes:
 
 ## Provider Routing Object
 
-`POST /api/v1/chat/completions`, `POST /api/v1/completions`, and `POST /api/talk-to-gpt` also accept a structured `provider` object for per-request routing controls.
+`POST /api/v1/chat/completions`, `POST /api/v1/responses`, `POST /api/v1/messages`, `POST /api/v1/completions`, and `POST /api/talk-to-gpt` also accept a structured `provider` object for per-request routing controls. See [Provider controls on `/v1/responses` and `/v1/messages`](#provider-controls-on-v1responses-and-v1messages) for how those two routes apply them.
 
 ```json
 {
@@ -198,7 +198,9 @@ Provider entries can use public NanoGPT provider IDs or accepted display names/a
 | `provider.order` | string[] | Soft preference order. NanoGPT tries these providers first when possible, but may route elsewhere. Unknown providers are ignored. |
 | `provider.only` | string[] | Hard provider pin. NanoGPT restricts routing to these providers and fails instead of routing outside the list. Unknown providers return `400` with `error.code: "provider_unknown_provider"`. |
 | `provider.ignore` | string[] | Excludes providers from routing. Unknown providers are ignored. |
-| `provider.sort` | string | Routing preference. Supported values are `speed`, `throughput`, `latency`, `price`, `auto`, `none`, and `default`. `auto`, `none`, and `default` suppress stored/default routing preferences without requesting a sort. |
+| `provider.sort` | string or object | Routing preference. Supported values are `speed`, `throughput`, `latency`, `price`, `auto`, `none`, and `default`. `auto`, `none`, and `default` suppress stored/default routing preferences without requesting a sort. The object form is `{"by": "price", "partition": "model"}`. `partition` is `model` (the default) or `none`. See [Model fallbacks](#model-fallbacks) for how it applies to `models`. |
+| `provider.preferred_max_latency` | number or object | Preferred maximum time to first token, in seconds. A number applies to p50. An object sets any of `p50`, `p75`, `p90`, `p99`. See [Performance cutoffs](#performance-cutoffs). |
+| `provider.preferred_min_throughput` | number or object | Preferred minimum output speed, in tokens per second. A number applies to p50. An object sets any of `p50`, `p75`, `p90`, `p99`. See [Performance cutoffs](#performance-cutoffs). |
 | `provider.quantizations` | string[] | Hard allowlist of model weight quantization levels. Supported values are `int4`, `fp4`, `fp6`, `int8`, `fp8`, `fp16`, `bf16`, `fp32`, and `unknown`. |
 | `provider.min_quantization` | string | Minimum precision floor. Supported values are `int4`, `fp4`, `fp6`, `int8`, `fp8`, `fp16`, `bf16`, and `fp32`. `unknown` is not allowed because it cannot be compared to a precision floor. |
 | `provider.max_price` | object | Optional `prompt` and/or `completion` caps on provider input/output rates, including selection markup, in USD per 1 million tokens. See [price-cap limits](#price-cap-limits). |
@@ -346,6 +348,91 @@ If the filters do not overlap, the request is rejected as invalid. For example, 
 
 Use NanoGPT's canonical quantization values in API requests. Provider metadata may use different internal labels, but request parameters must use the supported canonical values listed above.
 
+### Performance cutoffs
+
+`preferred_max_latency` and `preferred_min_throughput` move providers that miss a cutoff to the end of the ranking. They never exclude a provider and never make a request fail: if no provider meets the cutoffs, or NanoGPT has no recent data, the ranking stays as it was.
+
+```json
+{
+  "model": "model-id",
+  "provider": {
+    "sort": { "by": "price" },
+    "preferred_max_latency": { "p90": 3 },
+    "preferred_min_throughput": 50
+  },
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+This ranks providers by price, but tries those meeting both cutoffs first.
+
+- **What a percentile means.** `p90: 3` on latency means 90% of recent requests got their first token within 3 seconds. `p90: 50` on throughput means 90% of recent requests ran at 50 tokens per second or faster. Setting several cutoffs requires all of them.
+- **They need a ranking to reorder.** Cutoffs apply when `provider.sort`, or a `provider.max_price` that implies price routing, ranks several providers in the same `provider` object. A provider list or filter that resolves to a single provider has nothing to reorder.
+- **On their own, they do nothing.** Sent without any other control that chooses among providers, cutoffs leave automatic routing and your bill as they were. Add `provider.sort` to use them, which bills the request as [explicit provider selection](#billing-and-markup).
+- **They can't widen a restriction.** They only reorder the providers your request, API key, team policy, zero data retention and EU inference settings already allow.
+- **How the numbers are measured.** They cover about the last hour of requests and are estimated from fixed ranges, not exact samples. A provider needs at least 10 recent requests on that model to count as meeting a cutoff, so one with less traffic is treated as missing it.
+
+Latency here means time to first token. On `POST /api/v1/completions` and `POST /api/talk-to-gpt`, cutoffs are accepted and have no effect.
+
+### Model fallbacks
+
+Send `models` to list other models to try if one fails. It works on `POST /api/v1/chat/completions`, `POST /api/v1/responses` and `POST /api/v1/messages`. A list that comes down to one model, once duplicates are removed, is a normal request for that model. Everything below about trying several models applies to two or more different models.
+
+```json
+{
+  "model": "model-a",
+  "models": ["model-b", "model-c"],
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
+
+- **Order.** `model` goes first, then `models`. You can leave out `model` and send only `models`. Duplicates are removed. `models` can list at most 4 IDs, and a request can try at most 4 models in total.
+- **What moves to the next model.** A provider failure (a 5xx, or a provider's 429) and a prompt too long for that model, once NanoGPT's own routing for that model has run out of options.
+- **What doesn't.** Authentication, permission, balance and invalid-request errors, moderation refusals, and NanoGPT's own rate limits, concurrency limits and budgets. The request ends with that error.
+- **Streaming.** Fallback happens only before a response starts. Once NanoGPT returns a `200`, including a stream, the request stays on that model, even if the stream later fails.
+- **The final error.** If every model fails, you get the last model's error.
+- **What you see.** The response's `model` is the model that answered, and `X-Request-ID` identifies that attempt, so it can differ from an ID you sent. Which provider was used isn't revealed.
+- **Billing.** Each attempt is billed as if you had requested that model alone, including whether a subscription covers it. The model that answered is billed at its own price. A failed attempt is free unless its provider charged for it, for example for output generated before the failure or an empty answer the provider billed. Such an attempt is billed under its own request ID, as it would be without `models`.
+- **Limits and policies.** Each attempt passes the same checks as a request for that model alone, including your API key's model and provider allowlists, team policy, zero data retention, EU inference and balance. `provider` settings apply to every model in the list. A model those rules refuse ends the request with that error. On `/v1/responses` and `/v1/messages`, each attempt also counts toward your rate limits. Attempts run one at a time, and a failed attempt's concurrency slot is freed before the next one starts.
+- **`provider.sort.partition`.** Models are always tried in order, which is what `model` means. `none`, which would rank across models, isn't supported with `models` and returns `400` `provider_sort_partition_not_supported`.
+
+These can't be combined with two or more different models, and return `400`:
+
+| Combination | `error.code` |
+| --- | --- |
+| No API key | `models_requires_api_key` |
+| x402 payment | `models_x402_not_supported` |
+| Auto Model in the list | `models_auto_model_not_supported` |
+| A model preset (`presets/<name>`) in the list | `models_preset_not_supported` |
+| A TEE model in the list | `models_tee_not_supported` |
+| A Decisions model in the list | `models_decisions_not_supported` |
+| Fusion | `models_fusion_not_supported` |
+| Advisor | `models_advisor_not_supported` |
+| `character_id` | `models_character_not_supported` |
+| `background: true` | `models_background_not_supported` |
+| Inline moderation | `models_moderation_not_supported` |
+| PII redaction requested on the request or a model suffix | `models_redaction_not_supported` |
+| The web search add-on (a search suffix such as `:online`, or search options in the request body), Context Memory, URL scraping or transcript add-ons | `models_addon_not_supported` |
+
+A malformed list returns `models_invalid`, and more than 4 entries in `models`, or more than 4 models in total, returns `models_too_many`. These two apply to any `models` list, however many models it names. A `web_search` tool on `/v1/responses` isn't the add-on, and can be used with `models`.
+
+### Provider controls on `/v1/responses` and `/v1/messages`
+
+Both routes accept the same `provider` object as Chat Completions, with the same errors, and `/v1/messages` applies it the same way.
+
+Most `/v1/responses` requests also run through the same routing. Some can only run on a native route, for example those using built-in tools or computer use. A native route doesn't rank providers, so:
+
+| Control | On a native route |
+| --- | --- |
+| `only`, `ignore` | Enforced. If they leave the route no provider, the request returns `403` `no_allowed_provider_for_model`. |
+| `order`, `sort`, `preferred_max_latency`, `preferred_min_throughput` | Accepted, with no effect, because nothing is ranked. |
+| `allow_fallbacks` | Accepted, but it doesn't pin the request to one provider: `false` skips some of the route's alternative attempts, not all of them. |
+| `max_price`, `quantizations`, `min_quantization` | Returns `400` `provider_control_not_supported`, because the route can't apply them. Remove the control, or the feature that needs the native route. |
+
 ### Output limits
 
 Providers can accept different maximum output budgets for the same model. A provider whose `maxOutputTokens` is lower than the request's `max_tokens`, `max_completion_tokens` or `max_output_tokens` is skipped, including under `sort: "price"` and `max_price` routing. NanoGPT does not lower your budget to fit a provider.
@@ -364,6 +451,8 @@ Invalid object shapes return a structured `400` error:
 - Unknown providers in `order` and `ignore` are ignored.
 - `provider.max_price.prompt` and `provider.max_price.completion` must be non-negative numbers.
 - `provider.allow_fallbacks` and `provider.require_parameters` must be booleans.
+- `provider.sort` must be a string or an object with `by` and an optional `partition`. Invalid values return `provider_sort_invalid`.
+- `provider.preferred_max_latency` and `provider.preferred_min_throughput` must be a non-negative number or an object with non-negative `p50`, `p75`, `p90` or `p99` values. Invalid values return `provider_field_invalid`.
 
 Example error:
 
@@ -607,6 +696,7 @@ When `caching: true` is set without a routing preference, use the routing order 
 - If you explicitly select or constrain providers with `X-Provider` or body `provider`, billing uses the resolved provider-specific price plus the applicable provider-selection markup (normally 5%) and the request is treated as pay-as-you-go.
 - If saved preferences select a provider on pay-as-you-go traffic, billing uses the provider-specific price plus the applicable provider-selection markup (normally 5%).
 - If you do not select a provider, billing uses the model's default price.
+- `provider.preferred_max_latency` and `provider.preferred_min_throughput` don't change billing by themselves.
 
 ## Which Provider Served My Request?
 

@@ -64,7 +64,7 @@ Use either header:
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `model` | string | Model identifier (any NanoGPT model, including non‑Anthropic models) |
+| `model` | string | Model identifier (any NanoGPT model, including non‑Anthropic models). Can be left out when `models` is sent. |
 | `max_tokens` | number | Maximum tokens to generate (must be a finite number) |
 | `messages` | array | Array of conversation messages |
 
@@ -74,6 +74,8 @@ Use either header:
 | --- | --- | --- | --- |
 | `system` | string or array | -- | System prompt (string or array of text blocks) |
 | `stream` | boolean | `false` | Enable streaming responses |
+| `models` | string[] | -- | Models to try in order if one fails before any output is sent. `model` goes first. At most 4 in total. The model that answered is billed, and so is a failed attempt its provider charged for. With two or more different models it needs an API key. See [Model fallbacks](/api-reference/miscellaneous/provider-selection#model-fallbacks). |
+| `provider` | string or object | -- | Provider selection controls for this request, applied as on Chat Completions. See [Provider Routing Object](/api-reference/miscellaneous/provider-selection#provider-routing-object). |
 | `temperature` | number | -- | Sampling temperature |
 | `top_p` | number | -- | Nucleus sampling parameter |
 | `top_k` | number | -- | Top-k sampling parameter |

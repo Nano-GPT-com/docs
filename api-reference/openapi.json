@@ -7044,15 +7044,22 @@
       "ChatCompletionRequest": {
         "type": "object",
         "required": [
-          "model",
           "messages"
         ],
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for completion. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.). Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is none, low, medium, high, xhigh, or max, to supply a default reasoning_effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence, including enabled thinking when the suffix is none. The none suffix requests disabled reasoning where supported; it does not bypass model/provider restrictions. Other effort levels remain model/provider-specific.",
+            "description": "The model to use for completion. Required unless models is sent. The model value may include supported model suffixes, including web search (':online', ':online/<provider>'), memory (':memory', ':memory-<days>'), reasoning visibility (':reasoning-exclude'), thinking variants where listed by the model catalog (':thinking'), and provider routing preferences for eligible models (':fast', ':cheap', ':caching', etc.). Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is none, low, medium, high, xhigh, or max, to supply a default reasoning_effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence, including enabled thinking when the suffix is none. The none suffix requests disabled reasoning where supported; it does not bypass model/provider restrictions. Other effort levels remain model/provider-specific.",
             "default": "minimax/minimax-m2.7",
             "examples": ["minimax/minimax-m2.7", "zai-org/glm-5:fast", "zai-org/glm-5:cheap", "openai/gpt-6.1-sol:online/exa-instant", "openai/gpt-6.1-sol:online/exa-deep-reasoning"]
+          },
+          "models": {
+            "type": "array",
+            "description": "Models to try in order if one fails before any output is sent. model goes first, and models can also be sent alone. At most 4 models per request. With two or more different models it needs an API key. The model that answered is billed, and so is a failed attempt its provider charged for.",
+            "maxItems": 4,
+            "items": {
+              "type": "string"
+            }
           },
           "billing_mode": {
             "type": "string",
@@ -8164,14 +8171,34 @@
       },
       "AnthropicMessageRequest": {
         "type": "object",
-        "required": ["model", "messages"],
+        "required": ["messages"],
         "properties": {
         "output_config": {
           "$ref": "#/components/schemas/InlineReasoningEffort",
           "description": "Request-level effort baseline. Keep unchanged when using inline output_config updates."
         },
           "model": { "type": "string",
-            "description": "Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is none, low, medium, high, xhigh, or max, to supply a default output_config.effort for enabled reasoning levels; none instead supplies thinking: { type: \"disabled\" }. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence, including enabled thinking when the suffix is none. The none suffix requests disabled reasoning where supported; it does not bypass model/provider restrictions. Other effort levels remain model/provider-specific." },
+            "description": "Model ID or compatibility alias. Required unless models is sent. Append :reasoning-effort/<effort>, where effort is none, low, medium, high, xhigh, or max, to supply a default output_config.effort for enabled reasoning levels; none instead supplies thinking: { type: \"disabled\" }. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence, including enabled thinking when the suffix is none. The none suffix requests disabled reasoning where supported; it does not bypass model/provider restrictions. Other effort levels remain model/provider-specific." },
+          "models": {
+            "type": "array",
+            "description": "Models to try in order if one fails before any output is sent. model goes first, and models can also be sent alone. At most 4 models per request. With two or more different models it needs an API key. The model that answered is billed, and so is a failed attempt its provider charged for.",
+            "maxItems": 4,
+            "items": {
+              "type": "string"
+            }
+          },
+          "provider": {
+            "description": "Provider selection controls for this request, applied as on Chat Completions.",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Provider ID or accepted provider display name/alias."
+              },
+              {
+                "$ref": "#/components/schemas/ProviderRoutingObject"
+              }
+            ]
+          },
           "max_tokens": { "type": "integer" },
           "messages": {
             "type": "array",
@@ -12314,9 +12341,28 @@
             }
           },
           "sort": {
-            "type": "string",
-            "description": "Routing preference. speed, throughput, latency, and price actively request that strategy. auto, none, and default are accepted to suppress stored/default routing preferences without requesting a provider sort.",
-            "enum": ["speed", "throughput", "latency", "price", "auto", "none", "default"]
+            "description": "Routing preference. speed, throughput, latency, and price actively request that strategy. auto, none, and default are accepted to suppress stored/default routing preferences without requesting a provider sort. The object form is {\"by\": \"price\", \"partition\": \"model\"}.",
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": ["speed", "throughput", "latency", "price", "auto", "none", "default"]
+              },
+              {
+                "type": "object",
+                "required": ["by"],
+                "properties": {
+                  "by": {
+                    "type": "string",
+                    "enum": ["speed", "throughput", "latency", "price", "auto", "none", "default"]
+                  },
+                  "partition": {
+                    "type": "string",
+                    "description": "model (the default) keeps models in the order sent. none isn't supported with two or more different models and returns 400 provider_sort_partition_not_supported.",
+                    "enum": ["model", "none"]
+                  }
+                }
+              }
+            ]
           },
           "quantizations": {
             "type": "array",
@@ -12348,9 +12394,47 @@
               }
             }
           },
+          "preferred_max_latency": {
+            "description": "Preferred maximum time to first token, in seconds. A number applies to p50. An object sets any of p50, p75, p90 or p99. Providers that miss a cutoff move to the end of the ranking and are never excluded. Cutoffs need provider.sort, or a provider.max_price that implies price routing, to act; sent alone they do nothing.",
+            "oneOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "p50": { "type": "number", "minimum": 0 },
+                  "p75": { "type": "number", "minimum": 0 },
+                  "p90": { "type": "number", "minimum": 0 },
+                  "p99": { "type": "number", "minimum": 0 }
+                }
+              }
+            ]
+          },
+          "preferred_min_throughput": {
+            "description": "Preferred minimum output speed, in tokens per second. A number applies to p50. An object sets any of p50, p75, p90 or p99. Providers that miss a cutoff move to the end of the ranking and are never excluded. Cutoffs need provider.sort, or a provider.max_price that implies price routing, to act; sent alone they do nothing.",
+            "oneOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "p50": { "type": "number", "minimum": 0 },
+                  "p75": { "type": "number", "minimum": 0 },
+                  "p90": { "type": "number", "minimum": 0 },
+                  "p99": { "type": "number", "minimum": 0 }
+                }
+              }
+            ]
+          },
           "allow_fallbacks": {
             "type": "boolean",
-            "description": "When false, disables cross-provider fallback for this request."
+            "description": "When false, disables cross-provider fallback for this request. On a native /v1/responses route it skips some alternative attempts, not all of them."
           },
           "require_parameters": {
             "type": "boolean",
@@ -12691,11 +12775,31 @@
       },
       "ResponsesCreateRequest": {
         "type": "object",
-        "required": ["model", "input"],
+        "required": ["input"],
         "properties": {
           "model": {
             "type": "string",
-            "description": "Model ID to use for the response. Provider-selection-capable models may include routing preference suffixes such as ':fast', ':speed', ':cheap', ':price', ':latency', ':throughput', ':floor', ':tools', ':caching', ':cache', or ':cached'. Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is none, low, medium, high, xhigh, or max, to supply a default reasoning.effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence, including enabled thinking when the suffix is none. The none suffix requests disabled reasoning where supported; it does not bypass model/provider restrictions. Other effort levels remain model/provider-specific."
+            "description": "Model ID to use for the response. Required unless models is sent. Provider-selection-capable models may include routing preference suffixes such as ':fast', ':speed', ':cheap', ':price', ':latency', ':throughput', ':floor', ':tools', ':caching', ':cache', or ':cached'. Model ID or compatibility alias. Append :reasoning-effort/<effort>, where effort is none, low, medium, high, xhigh, or max, to supply a default reasoning.effort. The suffix is stripped before model routing and is not listed as a separate model. Explicit reasoning generation settings take precedence, including enabled thinking when the suffix is none. The none suffix requests disabled reasoning where supported; it does not bypass model/provider restrictions. Other effort levels remain model/provider-specific."
+          },
+          "models": {
+            "type": "array",
+            "description": "Models to try in order if one fails before any output is sent. model goes first, and models can also be sent alone. At most 4 models per request. With two or more different models it needs an API key and can't be combined with background: true. The model that answered is billed, and so is a failed attempt its provider charged for.",
+            "maxItems": 4,
+            "items": {
+              "type": "string"
+            }
+          },
+          "provider": {
+            "description": "Provider selection controls for this request. On a native route, max_price, quantizations and min_quantization return 400 provider_control_not_supported.",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Provider ID or accepted provider display name/alias."
+              },
+              {
+                "$ref": "#/components/schemas/ProviderRoutingObject"
+              }
+            ]
           },
           "billing_mode": {
             "type": "string",
