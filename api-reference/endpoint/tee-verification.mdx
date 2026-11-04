@@ -25,14 +25,45 @@ Receipts are available on Chat Completions. Non-streaming Responses API replies 
 
 ## What a receipt can prove
 
-| Check | Streaming | Non-streaming |
-| --- | --- | --- |
-| The receipt was signed by a key in the attestation report | Yes | Yes |
-| The upstream was verified | Yes | Yes |
-| `response.returned` matches the bytes you received | Yes, except on `TEE/gemma-4-31b-it` | No |
-| `request.received` matches the bytes you sent | No | No |
+| Check | Streaming | Non-streaming | Non-streaming in exact mode |
+| --- | --- | --- | --- |
+| The receipt was signed by a key in the attestation report | Yes | Yes | Yes |
+| The upstream was verified | Yes | Yes | Yes |
+| `response.returned` matches the bytes you received | Yes | No | Yes |
+| `request.received` matches the bytes you sent | No | No | No |
 
-NanoGPT rebuilds non-streaming replies and `TEE/gemma-4-31b-it` streams from the upstream response, so their bytes differ from what the receipt covers. Use streaming on another model to check the response bytes. NanoGPT also adapts each request before forwarding it, so `request.received` covers the request NanoGPT sent.
+NanoGPT adapts each request before forwarding it, so `request.received` covers the request NanoGPT sent.
+
+The response checks don't hold for `TEE/gemma-4-31b-it` and `TEE/deepseek-v3.2`, whose replies NanoGPT always rewrites, and exact mode isn't available for them.
+
+## Exact mode for non-streaming replies
+
+NanoGPT normally rebuilds non-streaming replies, so their bytes differ from what the receipt covers. To get the bytes the receipt covers, send this header on `/v1/chat/completions`:
+
+```bash
+curl -D headers.txt -o body.json "https://nano-gpt.com/api/v1/chat/completions" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-NanoGPT-TEE-Response: exact" \
+  -d '{"model":"TEE/glm-5.3-flash","messages":[{"role":"user","content":"Hello"}]}'
+
+shasum -a 256 body.json
+```
+
+Check that the response has `X-NanoGPT-TEE-Response: exact`, which only exact replies return. Then compare the hash with `response.returned.body_hash` in the receipt named by `X-Receipt-Id`. If `X-TEE-Signature-Available` is `false`, there's no receipt to compare it with.
+
+The body is what RedPill returned, unchanged, even if it's empty or malformed. This means:
+
+- There's no `x_nanogpt_pricing`. Read the cost from `GET /api/v1/usage/requests/{X-Request-ID}`, which can return a `404` for a few seconds after the reply.
+- `model` is the upstream model ID. `X-Requested-Model` holds the one you sent.
+- NanoGPT doesn't repair tool calls, filter reasoning or retry empty replies.
+- NanoGPT doesn't try another provider. If RedPill can't serve the request, you get an error.
+
+No bytes arrive until the whole reply is finished, so allow a long client timeout. `nano-gpt.com` closes a connection that has received no bytes after about 5 and a half minutes, so use streaming for replies that may take longer.
+
+On Chat Completions, exact mode returns a `400` with code `tee_exact_response_unsupported` for models it doesn't cover, requests that would use your own provider keys, Context Memory, web search, `reasoning.exclude`, PII redaction and more than one choice.
+
+The header has no effect on streaming requests, whose replies already match, on x402 payments or on the Responses, Messages and text completions endpoints. Those replies don't include the `X-NanoGPT-TEE-Response` header.
 
 ## Fetch a receipt
 
