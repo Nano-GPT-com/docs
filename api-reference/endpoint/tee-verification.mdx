@@ -67,7 +67,7 @@ The header has no effect on streaming requests, whose replies already match, on 
 
 ## Fetch a receipt
 
-Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. For streams, fetch it after the stream ends, because the receipt covers the whole stream.
+Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. For streams, fetch it after the stream ends, because the receipt covers the whole stream. A stream that's cut off before it finishes has no receipt, even if its headers named one.
 
 ```bash
 curl "https://nano-gpt.com/api/v1/tee/signature/{receiptId}?model=TEE/glm-5.3-flash" \
