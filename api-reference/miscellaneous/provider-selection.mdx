@@ -166,7 +166,7 @@ Notes:
 
 ## Provider Routing Object
 
-`POST /api/v1/chat/completions`, `POST /api/v1/responses`, `POST /api/v1/messages`, `POST /api/v1/completions`, and `POST /api/talk-to-gpt` also accept a structured `provider` object for per-request routing controls. See [Provider controls on `/v1/responses` and `/v1/messages`](#provider-controls-on-v1responses-and-v1messages) for how those two routes apply them.
+`POST /api/v1/chat/completions`, `POST /api/v1/responses`, `POST /api/v1/messages`, `POST /api/v1/completions`, and `POST /api/talk-to-gpt` also accept a structured `provider` object for per-request routing controls. See [Provider controls on Responses and Messages](#provider-controls-on-responses-and-messages) for how those two routes apply them.
 
 ```json
 {
@@ -420,7 +420,7 @@ These can't be combined with two or more different models, and return `400`:
 
 A malformed list returns `models_invalid`, and more than 4 entries in `models`, or more than 4 models in total, returns `models_too_many`. These two apply to any `models` list, however many models it names. A `web_search` tool on `/v1/responses` isn't the add-on, and can be used with `models`.
 
-### Provider controls on `/v1/responses` and `/v1/messages`
+### Provider controls on Responses and Messages
 
 Both routes accept the same `provider` object as Chat Completions, with the same errors, and `/v1/messages` applies it the same way.
 
