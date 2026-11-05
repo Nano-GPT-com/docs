@@ -10098,8 +10098,8 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "The model to use for generation",
-            "default": "hidream"
+            "description": "The model to use for generation. Set it explicitly to select the intended model; use GET /api/v1/image-models to discover available IDs.",
+            "example": "hidream"
           },
           "prompt": {
             "type": "string",
