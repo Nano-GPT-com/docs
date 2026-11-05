@@ -327,6 +327,8 @@ const visionReply = await client.chat.completions.create({
 console.log(visionReply.choices[0]?.message.content);
 ```
 
+The number of images a request can carry varies by route, and images in conversation history count. On https://nano-gpt.com, a request body over about 4.5 MB gets HTTP 413 before it reaches the API; for larger requests, use https://api.nano-gpt.com/api/v1.
+
 For many or large images, send public HTTPS URLs rather than base64 data URLs. A data URL puts the whole image in the request body, about a third larger than the file, and request bodies are limited to 32 MB. Use data URLs for private images and for models that accept only inline images. Resize large images first; most vision models scale them down anyway.
 
 VIDEO INPUT

@@ -5,7 +5,7 @@ description: "Choose the direct API host for inference, uploads, and long-runnin
 
 ## Recommended host
 
-Use `https://api.nano-gpt.com` for API-key requests. The direct API host has a higher request size limit and a longer request runtime than `https://nano-gpt.com`, so it is the better choice for large attachments, long conversations, and model calls that take time to finish. Batch file uploads also use the direct API host.
+Use `https://api.nano-gpt.com` for API-key requests. The direct API host has a higher request size limit and a longer request runtime than `https://nano-gpt.com`, so it is the better choice for large attachments, long conversations, and model calls that take time to finish. The website host rejects request bodies over about 4.5 MB with HTTP 413. Batch file uploads also use the direct API host.
 
 | Client or request | Base URL or endpoint |
 | --- | --- |
