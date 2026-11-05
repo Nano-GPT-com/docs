@@ -7,9 +7,19 @@ description: "Check that a TEE-backed response came from an attested gateway and
 
 This guide covers TEE models served through RedPill. Each request requires a verified upstream: if none is available, the request fails with a `503` instead of being served. Other TEE routes, such as Tinfoil and Chutes TEE, don't have these receipts.
 
-RedPill signs a receipt for each response. A receipt records what its gateway received, which upstream it verified and what it returned, with a hash of each body, and is signed with a key from the gateway's attestation report.
+RedPill signs a receipt for each response. A receipt records what its gateway received, which upstream it verified and what it returned, with a hash of each body, and is signed with a key the gateway publishes. [The attestation report](#fetch-the-attestation-report) ties that key to the gateway's hardware quote.
 
 Confidentiality and logging outcomes are provider-specific, and plaintext may still exist at gateway or proxy layers outside the enclave.
+
+## Which replies have a receipt
+
+`TEE/` models don't all answer from the same route, so check `X-TEE-Signature-Available` on each reply.
+
+| Models | Who answers | Receipt |
+| --- | --- | --- |
+| `TEE/kimi-k2.6`, `TEE/kimi-k3`, `TEE/glm-5.1`, `TEE/glm-5.1-thinking`, `TEE/glm-5.2`, `TEE/glm-5.2:thinking`, `TEE/gemma4-31b`, `TEE/gemma4-31b:thinking` | Chutes TEE first, then another TEE route if it can't serve the request | Only if RedPill answers |
+| `TEE/gemma-4-31b-it` | RedPill, and NanoGPT rewrites its replies | Yes, but it covers RedPill's bytes rather than the ones you receive |
+| Other RedPill `TEE/` models | RedPill | Yes |
 
 ## Response headers
 
@@ -20,6 +30,7 @@ Confidentiality and logging outcomes are provider-specific, and plaintext may st
 | `X-TEE-Signature-ID` | The same receipt ID. |
 | `X-TEE-Completion-ID` | Non-streaming only. The response body `id`, which also finds the receipt. |
 | `X-Aci-Version`, `X-Aci-Keyset-Digest` | The receipt format version and the digest of the gateway's signing keys. |
+| `X-TEE-Verification-Route` | On models with more than one route, a token naming the route that answered. |
 
 Receipts are available on Chat Completions. Non-streaming Responses API replies don't include one, and the Messages API and streaming Responses API reject these models.
 
@@ -27,14 +38,16 @@ Receipts are available on Chat Completions. Non-streaming Responses API replies 
 
 | Check | Streaming | Non-streaming | Non-streaming in exact mode |
 | --- | --- | --- | --- |
-| The receipt was signed by a key in the attestation report | Yes | Yes | Yes |
+| The receipt was signed by a key the hardware quote binds, using `report=aci` | Yes | Yes | Yes |
 | The upstream was verified | Yes | Yes | Yes |
 | `response.returned` matches the bytes you received | Yes | No | Yes |
 | `request.received` matches the bytes you sent | No | No | No |
 
 NanoGPT adapts each request before forwarding it, so `request.received` covers the request NanoGPT sent.
 
-The response checks don't hold for `TEE/gemma-4-31b-it` and `TEE/deepseek-v3.2`, whose replies NanoGPT always rewrites, and exact mode isn't available for them.
+`response.returned` doesn't match on `TEE/gemma-4-31b-it`, whose replies NanoGPT always rewrites. Exact mode isn't available for that model or for replies Chutes TEE answers.
+
+Streams that match their receipt reach you unchanged, so they end with a usage frame whose `choices` is empty, even if you didn't ask for usage, and `reasoning.exclude` can't hide their reasoning.
 
 ## Exact mode for non-streaming replies
 
@@ -81,18 +94,25 @@ The response contains:
 
 NanoGPT allows lookups for 7 days after the request, as long as RedPill still holds the receipt. `X-Request-ID` values aren't accepted.
 
-If a chat response has an `X-TEE-Verification-Route` header, also send that header on this request and on the attestation request below. Its value expires after one hour.
+If a chat response has an `X-TEE-Verification-Route` header, also send that header on this request and on the attestation request below. Its value expires after one hour. An expired value doesn't block a receipt lookup, but the attestation request returns a `400`.
 
 ## Fetch the attestation report
 
-Send a fresh nonce of 64 lowercase hex characters.
+Send `report=aci` and a fresh nonce of 64 lowercase hex characters.
 
 ```bash
-curl "https://nano-gpt.com/api/v1/tee/attestation?model=TEE/glm-5.3-flash&nonce=$(openssl rand -hex 32)" \
+curl "https://nano-gpt.com/api/v1/tee/attestation?model=TEE/glm-5.3-flash&report=aci&nonce=$(openssl rand -hex 32)" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
-The report attests the gateway. `attestation.workload_keyset` holds its signing keys and `attestation.evidence.quote` its TDX quote. Evidence for the upstream is in the session the receipt names in `upstream.verified.session_id`, at `https://api.redpill.ai/v1/aci/sessions/{session_id}`.
+This returns RedPill's gateway report unchanged, with no route token needed. `attestation.workload_keyset` holds the gateway's signing keys and `attestation.evidence.quote` its TDX quote. The quote's report data is the SHA-256 of the canonical JSON `{"keyset_digest":"sha256:...","nonce":"<your nonce>","purpose":"aci.report_data.v1"}`, followed by 32 zero bytes. That binds the keys, including the receipt key, to the quote and to your nonce.
+
+Evidence for the upstream is in the session the receipt names in `upstream.verified.session_id`, at `https://api.redpill.ai/v1/aci/sessions/{session_id}`.
+
+`report=aci` returns a `400` for models served only by Chutes TEE or Tinfoil. Without it:
+
+- On a model RedPill serves, you get RedPill's older report for that model. Its quote covers the signing address and your nonce, not the receipt keys, and for some models it lists Chutes instances that carry their own nonce instead of yours.
+- On the models in [the first table row above](#which-replies-have-a-receipt), you get Chutes TEE evidence carrying your nonce. If `X-TEE-Verification-Route` names another route, you get that route's report instead. `X-TEE-Provider` on the response names the route it describes.
 
 Don't pin `workload_keyset_digest`: it changes when the gateway renews its keys.
 
@@ -166,16 +186,27 @@ def fetch_receipt(receipt_id: str) -> dict:
 
 
 def fetch_workload_keyset(expected_digest: str) -> dict:
+    nonce = secrets.token_hex(32)
     report = requests.get(
         f"{BASE_URL}/v1/tee/attestation",
         headers=HEADERS,
-        params={"model": MODEL, "nonce": secrets.token_hex(32)},
+        params={"model": MODEL, "report": "aci", "nonce": nonce},
         timeout=30,
     )
     report.raise_for_status()
-    keyset = report.json()["attestation"]["workload_keyset"]
+    attestation = report.json()["attestation"]
+    keyset = attestation["workload_keyset"]
     if digest(canonical(keyset)) != expected_digest:
-        raise RuntimeError("The attested keyset does not match the receipt's workload_keyset_digest")
+        raise RuntimeError("The keyset does not match the receipt's workload_keyset_digest")
+
+    # A TDX quote holds its 64 bytes of report data at offset 568.
+    bound = hashlib.sha256(canonical({
+        "keyset_digest": expected_digest,
+        "nonce": nonce,
+        "purpose": "aci.report_data.v1",
+    })).digest() + bytes(32)
+    if bytes.fromhex(attestation["evidence"]["quote"])[568:632] != bound:
+        raise RuntimeError("The quote does not bind this keyset and nonce")
     return keyset
 
 
@@ -194,7 +225,7 @@ def main() -> None:
 
     keyset = fetch_workload_keyset(receipt["workload_keyset_digest"])
     verify_signature(receipt, keyset)
-    print("Receipt signature verified against the attested keyset")
+    print("Receipt signature verified against a keyset the quote binds")
 
     if events["response.returned"]["body_hash"] != digest(body):
         raise RuntimeError("The receipt does not cover the bytes this client received")
@@ -212,4 +243,4 @@ if __name__ == "__main__":
 
 ## What this example doesn't check
 
-The example trusts the attestation report it fetches. For a full check, also verify the TDX quote and its nonce binding, the release measurements and the upstream session evidence. See [RedPill's verification guide](https://docs.redpill.ai/guides/verify-a-response).
+The example checks that the quote's report data binds the keyset and your nonce, but it doesn't verify the quote itself. For a full check, also verify the TDX quote's signature, the release measurements and the upstream session evidence. See [RedPill's verification guide](https://docs.redpill.ai/guides/verify-a-response).

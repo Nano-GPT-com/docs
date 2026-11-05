@@ -2809,7 +2809,8 @@
         "security": [ { "bearerAuth": [] } ],
         "parameters": [
           { "name": "model", "in": "query", "description": "TEE model to attest", "required": true, "schema": { "type": "string" } },
-          { "name": "nonce", "in": "query", "description": "A fresh nonce of 64 lowercase hex characters", "required": false, "schema": { "type": "string" } }
+          { "name": "nonce", "in": "query", "description": "A fresh nonce of 64 lowercase hex characters. Required with report=aci", "required": false, "schema": { "type": "string" } },
+          { "name": "report", "in": "query", "description": "Set to aci to get the gateway report whose TDX quote binds the receipt signing keys and your nonce", "required": false, "schema": { "type": "string", "enum": ["aci"] } }
         ],
         "responses": {
           "200": {
