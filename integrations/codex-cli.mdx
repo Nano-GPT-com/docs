@@ -127,15 +127,28 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
         Replace `your_nanogpt_api_key` with your actual API key. Open a new terminal for changes to take effect.
       </Tab>
 
-      <Tab title="Environment Variables Only (Quick)">
-        If you just want to override the default OpenAI endpoint without a config file:
+      <Tab title="Built-in Provider Override (OpenAI Models Only)">
+        This points Codex's built-in OpenAI provider at NanoGPT, without adding a provider. Follow the steps in order.
 
-        ```bash
-        export OPENAI_BASE_URL="https://nano-gpt.com/api/v1"
-        export OPENAI_API_KEY="your_nanogpt_api_key"
+        **Step 1**: Add these lines to the top of `~/.codex/config.toml`, above any line that starts with `[`:
+
+        ```toml
+        openai_base_url = "https://nano-gpt.com/api/v1"
+        model = "{{example-text-model}}"
         ```
 
-        This method works but does not persist across terminal sessions unless added to your shell profile.
+        **Step 2**: Save your API key in Codex. This replaces any OpenAI or ChatGPT sign-in Codex has saved.
+
+        ```bash
+        export NANOGPT_API_KEY="your_nanogpt_api_key"
+        printenv NANOGPT_API_KEY | codex login --with-api-key
+        ```
+
+        <Warning>
+          Codex sends a saved key to OpenAI unless `openai_base_url` is set at the top of the file. Codex 0.119 and later ignore the `OPENAI_BASE_URL` environment variable, so don't use it to reach NanoGPT.
+        </Warning>
+
+        Use only OpenAI models with this method. On long sessions Codex asks this provider for native compaction, which NanoGPT supports only for OpenAI models, so other models stop with an error. To use other models, follow Manual Configuration.
       </Tab>
     </Tabs>
   </Step>
@@ -188,6 +201,19 @@ For this recommendation, also set `base_url = "https://nano-gpt.com/api/v1"` in 
 ```bash
 codex --model {{example-text-model}} --config 'model_providers.nanogpt.base_url="https://nano-gpt.com/api/v1"'
 ```
+
+### How Does Codex Compact Long Sessions?
+
+With the `nanogpt` provider from One-Click Setup or Manual Configuration, Codex summarizes long sessions itself, on any model.
+
+To use OpenAI's native compaction on OpenAI models instead, add this to `~/.codex/config.toml`:
+
+```toml
+[model_providers.nanogpt.capabilities]
+remote_compaction = "v2"
+```
+
+Use this only with OpenAI models. NanoGPT rejects native compaction on other models and on API keys that require Zero Data Retention, and Codex then stops with an error. One-Click Setup doesn't add this setting.
 
 ### Configuration Not Working?
 
