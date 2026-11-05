@@ -273,6 +273,24 @@ To get the exact amount charged instead, send `"include_usage": true`. The respo
 }
 ```
 
+### Declined questions
+
+A decision model can decline individual questions. On models that do this, such as GPT-6 Luna Decisions, a declined question comes back with only a `type`, and the other questions keep their answers:
+
+```json
+"answers": {
+  "needs_human_review": { "type": "refusal" },
+  "route": {
+    "type": "choice",
+    "choice": "billing",
+    "confidence": 0.97,
+    "probabilities": { "billing": 0.97, "technical": 0.03 }
+  }
+}
+```
+
+Check each answer's `type` before reading its value. A response with a declined question returns `200` and is charged normally. If every question is declined, the request returns `400` with the code `content_policy_violation` and isn't charged. The compatibility endpoints return a declined question the same way, inside the JSON text. The official TypeSafe JavaScript SDK returns it as is. The Python SDK drops answer types it doesn't recognize and logs a warning, so a declined question is simply missing from `answers`.
+
 ### Image input
 
 `perplexity/pplx-decider-v1.2`, `cloudflare/clef` and `cloudflare/clef-flash` accept images on the native `POST /api/v1/decisions` endpoint and the `POST /api/v1/systemone` compatibility endpoint. Use them to classify photos, score visual content, or answer yes/no questions about an image.
@@ -432,7 +450,7 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 | `score` | `instructions` and 2-10 ordered `criteria` entries | Fractional `score`, `confidence`, `legend`, and `probabilities` keyed from `0` |
 | `noul` | `instructions`; optional `criteria.true` and `criteria.false` descriptions | `noul`, a probability from `0` to `1` |
 
-`instructions` and criterion descriptions can be strings, non-empty JSON objects, or non-empty arrays. A `choice` criterion may also be `null` when its label is self-explanatory. The top-level `state` can be a string, JSON object, or JSON array. Question names become keys in `answers`.
+`instructions` and criterion descriptions can be strings, non-empty JSON objects, or non-empty arrays. A `choice` criterion may also be `null` when its label is self-explanatory. The top-level `state` can be a string, JSON object, or JSON array. Question names become keys in `answers`. Any question can come back [declined](#declined-questions) instead.
 
 ## Model-specific rules
 

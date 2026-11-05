@@ -6523,6 +6523,19 @@
           }
         }
       },
+      "DecisionsRefusalAnswer": {
+        "type": "object",
+        "description": "The model declined this question, so it has no value or probabilities. Other questions in the same request can still have answers. If every question is declined, the request fails with 400 content_policy_violation and is not charged.",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "refusal"
+          }
+        }
+      },
       "DecisionsResponse": {
         "type": "object",
         "required": [
@@ -6549,6 +6562,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/DecisionsNoulAnswer"
+                },
+                {
+                  "$ref": "#/components/schemas/DecisionsRefusalAnswer"
                 }
               ]
             }
