@@ -16,7 +16,7 @@ PII redaction is opt-in. You choose between two providers:
 | Where detection runs | Tinfoil's privacy-filter enclave. NanoGPT verifies the enclave's attestation (its hardware report and the published, signed code it runs) and encrypts the text so that only that code can read it | Grepture's proxy, which receives the request and response |
 | Detection | More thorough, plus deterministic checks for emails, IBANs, cards, IP addresses, profile links and secrets | Fewer categories caught |
 
-Redaction that does not name a provider uses Grepture unless you chose Tinfoil in your settings, so existing setups keep their price.
+Tinfoil is the default in web chat and for new setups, and Grepture is opt-in. An account or API key default turned on before November 6, 2026 with no provider chosen stays on Grepture for now. In web chat, you may need to choose Grepture again.
 
 This is useful when you want to keep personal or sensitive data away from model providers and other services while still getting a useful final answer.
 
@@ -41,7 +41,7 @@ User <- restored response <- NanoGPT
 
 NanoGPT's own servers still receive your request as you sent it, as they do without redaction.
 
-With Grepture, NanoGPT sends the provider request through Grepture's proxy, which replaces personal information before the model provider sees it and restores it in the response. Context memory and web search run on the original text.
+With Grepture, NanoGPT sends the provider request through Grepture's proxy, which replaces personal information before the model provider sees it and restores it in the response. Context memory, web search and inline moderation run on the original text.
 
 Credential-like secrets are handled differently from normal PII. API keys, tokens, private keys, passwords and similar secrets are replaced with placeholders and are not restored into the response. This is intentional: a credential should never reach a provider, and the model's output should not echo it.
 
@@ -85,7 +85,7 @@ Recommended header:
 redaction: tinfoil
 ```
 
-`true` and the other truthy values use the provider set on your API key, then your account (`Settings > Privacy`), then Grepture.
+`true` and the other truthy values use the provider set on your API key, then your account (`Settings > Privacy`), then Tinfoil. An older account or API key default with no provider chosen keeps Grepture.
 
 ### Chat Completions Example
 
@@ -228,7 +228,7 @@ API keys can also be configured individually from the API key settings modal:
 | Never redact | Do not apply the account-level API redaction default to this API key. |
 | Redaction provider | Inherit account, Tinfoil or Grepture, for this key's redacted requests. |
 
-The provider is chosen in this order: the request header (`redaction: tinfoil` or `redaction: grepture`), the API key, the account, then Grepture.
+The provider is chosen in this order: the request header (`redaction: tinfoil` or `redaction: grepture`), the API key, the account, then Tinfoil. Turning on an account or API key default now saves Tinfoil as its provider when there is none to inherit. A default turned on before November 6, 2026 with no provider chosen stays on Grepture for now.
 
 Explicit per-request headers and model suffixes are still the clearest way to control redaction for a single request.
 
