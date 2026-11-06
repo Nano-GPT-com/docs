@@ -293,13 +293,25 @@ Common fields include:
 - `aspect_ratio`
 - `quality`
 - `output_format`
-- `background` (GPT Image 1, 1.5, and 2.5: `auto`, `opaque`, or `transparent`; transparent needs `png` or `webp` output)
+- `background` (GPT Image 1, 1.5, 2.5, and 2.6: `auto`, `opaque`, or `transparent`; transparent needs `png` or `webp` output)
 - `seed`
 - `input_references`
 
 NanoGPT exposes many model-specific parameters. Treat them as discoverable via `supported_parameters`, not as globally supported fields.
 
 `seed` is an optional model-specific hint that may improve reproducibility where supported by the model/provider route. Identical results are not guaranteed. Check the selected model's `supported_parameters` before using it. Any stronger reproducibility guarantee belongs in documentation for the specific model/provider route, not this generic endpoint guide.
+
+### GPT Image 2.6
+
+`gpt-image-2.6-flare` is designed for fast iteration; `gpt-image-2.6-sunburst` is designed for detailed compositions. Both support:
+
+- `quality`: `low`, `medium`, `high`, `xhigh`, or `max`.
+- `complexity`: `low`, `medium`, or `high` (default). Complexity is independent of quality and has no separate fee.
+- `output_format`: `png`, `jpeg`, `webp`, or animated `gif`. NanoGPT does not support SVG output for these models.
+- One to four output images and up to 16 reference images for edits. Regional edits use a transparent PNG `markup` annotation with at least one reference image; masks are not supported.
+- GIF generation without reference images: `frame_count` from 2 to 64 (default 9) and `frame_duration_ms` from 20 to 2000 (default 200, rounded to 10 ms increments). The total across all frames and outputs must fit within 8,294,400 pixels. Use `size: "auto"` or consult the model's endpoint metadata for size constraints.
+
+These models bill from returned token usage. In discovery responses, `pricing.per_image` estimates image output at high quality; it is not an all-inclusive fixed price. Request quotes also include conservative prompt and reference-image allowances, and GIF estimates include every frame. Read `pricing.token_rates_per_million` for current input, cached-input, and output rates. Cached-input rates apply only when cached token counts are reported.
 
 ## Unsupported Features For Now
 
