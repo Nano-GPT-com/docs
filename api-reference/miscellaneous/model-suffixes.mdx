@@ -24,7 +24,7 @@ These apply only to provider-selection-capable models.
 | `:price` | Pick the lowest estimated request cost, based on expected input/output usage and customer-facing rates, including opt-in providers. Stays on Auto routing, billed at the Auto price, when Auto is no more expensive. |
 | `:cheap` | Alias for `:price`. |
 | `:floor` | Alias for `:price`. |
-| `:nitro` | Alias for `:throughput`. |
+| `:nitro` | Alias for `:throughput`. Unlike OpenRouter's `:nitro`, it doesn't add priority-tier endpoints. |
 | `:tools` | Route to a tools-capable provider path for models that support tools provider selection. |
 | `:caching` | Require routing to a cache-capable provider, equivalent to top-level `caching: true`. |
 | `:cache` | Alias for `:caching`. |

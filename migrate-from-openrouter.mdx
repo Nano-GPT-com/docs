@@ -53,10 +53,10 @@ curl https://api.nano-gpt.com/api/v1/chat/completions \
 
 ## Check these four things first
 
-1. **Your model IDs.** All 19 models on OpenRouter's rankings page on November 6 had the same ID here. About half of its full catalog matched exactly, and some others still resolve. See [Model IDs](#model-ids).
+1. **Your model IDs.** All 10 models in OpenRouter's weekly top ten on November 6 had the same ID here. About half of its full catalog matched exactly, and some others still resolve. See [Model IDs](#model-ids).
 2. **Your `provider` settings.** The object works, but selecting a provider adds a markup, normally 5%, and provider IDs can differ. See [Routing](#routing).
 3. **How you read cost.** `usage.cost` can be missing, and it isn't always in USD. See [Cost and usage](#cost-and-usage).
-4. **Your prices.** NanoGPT has no percentage fee on card top-ups, and many popular models have the same list price on both services. But prices differ by model, in both directions, and some models cost more here even after OpenRouter's fee. Compare the models you use on [API pricing](https://nano-gpt.com/api-pricing) before you move traffic.
+4. **Your prices.** NanoGPT has no percentage fee on card top-ups, though tax can apply at checkout, and many popular models have the same list price on both services. But prices differ by model, in both directions, and some models cost more here even after OpenRouter's fee. Compare the models you use on [API pricing](https://nano-gpt.com/api-pricing) before you move traffic.
 
 ## Mapping table
 
@@ -67,23 +67,24 @@ curl https://api.nano-gpt.com/api/v1/chat/completions \
 | `model` | Same format | [Check your IDs](#model-ids) |
 | `models` fallback list | Works, with up to 4 IDs | [Fewer errors move on](#routing) |
 | `route: "fallback"` | Accepted, no effect | Remove it |
-| `provider.order`, `only`, `ignore`, `allow_fallbacks`, `sort`, `max_price`, `quantizations`, `zdr` | Work | [Check IDs and the markup](#routing) |
+| `provider.order`, `only`, `ignore`, `allow_fallbacks`, `sort`, `max_price`, `quantizations`, `zdr` | Work on models that support provider selection | [Check IDs and the markup](#routing) |
 | `provider.preferred_min_throughput`, `preferred_max_latency` | Work alongside another routing control. Alone they do nothing | Add `provider.sort` |
 | `provider.require_parameters` | Applies only on routes that can check parameters | Don't rely on it as a guarantee |
-| `provider.data_collection: "deny"` | Refused with `400` | Use `provider.zdr: true` |
+| `provider.data_collection: "deny"` | Refused with `400` | Use `provider.zdr: true`, a stricter limit that can rule out some models or cost more |
 | `transforms: ["middle-out"]` | Accepted, no effect | [Trim long prompts yourself](#known-differences) |
 | `plugins` with `web` | Accepted, no effect | Use the `:online` suffix |
-| `plugins` with `file-parser` | Not needed: PDFs in messages are read for you | Remove it |
+| `plugins` with `file-parser` | Not needed for ordinary PDFs, which are read for you. You can't choose a parser engine | Remove it |
 | `reasoning` | `effort`, `max_tokens`, `exclude` and `enabled` work | [Check the default](#reasoning) |
 | `usage: {"include": true}` | Works | [Read the cost notes](#cost-and-usage) |
 | `HTTP-Referer`, `X-Title` | Accepted and ignored | Nothing, or remove them |
 | `@preset/name` as the model | Works once you [create that preset here](/api-reference/miscellaneous/model-presets) | Recreate your presets |
-| `preset` field, `model@preset/name` | Refused with `400` | Send `"model": "presets/name"` |
+| `"preset": "@preset/name"`, `model@preset/name` | Refused with `400` | Send `"model": "presets/name"`. The preset holds its own model, so set it there |
+| `preset` with a bare name | Ignored, as on OpenRouter | Remove it |
 | `GET /generation?id=` | Not available | [Use the request billing lookup](#cost-and-usage) |
 | `GET /models` | Different fields and price units | [Use `?detailed=true`](#models-endpoint) |
 | `GET /models/{id}/endpoints` | `GET /api/models/{id}/providers`, with the ID URL-encoded | Update the call |
-| `GET /credits` | `POST /api/check-balance` | Update the call |
-| `GET /key` | `GET /api/v1/api-keys/current` | Update the call |
+| `GET /credits` | `POST /api/check-balance` | Update the call and how you read the response |
+| `GET /key` | `GET /api/v1/api-keys/current` | Update the call and how you read the response |
 
 ## Model IDs
 
@@ -97,8 +98,8 @@ Some IDs that aren't listed still work. For example, `google/gemini-2.5-flash` w
 
 | OpenRouter | NanoGPT |
 | --- | --- |
-| `:nitro` | Works, the same as `:throughput` |
-| `:floor` | Works, the same as `:price` |
+| `:nitro` | Sorts providers by throughput, like `:throughput`. On OpenRouter it also [allows priority-tier endpoints](https://openrouter.ai/docs/guides/routing/provider-selection); here it doesn't |
+| `:floor` | Sorts providers by price, like `:price`. On OpenRouter it also allows flex-tier endpoints; here it doesn't |
 | `:online` | Works. Search is billed separately |
 | `:free` | Not available. Pick a model from the catalog |
 | `:exacto`, `:extended` | Not available. Remove the suffix and pick the model again |
@@ -107,23 +108,25 @@ Some IDs that aren't listed still work. For example, `google/gemini-2.5-flash` w
 | `~vendor/model-latest` | Not available. Use a specific ID |
 | Dated `canonical_slug` IDs | Not available. Use `id` |
 
-These stay errors on purpose. Rerouting one could bill you for a model you didn't pick. The error message says what to send instead.
+These stay errors on purpose. Rerouting one could bill you for a model you didn't pick. For most of them, the error message says what to send instead.
 
-`:nitro`, `:floor`, `:price` and the other routing suffixes are billed like selecting a provider. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
+`:nitro`, `:floor` and the other routing suffixes work only on models that support provider selection, and they're billed like selecting a provider. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
 
 ## Routing
 
 The `provider` object uses the same field names. Three things differ:
 
 - **Selecting a provider costs more.** With `provider` routing controls or a routing suffix, billing uses that provider's price plus a markup, normally 5%, and the request is treated as pay-as-you-go. Leave `provider` out to pay the model's default price. See [Billing and Markup](/api-reference/miscellaneous/provider-selection#billing-and-markup).
-- **Provider IDs can differ.** Find a model's IDs with `GET /api/models/{id}/providers`. An unknown ID in `provider.only` returns `400`. In `provider.order` it's ignored, unless `allow_fallbacks` is `false` and no listed ID is usable. Then the request returns `400` instead of going to a provider you didn't list.
+- **Provider IDs can differ.** Find a model's IDs with `GET /api/models/{id}/providers`. An unknown ID in `provider.only` returns `400`. In `provider.order` it's ignored, unless `allow_fallbacks` is `false`. Then `order` is the full list: if none of its IDs is usable, or none is also in `only`, the request returns `400` instead of going to a provider you didn't list.
 - **Fewer errors move to the next model.** `models` tries the next model after a provider failure or a prompt that's too long for that model. Authentication, balance and invalid-request errors end the request. A first model that doesn't meet your `provider` limits also ends the request, while OpenRouter moves on. See [Model fallbacks](/api-reference/miscellaneous/provider-selection#model-fallbacks).
+
+If a subscription key has paid models turned off, `provider` is dropped so the request stays on the plan, and `only` and `ignore` aren't applied. `provider.zdr` still applies, and `data_collection: "deny"` and a strict `order` are still refused.
 
 NanoGPT doesn't return the provider that served a request: there's no `provider` field in responses or chunks, and no `metadata.provider_name` in errors. The [Usage page](https://nano-gpt.com/usage) shows a provider when public attribution is available.
 
 ## Cost and usage
 
-**Send `usage: {"include": true}` if you read `usage.cost`.** On a non-streaming request, NanoGPT then waits briefly for billing to finish. Without it, `usage.cost` is present only if billing finished before the response was ready.
+**Send `usage: {"include": true}` if you read `usage.cost`.** On a non-streaming request, NanoGPT then waits briefly for billing to finish, so the field is usually present. `"include_usage": true` does the same. Without either, `usage.cost` is present only if billing finished before the response was ready.
 
 ```json
 "usage": {
@@ -138,7 +141,7 @@ NanoGPT doesn't return the provider that served a request: there's no `provider`
 Read the result like this:
 
 - **`usage.currency` matters.** `usage.cost` is in `USD` or, if the request was paid from a Nano balance, `XNO`. On OpenRouter it's always in credits, which track USD.
-- **`usage.cost` can still be missing.** If billing is slow, the response has no `usage.cost`, and `x_nanogpt_pricing` holds an estimate with `isEstimate: true`. Don't treat an estimate as the charge.
+- **`usage.cost` can still be missing.** If billing takes longer than the wait, or the response came through an internal fallback, there may be no `usage.cost`. `x_nanogpt_pricing` then holds an estimate with `isEstimate: true`. Don't treat an estimate as the charge.
 - **`0` is a real value.** A request covered by a subscription reports `0`.
 - **`cost_details` and `is_byok` aren't returned on Chat Completions.**
 - **Embeddings report tokens but no cost.** Use the [Usage API](/api-reference/endpoint/usage).
@@ -157,7 +160,7 @@ If you use `@openrouter/ai-sdk-provider`, set `compatibility: "strict"`. In its 
 | Cost | Number in USD | Decimal string in `currency` |
 | Provider, latency, native tokens | Returned | Not returned |
 
-The response `id` doesn't work here, and neither does `X-Request-ID` after a fallback: it keeps the first attempt's ID, and `x_nanogpt_pricing.requestId` has the ID of the attempt that answered.
+The response `id` doesn't work here, and neither does `X-Request-ID` after a fallback: it keeps the first attempt's ID, and `x_nanogpt_pricing.requestId` has the ID of the attempt that answered. Don't send your own `X-Request-ID` on chat completions, or the lookup can't find the charge by it.
 
 ## Reasoning
 
