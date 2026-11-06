@@ -14,6 +14,10 @@ Use NanoGPT with [OpenCode](https://opencode.ai), the open source AI coding agen
 
 This guide covers OpenCode 1 and OpenCode 2. They store API keys in different places, so run `opencode --version` to check which one you have.
 
+<Note>
+**Tested setup.** Last verified November 6, 2026 with OpenCode 1.19.5 on macOS, using the [manual config](#2-create-the-config-file) below with `nano-gpt/deepseek/deepseek-v4.1-flash-1017` and its `:thinking` version. OpenCode read a file, edited it with its tools and finished the task. Requests went to `https://nano-gpt.com/api/v1` through a local test proxy that capped output at 8,000 tokens.
+</Note>
+
 ## Requirements
 
 - [OpenCode](https://opencode.ai) installed. OpenCode 1: `curl -fsSL https://opencode.ai/install | bash`. OpenCode 2: `curl -fsSL https://opencode.ai/v2/install | bash`.
@@ -156,6 +160,22 @@ To add or override a model, merge its definition into `provider.nano-gpt.models`
 ```
 
 List NanoGPT API models with `GET https://api.nano-gpt.com/api/v1/models`. OpenCode's catalogue can lag behind the API, so a model missing from OpenCode may need a manual definition. A model appearing in the API list does not necessarily support the tool calls needed by OpenCode.
+
+### If a Task Stops Partway
+
+When a provider fails during a reply, NanoGPT sends an error in the stream. OpenCode retries the same turn on its own: in our test it tried six times over about 100 seconds, then stopped with the error.
+
+- Each retry is a new request, and output that reached OpenCode before a failure is normally charged. Repeated failures on a long conversation add up.
+- If OpenCode stops with an error, run the task again. Your session and the files it changed are kept.
+- Don't pick one provider for a long agent run unless you need to. It leaves NanoGPT fewer routes to fall back to.
+
+### Running OpenCode from a Script
+
+`opencode run` waits for standard input when it isn't attached to a terminal. In a script or CI job, close it, or the command can hang with no output:
+
+```bash
+opencode run "Fix the failing test" </dev/null
+```
 
 ### Limiting the Model List
 

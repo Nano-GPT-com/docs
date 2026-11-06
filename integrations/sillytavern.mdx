@@ -10,13 +10,39 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 
 # SillyTavern Integration
 
-Configure NanoGPT:
-- Select "OpenAI" as the API type (NanoGPT uses an OpenAI-compatible API)
-- Enter your NanoGPT API key
-- Set the API URL to: `https://api.nano-gpt.com/api/v1` (SillyTavern understands the modern `delta.reasoning` stream)
-- Set the Model to: <code>{exampleTextModel}</code> (or `anthropic/claude-opus-5.5`, `google/gemini-flash-latest`)
+SillyTavern has NanoGPT built in, so you only need your API key. Use the NanoGPT source rather than the OpenAI or Custom source: it knows the model list, reasoning and NanoGPT's extra samplers.
 
-**Important Note**: If you choose the Chat Completions endpoint in SillyTavern, you will see NanoGPT automatically appear as an option.
+<Note>
+**Tested setup.** Last verified November 6, 2026 with SillyTavern 1.19.0 and DeepSeek V4.1 Flash 1017 Thinking. We ran the steps below in a real SillyTavern, then checked a streamed reply, reasoning, a lorebook entry, a reply cut off partway, and Continue. Requests went to NanoGPT through a local test proxy, which removed SillyTavern's neutral sampler values before sending them.
+</Note>
+
+## Set up NanoGPT
+
+1. Open **API Connections** (the plug icon).
+2. Set **API** to **Chat Completion**.
+3. Set **Chat Completion Source** to **NanoGPT**.
+4. Paste your key into **NanoGPT API Key** and click **Connect**. Create a key at [nano-gpt.com/api](https://nano-gpt.com/api).
+5. Pick a model under **NanoGPT Model**, for example <code>{exampleTextModel}</code>. The list comes from NanoGPT.
+
+SillyTavern's NanoGPT source always connects to `https://nano-gpt.com/api/v1`, so there is no address to enter.
+
+## Settings that matter
+
+- **Streaming:** leave it on. If a reply fails partway, you keep what already arrived.
+- **Response (tokens):** the default is 300. Thinking models spend part of this on reasoning, so raise it for longer replies, or the reply can end early.
+- **Top K, Top A, Min P, Repetition Penalty:** leave them at their defaults (0, 0, 0 and 1) unless you know the model uses them. Some models, including the uncensored ones, have no route that accepts them. NanoGPT then returns an error that names the setting: put that setting back to its default.
+
+## Lorebooks and character cards
+
+SillyTavern handles World Info, lorebooks and character cards itself and adds the matching text to each request. They need no NanoGPT setting. In our test, an entry triggered by a keyword reached the model, and the model answered from it.
+
+## If a reply stops partway
+
+SillyTavern shows an error and keeps the text it received. Click **Regenerate** for a fresh reply, or **Continue** to carry on from the partial text.
+
+- **Continue** can repeat the last few words, because the model starts from the cut-off text. It repeated them in our test, so check the join.
+- Text that reached you before the failure is normally charged. Regenerate or Continue is a new request.
+- If a reply just ends with no error, SillyTavern can't tell it was cut off. Use the same two buttons.
 
 ## Image Generation
 
