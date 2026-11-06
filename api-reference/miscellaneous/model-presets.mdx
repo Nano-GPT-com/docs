@@ -17,7 +17,9 @@ curl https://api.nano-gpt.com/api/v1/chat/completions \
   }'
 ```
 
-Preset names aren't case-sensitive. The API key must belong to the account that owns the preset.
+Preset names aren't case-sensitive. The API key must belong to the account that owns the preset. `@preset/production-chat` also works as the model, for code moved from OpenRouter. Presets don't carry over: create each one here first.
+
+The `preset` request field isn't supported. Sending `"preset": "@preset/production-chat"` returns `preset_field_not_supported`.
 
 ## Where presets work
 

@@ -24,6 +24,7 @@ These apply only to provider-selection-capable models.
 | `:price` | Pick the lowest estimated request cost, based on expected input/output usage and customer-facing rates, including opt-in providers. Stays on Auto routing, billed at the Auto price, when Auto is no more expensive. |
 | `:cheap` | Alias for `:price`. |
 | `:floor` | Alias for `:price`. |
+| `:nitro` | Alias for `:throughput`. |
 | `:tools` | Route to a tools-capable provider path for models that support tools provider selection. |
 | `:caching` | Require routing to a cache-capable provider, equivalent to top-level `caching: true`. |
 | `:cache` | Alias for `:caching`. |
@@ -40,7 +41,7 @@ Rules:
 
 - Routing preference suffixes only consider user-selectable providers. Internal routing-only providers are excluded.
 - Routing preference suffixes are stripped before model mapping/routing. Non-routing identity suffixes such as `:thinking` are preserved.
-- Do not combine `:speed`, `:fast`, `:throughput`, `:latency`, `:price`, `:cheap`, or `:floor` with `X-Provider`, body `provider`, or a provider model suffix.
+- Do not combine `:speed`, `:fast`, `:throughput`, `:nitro`, `:latency`, `:price`, `:cheap`, or `:floor` with `X-Provider`, body `provider`, or a provider model suffix.
 - Do not combine `:tools` with a routing preference suffix, `X-Provider`, body `provider`, a provider model suffix, or `caching: true`.
 - Do not combine `:caching`, `:cache`, or `:cached` with `:tools`, `X-Provider`, body `provider`, a provider model suffix, or another routing preference suffix.
 - Routing preference requests are billed like explicit provider-selection requests.

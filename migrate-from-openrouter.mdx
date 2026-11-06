@@ -1,0 +1,217 @@
+---
+title: 'Migrate from OpenRouter'
+description: 'Change the base URL and key, then check the few things that work differently.'
+---
+
+NanoGPT takes the same Chat Completions requests as OpenRouter, so basic chat, streaming and tool calls usually move with one line. This page lists what stays the same and what doesn't, so you can decide before you switch.
+
+We ran the requests behind this page against both services on November 6, 2026. OpenRouter can change at any time, so its [API reference](https://openrouter.ai/docs/api-reference/overview) is the source for its side.
+
+## The one-line change
+
+Change the base URL and use a NanoGPT key from the [API page](https://nano-gpt.com/api).
+
+<CodeGroup>
+```python Python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.nano-gpt.com/api/v1",  # was https://openrouter.ai/api/v1
+    api_key=os.environ["NANOGPT_API_KEY"],       # was OPENROUTER_API_KEY
+)
+
+reply = client.chat.completions.create(
+    model="{{example-text-model}}",
+    messages=[{"role": "user", "content": "Hello!"}],
+)
+print(reply.choices[0].message.content)
+```
+
+```typescript TypeScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.nano-gpt.com/api/v1", // was https://openrouter.ai/api/v1
+  apiKey: process.env.NANOGPT_API_KEY,        // was OPENROUTER_API_KEY
+});
+
+const reply = await client.chat.completions.create({
+  model: "{{example-text-model}}",
+  messages: [{ role: "user", content: "Hello!" }],
+});
+console.log(reply.choices[0].message.content);
+```
+
+```bash curl
+curl https://api.nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "{{example-text-model}}", "messages": [{"role": "user", "content": "Hello!"}]}'
+```
+</CodeGroup>
+
+## Check these four things first
+
+1. **Your model IDs.** All 19 models on OpenRouter's rankings page on November 6 had the same ID here. About half of its full catalog matched exactly, and some others still resolve. See [Model IDs](#model-ids).
+2. **Your `provider` settings.** The object works, but selecting a provider adds a markup, normally 5%, and provider IDs can differ. See [Routing](#routing).
+3. **How you read cost.** `usage.cost` can be missing, and it isn't always in USD. See [Cost and usage](#cost-and-usage).
+4. **Your prices.** NanoGPT has no percentage fee on card top-ups, and many popular models have the same list price on both services. But prices differ by model, in both directions, and some models cost more here even after OpenRouter's fee. Compare the models you use on [API pricing](https://nano-gpt.com/api-pricing) before you move traffic.
+
+## Mapping table
+
+| OpenRouter | NanoGPT | What to do |
+| --- | --- | --- |
+| `https://openrouter.ai/api/v1` | `https://api.nano-gpt.com/api/v1` | Change it |
+| `Authorization: Bearer` | Same. `x-api-key` also works | Nothing |
+| `model` | Same format | [Check your IDs](#model-ids) |
+| `models` fallback list | Works, with up to 4 IDs | [Fewer errors move on](#routing) |
+| `route: "fallback"` | Accepted, no effect | Remove it |
+| `provider.order`, `only`, `ignore`, `allow_fallbacks`, `sort`, `max_price`, `quantizations`, `zdr` | Work | [Check IDs and the markup](#routing) |
+| `provider.preferred_min_throughput`, `preferred_max_latency` | Work alongside another routing control. Alone they do nothing | Add `provider.sort` |
+| `provider.require_parameters` | Applies only on routes that can check parameters | Don't rely on it as a guarantee |
+| `provider.data_collection: "deny"` | Refused with `400` | Use `provider.zdr: true` |
+| `transforms: ["middle-out"]` | Accepted, no effect | [Trim long prompts yourself](#known-differences) |
+| `plugins` with `web` | Accepted, no effect | Use the `:online` suffix |
+| `plugins` with `file-parser` | Not needed: PDFs in messages are read for you | Remove it |
+| `reasoning` | `effort`, `max_tokens`, `exclude` and `enabled` work | [Check the default](#reasoning) |
+| `usage: {"include": true}` | Works | [Read the cost notes](#cost-and-usage) |
+| `HTTP-Referer`, `X-Title` | Accepted and ignored | Nothing, or remove them |
+| `@preset/name` as the model | Works once you [create that preset here](/api-reference/miscellaneous/model-presets) | Recreate your presets |
+| `preset` field, `model@preset/name` | Refused with `400` | Send `"model": "presets/name"` |
+| `GET /generation?id=` | Not available | [Use the request billing lookup](#cost-and-usage) |
+| `GET /models` | Different fields and price units | [Use `?detailed=true`](#models-endpoint) |
+| `GET /models/{id}/endpoints` | `GET /api/models/{id}/providers`, with the ID URL-encoded | Update the call |
+| `GET /credits` | `POST /api/check-balance` | Update the call |
+| `GET /key` | `GET /api/v1/api-keys/current` | Update the call |
+
+## Model IDs
+
+Check an ID with the public catalog:
+
+```bash
+curl -s https://api.nano-gpt.com/api/v1/models | jq -r '.data[].id' | grep -Fx 'anthropic/claude-opus-5.5'
+```
+
+Some IDs that aren't listed still work. For example, `google/gemini-2.5-flash` works, while the catalog lists `gemini-2.5-flash`. If you get `model_not_supported`, look up the model on the [models page](https://nano-gpt.com/models/text).
+
+| OpenRouter | NanoGPT |
+| --- | --- |
+| `:nitro` | Works, the same as `:throughput` |
+| `:floor` | Works, the same as `:price` |
+| `:online` | Works. Search is billed separately |
+| `:free` | Not available. Pick a model from the catalog |
+| `:exacto`, `:extended` | Not available. Remove the suffix and pick the model again |
+| `openrouter/auto` | Use `auto-model`, which picks models its own way, so test it first |
+| `openrouter/free` | Not available |
+| `~vendor/model-latest` | Not available. Use a specific ID |
+| Dated `canonical_slug` IDs | Not available. Use `id` |
+
+These stay errors on purpose. Rerouting one could bill you for a model you didn't pick. The error message says what to send instead.
+
+`:nitro`, `:floor`, `:price` and the other routing suffixes are billed like selecting a provider. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes).
+
+## Routing
+
+The `provider` object uses the same field names. Three things differ:
+
+- **Selecting a provider costs more.** With `provider` routing controls or a routing suffix, billing uses that provider's price plus a markup, normally 5%, and the request is treated as pay-as-you-go. Leave `provider` out to pay the model's default price. See [Billing and Markup](/api-reference/miscellaneous/provider-selection#billing-and-markup).
+- **Provider IDs can differ.** Find a model's IDs with `GET /api/models/{id}/providers`. An unknown ID in `provider.only` returns `400`. In `provider.order` it's ignored, unless `allow_fallbacks` is `false` and no listed ID is usable. Then the request returns `400` instead of going to a provider you didn't list.
+- **Fewer errors move to the next model.** `models` tries the next model after a provider failure or a prompt that's too long for that model. Authentication, balance and invalid-request errors end the request. A first model that doesn't meet your `provider` limits also ends the request, while OpenRouter moves on. See [Model fallbacks](/api-reference/miscellaneous/provider-selection#model-fallbacks).
+
+NanoGPT doesn't return the provider that served a request: there's no `provider` field in responses or chunks, and no `metadata.provider_name` in errors. The [Usage page](https://nano-gpt.com/usage) shows a provider when public attribution is available.
+
+## Cost and usage
+
+**Send `usage: {"include": true}` if you read `usage.cost`.** On a non-streaming request, NanoGPT then waits briefly for billing to finish. Without it, `usage.cost` is present only if billing finished before the response was ready.
+
+```json
+"usage": {
+  "prompt_tokens": 10,
+  "completion_tokens": 2,
+  "total_tokens": 12,
+  "cost": 0.0000013,
+  "currency": "USD"
+}
+```
+
+Read the result like this:
+
+- **`usage.currency` matters.** `usage.cost` is in `USD` or, if the request was paid from a Nano balance, `XNO`. On OpenRouter it's always in credits, which track USD.
+- **`usage.cost` can still be missing.** If billing is slow, the response has no `usage.cost`, and `x_nanogpt_pricing` holds an estimate with `isEstimate: true`. Don't treat an estimate as the charge.
+- **`0` is a real value.** A request covered by a subscription reports `0`.
+- **`cost_details` and `is_byok` aren't returned on Chat Completions.**
+- **Embeddings report tokens but no cost.** Use the [Usage API](/api-reference/endpoint/usage).
+
+**For streams,** send `stream_options: {"include_usage": true}` or `usage: {"include": true}`. OpenRouter always sends usage. NanoGPT sends it only when asked, or when prompt caching is on. The usage object can share the last chunk with `finish_reason`, so don't wait for a chunk with empty `choices`.
+
+If you use `@openrouter/ai-sdk-provider`, set `compatibility: "strict"`. In its default mode, token counts come back empty.
+
+**To look up a charge later,** replace `GET /generation` with [`GET /api/v1/usage/requests/{request_id}`](/api-reference/endpoint/request-billing):
+
+| | `GET /generation` | `GET /api/v1/usage/requests/{request_id}` |
+| --- | --- | --- |
+| ID to send | Response `id` | `X-Request-ID` response header |
+| After a `models` fallback | Response `id` | `x_nanogpt_pricing.requestId` |
+| Available for | See OpenRouter's docs | 24 hours, with the same API key |
+| Cost | Number in USD | Decimal string in `currency` |
+| Provider, latency, native tokens | Returned | Not returned |
+
+The response `id` doesn't work here, and neither does `X-Request-ID` after a fallback: it keeps the first attempt's ID, and `x_nanogpt_pricing.requestId` has the ID of the attempt that answered.
+
+## Reasoning
+
+`reasoning.effort`, `max_tokens`, `exclude` and `enabled` work, and so does `include_reasoning`. Reasoning comes back in `message.reasoning`. `reasoning_details` depends on the model, so don't require it.
+
+Two differences:
+
+- **Thinking can be off by default.** Some models think by default on OpenRouter but not here. To turn it on, send `reasoning: {"enabled": true}` or add the `:thinking` suffix. See [Extended Thinking](/api-reference/miscellaneous/extended-thinking).
+- **Invalid values aren't always refused.** An unknown `reasoning.effort` returns `200`. On a model that always thinks, `reasoning.enabled: false` hides the reasoning, but the tokens are still counted.
+
+## Models endpoint
+
+`GET /api/v1/models` returns only `id`, `object`, `created` and `owned_by`. Add `?detailed=true` for everything else.
+
+| Field | OpenRouter | NanoGPT with `?detailed=true` |
+| --- | --- | --- |
+| `pricing.prompt`, `pricing.completion` | USD per token, as a string | USD per 1M tokens, as a number |
+| `context_length` | Yes | Yes |
+| `architecture` | Yes | Yes, without `tokenizer` or `instruct_type` |
+| `supported_parameters` | Yes | No. Use `capabilities` and `reasoning_efforts` |
+| `top_provider`, `per_request_limits` | Yes | No. Use `max_output_tokens` and `providers` |
+| `canonical_slug` | Yes | No |
+| Query filters such as `supported_parameters` | Yes | Ignored |
+
+<Warning>
+  If your code computes cost from `pricing`, divide NanoGPT's values by 1,000,000 instead of using them as a per-token price. Otherwise your estimates will be a million times too high.
+</Warning>
+
+## Errors
+
+Errors use the same outer shape, but `error.code` is a string instead of a number:
+
+```json
+{
+  "error": {
+    "message": "Model example/model is not supported on /v1/chat/completions.",
+    "type": "invalid_request_error",
+    "param": "model",
+    "code": "model_not_supported"
+  }
+}
+```
+
+Branch on the HTTP status, or on the string code. `metadata` isn't returned. Some statuses differ for the same cause: an unavailable provider is `400` here and `404` on OpenRouter, and a zero data retention conflict is `403` here. See [Error Handling](/api-reference/miscellaneous/error-handling).
+
+## Known differences
+
+- **Long prompts.** `transforms` has no effect. A prompt that's too long returns `400` `context_length_exceeded`, so trim it yourself or add a longer-context model to `models`.
+- **Web search.** `plugins` has no effect, so `plugins: [{"id": "web"}]` runs no search and raises no error. Use `:online`. `web_search_options` does turn on search here, and search is billed.
+- **Stop sequences.** If a `stop` string matches the very start of the answer, NanoGPT can return `502` `empty_response`, while OpenRouter returns an empty success.
+- **Structured output.** Support depends on the model. A model without it returns `400` `model_response_format_unsupported`.
+- **Response `model`.** Suffixes such as `:floor` stay in the response's `model`. OpenRouter returns the base ID.
+- **`native_finish_reason`.** Not returned. Use `finish_reason`.
+- **Validation.** Unknown keys in `provider` and invalid values in some fields are accepted without an error. A `200` doesn't prove a setting took effect.
+- **App attribution.** `HTTP-Referer` and `X-Title` don't create an app page or a ranking entry.
+
+Something missing or wrong here? [Tell us](https://nano-gpt.com/support) what you ran into.

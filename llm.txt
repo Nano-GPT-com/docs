@@ -645,6 +645,7 @@ ERROR HANDLING AND OBSERVABILITY
 LINKS
 - https://nano-gpt.com/api
 - https://docs.nano-gpt.com/api-reference/miscellaneous/api-hosts
+- [Migrate from OpenRouter](https://docs.nano-gpt.com/migrate-from-openrouter.md): The base URL change, a parameter mapping table and known differences.
 - api-reference/endpoint/usage
 - [Request Billing](https://docs.nano-gpt.com/api-reference/endpoint/request-billing.md): Recover the original primary request charge by captured X-Request-ID for 24 hours.
 - api-reference/endpoint/batches

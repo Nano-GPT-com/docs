@@ -395,7 +395,7 @@ Send `models` to list other models to try if one fails. It works on `POST /api/v
 - **What doesn't.** Authentication, permission, balance and invalid-request errors, moderation refusals, and NanoGPT's own rate limits, concurrency limits and budgets. The request ends with that error.
 - **Streaming.** Fallback happens only before a response starts. Once NanoGPT returns a `200`, including a stream, the request stays on that model, even if the stream later fails.
 - **The final error.** If every model fails, you get the last model's error.
-- **What you see.** The response's `model` is the model that answered, and `X-Request-ID` identifies that attempt, so it can differ from an ID you sent. Which provider was used isn't revealed.
+- **What you see.** The response's `model` is the model that answered. `x_nanogpt_pricing.requestId` identifies that attempt, and it's the ID to use for a [request billing lookup](/api-reference/endpoint/request-billing). `X-Request-ID` keeps the first attempt's ID. Which provider was used isn't revealed.
 - **Billing.** Each attempt is billed as if you had requested that model alone, including whether a subscription covers it. The model that answered is billed at its own price. A failed attempt is free unless its provider charged for it, for example for output generated before the failure or an empty answer the provider billed. Such an attempt is billed under its own request ID, as it would be without `models`.
 - **Limits and policies.** Each attempt passes the same checks as a request for that model alone, including your API key's model and provider allowlists, team policy, zero data retention, EU inference and balance. `provider` settings apply to every model in the list. A model those rules refuse ends the request with that error. On `/v1/responses` and `/v1/messages`, each attempt also counts toward your rate limits. Attempts run one at a time, and a failed attempt's concurrency slot is freed before the next one starts.
 - **`provider.sort.partition`.** Models are always tried in order, which is what `model` means. `none`, which would rank across models, isn't supported with `models` and returns `400` `provider_sort_partition_not_supported`.
@@ -448,7 +448,8 @@ Invalid object shapes return a structured `400` error:
 - `provider.min_quantization` must be a supported comparable quantization string. `unknown` is only valid in `provider.quantizations`.
 - If `provider.quantizations` and `provider.min_quantization` have no overlap, the request is invalid.
 - Unknown providers in `only` return `provider_unknown_provider`.
-- Unknown providers in `order` and `ignore` are ignored.
+- Unknown providers in `order` and `ignore` are ignored. The exception is `provider.allow_fallbacks: false`: if `order` names no usable provider and `only` is empty, the request returns `provider_unknown_provider`.
+- `provider.data_collection` must be `allow` or `deny`. `deny` returns `provider_data_collection_unsupported`, unless the request also sends `provider.zdr: true`. To require zero data retention, send `provider.zdr: true`.
 - `provider.max_price.prompt` and `provider.max_price.completion` must be non-negative numbers.
 - `provider.allow_fallbacks` and `provider.require_parameters` must be booleans.
 - `provider.sort` must be a string or an object with `by` and an optional `partition`. Invalid values return `provider_sort_invalid`.
@@ -606,6 +607,7 @@ For provider-selection-capable models, you can append a routing preference suffi
 - `:latency`: lowest time to first token.
 - `:price` / `:cheap`: lowest estimated cost for the request’s input and expected output, including selection markup. Opt-in providers that are otherwise used only when selected explicitly are included; when Auto routing is no more expensive, the request stays on Auto and is billed at the Auto price.
 - `:floor`: alias for `:price`.
+- `:nitro`: alias for `:throughput`.
 - `:tools`: route to a tools-capable provider path when the model supports tools provider selection.
 
 Example:

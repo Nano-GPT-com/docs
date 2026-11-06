@@ -13,6 +13,10 @@ For chat completions, omit the incoming `X-Request-ID` header and capture the
 server-generated ID from each response. Save it as soon as the response headers
 arrive, before consuming the stream; it is the ID to use for this lookup.
 
+After a [model fallback](/api-reference/miscellaneous/provider-selection#model-fallbacks),
+use `x_nanogpt_pricing.requestId` instead. `X-Request-ID` keeps the first attempt's
+ID, and the charge belongs to the attempt that answered.
+
 ```sh
 curl 'https://api.nano-gpt.com/api/v1/usage/requests/req_example' \
   -H "Authorization: Bearer $NANOGPT_API_KEY"
