@@ -18,7 +18,6 @@ When you use a music model (for example `Minimax-Music-02`), the `input` field i
 - Method/Path: `POST https://api.nano-gpt.com/api/v1/audio/speech`
 - Auth: `Authorization: Bearer <API_KEY>`
 - Required header: `Content-Type: application/json`
-- You may see older examples using `POST https://api.nano-gpt.com/api/v1/speech`. Prefer `/api/v1/audio/speech` for OpenAI SDK compatibility.
 
 ## Request Parameters
 
@@ -201,7 +200,7 @@ curl -X POST https://api.nano-gpt.com/api/v1/audio/speech \
 ## Voices
 
 - Voice IDs vary by model/provider. See model-specific voices on Text-to-Speech: `api-reference/text-to-speech.mdx`.
-- If a voices listing endpoint is available (for example `GET /v1/voices`), it returns available voice IDs and metadata (language coverage, gender/pitch, sample links).
+- `GET /api/v1/audio-models?type=tts` lists each model's voices under `supported_parameters.voices`.
 
 ## Errors & Troubleshooting
 

@@ -445,7 +445,7 @@ Content-Type: application/json
 }
 ```
 
-### Video Status (GET /v1/video/status)
+### Video Status (GET /api/video/status)
 
 Check the status of a video generation request.
 
@@ -453,20 +453,24 @@ Check the status of a video generation request.
 
 **Example Request:**
 ```
-GET https://api.nano-gpt.com/api/v1/video/status?runId=run_123456&projectId=proj_123456
+GET https://api.nano-gpt.com/api/video/status?runId=run_123456&projectId=proj_123456
 x-api-key: YOUR_API_KEY
 ```
 
 **Example Response:**
 ```json
 {
-  "status": "COMPLETED",
+  "requestId": "run_123456",
+  "model": "sora-2",
   "data": {
-    "isCompleted": true,
-    "isSuccess": true,
+    "status": "COMPLETED",
+    "requestId": "run_123456",
     "output": {
-      "url": "https://storage.nano-gpt.com/videos/output_123456.mp4"
-    }
+      "video": {
+        "url": "https://storage.example.com/video.mp4"
+      }
+    },
+    "cost": 0.35
   }
 }
 ```

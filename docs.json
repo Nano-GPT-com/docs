@@ -69,11 +69,9 @@
           "api-reference/endpoint/voice-cloning",
           "api-reference/endpoint/tee-attestation",
           "api-reference/endpoint/tee-signature",
-          "api-reference/endpoint/check-midjourney-status",
           "api-reference/endpoint/video-generation",
           "api-reference/endpoint/video-status-unified",
           "api-reference/endpoint/video-recover",
-          "api-reference/endpoint/video-extend",
           "api-reference/endpoint/video-content",
           "api-reference/endpoint/check-balance",
           "api-reference/endpoint/usage",
@@ -230,6 +228,14 @@
     }
   },
   "redirects": [
+    {
+      "source": "/api-reference/endpoint/video-extend",
+      "destination": "/api-reference/endpoint/video-generation"
+    },
+    {
+      "source": "/api-reference/endpoint/check-midjourney-status",
+      "destination": "/api-reference/image-generation"
+    },
     {
       "source": "/llm.txt",
       "destination": "/llms-full.txt"

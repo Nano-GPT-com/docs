@@ -1,6 +1,6 @@
 ---
 title: 'Gemini CLI'
-description: 'Use Gemini CLI with NanoGPT via the OpenRouter compatible fork'
+description: 'Use Gemini CLI with NanoGPT through a community fork'
 ---
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
@@ -17,9 +17,9 @@ import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-m
   [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees. Add credits and start immediately.
 </Tip>
 
-Gemini CLI is Google's official command-line interface for Gemini. The official CLI only targets Google endpoints, so use the community fork that adds OpenRouter and OpenAI-compatible support to point it at NanoGPT.
+Gemini CLI is Google's official command-line interface for Gemini. The official CLI only targets Google endpoints, so use a community fork that can point it at NanoGPT.
 
-## Step 1: Install the OpenRouter Fork
+## Step 1: Install the Community Fork
 
 Prerequisites: [Node.js 18 or newer](https://nodejs.org/en/download/)
 
@@ -31,7 +31,7 @@ npm install
 ```
 
 <Note>
-  This fork is community maintained. If the branch name changes or is missing, check the repository README for the latest OpenRouter-compatible branch.
+  This fork is community maintained. If the branch name changes or is missing, check the repository README for the latest compatible branch.
 </Note>
 
 ## Step 2: Configure NanoGPT
@@ -44,7 +44,7 @@ npm install
   </Step>
 
   <Step title="Set Environment Variables">
-    Set the base URL and API key in the same shell where you will run the CLI:
+    Set the base URL and API key in the same shell where you will run the CLI. The fork sets these variable names, so use them exactly as shown:
 
     <Tabs>
       <Tab title="macOS/Linux">

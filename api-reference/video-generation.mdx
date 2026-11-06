@@ -230,7 +230,6 @@ These parameters are available across models. Only send the fields your chosen m
 | `vidu-video` | Variable | Vidu Q1 |
 | `runwayml-gen4-aleph` | Variable | Runway Gen4 |
 | `veed-fabric-1.0` | Variable | Veed fabric |
-| `midjourney-video` | Variable | Returns 4 videos |
 
 ### Image-to-Video Only Models
 | Model | Notes |
@@ -265,7 +264,7 @@ These parameters are available across models. Only send the fields your chosen m
 
 ### Extension Models
 
-Extend models run through `POST /api/generate-video` with `prompt` plus a source video input (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`). The task-based `/api/generate-video/extend` endpoint is only for Midjourney extensions.
+Extend models run through `POST /api/generate-video` with `prompt` plus a source video input (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`).
 Max source video length: 120 seconds.
 
 | Model | Purpose |
@@ -429,18 +428,6 @@ Recover recent video generation runs for a user.
 | `conversationUUID` | string | No | Filter by conversation |
 
 **Rate Limit**: 20 requests/minute
-
-### POST `/api/generate-video/extend`
-Extend a Midjourney video using a task-based flow.
-
-**Rate Limit**: 20 requests/minute
-
-**Required Fields**: `runId` (preferred) or `taskId` (legacy alias), `index` (0-3)
-
-**Notes**:
-- This endpoint does **not** accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
-- Session ownership is enforced; requests for jobs you do not own return `403`.
-- Use `POST /api/generate-video` with an extend model for source-video extension.
 
 ### GET `/api/generate-video/content`
 Proxy content retrieval for Sora 2 videos.
@@ -747,7 +734,6 @@ async function generateVideoWithErrorHandling(params) {
 | POST `/api/generate-video` | 50 requests/minute per IP |
 | GET `/api/video/status` | No explicit limit (cached) |
 | GET `/api/generate-video/status` | Deprecated (legacy compatibility) |
-| POST `/api/generate-video/extend` | 20 requests/minute per IP |
 | GET `/api/generate-video/recover` | 20 requests/minute per IP |
 
 ## Additional Notes

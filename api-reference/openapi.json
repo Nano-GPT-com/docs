@@ -1960,52 +1960,6 @@
         }
       }
     },
-    "/check-midjourney-status": {
-      "post": {
-        "description": "Check the status of an asynchronous Midjourney image generation task",
-        "security": [
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "requestBody": {
-          "description": "Task ID to check status for",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckMidjourneyStatusRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Midjourney task status response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CheckMidjourneyStatusResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request (e.g., missing task_id)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized (invalid API key)"
-          }
-        }
-      }
-    },
     "/receive-nano": {
       "post": {
         "description": "Process pending Nano transactions for the account",
@@ -2295,62 +2249,6 @@
         }
       }
     },
-    "/generate-video/extend": {
-      "post": {
-        "description": "Extend a Midjourney video using a task-based flow (taskId + index).",
-        "security": [
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "requestBody": {
-          "description": "Midjourney extension request payload (taskId from the original run + index).",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VideoExtendRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "202": {
-            "description": "Video extension request submitted successfully (asynchronous processing)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VideoGenerationResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid parameters or safety filter triggered",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing API key"
-          },
-          "500": {
-            "description": "Server Error - Video extension failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/generate-video/content": {
       "get": {
         "description": "Proxy content retrieval for Sora 2 videos.",
@@ -2415,76 +2313,6 @@
           },
           "500": {
             "description": "Server Error - Failed to retrieve content",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/video/status": {
-      "get": {
-        "description": "Check the status of a video generation request",
-        "security": [
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "runId",
-            "in": "query",
-            "description": "Run ID from the generation request",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "projectId",
-            "in": "query",
-            "description": "Project ID from the generation request",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "cost",
-            "in": "query",
-            "description": "Cost of the video generation",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "paymentSource",
-            "in": "query",
-            "description": "Payment source used",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Video generation status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VideoStatusResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unexpected error",
             "content": {
               "application/json": {
                 "schema": {

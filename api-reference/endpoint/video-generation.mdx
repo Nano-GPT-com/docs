@@ -13,8 +13,7 @@ Errors include descriptive JSON payloads. Surface the `error.message` (and HTTP 
 
 ## Extend Workflows
 
-- **Midjourney extend (task-based)**: use `POST /api/generate-video/extend` with `runId` (preferred) or `taskId` (legacy alias) plus `index` (0-3). This flow does not accept `video`, `videoUrl`, `videoDataUrl`, or `videoAttachmentId`.
-- **Source video extend (extend models)**: use `POST /api/generate-video` with an extend model plus `prompt` and a source video (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`). `video` is only accepted by select models (for example, `wan-wavespeed-25-extend`). Max source video length: 120 seconds.
+Use `POST /api/generate-video` with an extend model plus `prompt` and a source video (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`). `video` is only accepted by select models (for example, `wan-wavespeed-25-extend`). Max source video length: 120 seconds.
 
 ## Request Schema
 
