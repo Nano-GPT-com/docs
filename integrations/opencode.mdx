@@ -86,7 +86,7 @@ Create `~/.config/opencode/opencode.json`, or merge these settings into your exi
       "npm": "@ai-sdk/openai-compatible",
       "name": "NanoGPT",
       "options": {
-        "baseURL": "https://nano-gpt.com/api/v1"
+        "baseURL": "https://api.nano-gpt.com/api/v1"
       }
     }
   }
@@ -155,7 +155,7 @@ To add or override a model, merge its definition into `provider.nano-gpt.models`
 }
 ```
 
-List NanoGPT API models with `GET https://nano-gpt.com/api/v1/models`. OpenCode's catalogue can lag behind the API, so a model missing from OpenCode may need a manual definition. A model appearing in the API list does not necessarily support the tool calls needed by OpenCode.
+List NanoGPT API models with `GET https://api.nano-gpt.com/api/v1/models`. OpenCode's catalogue can lag behind the API, so a model missing from OpenCode may need a manual definition. A model appearing in the API list does not necessarily support the tool calls needed by OpenCode.
 
 ### Limiting the Model List
 
@@ -204,7 +204,7 @@ To request one-hour caching for Opus 5.5, merge this configuration into your exi
       "npm": "@ai-sdk/openai-compatible",
       "name": "NanoGPT",
       "options": {
-        "baseURL": "https://nano-gpt.com/api/v1"
+        "baseURL": "https://api.nano-gpt.com/api/v1"
       },
       "models": {
         "anthropic/claude-opus-5.5": {

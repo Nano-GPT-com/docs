@@ -16,12 +16,25 @@ Use `https://api.nano-gpt.com` for API-key requests. The direct API host has a h
 | Raw Messages | `https://api.nano-gpt.com/api/v1/messages` |
 | Batch files and jobs | `https://api.nano-gpt.com/api/v1` |
 
-The endpoint path and request format stay the same when switching from the website host to the direct API host. For example, replace `https://nano-gpt.com/api/v1/chat/completions` with `https://api.nano-gpt.com/api/v1/chat/completions`.
+The endpoint path and request format stay the same when switching from the website host to the direct API host. For example, replace `https://nano-gpt.com/api/v1/chat/completions` with `https://api.nano-gpt.com/api/v1/chat/completions`. `https://nano-gpt.com/api/v1` keeps working, with the lower limits above.
 
 The direct host's higher ingress limit does not override the application, model, file-type, or provider limits for a particular endpoint. For authenticated Chat Completions, Responses, and Messages JSON requests, the application body limit is 32 MiB; check endpoint documentation for multipart and file limits. A long-running call also needs a sufficiently long timeout in your HTTP client.
 
 Check `GET https://api.nano-gpt.com/api/v1/models?detailed=true` for model availability on the direct host. The website and direct API host can have different model catalogs during deployment rollouts; a model listed on one host is not automatically available on the other.
 
+## IPv6-only clients
+
+`api.nano-gpt.com` has an IPv4 address only. A client with no IPv4 route can't reach it directly, so use `https://nano-gpt.com` with the same paths instead.
+
 ## Website flows
 
-Use `https://nano-gpt.com` for the dashboard, creating or managing API keys, browser sign-in, OAuth and device login, and the [Management API](/api-reference/management-api). Follow the [Accountless x402 API Payments](/api-reference/miscellaneous/x402) guide for its quote, payment, and callback URLs.
+These routes stay on `https://nano-gpt.com`. The direct API host answers them with `404 route_not_available`, or `403` for browser sign-in:
+
+- The dashboard, browser sign-in, OAuth and device login, including `/api/cli-login/*` and `/api/v1/auth/keys`
+- The [Management API](/api-reference/management-api) and Teams routes under `/api/teams`
+- Account routes under `/api/user`, including saved provider keys
+- Invitations, under `/api/invitations/create`
+- USD deposits and Daimo deposits. For simplicity, the [crypto deposit guide](/api-reference/endpoint/crypto-deposits) keeps every `/api/transaction` example here too
+- Price helpers: `/api/get-nano-price` and `/api/get-fiat-prices`
+
+[Accountless x402 API Payments](/api-reference/miscellaneous/x402) also use `https://nano-gpt.com`. Follow that guide for its quote, payment, and callback URLs.

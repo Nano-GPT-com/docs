@@ -152,7 +152,7 @@ npx @deepseek-ai/dsh headless "run the tests and fix any failures"
 Any NanoGPT text model with tool calling can be added to the same provider. Find model IDs, context sizes, output limits, and supported reasoning levels with:
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true"
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true"
 ```
 
 Use each model's `context_length` and `max_output_tokens` for the model options, and its `reasoning_efforts` list for the reasoning levels. NanoGPT's `none` effort maps to the Off level. Leave reasoning levels off for models that do not list any.
@@ -178,5 +178,5 @@ Use the custom model API described above.
 | `402` `insufficient_balance` while you still have some balance | Lower **Max output tokens**. NanoGPT reserves balance for the full limit before each pay-as-you-go request. |
 | An answer or tool call is cut off after long thinking | Raise **Max output tokens** or choose a lower effort. Thinking and the answer share the limit. |
 | An image is refused | Only DeepSeek V4.1 Flash takes images. Tick **Image** under its **Input types**. |
-| **Fetch available models** lists hundreds of models | Search for the model name, or type the model IDs by hand. |
-| `TRANSPORT: Connection error` | On some networks, Node.js's default 250 ms limit per address attempt can cause this error when connecting to `api.nano-gpt.com`. Start DeepSeek Harness with `NODE_OPTIONS=--network-family-autoselection-attempt-timeout=2000 npx @deepseek-ai/dsh web`, or use `https://nano-gpt.com/api/v1legacy` as the base URL. |
+| **Fetch available models** returns a long list | Search for the model name, or type the model IDs by hand. |
+| `TRANSPORT: Connection error` | On some networks, Node.js's default 250 ms limit per address attempt can cause this error when connecting to `api.nano-gpt.com`. Start DeepSeek Harness with `NODE_OPTIONS=--network-family-autoselection-attempt-timeout=2000 npx @deepseek-ai/dsh web`, or use `https://api.nano-gpt.com/api/v1legacy` as the base URL. |

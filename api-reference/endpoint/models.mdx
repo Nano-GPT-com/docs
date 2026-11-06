@@ -54,7 +54,7 @@ Chat Completions batches do not support tools for this model.
 
 Standard pricing is $1/M input, $5/M output, $0.05/M cached input, and $1.25/M
 cache writes. Requests above 272,000 input tokens use higher long-context rates.
-It is a paid model; use the [live model pricing and privacy metadata](https://nano-gpt.com/api/models/openai%2Fgpt-6.1-terra/providers)
+It is a paid model; use the [live model pricing and privacy metadata](https://api.nano-gpt.com/api/models/openai%2Fgpt-6.1-terra/providers)
 for the current route details.
 
 For Pro reasoning mode, choose `openai/gpt-6.1-terra-pro` explicitly. It uses the
@@ -80,7 +80,7 @@ on every provider.
 Auto prices follow the current eligible routes and can differ from the snapshot's
 peak/off-peak schedule. Read `pricing` and `effective_pricing` in
 `/api/v1/models?detailed=true` for the current Auto tariff, or the model's
-[provider pricing](https://nano-gpt.com/api/models/deepseek%2Fdeepseek-v4-flash-latest/providers)
+[provider pricing](https://api.nano-gpt.com/api/models/deepseek%2Fdeepseek-v4-flash-latest/providers)
 for Auto prices by privacy mode and provider-specific prices. Selecting a provider
 can change the price, including any applicable schedule and provider-selection markup.
 For a fixed checkpoint and the older price/capability contract, select
@@ -106,7 +106,7 @@ and is excluded from subscriber discounts. It does not inherit K3-specific
 discounts, and neither model is included in subscriptions. Keep explicit K3
 for integrations that need its batch support. Availability, privacy options and route limits can differ;
 check `/api/v1/models?detailed=true` and the
-[provider endpoint](https://nano-gpt.com/api/models/moonshotai%2Fkimi-latest/providers)
+[provider endpoint](https://api.nano-gpt.com/api/models/moonshotai%2Fkimi-latest/providers)
 on your chosen API host for current information.
 
 ### MiniMax Latest and M3.1 Flash
@@ -129,7 +129,7 @@ values have no effect; omit these parameters from requests.
 M3.1 Flash currently does not support `response_format` JSON modes, forced
 `tool_choice`, or disabling thinking. Keep an explicit M3 model for integrations
 that need these controls. Use the detailed model catalog for current prices and
-the [provider endpoint](https://nano-gpt.com/api/models/minimax%2Fminimax-m3.1-flash/providers)
+the [provider endpoint](https://api.nano-gpt.com/api/models/minimax%2Fminimax-m3.1-flash/providers)
 for route-specific limits and privacy information.
 
 ## Compatibility
@@ -191,7 +191,7 @@ When `detailed=true`, additional fields may be included per model:
 Service-tier availability is model-specific. To discover it programmatically, request the detailed model list and inspect each model's `supported_service_tiers` array:
 
 ```bash
-curl -s "https://nano-gpt.com/api/v1/models?detailed=true" \
+curl -s "https://api.nano-gpt.com/api/v1/models?detailed=true" \
   | jq '.data[] | select(.supported_service_tiers | length > 0) | {id, supported_service_tiers}'
 ```
 
@@ -243,20 +243,20 @@ Examples:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?sort=favorites"
 ```
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?sort=mostused"
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
 ```
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
 ```
 
 ### `capabilities` (detailed mode)
@@ -463,50 +463,50 @@ This metadata is informational and is not legal advice. Provider terms and model
 ### Basic Request
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models"
+curl "https://api.nano-gpt.com/api/v1/models"
 ```
 
 ### Detailed Request
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true"
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true"
 ```
 
 ### Sort by Favorites
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?sort=favorites"
 ```
 
 ### Sort by Most Used
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?sort=mostused"
 ```
 
 ### Detailed and Sorted
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
+  "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=favorites"
 ```
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true&sort=mostused"
 ```
 
 ### Detailed with Authentication
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true" \
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true" \
   -H "Authorization: Bearer your_api_key_here"
 ```
 
 ### Alternative API Key Header
 
 ```bash
-curl "https://nano-gpt.com/api/v1/models?detailed=true" \
+curl "https://api.nano-gpt.com/api/v1/models?detailed=true" \
   -H "x-api-key: your_api_key_here"
 ```
 
@@ -524,12 +524,12 @@ Examples:
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  https://nano-gpt.com/api/v1/models
+  https://api.nano-gpt.com/api/v1/models
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/v1/models?detailed=true"
+  "https://api.nano-gpt.com/api/v1/models?detailed=true"
 ```
 
 ### 2) GET /api/subscription/v1/models (subscription-only)
@@ -541,12 +541,12 @@ curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
 Examples:
 
 ```bash
-curl https://nano-gpt.com/api/subscription/v1/models
+curl https://api.nano-gpt.com/api/subscription/v1/models
 ```
 
 ```bash
 curl -H "x-api-key: $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/subscription/v1/models?detailed=true"
+  "https://api.nano-gpt.com/api/subscription/v1/models?detailed=true"
 ```
 
 ### 3) GET /api/paid/v1/models (paid/extras)
@@ -557,12 +557,12 @@ curl -H "x-api-key: $NANOGPT_API_KEY" \
 Examples:
 
 ```bash
-curl https://nano-gpt.com/api/paid/v1/models
+curl https://api.nano-gpt.com/api/paid/v1/models
 ```
 
 ```bash
 curl -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  "https://nano-gpt.com/api/paid/v1/models?detailed=true"
+  "https://api.nano-gpt.com/api/paid/v1/models?detailed=true"
 ```
 
 ### Choosing the Right Endpoint

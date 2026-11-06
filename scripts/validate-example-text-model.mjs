@@ -9,6 +9,8 @@ const OPENAPI_PATH = 'api-reference/openapi.json';
 const MODEL_VARIABLE = 'example-text-model';
 const LEGACY_EXAMPLE_MODEL = 'openai/gpt-5.2';
 const EXPECTED_PLACEHOLDER = `{{${MODEL_VARIABLE}}}`;
+// Counts go stale here: this repo can't read the site's generated count, so name no total.
+const HAND_WRITTEN_MODEL_COUNT = /(hundreds|thousands)( of| more)? ([a-z][a-z,-]* ){0,4}models|[0-9],?[0-9]{2,3}\+? ([a-z][a-z-]* ){0,3}models/i;
 const SHARED_IMPORT = "import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';";
 
 function fetchJson(url) {
@@ -114,6 +116,9 @@ async function main() {
   let directHostIds;
   for (const filePath of await listMdxFiles()) {
     const content = await fs.readFile(filePath, 'utf8');
+    if (HAND_WRITTEN_MODEL_COUNT.test(content)) {
+      throw new Error(`${filePath} writes a total model count by hand`);
+    }
     const codeBlocks = [...content.matchAll(/```[^\n]*\n([\s\S]*?)```/g)];
     if (codeBlocks.some((match) => match[1].includes('ExampleModelHostNotice'))) {
       throw new Error(`${filePath} embeds a documentation host notice in executable sample code`);

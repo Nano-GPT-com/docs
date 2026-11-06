@@ -1,6 +1,6 @@
 ---
 name: nanogpt
-description: Use the NanoGPT API to generate text, images, video, audio, embeddings, and more using 200+ AI models. Pay with Nano cryptocurrency or fiat.
+description: Use the NanoGPT API to generate text, images, video, audio, embeddings, and more using NanoGPT's AI models. Pay with Nano cryptocurrency or fiat.
 author: NanoGPT
 version: 1.0.0
 license: MIT
@@ -8,7 +8,7 @@ license: MIT
 
 # NanoGPT API Skill
 
-NanoGPT is a unified AI API platform that provides access to 500+ models across text, image, video, audio, and embedding generation. It is OpenAI-compatible, meaning any tool or library that works with the OpenAI API works with NanoGPT by changing the base URL. Payments can be made with Nano cryptocurrency, other cryptocurrencies, or fiat (USD via Stripe).
+NanoGPT is a unified AI API platform that provides access to models across text, image, video, audio, and embedding generation. It is OpenAI-compatible, meaning any tool or library that works with the OpenAI API works with NanoGPT by changing the base URL. Payments can be made with Nano cryptocurrency, other cryptocurrencies, or fiat (USD via Stripe).
 
 ## When to Apply
 
@@ -141,7 +141,7 @@ See the current model list at `GET /v1/models`.
 
 **Endpoint:** `POST /v1/images/generations`
 
-OpenAI-compatible image generation with 100+ models.
+OpenAI-compatible image generation.
 
 ### Request
 
@@ -442,17 +442,6 @@ Deposit limits may apply; see docs for current limits.
 ### Estimate Cost Before Requesting
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/get-completion-cost \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
-  -d '{
-    "model": "TEXT_MODEL_ID",
-    "messages": [{"role": "user", "content": "Hello"}]
-  }'
-```
-
-For images:
-```bash
 curl -X POST https://api.nano-gpt.com/api/estimate-image-cost \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
@@ -568,7 +557,7 @@ Error response format:
 3. When status is `"completed"`, read `videoUrl`
 
 ### Check if you can afford a request
-1. `POST /api/get-completion-cost` or `/api/estimate-image-cost`
+1. For images, `POST /api/estimate-image-cost`
 2. `POST /api/check-balance`
 3. Compare cost to balance before proceeding
 

@@ -54,7 +54,7 @@ Streams that match their receipt reach you unchanged, so they end with a usage f
 NanoGPT normally rebuilds non-streaming replies, so their bytes differ from what the receipt covers. To get the bytes the receipt covers, send this header on `/v1/chat/completions`:
 
 ```bash
-curl -D headers.txt -o body.json "https://nano-gpt.com/api/v1/chat/completions" \
+curl -D headers.txt -o body.json "https://api.nano-gpt.com/api/v1/chat/completions" \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -H "X-NanoGPT-TEE-Response: exact" \
@@ -83,7 +83,7 @@ The header has no effect on streaming requests, whose replies already match, on 
 Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. For streams, fetch it after the stream ends, because the receipt covers the whole stream. A stream that's cut off can't be verified: it usually has no receipt, even if its headers named one, and any receipt it does have won't match the bytes you received.
 
 ```bash
-curl "https://nano-gpt.com/api/v1/tee/signature/{receiptId}?model=TEE/glm-5.3-flash" \
+curl "https://api.nano-gpt.com/api/v1/tee/signature/{receiptId}?model=TEE/glm-5.3-flash" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
@@ -101,7 +101,7 @@ If a chat response has an `X-TEE-Verification-Route` header, also send that head
 Send `report=aci` and a fresh nonce of 64 lowercase hex characters.
 
 ```bash
-curl "https://nano-gpt.com/api/v1/tee/attestation?model=TEE/glm-5.3-flash&report=aci&nonce=$(openssl rand -hex 32)" \
+curl "https://api.nano-gpt.com/api/v1/tee/attestation?model=TEE/glm-5.3-flash&report=aci&nonce=$(openssl rand -hex 32)" \
   -H "Authorization: Bearer $API_KEY"
 ```
 
@@ -135,7 +135,7 @@ import time
 import requests
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-BASE_URL = "https://nano-gpt.com/api"
+BASE_URL = "https://api.nano-gpt.com/api"
 MODEL = "TEE/glm-5.3-flash"
 HEADERS = {"Authorization": f"Bearer {os.environ['NANOGPT_API_KEY']}"}
 

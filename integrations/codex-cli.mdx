@@ -10,7 +10,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 
 # Codex CLI
 
-> Use OpenAI's Codex CLI with NanoGPT to access GPT 6.1 Sol, Claude Opus 5.5, Gemini Flash Latest, and 400+ AI models through a single API key.
+> Use OpenAI's Codex CLI with NanoGPT to access GPT 6.1 Sol, Claude Opus 5.5, Gemini Flash Latest, and every other NanoGPT text model through a single API key.
 
 <Tip>
   [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees. Add credits and start coding immediately.
@@ -20,7 +20,7 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
 
 - Use Codex CLI with your NanoGPT credits
 - Access OpenAI models (GPT 6.1 Sol and more) without a separate OpenAI account
-- Route to 400+ other models including Claude Opus 5.5, Gemini Flash Latest, and GLM Latest
+- Route to other models including Claude Opus 5.5, Gemini Flash Latest, and GLM Latest
 
 ## Step 1: Install Codex CLI
 
@@ -98,14 +98,14 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
 
         [model_providers.nanogpt]
         name = "NanoGPT"
-        base_url = "https://nano-gpt.com/api/v1"
+        base_url = "https://api.nano-gpt.com/api/v1"
         env_key = "NANOGPT_API_KEY"
         wire_api = "responses"
         ```
 
         Recent Codex CLI versions require `wire_api = "responses"`. Older examples that use `wire_api = "chat"` will fail on current Codex CLI releases.
 
-        This manual configuration uses the website host for the recommended model. For long-running sessions with large payloads, use `https://api.nano-gpt.com/api/v1` and choose a model from that host's catalog. The installer keeps the direct host and chooses the newest recommended Sol model permitted by your API key, or another permitted model with tool support. If no permitted model supports tools, setup stops and asks you to update the key’s model access. It preserves an existing model selection.
+        The installer keeps the direct host and chooses the newest recommended Sol model permitted by your API key, or another permitted model with tool support. If no permitted model supports tools, setup stops and asks you to update the key’s model access. It preserves an existing model selection.
 
         **Step 2**: Set your API key as an environment variable:
 
@@ -133,7 +133,7 @@ NanoGPT provides an OpenAI API-compatible endpoint that works seamlessly with Co
         **Step 1**: Add these lines to the top of `~/.codex/config.toml`, above any line that starts with `[`:
 
         ```toml
-        openai_base_url = "https://nano-gpt.com/api/v1"
+        openai_base_url = "https://api.nano-gpt.com/api/v1"
         model = "{{example-text-model}}"
         ```
 
@@ -162,13 +162,13 @@ Once configured, start Codex in your terminal:
 codex
 ```
 
-Or explicitly use the current recommendation on the website host for one run:
+Or choose the current recommendation for one run:
 
 ```bash
-codex --model {{example-text-model}} --config 'model_providers.nanogpt.base_url="https://nano-gpt.com/api/v1"'
+codex --model {{example-text-model}}
 ```
 
-After one-click setup, plain `codex` uses the model selected from the direct host's catalog. For larger requests, keep that host and select a model it lists; the website override above has a smaller ingress limit.
+After one-click setup, plain `codex` uses the model selected from the direct host's catalog.
 
 ---
 
@@ -176,7 +176,7 @@ After one-click setup, plain `codex` uses the model selected from the direct hos
 
 ### What Models Can I Use?
 
-NanoGPT supports 400+ models. These recommendations use the manual website configuration above. One-click setup uses the direct host, whose model catalog can differ during a rollout.
+Codex can use any NanoGPT text model. These are our current recommendations.
 
 | Use Case | Recommended Model | Config |
 |----------|-------------------|--------|
@@ -186,7 +186,7 @@ NanoGPT supports 400+ models. These recommendations use the manual website confi
 | Long context | `google/gemini-pro-latest` | `model = "google/gemini-pro-latest"` |
 | Open model | `z-ai/glm-latest` | `model = "z-ai/glm-latest"` |
 
-List available models with `GET https://nano-gpt.com/api/v1/models` for the website configuration, or `GET https://api.nano-gpt.com/api/v1/models` for one-click setup's direct host.
+List available models with `GET https://api.nano-gpt.com/api/v1/models`.
 
 ### How Do I Change Models?
 
@@ -195,11 +195,9 @@ List available models with `GET https://nano-gpt.com/api/v1/models` for the webs
 model = "{{example-text-model}}"
 ```
 
-For this recommendation, also set `base_url = "https://nano-gpt.com/api/v1"` in the existing `[model_providers.nanogpt]` section. To retain the direct host, choose a model from its catalog instead.
-
 **Option 2**: Use CLI flag:
 ```bash
-codex --model {{example-text-model}} --config 'model_providers.nanogpt.base_url="https://nano-gpt.com/api/v1"'
+codex --model {{example-text-model}}
 ```
 
 ### How Does Codex Compact Long Sessions?
@@ -233,7 +231,7 @@ Use this only with OpenAI models. NanoGPT rejects native compaction on other mod
 | Feature | OpenAI Direct | NanoGPT |
 |---------|---------------|---------|
 | Pricing | Monthly subscription or API credits | Pay-as-you-go, no minimums |
-| Models | OpenAI only | OpenAI + Claude + 400 other models |
+| Models | OpenAI only | OpenAI, Claude and every other NanoGPT text model |
 | Billing | Separate OpenAI account | Single NanoGPT balance |
 | Rate limits | OpenAI limits | NanoGPT limits |
 

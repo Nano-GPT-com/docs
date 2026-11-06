@@ -19,9 +19,9 @@ For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If 
 Only input tokens are billed. Browse every decision model, with current pricing, on [nano-gpt.com/models/decisions](https://nano-gpt.com/models/decisions), or list them with `GET /api/v1/decision-models`.
 
 <Note>
-  Decision models work on both API hosts. The text examples use the direct API host, `https://api.nano-gpt.com`; `https://nano-gpt.com` accepts the same requests. See [API Hosts](/api-reference/miscellaneous/api-hosts).
+  Decision models work on both API hosts. The examples use the direct API host, `https://api.nano-gpt.com`; `https://nano-gpt.com` accepts the same requests. See [API Hosts](/api-reference/miscellaneous/api-hosts).
 
-  The image examples use `https://nano-gpt.com`. Before using a model on either host, check that host’s `GET /api/v1/models?detailed=true&output_modalities=decisions` catalog for the model, its `supported_endpoints`, and its `decision_input` capabilities and limits. Catalogs can differ during rollouts.
+  Before using a model on either host, check that host’s `GET /api/v1/models?detailed=true&output_modalities=decisions` catalog for the model, its `supported_endpoints`, and its `decision_input` capabilities and limits. Catalogs can differ during rollouts.
 </Note>
 
 <Note>
@@ -302,7 +302,7 @@ Make `state` an array, and put each image directly in it as an `image_url` part 
 ```bash cURL
 IMAGE=$(base64 < return-photo.jpg | tr -d '\n')
 
-curl https://nano-gpt.com/api/v1/decisions \
+curl https://api.nano-gpt.com/api/v1/decisions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d @- <<EOF
@@ -336,7 +336,7 @@ import { readFile } from "node:fs/promises";
 
 const image = (await readFile("return-photo.jpg")).toString("base64");
 
-const response = await fetch("https://nano-gpt.com/api/v1/decisions", {
+const response = await fetch("https://api.nano-gpt.com/api/v1/decisions", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NANOGPT_API_KEY}`,
@@ -379,7 +379,7 @@ with open("return-photo.jpg", "rb") as f:
     image = base64.b64encode(f.read()).decode()
 
 response = requests.post(
-    "https://nano-gpt.com/api/v1/decisions",
+    "https://api.nano-gpt.com/api/v1/decisions",
     headers={"Authorization": f"Bearer {os.environ['NANOGPT_API_KEY']}"},
     json={
         "model": "perplexity/pplx-decider-v1.2",

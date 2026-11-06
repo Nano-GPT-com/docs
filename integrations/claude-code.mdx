@@ -1,6 +1,6 @@
 ---
 title: 'Claude Code'
-description: 'Use Claude Code with NanoGPT and Claude + 400 models'
+description: 'Use Claude Code with Claude and other models on NanoGPT'
 ---
 
 import { exampleTextModel, exampleTextModelName } from '/snippets/example-text-model.mdx';
@@ -10,7 +10,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 
 # Claude Code
 
-> Use Claude Code with NanoGPT to access Claude and 400+ AI models through a single API key.
+> Use Claude Code with NanoGPT to access Claude and every other NanoGPT text model through a single API key.
 
 <Tip>
   [Get started with NanoGPT](https://nano-gpt.com/api) for pay-as-you-go pricing with no monthly fees.
@@ -20,7 +20,7 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
 
 - Use Claude Code with your NanoGPT credits
 - Access the real Claude models (Sonnet, Opus, Haiku)
-- Optionally route to 400+ other models (GPT-4o, Gemini, DeepSeek, and more)
+- Optionally route to other models (GPT-4o, Gemini, DeepSeek, and more)
 
 ## Step 1: Install Claude Code
 
@@ -83,7 +83,7 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
         {
           "env": {
             "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
-            "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1",
+            "ANTHROPIC_BASE_URL": "https://api.nano-gpt.com/api/v1",
             "API_TIMEOUT_MS": "600000"
           }
         }
@@ -105,7 +105,7 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
         {
           "env": {
             "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
-            "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1"
+            "ANTHROPIC_BASE_URL": "https://api.nano-gpt.com/api/v1"
           }
         }
         ```
@@ -114,14 +114,14 @@ NanoGPT provides an Anthropic API-compatible endpoint that works seamlessly with
 
         ```cmd
         setx ANTHROPIC_AUTH_TOKEN your_nanogpt_api_key
-        setx ANTHROPIC_BASE_URL https://nano-gpt.com/api/v1
+        setx ANTHROPIC_BASE_URL https://api.nano-gpt.com/api/v1
         ```
 
         **Windows PowerShell**:
 
         ```powershell
         [System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', 'your_nanogpt_api_key', 'User')
-        [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://nano-gpt.com/api/v1', 'User')
+        [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.nano-gpt.com/api/v1', 'User')
         ```
 
         Replace `your_nanogpt_api_key` with your actual API key. A new terminal window is required for changes to take effect.
@@ -169,13 +169,13 @@ These settings select the public NanoGPT model IDs shown above. Haiku Latest now
 
 ### Can I Use Other Models?
 
-Yes. NanoGPT supports 400+ models. You can configure Claude Code to use different models by adding model mappings to your `~/.claude/settings.json`:
+Yes. You can configure Claude Code to use different models by adding model mappings to your `~/.claude/settings.json`:
 
 ```json
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "your_nanogpt_api_key",
-    "ANTHROPIC_BASE_URL": "https://nano-gpt.com/api/v1",
+    "ANTHROPIC_BASE_URL": "https://api.nano-gpt.com/api/v1",
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "{{example-text-model}}",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "anthropic/claude-opus-5.5",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemini-flash-latest"
@@ -190,7 +190,7 @@ Recommended models:
 | Best overall | <code>{exampleTextModel}</code>, `anthropic/claude-opus-5.5` |
 | Fast/cheap | `google/gemini-flash-latest` |
 
-List available models with `GET https://nano-gpt.com/api/v1/models`.
+List available models with `GET https://api.nano-gpt.com/api/v1/models`.
 
 ### Configuration Not Working?
 
@@ -223,7 +223,7 @@ NanoGPT is compatible with Claude Code 1.0.0 and newer.
 | Feature | Anthropic Direct | NanoGPT |
 |---------|------------------|---------|
 | Pricing | Monthly subscription or API credits | Pay-as-you-go, no minimums |
-| Models | Claude only | Claude + 400 other models |
+| Models | Claude only | Claude and every other NanoGPT text model |
 | Billing | Separate Anthropic account | Single NanoGPT account |
 | Rate limits | Anthropic limits | NanoGPT limits |
 
