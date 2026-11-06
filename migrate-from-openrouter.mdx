@@ -117,10 +117,10 @@ These stay errors on purpose. Rerouting one could bill you for a model you didn'
 The `provider` object uses the same field names. Three things differ:
 
 - **Selecting a provider costs more.** With `provider` routing controls or a routing suffix, billing uses that provider's price plus a markup, normally 5%, and the request is treated as pay-as-you-go. Leave `provider` out to pay the model's default price. See [Billing and Markup](/api-reference/miscellaneous/provider-selection#billing-and-markup).
-- **Provider IDs can differ.** Find a model's IDs with `GET /api/models/{id}/providers`. An unknown ID in `provider.only` returns `400`. In `provider.order` it's ignored, unless `allow_fallbacks` is `false`. Then `order` is the full list: if none of its IDs is usable, or none is also in `only`, the request returns `400` instead of going to a provider you didn't list.
+- **Provider IDs can differ.** Find a model's IDs with `GET /api/models/{id}/providers`. An unknown ID in `provider.only` returns `400`. In `provider.order` it's ignored, unless `allow_fallbacks` is `false`. Then `order` is the full list and is enforced like `only`, so saved preferences can't add to it: if none of its IDs is usable, or none is also in `only`, the request returns `400` instead of going to a provider you didn't list.
 - **Fewer errors move to the next model.** `models` tries the next model after a provider failure or a prompt that's too long for that model. Authentication, balance and invalid-request errors end the request. A first model that doesn't meet your `provider` limits also ends the request, while OpenRouter moves on. See [Model fallbacks](/api-reference/miscellaneous/provider-selection#model-fallbacks).
 
-If a subscription key has paid models turned off, `provider` is dropped so the request stays on the plan, and `only` and `ignore` aren't applied. `provider.zdr` still applies, and `data_collection: "deny"` and a strict `order` are still refused.
+If **Enable paid models on API** is off for a subscription, `provider` is dropped so the request stays on the plan, and `only` and `ignore` aren't applied. `provider.zdr` still applies. `data_collection: "deny"` and `order` with `allow_fallbacks: false` return `400`, because the plan can't honor them.
 
 NanoGPT doesn't return the provider that served a request: there's no `provider` field in responses or chunks, and no `metadata.provider_name` in errors. The [Usage page](https://nano-gpt.com/usage) shows a provider when public attribution is available.
 
