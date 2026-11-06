@@ -28,7 +28,7 @@ See [examples and precedence](#price-caps-and-cache-reuse) before combining thes
 - Provider selection only applies when a model reports `supportsProviderSelection: true`.
 - Use `GET /api/models/:canonicalId/providers` to discover eligible models and provider IDs.
 - `supportsProviderSelection` is exposed on the model-specific provider endpoint. Do not rely on `/api/v1/models` or `/api/v1/models?detailed=true` to determine provider-selection support.
-- If a model does not support provider selection, the request ignores provider preferences.
+- If a model does not support provider selection, it runs on a fixed route, and ranking preferences such as a soft `order` or `sort` have no effect. Hard limits still apply: `only`, `ignore` and `order` with `allow_fallbacks: false`. If the route can't meet them, the request returns `no_allowed_provider_for_model`.
 - You cannot currently force a provider and have that same request count as subscription-included usage.
 
 ## Google Vertex and Google AI Studio
@@ -195,7 +195,7 @@ Provider entries can use public NanoGPT provider IDs or accepted display names/a
 
 | Field | Type | Behavior |
 | --- | --- | --- |
-| `provider.order` | string[] | Soft preference order. NanoGPT tries these providers first when possible, but may route elsewhere. Unknown providers are ignored. |
+| `provider.order` | string[] | Soft preference order. NanoGPT tries these providers first when possible, but may route elsewhere. Unknown providers are ignored. With `provider.allow_fallbacks: false`, it's a hard list instead, enforced like `only`. |
 | `provider.only` | string[] | Hard provider pin. NanoGPT restricts routing to these providers and fails instead of routing outside the list. Unknown providers return `400` with `error.code: "provider_unknown_provider"`. |
 | `provider.ignore` | string[] | Excludes providers from routing. Unknown providers are ignored. |
 | `provider.sort` | string or object | Routing preference. Supported values are `speed`, `throughput`, `latency`, `price`, `auto`, `none`, and `default`. `auto`, `none`, and `default` suppress stored/default routing preferences without requesting a sort. The object form is `{"by": "price", "partition": "model"}`. `partition` is `model` (the default) or `none`. See [Model fallbacks](#model-fallbacks) for how it applies to `models`. |
@@ -279,7 +279,7 @@ Examples:
 
 ### Routing Semantics
 
-- `order` is soft. Use `only` when the request must fail instead of using any provider outside the list.
+- `order` is soft unless `allow_fallbacks` is `false`, which makes it a hard list. Use `only`, or `order` with `allow_fallbacks: false`, when the request must fail instead of using any provider outside the list.
 - `only` is hard. It restricts routing to the listed providers and disables internal fallback outside the pinned set.
 - `ignore` and `max_price` can resolve to a concrete provider. For direct provider routing, NanoGPT cannot represent "any provider except X" as a multi-provider pool. If filters like `ignore` or `max_price` are provided without `order` or `only`, NanoGPT resolves to one cheapest concrete provider that satisfies those filters. That is treated as explicit provider selection for billing and routing because the request changed the provider candidate set.
 - If `max_price` is provided without `order` or an explicit `sort`, NanoGPT treats it as a request for price-aware routing among providers that satisfy the cap. `only` does not prevent this inference; an `order` does.
