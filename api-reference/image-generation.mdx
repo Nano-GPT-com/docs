@@ -305,13 +305,15 @@ NanoGPT exposes many model-specific parameters. Treat them as discoverable via `
 
 `gpt-image-2.6-flare` is designed for fast iteration; `gpt-image-2.6-sunburst` is designed for detailed compositions. Both support:
 
+- Still-image resolution: `1k`, `2k`, or `4k` with `aspect_ratio` (`1:1`, `1:2`, `2:1`, `1:3`, `3:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `9:21`, `21:9`). These target approximately 1, 4, or 8.3 megapixels, rounded down to multiples of 16 and capped at 3840px on the long edge. For example, 4K is 3840×2160 at 16:9 or 2880×2880 at 1:1.
+- `size`, `image_size`, or `resolution` also accept explicit pixel sizes such as `1536x1024`; `width` plus `height`, existing presets, and `auto` remain supported. Explicit dimensions take precedence over aspect ratio. An aspect ratio with no size uses 1K; with neither, the default remains 1024×1024. Tiers without an aspect ratio retain their existing defaults: 1K and 2K square, 4K at 3840×2160.
 - `quality`: `low`, `medium`, `high`, `xhigh`, or `max`.
 - `complexity`: `low`, `medium`, or `high` (default). Complexity is independent of quality and has no separate fee.
 - `output_format`: `png`, `jpeg`, `webp`, or animated `gif`. NanoGPT does not support SVG output for these models.
 - One to four output images and up to 16 reference images for edits. Regional edits use a transparent PNG `markup` annotation with at least one reference image; masks are not supported.
 - GIF generation without reference images: `frame_count` from 2 to 64 (default 9) and `frame_duration_ms` from 20 to 2000 (default 200, rounded to 10 ms increments). The total across all frames and outputs must fit within 8,294,400 pixels. Use `size: "auto"` or consult the model's endpoint metadata for size constraints.
 
-These models bill from returned token usage. In discovery responses, `pricing.per_image` estimates image output at high quality; it is not an all-inclusive fixed price. Request quotes also include conservative prompt and reference-image allowances, and GIF estimates include every frame. Read `pricing.token_rates_per_million` for current input, cached-input, and output rates. Cached-input rates apply only when cached token counts are reported.
+These models bill from returned token usage. In discovery responses, `pricing.per_image` estimates square image output at high quality for each tier (the most expensive aspect ratio); it is not an all-inclusive fixed price. Request quotes also include conservative prompt and reference-image allowances, and GIF estimates include every frame. Read `pricing.token_rates_per_million` for current input, cached-input, and output rates. Cached-input rates apply only when cached token counts are reported.
 
 ## Unsupported Features For Now
 
