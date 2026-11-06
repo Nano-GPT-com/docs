@@ -145,7 +145,6 @@
           "integrations/cline",
           "integrations/codex-cli",
           "integrations/grok-cli",
-          "integrations/gemini-cli",
           "integrations/claude-code",
           "integrations/deepseek-harness",
           "integrations/roocode",
@@ -228,6 +227,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/integrations/gemini-cli",
+      "destination": "/integrations"
+    },
     {
       "source": "/api-reference/endpoint/video-extend",
       "destination": "/api-reference/endpoint/video-generation"
