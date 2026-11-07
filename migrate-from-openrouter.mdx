@@ -5,7 +5,7 @@ description: 'Change the base URL and key, then check the few things that work d
 
 NanoGPT takes the same Chat Completions requests as OpenRouter, so basic chat, streaming and tool calls usually move with one line. This page lists what stays the same and what doesn't, so you can decide before you switch.
 
-We ran the requests behind this page against both services on November 6, 2026. OpenRouter can change at any time, so its [API reference](https://openrouter.ai/docs/api-reference/overview) is the source for its side.
+We ran the requests behind this page against both services on November 6, 2026, and rechecked OpenRouter's published details on November 7. OpenRouter can change at any time, so its [API reference](https://openrouter.ai/docs/api-reference/overview) is the source for its side.
 
 ## The one-line change
 
@@ -53,7 +53,7 @@ curl https://api.nano-gpt.com/api/v1/chat/completions \
 
 ## Check these four things first
 
-1. **Your model IDs.** All 10 models in OpenRouter's weekly top ten on November 6 had the same ID here. About half of its full catalog matched exactly, and some others still resolve. See [Model IDs](#model-ids).
+1. **Your model IDs.** All 10 models in OpenRouter's weekly top ten on November 7 had the same ID here. About half of its full catalog matched exactly, and some others still resolve. See [Model IDs](#model-ids).
 2. **Your `provider` settings.** The object works, but selecting a provider adds a markup, normally 5%, and provider IDs can differ. See [Routing](#routing).
 3. **How you read cost.** `usage.cost` can be missing, and it isn't always in USD. See [Cost and usage](#cost-and-usage).
 4. **Your prices.** NanoGPT has no percentage fee on card top-ups, though tax can apply at checkout, and many popular models have the same list price on both services. But prices differ by model, in both directions, and some models cost more here even after OpenRouter's fee. Compare the models you use on [API pricing](https://nano-gpt.com/api-pricing) before you move traffic.
