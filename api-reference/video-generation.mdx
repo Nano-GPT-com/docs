@@ -191,9 +191,16 @@ These parameters are available across models. Only send the fields your chosen m
 
 ## Supported Models
 
+Use `GET https://api.nano-gpt.com/api/v1/video-models` for the current catalog, supported parameters, and pricing. `capabilities.audio_generation` means the model can create a soundtrack; `capabilities.audio_input` means it accepts uploaded audio. These are separate capabilities.
+
+Gemini Omni Flash (`google/gemini-omni-flash`), 1.1 (`google/gemini-omni-flash/v1.1`), and 1.2 (`google/gemini-omni-flash/v1.2`) generate native audio with video. Gemini Omni 1.2 does not accept audio uploads. Its separate `/upscale` model preserves existing audio rather than generating a new soundtrack.
+
+Gemini Omni 1.2 generation reserves $15, then refunds unused funds before delivery. The final charge uses input, text/thinking output, and video output tokens; $15 is a refundable ceiling, not a fixed per-video price. Native audio has no separate fee. Read the model's `pricing` metadata for current token rates.
+
 ### Text-to-Video Models
 | Model | Duration | Notes |
 | --- | --- | --- |
+| `google/gemini-omni-flash/v1.2` | 3–15s | Native audio; usage-based billing with a refundable reservation |
 | `veo2-video` | 5-8s | Also supports image-to-video |
 | `veo3-video` | 5-8s | Audio generation supported |
 | `veo3-1-video` | Variable | T2V and I2V modes |
@@ -205,7 +212,7 @@ These parameters are available across models. Only send the fields your chosen m
 | `kling-video-o1-standard` | 5-10s | Standard variant |
 | `kling-v25-turbo-pro` | 5-10s | Turbo pro |
 | `kling-v25-turbo-std` | 5-10s | Turbo standard |
-| `kling-v26-pro` | 5-10s | Latest pro |
+| `kling-v26-pro` | 5-10s | Kling 2.6 Pro with native audio |
 | `minimax-video` | 6s | Fixed duration |
 | `minimax-hailuo-02` | Variable | Per-second pricing |
 | `minimax-hailuo-02-pro` | Variable | Premium variant |
