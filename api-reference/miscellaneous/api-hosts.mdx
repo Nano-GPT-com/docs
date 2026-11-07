@@ -15,6 +15,7 @@ Use `https://api.nano-gpt.com` for API-key requests. The direct API host has a h
 | Raw Responses | `https://api.nano-gpt.com/api/v1/responses` |
 | Raw Messages | `https://api.nano-gpt.com/api/v1/messages` |
 | Batch files and jobs | `https://api.nano-gpt.com/api/v1` |
+| [Accountless x402 API Payments](/api-reference/miscellaneous/x402) | `https://api.nano-gpt.com/api/v1` |
 
 The endpoint path and request format stay the same when switching from the website host to the direct API host. For example, replace `https://nano-gpt.com/api/v1/chat/completions` with `https://api.nano-gpt.com/api/v1/chat/completions`. `https://nano-gpt.com/api/v1` keeps working, with the lower limits above.
 
@@ -36,5 +37,3 @@ These routes stay on `https://nano-gpt.com`. The direct API host answers them wi
 - Invitations, under `/api/invitations/create`
 - USD deposits and Daimo deposits. For simplicity, the [crypto deposit guide](/api-reference/endpoint/crypto-deposits) keeps every `/api/transaction` example here too
 - Price helpers: `/api/get-nano-price` and `/api/get-fiat-prices`
-
-[Accountless x402 API Payments](/api-reference/miscellaneous/x402) also use `https://nano-gpt.com`. Follow that guide for its quote, payment, and callback URLs.

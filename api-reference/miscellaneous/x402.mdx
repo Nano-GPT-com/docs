@@ -15,12 +15,18 @@ Only endpoints returned by `GET /api/v1/x402/endpoints` should be treated as pub
 
 Streaming chat/responses and long-running video generation have implementation coverage but are not the stable public contract yet.
 
+## API Host
+
+Use `https://api.nano-gpt.com` for accountless requests, as the examples below do. Quotes name the host you called, so use the `statusUrl` and `completeUrl` from your quote as given. IPv6-only clients can use `https://nano-gpt.com` with the same paths; see [API Hosts](/api-reference/miscellaneous/api-hosts#ipv6-only-clients).
+
+Every public endpoint below returns quotes on `https://api.nano-gpt.com`, but as of 2026-11-07 the only payment completed there is Base USDC through `x402-exact`. The `nano`, `nano-exact`, `base-usdc`, `x402-solana-usdc`, and `lightning-l402` rails have not been paid on that host yet.
+
 ## Endpoint Matrix
 
 The supported endpoint matrix is machine-readable. Its `schemes` list reflects the payment rails enabled in the current deployment.
 
 ```bash
-curl https://nano-gpt.com/api/v1/x402/endpoints
+curl https://api.nano-gpt.com/api/v1/x402/endpoints
 ```
 
 As of 2026-06-14, production advertises `lightning-l402` on the public endpoints listed below. Continue to use `GET /api/v1/x402/endpoints` as the source of truth because enabled rails can be deployment-gated.
@@ -28,7 +34,7 @@ As of 2026-06-14, production advertises `lightning-l402` on the public endpoints
 Use `?supported=all` to include beta and deferred routes:
 
 ```bash
-curl "https://nano-gpt.com/api/v1/x402/endpoints?supported=all"
+curl "https://api.nano-gpt.com/api/v1/x402/endpoints?supported=all"
 ```
 
 If x402 is disabled, payment storage is unavailable, or completion replay is not configured, the default supported list is empty.
@@ -70,7 +76,7 @@ All initial quote examples below intentionally omit `Authorization` and `x-api-k
 ### Text Chat
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/chat/completions \
+curl -i https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -83,7 +89,7 @@ curl -i https://nano-gpt.com/api/v1/chat/completions \
 ### Image Generation
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/images/generations \
+curl -i https://api.nano-gpt.com/api/v1/images/generations \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -97,7 +103,7 @@ curl -i https://nano-gpt.com/api/v1/images/generations \
 ### Web Search
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/web/search \
+curl -i https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -109,7 +115,7 @@ curl -i https://nano-gpt.com/api/v1/data/web/search \
 ### URL Scrape
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/url/scrape \
+curl -i https://api.nano-gpt.com/api/v1/data/url/scrape \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -122,7 +128,7 @@ curl -i https://nano-gpt.com/api/v1/data/url/scrape \
 To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options.
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/images/generations \
+curl -i https://api.nano-gpt.com/api/v1/images/generations \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -148,8 +154,8 @@ For accountless payment challenges, key off the stable top-level `payment` objec
     "requestHash": "sha256:...",
     "expiresAt": "2026-06-09T12:00:00.000Z",
     "amountUsd": "0.0714",
-    "statusUrl": "https://nano-gpt.com/api/x402/status/pay_...",
-    "completeUrl": "https://nano-gpt.com/api/x402/complete/pay_...",
+    "statusUrl": "https://api.nano-gpt.com/api/x402/status/pay_...",
+    "completeUrl": "https://api.nano-gpt.com/api/x402/complete/pay_...",
     "accepted": [
       {
         "scheme": "nano",
@@ -160,8 +166,8 @@ For accountless payment challenges, key off the stable top-level `payment` objec
         "amountUsd": "0.0714",
         "payTo": "nano_...",
         "paymentId": "pay_...",
-        "statusUrl": "https://nano-gpt.com/api/x402/status/pay_...",
-        "completeUrl": "https://nano-gpt.com/api/x402/complete/pay_..."
+        "statusUrl": "https://api.nano-gpt.com/api/x402/status/pay_...",
+        "completeUrl": "https://api.nano-gpt.com/api/x402/complete/pay_..."
       },
       {
         "scheme": "x402-solana-usdc",
@@ -204,7 +210,7 @@ Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary adver
 After paying a `nano` or `base-usdc` quote, call:
 
 ```bash
-curl -i -X POST "https://nano-gpt.com/api/x402/complete/pay_..."
+curl -i -X POST "https://api.nano-gpt.com/api/x402/complete/pay_..."
 ```
 
 Completion replays the stored original request. A payment is bound to the original method, path, body hash, quoted amount, and expiration. Expired, underpaid, already processing, or already completed payments are rejected.
@@ -216,7 +222,7 @@ Nano quote-and-complete rails use `scheme: "nano"` and a unique `payTo` Nano add
 For `nano-exact`, `x402-exact`, and `x402-solana-usdc`, sign the advertised exact payment requirement and replay the original endpoint with:
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/chat/completions \
+curl -i https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-PAYMENT: $BASE64_PAYMENT_PAYLOAD" \
   -d '{
@@ -249,7 +255,7 @@ Lower-level x402 clients can also read the top-level `accepts[]` protocol object
 The exact replay request must use the same method, path, and JSON body that produced the quote:
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/chat/completions \
+curl -i https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-PAYMENT: $BASE64_PAYMENT_PAYLOAD" \
   -d '{
@@ -264,7 +270,7 @@ NanoGPT validates exact `X-PAYMENT` replay against the quoted resource, amount, 
 Example Solana USDC replay:
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/url/scrape \
+curl -i https://api.nano-gpt.com/api/v1/data/url/scrape \
   -H "Content-Type: application/json" \
   -H "X-PAYMENT: $BASE64_SOLANA_X402_PAYMENT" \
   -d '{
@@ -295,7 +301,7 @@ NanoGPT also supports Lightning L402 for accountless API payments. Instead of si
 To request an accountless Lightning L402 quote, send the original request without `Authorization` or `x-api-key`, and include `x-x402: true`:
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/web/search \
+curl -i https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
   -H "x-x402: true" \
   -d '{
@@ -328,7 +334,7 @@ Example Lightning option:
 The `WWW-Authenticate` challenge includes the same token in `id="<token>"` and a base64-encoded request value:
 
 ```http
-WWW-Authenticate: Payment id="<token>", realm="https://nano-gpt.com", method="lightning", intent="charge", request="<base64-json>", description="...", expires="..."
+WWW-Authenticate: Payment id="<token>", realm="https://api.nano-gpt.com", method="lightning", intent="charge", request="<base64-json>", description="...", expires="..."
 ```
 
 After decoding the `request` value, the JSON contains the Lightning invoice:
@@ -354,7 +360,7 @@ Authorization: L402 <token>:<preimage>
 ```
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/data/web/search \
+curl -i https://api.nano-gpt.com/api/v1/data/web/search \
   -H "Content-Type: application/json" \
   -H "Authorization: L402 $L402_TOKEN:$PAYMENT_PREIMAGE" \
   -d '{
@@ -366,7 +372,7 @@ curl -i https://nano-gpt.com/api/v1/data/web/search \
 For chat completions, keep accountless L402 requests non-streaming:
 
 ```bash
-curl -i https://nano-gpt.com/api/v1/chat/completions \
+curl -i https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: L402 $L402_TOKEN:$PAYMENT_PREIMAGE" \
   -d '{
@@ -389,7 +395,7 @@ const original = {
   },
 };
 
-const quoteResponse = await fetch(`https://nano-gpt.com${original.path}`, {
+const quoteResponse = await fetch(`https://api.nano-gpt.com${original.path}`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -414,7 +420,7 @@ if (!lightning) {
 // Pay lightning.invoice with a Lightning client that returns the preimage.
 const preimage = await payLightningInvoiceAndReturnPreimage(lightning.invoice);
 
-const paidResponse = await fetch(`https://nano-gpt.com${original.path}`, {
+const paidResponse = await fetch(`https://api.nano-gpt.com${original.path}`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -432,7 +438,7 @@ console.log(result);
 For quote-and-complete rails such as `nano` and `base-usdc`, use the quoted `statusUrl` to watch payment state:
 
 ```bash
-curl "https://nano-gpt.com/api/x402/status/pay_..."
+curl "https://api.nano-gpt.com/api/x402/status/pay_..."
 ```
 
 Known statuses:
@@ -480,14 +486,14 @@ Run the smoke tests against localhost or production:
 
 ```bash
 pnpm x402:smoke -- --base http://localhost:3000
-pnpm x402:smoke -- --base https://nano-gpt.com
+pnpm x402:smoke -- --base https://api.nano-gpt.com
 ```
 
 Paid smoke paths are opt-in because the payment payload is wallet-specific:
 
 ```bash
 X402_PAYMENT_HEADER="$BASE64_PAYMENT_PAYLOAD" pnpm x402:smoke -- --endpoint chat-completions
-X402_COMPLETE_URL="https://nano-gpt.com/api/x402/complete/pay_..." pnpm x402:smoke
+X402_COMPLETE_URL="https://api.nano-gpt.com/api/x402/complete/pay_..." pnpm x402:smoke
 ```
 
 ## Safety Notes

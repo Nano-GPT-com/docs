@@ -4064,12 +4064,6 @@
       }
     },
     "/v1/x402/endpoints": {
-      "servers": [
-        {
-          "url": "https://nano-gpt.com/api",
-          "description": "Website host"
-        }
-      ],
       "get": {
         "description": "List endpoints supported by accountless x402 in the running deployment. By default only supported endpoints are returned; pass supported=all to include beta and deferred entries. If x402 is disabled, payment storage is unavailable, or completion replay is not configured, the default supported list is empty.",
         "parameters": [
@@ -4097,12 +4091,6 @@
       }
     },
     "/x402/status/{paymentId}": {
-      "servers": [
-        {
-          "url": "https://nano-gpt.com/api",
-          "description": "Website host"
-        }
-      ],
       "get": {
         "description": "Poll the status of an X-402 payment by paymentId.",
         "parameters": [
@@ -4142,12 +4130,6 @@
       }
     },
     "/x402/complete/{paymentId}": {
-      "servers": [
-        {
-          "url": "https://nano-gpt.com/api",
-          "description": "Website host"
-        }
-      ],
       "post": {
         "description": "Complete a paid X-402 request and execute the original API request associated with the paymentId.",
         "parameters": [
