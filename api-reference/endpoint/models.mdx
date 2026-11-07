@@ -113,7 +113,8 @@ on your chosen API host for current information.
 
 `minimax/minimax-latest` currently resolves to MiniMax M3 Thinking. This
 compatibility alias retains M3's request format and structured-output support;
-it does not automatically select MiniMax M3.1 Flash.
+it does not automatically select MiniMax M3.1 Flash. Plain `minimax/minimax-m3`
+only thinks when a request [asks for it](/api-reference/miscellaneous/extended-thinking#turn-reasoning-on).
 
 For the newer model, select `minimax/minimax-m3.1-flash` explicitly. It is included
 in subscriptions and supports text, image, and video input, tool calling, a

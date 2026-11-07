@@ -1423,9 +1423,9 @@ See also: [Extended Thinking (Reasoning)](/api-reference/miscellaneous/extended-
 
 ### Endpoint variants
 
-Choose the base path that matches how your client consumes reasoning streams:
+Choose the base path that matches how your client consumes reasoning streams. These paths only change where reasoning appears; none of them turns it on. See [Extended Thinking](/api-reference/miscellaneous/extended-thinking#turn-reasoning-on) for that.
 
-- `https://api.nano-gpt.com/api/v1/chat/completions` — default endpoint that streams internal thoughts through `choices[0].delta.reasoning` (and repeats them in `message.reasoning` on completion). Recommended for apps like SillyTavern that understand the modern response shape.
+- `https://api.nano-gpt.com/api/v1/chat/completions` — default endpoint that streams internal thoughts through `choices[0].delta.reasoning`, or returns them in `choices[0].message.reasoning` on non-streaming requests. Recommended for apps like SillyTavern that understand the modern response shape.
 - `https://api.nano-gpt.com/api/v1legacy/chat/completions` — legacy contract that swaps the field name to `choices[0].delta.reasoning_content` / `message.reasoning_content` for older OpenAI-compatible clients. Use this for LiteLLM’s OpenAI adapter to avoid downstream parsing errors.
 - `https://api.nano-gpt.com/api/v1thinking/chat/completions` — reasoning-aware models write everything into the normal `choices[0].delta.content` stream so clients that ignore reasoning fields still see the full conversation transcript. This is the preferred base URL for JanitorAI.
 
@@ -1450,7 +1450,7 @@ data: {
 }
 ```
 
-When streaming completes, the formatter aggregates the collected values and repeats them in the final payload: `choices[0].message.content` contains the assistant reply and `choices[0].message.reasoning` (plus `reasoning_details` when available) contains the full chain-of-thought. Non-streaming requests reuse the same formatter, so the reasoning block is present as a dedicated field.
+Streaming responses don't repeat these values at the end, so collect `delta.content` and `delta.reasoning` as they arrive. Non-streaming requests return the assistant reply in `choices[0].message.content` and the reasoning in `choices[0].message.reasoning` (plus `reasoning_details` when available).
 
 ### Showing or hiding reasoning
 

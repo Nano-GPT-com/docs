@@ -535,6 +535,7 @@ PRICING AND BILLING
   - `cache_read_input_tokens`
   - `input_tokens`
 - Streaming consistency note: when provider-reported usage is missing or zero, server-side normalization may backfill final usage from `x_nanogpt_pricing.inputTokens` and `x_nanogpt_pricing.outputTokens`.
+- Not every provider counts reasoning tokens. When a response carries reasoning but no count, `reasoning_tokens` is left out of `usage` and `completion_tokens_details` rather than reported as 0.
 - `x_nanogpt_pricing` is an extension object (final chunk only in streaming; top-level on non-stream JSON):
   - Stable/core fields:
     - `amount?: number`

@@ -148,6 +148,8 @@ If enabled, the **final chunk** includes a `usage` field. (Some features, like p
 
 When provider usage is missing or zero, NanoGPT may backfill final usage counts from pricing metadata (`x_nanogpt_pricing.inputTokens` / `x_nanogpt_pricing.outputTokens`) for consistency.
 
+Not every provider counts reasoning tokens. When a stream carries reasoning but no count, `reasoning_tokens` is left out of `usage` and `completion_tokens_details` rather than reported as 0.
+
 ### `x_nanogpt_pricing` In Streaming
 
 `x_nanogpt_pricing` is an extension object:

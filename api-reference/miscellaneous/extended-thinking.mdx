@@ -18,9 +18,26 @@ Not every model exposes reasoning text. If a model does not emit a reasoning str
 `-thinking` is a legacy alias pattern for some model families only, not universal.
 Do not assume `-thinking` works for arbitrary model IDs. Always check `GET /api/v1/models` for exact valid IDs.
 
+## Turn Reasoning On
+
+Use `/api/v1/chat/completions` and send any of these. You don't need a different base URL.
+
+```json
+{ "reasoning": { "enabled": true } }
+{ "reasoning": { "effort": "high" } }
+{ "reasoning_effort": "high" }
+{ "include_reasoning": true }
+{ "thinking": { "type": "enabled" } }
+```
+
+Some models also have a `:thinking` ID that reasons without being asked, and their plain ID may start with reasoning off.
+For example, `minimax/minimax-m3` only thinks when a request asks for it, while `minimax/minimax-m3:thinking` and `minimax/minimax-latest` think by default. Some other APIs think by default on this model, so requests moved from one need a setting above or the `:thinking` ID.
+
+MiniMax M3 decides on each turn whether to think, so a simple turn can return no reasoning even with thinking on.
+
 ## Endpoint Variants (Chat Completions)
 
-NanoGPT provides three base paths for chat completions. All accept the same request format and model names, but differ in how reasoning content is delivered:
+NanoGPT provides three base paths for chat completions. All accept the same request format and model names, but differ in how reasoning content is delivered. None of them turns reasoning on; they only change where it appears:
 
 | Base URL | Behavior | Use When |
 | --- | --- | --- |
@@ -140,6 +157,10 @@ The final message may include a separate reasoning field:
   ]
 }
 ```
+
+## Reasoning Token Counts
+
+`usage.completion_tokens_details.reasoning_tokens` and `usage.reasoning_tokens` show the count when the provider reports it. Not every provider does. When a response carries reasoning but no count, both fields are left out rather than reported as 0, so read a missing count as unknown. The Responses API requires `output_tokens_details.reasoning_tokens` to be a number, so an unknown count shows as 0 there. Reasoning tokens are included in `completion_tokens` either way.
 
 ## Cost Notes
 
