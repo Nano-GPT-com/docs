@@ -317,6 +317,9 @@ GPT-6 Astra and Claude Fable 5.1 support [inline reasoning effort updates](/api-
 | `stop_sequence` | Hit a custom stop sequence |
 | `tool_use` | Model wants to use a tool |
 | `content_filter` | Content was filtered |
+| `refusal` | Claude declined for safety reasons |
+
+If an answer stops with `content_filter` or `refusal` after output has started, the request is charged for its input and the output generated so far. See [Content Policy and Empty Responses](/api-reference/miscellaneous/error-handling#content-policy-and-empty-responses).
 
 ### Streaming Response (SSE)
 
