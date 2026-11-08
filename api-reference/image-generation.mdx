@@ -259,6 +259,8 @@ See [Generate Images](/api-reference/endpoint/image-api-generate) for the endpoi
 
 `input_references` accepts an array of image references.
 
+GPT Image 2.5 Flare (`openai/gpt-image-2.5/flare/text-to-image`) and Sunburst (`openai/gpt-image-2.5/sunburst/text-to-image`) accept up to 16 references using the same model ID as text-only generation. References automatically select edit mode; masks are not supported. The `/api/v1/image-models` catalog exposes this through `capabilities.image_to_image` and `supported_parameters.max_input_images`.
+
 Supported entries:
 
 ```json
