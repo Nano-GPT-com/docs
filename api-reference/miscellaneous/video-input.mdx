@@ -135,7 +135,7 @@ See [Messages](/api-reference/endpoint/messages#video-block) for endpoint-specif
 
 ## YouTube URLs
 
-YouTube pass-through is model- and route-dependent. An applicable direct Gemini route may accept a public YouTube URL. A route that would need NanoGPT to fetch or materialize it returns `youtube_video_route_not_supported`. NanoGPT does not download or scrape YouTube for video input. The separate opt-in YouTube transcript feature is not video understanding.
+YouTube pass-through is model- and route-dependent. An applicable direct Gemini route may accept a public YouTube URL. A route that would need NanoGPT to fetch or materialize it returns `youtube_video_route_not_supported`. A link the model can't read, such as a private or deleted video, normally returns `invalid_media_input`. On a USD balance, a YouTube request reserves enough for a full-length input, or everything you can spend if that is less, and the unused amount is released when the request finishes. NanoGPT does not download or scrape YouTube for video input. The separate opt-in YouTube transcript feature is not video understanding.
 
 Batches for some Gemini models also accept public YouTube links. See [YouTube videos with Gemini](/api-reference/endpoint/batches#youtube-videos-with-gemini).
 

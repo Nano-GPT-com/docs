@@ -106,13 +106,13 @@ Chat Completions rows require a non-empty `messages` array and a positive `max_t
 
 ### YouTube videos with Gemini
 
-Batches for `google/gemini-3.8-flash`, `google/gemini-3.5-flash`, and `google/gemini-3-flash-preview` also accept public YouTube links as `video_url` parts in user messages:
+Batches for `google/gemini-3.8-flash`, `google/gemini-3.7-flash`, `google/gemini-3.5-flash`, `google/gemini-3-flash-preview`, and `google/gemini-3.1-pro-preview` also accept public YouTube links as `video_url` parts in user messages:
 
 ```jsonl
 {"custom_id":"video-1","method":"POST","url":"/v1/chat/completions","body":{"model":"google/gemini-3.8-flash","messages":[{"role":"user","content":[{"type":"text","text":"Summarize this video in one sentence."},{"type":"video_url","video_url":{"url":"https://www.youtube.com/watch?v=jNQXAC9IVRw"}}]}],"max_tokens":256}}
 ```
 
-Links must use HTTPS and point at a public video: watch, `youtu.be`, Shorts, live, and embed links work. Other video sources, `start_offset` and `end_offset`, and YouTube links sent as `image_url` are rejected.
+Links must use HTTPS and point at a public video: watch, `youtu.be`, Shorts, live, and embed links work. Each request can link up to two videos. Other video sources, `start_offset` and `end_offset`, and YouTube links sent as `image_url` are rejected.
 
 Gemini's batch upstreams can't read YouTube links, so when any row in a batch has one, every row in that batch runs through NanoGPT's normal routing, like open-source model rows. These rows cost the same as synchronous requests, without the 50% batch discount. A video's length isn't known until the model reads it, so each video row reserves the model's full input limit of 1,048,576 tokens at creation. The unused part of the reservation is released when the batch settles.
 
