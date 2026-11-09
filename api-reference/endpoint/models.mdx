@@ -115,6 +115,9 @@ on your chosen API host for current information.
 compatibility alias retains M3's request format and structured-output support;
 it does not automatically select MiniMax M3.1 Flash. Plain `minimax/minimax-m3`
 only thinks when a request [asks for it](/api-reference/miscellaneous/extended-thinking#turn-reasoning-on).
+Reasoning isn't guaranteed on MiniMax M3 Thinking. When MiniMax is the provider, such as with
+`provider: { "only": ["minimax"] }`, M3's thinking is adaptive, so the model can answer
+without any, and MiniMax has no setting to force it.
 
 For the newer model, select `minimax/minimax-m3.1-flash` explicitly. It is included
 in subscriptions and supports text, image, and video input, tool calling, a
