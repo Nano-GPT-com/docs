@@ -22,6 +22,10 @@ The link between a placeholder and its key exists only in memory for that one re
 
 Masking is one more layer, not a guarantee. It only recognises known formats, and a model's tool call can still use a key once it's been put back. The better approach is still to keep API keys and other sensitive information out of your prompts, or to use Private Mode.
 
+## In the Web App
+
+In the NanoGPT web app, recognised credentials are also replaced in your browser before a request is sent, on chat, titles, memory analysis, multi-model chat, Fusion, and image and video prompts. The keys go back into the reply in your browser too. The link between each placeholder and its key stays in that tab's memory for your recent conversations, so keys can go back into later replies; the keys aren't written to the browser's storage. The server's pass still runs behind it, and it covers anything the browser missed.
+
 ## Turning It On or Off
 
 Change it for your account under **Settings > Privacy & analytics**, or for one request with a header:
@@ -53,7 +57,9 @@ When masking ran, the response carries `x-nanogpt-api-key-masking: on`. It says 
 
 Text from files you attach in web chat, such as code, `.env` files and extracted documents, is covered once it's part of the message. It only recognises known key formats there too.
 
-It doesn't cover images, audio, embeddings or private (TEE) models, or files passed to a provider as files, such as base64 or URL file parts and PDFs sent to a model that reads them natively. Text read from a scanned document is also sent to an OCR provider before masking runs.
+Plain-text document blocks and inline UTF-8 text files up to 3 MiB, such as code, config or `.env` files sent as base64, are covered too.
+
+It doesn't cover images, audio, embeddings or private (TEE) models, or binary files passed to a provider as files, such as URL file parts, PDFs and Office files. Text read from a scanned document is also sent to an OCR provider before masking runs.
 
 On `/v1/completions`, `echo`, `logprobs`, token-ID prompts and batched streaming aren't covered.
 
@@ -73,7 +79,7 @@ Models sometimes shorten a placeholder on their own, writing something like `⟦
 
 ## Other Credential Types
 
-Masking of other credential types is rolling out gradually. While it isn't on for your account, these settings have no effect. Once it is, each type can be turned off under **Settings > Privacy & analytics**, or for one request by listing them, comma-separated, in `x-nanogpt-api-key-masking-exclude`:
+Masking also covers the credential types below. You can turn each one off under **Settings > Privacy & analytics**, or for one request by listing them, comma-separated, in `x-nanogpt-api-key-masking-exclude`:
 
 | Name | What it covers |
 | --- | --- |
@@ -82,6 +88,7 @@ Masking of other credential types is rolling out gradually. While it isn't on fo
 | `credential_urls` | Passwords in database URLs |
 | `login_tokens` | JWTs and bearer tokens |
 | `wallet_secrets` | Seed phrases, WIF keys and wallet private keys |
+| `payment_details` | Payment card numbers with a card label, and IBANs |
 | `other_credentials` | Generated passwords and secrets in named fields |
 
 ```bash
@@ -89,6 +96,12 @@ Masking of other credential types is rolling out gradually. While it isn't on fo
 ```
 
 Unknown names are ignored. While a value is masked the model can't read it, so asking a model to decode a JWT, for example, won't work unless you exclude that type.
+
+## Strict Tool Calls
+
+By default, real keys go back into tool calls your own client runs, so agents can write config files and call APIs. A model that has been tricked can use a key the same way. To restrict this, turn on strict tool calls under **Settings > Privacy & analytics**, or for one request send `x-nanogpt-api-key-masking-tool-calls: strict`.
+
+In strict mode, a credential in a tool call's arguments goes back only when it sits inside a URL on a host you sent that credential to. Everywhere else it stays a placeholder, including `echo KEY > .env` or a request header flag, so a tool that needs the real value there will get the placeholder instead. `x-nanogpt-api-key-masking-tool-calls: default` turns strict mode off for one request.
 
 ## Errors
 
