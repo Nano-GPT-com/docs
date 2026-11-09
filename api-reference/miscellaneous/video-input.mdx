@@ -137,6 +137,8 @@ See [Messages](/api-reference/endpoint/messages#video-block) for endpoint-specif
 
 YouTube pass-through is model- and route-dependent. An applicable direct Gemini route may accept a public YouTube URL. A route that would need NanoGPT to fetch or materialize it returns `youtube_video_route_not_supported`. NanoGPT does not download or scrape YouTube for video input. The separate opt-in YouTube transcript feature is not video understanding.
 
+Batches for some Gemini models also accept public YouTube links. See [YouTube videos with Gemini](/api-reference/endpoint/batches#youtube-videos-with-gemini).
+
 ## Validation errors
 
 Video errors use the endpoint's normal OpenAI- or Anthropic-compatible error envelope. Common `400` codes include:

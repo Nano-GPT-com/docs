@@ -104,6 +104,18 @@ All rows must use the same endpoint and model. `stream: true` is rejected.
 
 Chat Completions rows require a non-empty `messages` array and a positive `max_tokens` or `max_completion_tokens`. They support text and compatible `image_url` content. Image URLs may use HTTP, HTTPS, or base64 data URLs for PNG, JPEG, GIF, and WebP images.
 
+### YouTube videos with Gemini
+
+Batches for `google/gemini-3.8-flash`, `google/gemini-3.5-flash`, and `google/gemini-3-flash-preview` also accept public YouTube links as `video_url` parts in user messages:
+
+```jsonl
+{"custom_id":"video-1","method":"POST","url":"/v1/chat/completions","body":{"model":"google/gemini-3.8-flash","messages":[{"role":"user","content":[{"type":"text","text":"Summarize this video in one sentence."},{"type":"video_url","video_url":{"url":"https://www.youtube.com/watch?v=jNQXAC9IVRw"}}]}],"max_tokens":256}}
+```
+
+Links must use HTTPS and point at a public video: watch, `youtu.be`, Shorts, live, and embed links work. Other video sources, `start_offset` and `end_offset`, and YouTube links sent as `image_url` are rejected.
+
+Gemini's batch upstreams can't read YouTube links, so when any row in a batch has one, every row in that batch runs through NanoGPT's normal routing, like open-source model rows. These rows cost the same as synchronous requests, without the 50% batch discount. A video's length isn't known until the model reads it, so each video row reserves the model's full input limit of 1,048,576 tokens at creation. The unused part of the reservation is released when the batch settles.
+
 Responses rows require a non-empty `input` and an integer `max_output_tokens` of at least `16`.
 
 Embeddings rows require `model` and `input`, and take no output cap. `input` is a string or an array of up to 2,048 strings; token arrays and multimodal input are rejected. Rows may also set `dimensions` (`text-embedding-3-small` and `text-embedding-3-large` only), `encoding_format` (`float` or `base64`), and `user`. NanoGPT does not forward `user`. Any other field is rejected.
@@ -462,7 +474,7 @@ Remote HTTP(S) image URLs and image data URLs are accepted. Structured output th
 
 Batch jobs use NanoGPT account balance and do not use subscription included tokens. At creation, NanoGPT checks the balance against a conservative maximum-liability estimate based on the input and output caps. Completed usage is charged once after the batch reaches a terminal state. If there is no billable usage, no usage charge is created.
 
-- **OpenAI, Claude, and Gemini models, and some fine-tuned models:** token usage is priced 50% below the equivalent synchronous request. Non-token charges, where supported, keep their normal rate.
+- **OpenAI, Claude, and Gemini models, and some fine-tuned models:** token usage is priced 50% below the equivalent synchronous request. Non-token charges, where supported, keep their normal rate. A Gemini batch with a [YouTube video](#youtube-videos-with-gemini) is the exception: its rows are charged like open-source model rows.
 - **Other open-source models:** each row is charged exactly what the same synchronous request costs, including the automatic routing price, your subscriber discount, and the price of any provider you select. Rows are priced in USD, and a batch never costs more than the amount reserved when it was created.
 - **Open-source models with a batch price:** some models, such as `moonshotai/kimi-k3`, have a lower batch price for rows that use automatic routing. An alias such as `moonshotai/kimi-latest` uses the batch price of the model it points to. A row that sets `provider` pays that provider's normal price instead. A row never costs more than the same synchronous request.
 - **Embedding models:** input tokens are priced 50% below the synchronous embedding price: $0.01, $0.065, and $0.05 per million tokens for `text-embedding-3-small`, `text-embedding-3-large`, and `text-embedding-ada-002`. There are no output tokens. At creation, NanoGPT holds the estimated input cost plus 20%, with a $0.0001 minimum, then charges the tokens reported for successful rows. Failed rows are not charged.
