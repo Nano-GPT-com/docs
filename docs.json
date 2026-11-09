@@ -125,6 +125,7 @@
           "api-reference/miscellaneous/model-suffixes",
           "api-reference/miscellaneous/model-presets",
           "api-reference/miscellaneous/pii-redaction",
+          "api-reference/miscellaneous/api-key-masking",
           "api-reference/miscellaneous/oauth-pkce",
           "api-reference/miscellaneous/brave",
           "api-reference/miscellaneous/byok",

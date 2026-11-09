@@ -1,0 +1,100 @@
+---
+title: 'API Key Masking'
+description: 'Replace recognisable API keys in your prompts with placeholders before they reach a model provider.'
+---
+
+# API Key Masking
+
+NanoGPT replaces recognisable API keys in your prompts with placeholders before they reach a model provider, and puts the real keys back in the reply. It is on by default, free, and works the same on BYOK requests (the usual BYOK fee is unchanged).
+
+Masking is separate from [PII redaction](/api-reference/miscellaneous/pii-redaction), which is opt-in, paid and covers personal information.
+
+## How It Works
+
+Your request already passes through NanoGPT's servers on its way to the provider. While it does:
+
+1. NanoGPT runs a pattern match for known key formats. No AI model or third party is involved.
+2. Each key it finds is swapped for a placeholder such as `⟦APIKEY_k3x9qabc⟧`, which can't be turned back into the key. The same key keeps the same placeholder for your account, so prompt caching keeps working.
+3. Memory, web search, moderation and the model provider see only the placeholder.
+4. As the reply comes back, NanoGPT swaps the placeholders for the real keys, including in streamed replies and in tool calls your own client runs.
+
+The link between a placeholder and its key exists only in memory for that one request. NanoGPT doesn't write it or the key to its logs or database. A request with no key in it is sent unchanged.
+
+Masking is one more layer, not a guarantee. It only recognises known formats, and a model's tool call can still use a key once it's been put back. The better approach is still to keep API keys and other sensitive information out of your prompts, or to use Private Mode.
+
+## Turning It On or Off
+
+Change it for your account under **Settings > Privacy & analytics**, or for one request with a header:
+
+| Header | Effect |
+| --- | --- |
+| `x-nanogpt-api-key-masking: off` | Don't mask this request. |
+| `x-nanogpt-api-key-masking: on` | Mask this request, and return an error instead of sending it if masking can't run or isn't supported for the model. |
+
+The request header wins over your account setting, and your account setting wins over the default.
+
+```bash
+curl https://nano-gpt.com/api/v1/chat/completions \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "x-nanogpt-api-key-masking: off" \
+  -d '{"model": "deepseek/deepseek-v4-flash", "messages": [{"role": "user", "content": "Hello"}]}'
+```
+
+When masking ran, the response carries `x-nanogpt-api-key-masking: on`. It says only that masking ran, not whether a key was found.
+
+## What It Covers
+
+- `POST /v1/chat/completions`
+- `POST /v1/messages`
+- `POST /v1/responses`, native or through chat
+- `POST /v1/completions`, for string prompts and string arrays
+- `POST /v1/decisions`, and Decisions models through chat
+
+Text from files you attach in web chat, such as code, `.env` files and extracted documents, is covered once it's part of the message. It only recognises known key formats there too.
+
+It doesn't cover images, audio, embeddings or private (TEE) models, or files passed to a provider as files, such as base64 or URL file parts and PDFs sent to a model that reads them natively. Text read from a scanned document is also sent to an OCR provider before masking runs.
+
+On `/v1/completions`, `echo`, `logprobs`, token-ID prompts and batched streaming aren't covered.
+
+Background Responses API requests and stored Responses API conversations are only masked if you turned masking on yourself, with the header or your account setting. Those results keep their placeholders, because they are fetched after the request's mapping is gone.
+
+Hosted-tool credentials you deliberately supply, encrypted reasoning, signatures, correlation IDs and data URLs are left unchanged.
+
+## Where Keys Stay Masked
+
+Real keys go back into the reply and into tool calls your own client runs, so your tools keep working. These stay as placeholders:
+
+- A key inside a URL in the text of a reply, when the URL's host isn't one you sent that key to. This stops a reply from turning a key into a link or image that hands it to someone else.
+- Web search, provider-hosted tools and connected tools in the web app.
+- Requests using Redact on this device, where API keys aren't put back.
+
+Models sometimes shorten a placeholder on their own, writing something like `⟦APIKEY_…⟧`, in the same way people write `sk-...`. There's no key to put back in that case, so you see the text as the model wrote it.
+
+## Other Credential Types
+
+Masking of other credential types is rolling out gradually. While it isn't on for your account, these settings have no effect. Once it is, each type can be turned off under **Settings > Privacy & analytics**, or for one request by listing them, comma-separated, in `x-nanogpt-api-key-masking-exclude`:
+
+| Name | What it covers |
+| --- | --- |
+| `api_keys` | Recognisable API keys |
+| `private_keys` | Private key files |
+| `credential_urls` | Passwords in database URLs |
+| `login_tokens` | JWTs and bearer tokens |
+| `wallet_secrets` | Seed phrases, WIF keys and wallet private keys |
+| `other_credentials` | Generated passwords and secrets in named fields |
+
+```bash
+-H "x-nanogpt-api-key-masking-exclude: login_tokens,wallet_secrets"
+```
+
+Unknown names are ignored. While a value is masked the model can't read it, so asking a model to decode a JWT, for example, won't work unless you exclude that type.
+
+## Errors
+
+These apply only when you asked for masking yourself. Otherwise a request that can't be masked is sent as it is.
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| `400` | `api_key_masking_unsupported_model` | The model or request options aren't supported. Remove the header to send the request as it is. |
+| `503` | `api_key_masking_unavailable` | Masking couldn't run, so the request wasn't sent. |
