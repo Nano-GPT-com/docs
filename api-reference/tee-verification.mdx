@@ -80,7 +80,7 @@ The header has no effect on streaming requests, whose replies already match, on 
 
 ## Fetch a receipt
 
-Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. For streams, fetch it after the stream ends, because the receipt covers the whole stream. A stream that's cut off can't be verified: it usually has no receipt, even if its headers named one, and any receipt it does have won't match the bytes you received.
+Use the `X-Receipt-Id` value or the response body `id`, with the API key of the account that made the request. On `TEE/gemma-4-31b-it` streams the body `id` is NanoGPT's own, so use `X-Receipt-Id`. For streams, fetch it after the stream ends, because the receipt covers the whole stream. A stream that's cut off can't be verified: it usually has no receipt, even if its headers named one, and any receipt it does have won't match the bytes you received.
 
 ```bash
 curl "https://api.nano-gpt.com/api/v1/tee/signature/{receiptId}?model=TEE/glm-5.3-flash" \
@@ -115,6 +115,8 @@ Evidence for the upstream is in the session the receipt names in `upstream.verif
 - On the models in [the first table row above](#which-replies-have-a-receipt), you get Chutes TEE evidence carrying your nonce. If `X-TEE-Verification-Route` names another route, you get that route's report instead. `X-TEE-Provider` on the response names the route it describes.
 
 Don't pin `workload_keyset_digest`: it changes when the gateway renews its keys.
+
+Chutes TEE evidence covers every instance of the model and can take up to about a minute. If a provider doesn't finish in time, the request returns a `504` with code `tee_attestation_upstream_timeout`. Retry it with a new nonce.
 
 ## Python example
 
