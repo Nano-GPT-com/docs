@@ -185,6 +185,7 @@ When `detailed=true`, additional fields may be included per model:
 - `supported_service_tiers` — alternate `service_tier` values accepted by the model (`flex`, `fast`, and/or the legacy `priority` alias); an empty array means only the default tier is available
 - `pricing.prompt` and `pricing.completion` — current per-million-token prices in USD
 - `pricing.cacheReadInputPer1kTokens`, `pricing.cacheWriteInputPer1kTokens` and `pricing.cacheWriteInputPer1kTokens1h` — cache read, 5-minute cache write and 1-hour cache write prices in USD per 1,000 tokens, when the model has them (see [Pricing Object Structure](#pricing-object-structure))
+- `pricing.firstContextThresholdTokens`, `pricing.highContextThresholdTokens` and the prices above them — for models whose prices rise with prompt length (see [Long-Context Pricing](#long-context-pricing))
 - `pricing.unit` — `per_million_tokens`, the unit of `prompt` and `completion`
 - `icon_url` — small icon representing the provider
 - `cost_estimate` — internal rollup used in UI for cost hints (for example `"$"`, `"$$"`, or an object)
@@ -434,7 +435,41 @@ Enhanced format with model descriptions, context lengths, and pricing:
 | `currency` | string | Always "USD" |
 | `unit` | string | Always "per_million_tokens". Applies to `prompt` and `completion` only |
 
-Fields ending in `Per1kTokens` are USD per 1,000 tokens. Multiply them by 1,000 for the per-million price shown on the [pricing page](https://nano-gpt.com/api-pricing): Claude Opus 5.5's `cacheWriteInputPer1kTokens1h` of `0.008` is $8.00 per million tokens. Cache prices are left out for models with no cache pricing. These are base-context prices; models with long-context pricing also list `inputPer1kTokensAbove200k`, `outputPer1kTokensAbove200k`, `cacheReadInputPer1kTokensAbove200k` and `highContextThresholdTokens`.
+Fields ending in `Per1kTokens` are USD per 1,000 tokens. Multiply them by 1,000 for the per-million price shown on the [pricing page](https://nano-gpt.com/api-pricing): Claude Opus 5.5's `cacheWriteInputPer1kTokens1h` of `0.008` is $8.00 per million tokens. Cache prices are left out for models with no cache pricing. These are base-context prices; models whose prices rise with prompt length also list [long-context tiers](#long-context-pricing).
+
+### Long-Context Pricing
+
+Some models charge more once a prompt passes a threshold. A request whose prompt is longer than the threshold is billed entirely at that tier's prices: every input, cached and output token, not only the tokens past the threshold. Prompt length counts all input tokens, cached ones included. A model lists up to two tiers, and each tier lists every price that applies in it, including any that equal the base price.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `firstContextThresholdTokens` | number | Optional. Prompts longer than this many tokens are billed at the `AboveFirstThreshold` prices |
+| `inputPer1kTokensAboveFirstThreshold`, `outputPer1kTokensAboveFirstThreshold` | number | Input and output prices above the first threshold, in USD per 1,000 tokens |
+| `cacheReadInputPer1kTokensAboveFirstThreshold`, `cacheWriteInputPer1kTokensAboveFirstThreshold`, `cacheWriteInputPer1kTokens1hAboveFirstThreshold` | number | Cache read, 5-minute cache write and 1-hour cache write prices above the first threshold, in USD per 1,000 tokens, when the model has those cache prices |
+| `highContextThresholdTokens` | number | Optional. Prompts longer than this many tokens are billed at the `Above200k` prices. Despite the field names, the threshold is not always 200,000 |
+| `highContextThresholdCountsOutputTokens` | boolean | Optional. `true` when input plus output tokens count toward `highContextThresholdTokens` (Grok 4.3 and Grok Build) |
+| `inputPer1kTokensAbove200k`, `outputPer1kTokensAbove200k` | number | Input and output prices above the high threshold, in USD per 1,000 tokens |
+| `cacheReadInputPer1kTokensAbove200k`, `cacheWriteInputPer1kTokensAbove200k`, `cacheWriteInputPer1kTokens1hAbove200k` | number | Cache read, 5-minute cache write and 1-hour cache write prices above the high threshold, in USD per 1,000 tokens, when the model has those cache prices |
+
+Claude Haiku 5.5, for example, costs more once a prompt passes 100,000 tokens. A 1-hour cache write costs `0.0002` ($0.20 per million tokens) up to that point and `0.001` ($1.00 per million tokens) beyond it:
+
+```json
+"pricing": {
+  "prompt": 0.1,
+  "completion": 0.5,
+  "cacheReadInputPer1kTokens": 0.00001,
+  "cacheWriteInputPer1kTokens": 0.000125,
+  "cacheWriteInputPer1kTokens1h": 0.0002,
+  "firstContextThresholdTokens": 100000,
+  "inputPer1kTokensAboveFirstThreshold": 0.0005,
+  "outputPer1kTokensAboveFirstThreshold": 0.0025,
+  "cacheReadInputPer1kTokensAboveFirstThreshold": 0.00005,
+  "cacheWriteInputPer1kTokensAboveFirstThreshold": 0.000625,
+  "cacheWriteInputPer1kTokens1hAboveFirstThreshold": 0.001,
+  "currency": "USD",
+  "unit": "per_million_tokens"
+}
+```
 
 ### Distillation Policy
 

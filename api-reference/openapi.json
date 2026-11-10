@@ -8984,6 +8984,60 @@
                       "description": "Cost per 1,000 input tokens written to the prompt cache with a 1-hour lifetime, in USD. Omitted when the model has no 1-hour cache-write price",
                       "example": 0.004
                     },
+                    "firstContextThresholdTokens": {
+                      "type": "number",
+                      "description": "Prompts longer than this many tokens (cached ones included) are billed entirely at the AboveFirstThreshold prices. Omitted when the model has no first tier",
+                      "example": 100000
+                    },
+                    "inputPer1kTokensAboveFirstThreshold": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens above the first threshold, in USD"
+                    },
+                    "outputPer1kTokensAboveFirstThreshold": {
+                      "type": "number",
+                      "description": "Cost per 1,000 output tokens above the first threshold, in USD"
+                    },
+                    "cacheReadInputPer1kTokensAboveFirstThreshold": {
+                      "type": "number",
+                      "description": "Cost per 1,000 cached input tokens read above the first threshold, in USD"
+                    },
+                    "cacheWriteInputPer1kTokensAboveFirstThreshold": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens written to the prompt cache with the default 5-minute lifetime above the first threshold, in USD"
+                    },
+                    "cacheWriteInputPer1kTokens1hAboveFirstThreshold": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens written to the prompt cache with a 1-hour lifetime above the first threshold, in USD"
+                    },
+                    "highContextThresholdTokens": {
+                      "type": "number",
+                      "description": "Prompts longer than this many tokens (cached ones included) are billed entirely at the Above200k prices; the threshold is not always 200,000. Omitted when the model has no high tier",
+                      "example": 200000
+                    },
+                    "highContextThresholdCountsOutputTokens": {
+                      "type": "boolean",
+                      "description": "True when input plus output tokens count toward highContextThresholdTokens"
+                    },
+                    "inputPer1kTokensAbove200k": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens above the high threshold, in USD"
+                    },
+                    "outputPer1kTokensAbove200k": {
+                      "type": "number",
+                      "description": "Cost per 1,000 output tokens above the high threshold, in USD"
+                    },
+                    "cacheReadInputPer1kTokensAbove200k": {
+                      "type": "number",
+                      "description": "Cost per 1,000 cached input tokens read above the high threshold, in USD"
+                    },
+                    "cacheWriteInputPer1kTokensAbove200k": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens written to the prompt cache with the default 5-minute lifetime above the high threshold, in USD"
+                    },
+                    "cacheWriteInputPer1kTokens1hAbove200k": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens written to the prompt cache with a 1-hour lifetime above the high threshold, in USD"
+                    },
                     "currency": {
                       "type": "string",
                       "description": "Always 'USD'",
