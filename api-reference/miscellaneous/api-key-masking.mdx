@@ -49,7 +49,7 @@ When masking ran, the response carries `x-nanogpt-api-key-masking: on`. It says 
 
 ## What It Covers
 
-- `POST /v1/chat/completions`
+- `POST /v1/chat/completions`, including predicted output (`prediction`) and custom tool inputs
 - `POST /v1/messages`
 - `POST /v1/responses`, native or through chat
 - `POST /v1/completions`, for string prompts and string arrays
@@ -72,6 +72,7 @@ Hosted-tool credentials you deliberately supply, encrypted reasoning, signatures
 Real keys go back into the reply and into tool calls your own client runs, so your tools keep working. These stay as placeholders:
 
 - A key inside a URL in the text of a reply, when the URL's host isn't one you sent that key to. This stops a reply from turning a key into a link or image that hands it to someone else.
+- A key in a link or image address with no host in a reply, such as `![chart](/chart.png?key=…)` or `<img src="/x?key=…">`. The web app would load that address from NanoGPT, so the key would end up in a request.
 - Web search, provider-hosted tools and connected tools in the web app.
 - Requests using Redact on this device, where API keys aren't put back.
 
@@ -86,7 +87,7 @@ Masking also covers the credential types below. You can turn each one off under 
 | `api_keys` | Recognisable API keys |
 | `private_keys` | Private key files |
 | `credential_urls` | Passwords in database URLs |
-| `login_tokens` | JWTs and bearer tokens |
+| `login_tokens` | JWTs, bearer tokens, Basic auth and cookies |
 | `wallet_secrets` | Seed phrases, WIF keys and wallet private keys |
 | `payment_details` | Payment card numbers with a card label, and IBANs |
 | `other_credentials` | Generated passwords and secrets in named fields |
