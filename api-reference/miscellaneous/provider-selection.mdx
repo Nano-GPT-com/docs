@@ -163,6 +163,7 @@ Notes:
 - Recommended: use `X-Provider` or body `provider` for explicit provider overrides. The API also accepts a trailing provider suffix for user-selectable providers, such as `model-id:cerebras`, but request fields are clearer and easier to validate against provider-discovery responses.
 - To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `novita`, `cloudflare`, `baseten`, or `inceptron`.
 - If the request would otherwise be subscription-covered, explicit provider selection still bypasses subscription coverage and bills the request as pay-as-you-go. You do not need to also send `billing_mode: "paygo"` or `X-Billing-Mode: paygo`.
+- If **Enable paid models on API** is off and the request doesn't force pay-as-you-go with `billing_mode: "paygo"` or `X-Billing-Mode: paygo`, a provider pick returns an error and nothing is charged. `X-Provider` or a `provider` string returns `403 provider_selected`. `provider.only` or `provider.allow_fallbacks: false` returns `400 provider_selection_not_available`. Other `provider` object fields, such as `order`, `sort` and `ignore`, are ignored for that subscription.
 
 ## Provider Routing Object
 
@@ -448,7 +449,7 @@ Invalid object shapes return a structured `400` error:
 - `provider.min_quantization` must be a supported comparable quantization string. `unknown` is only valid in `provider.quantizations`.
 - If `provider.quantizations` and `provider.min_quantization` have no overlap, the request is invalid.
 - Unknown providers in `only` return `provider_unknown_provider`.
-- Unknown providers in `order` and `ignore` are ignored. The exception is `provider.allow_fallbacks: false`, which makes `order` the full list, enforced like `only`. If `order` names no usable provider, the request returns `provider_unknown_provider`. If it shares none with `only`, the request returns `provider_order_only_conflict`. If **Enable paid models on API** is off for a subscription, it returns `provider_order_not_available`.
+- Unknown providers in `order` and `ignore` are ignored. The exception is `provider.allow_fallbacks: false`, which makes `order` the full list, enforced like `only`. If `order` names no usable provider, the request returns `provider_unknown_provider`. If it shares none with `only`, the request returns `provider_order_only_conflict`. If **Enable paid models on API** is off for a subscription, it returns `provider_selection_not_available`.
 - `provider.data_collection` must be `allow` or `deny`. `deny` returns `provider_data_collection_unsupported`, unless the request also sends `provider.zdr: true`. To require zero data retention, send `provider.zdr: true`.
 - `provider.max_price.prompt` and `provider.max_price.completion` must be non-negative numbers.
 - `provider.allow_fallbacks` and `provider.require_parameters` must be booleans.
