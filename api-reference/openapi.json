@@ -8969,6 +8969,21 @@
                       "description": "Cost per million output tokens in USD",
                       "example": 10
                     },
+                    "cacheReadInputPer1kTokens": {
+                      "type": "number",
+                      "description": "Cost per 1,000 cached input tokens read, in USD. Omitted when the model has no cache-read price",
+                      "example": 0.0001
+                    },
+                    "cacheWriteInputPer1kTokens": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens written to the prompt cache with the default 5-minute lifetime, in USD. Omitted when the model has no cache-write price",
+                      "example": 0.0025
+                    },
+                    "cacheWriteInputPer1kTokens1h": {
+                      "type": "number",
+                      "description": "Cost per 1,000 input tokens written to the prompt cache with a 1-hour lifetime, in USD. Omitted when the model has no 1-hour cache-write price",
+                      "example": 0.004
+                    },
                     "currency": {
                       "type": "string",
                       "description": "Always 'USD'",
@@ -8976,7 +8991,7 @@
                     },
                     "unit": {
                       "type": "string",
-                      "description": "Always 'per_million_tokens'",
+                      "description": "Always 'per_million_tokens'. Applies to prompt and completion; fields ending in Per1kTokens are per 1,000 tokens",
                       "default": "per_million_tokens"
                     }
                   }
