@@ -1,0 +1,175 @@
+---
+title: "AI Image Detection"
+api: "POST https://nano-gpt.com/api/v1/ai-detection/image"
+description: "Check whether an image was made or edited with AI"
+---
+
+## Overview
+
+Use `POST /api/v1/ai-detection/image` to check whether an image is AI-generated. Send the image as base64 or as a direct link to the image file. Detection is run by Pangram.
+
+<Tip>
+  To check an image without code, use the [AI image detector](https://nano-gpt.com/ai-detection/image) on nano-gpt.com. It uses the same detectors and prices.
+</Tip>
+
+## Endpoint
+
+```text
+POST https://nano-gpt.com/api/v1/ai-detection/image
+```
+
+## Authentication
+
+An API key is required. Browser sessions are not accepted.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Request Body
+
+Send a link:
+
+```json
+{
+  "image_url": "https://example.com/photo.jpg",
+  "model": "pangram-image-1"
+}
+```
+
+Or send the image itself:
+
+```json
+{
+  "image": "data:image/png;base64,iVBORw0KGgo...",
+  "model": "pangram-image-flash-1"
+}
+```
+
+## Parameters
+
+Send exactly one of `image` or `image_url`.
+
+| Field | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `image` | string | One of `image` / `image_url` | - | Base64-encoded image, or a `data:image/png;base64,...` data URL. A data URL's type must match the file's bytes. |
+| `image_url` | string | One of `image` / `image_url` | - | Public `http` or `https` link to the image file. |
+| `model` | string | No | `pangram-image-1` | Detection model. Allowed values: `pangram-image-1`, `pangram-image-flash-1`. |
+
+## Models and Pricing
+
+| Model | Price per image |
+| --- | --- |
+| `pangram-image-1` | $0.3125 |
+| `pangram-image-flash-1` | $0.0625 |
+
+Your balance and any API key spend limits must cover the price before the image is read. You are charged only when a result is returned; a detector failure is not charged. If you disconnect after the image reaches the detector, the check still finishes and is charged.
+
+For API keys with an allowed-model list, the list must include `pangram-image-detection` (for `pangram-image-1`) or `pangram-image-flash-detection` (for `pangram-image-flash-1`).
+
+## Image Rules
+
+- Formats: PNG, JPEG or WebP.
+- Size: up to 32 MiB (33,554,432 bytes).
+- The JSON request body is limited to 4,400,000 bytes, so base64 images above about 3.3 MB must be sent with `image_url`.
+- `image_url` must be a direct link to the image file, not a web page that shows it. Links with a username or password are refused. The download times out after 30 seconds.
+- Link downloads count against the same per-account and per-IP request and byte quotas as other NanoGPT remote file fetches.
+- Up to 10 AI detection checks can run at once per account. This limit is shared with text detection.
+
+## Response
+
+```json
+{
+  "object": "ai_detection.image",
+  "model": "pangram-image-1",
+  "prediction": "Likely AI",
+  "ai_likelihood": 0.8,
+  "confidence": "High",
+  "detection_source": "model",
+  "heatmap": null,
+  "metadata": {},
+  "thumbnail": null,
+  "version": "detector version",
+  "cost_usd": 0.3125,
+  "pricing": {
+    "amount": 0.3125,
+    "currency": "USD"
+  }
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `object` | string | Always `ai_detection.image`. |
+| `model` | string | Model used. |
+| `prediction` | string | One of `AI Detected`, `Likely AI`, `Unsure`, `Likely No AI`, `No AI`, `Partially AI`. |
+| `ai_likelihood` | number or null | Likelihood that the image is AI-generated, from 0 to 1. |
+| `confidence` | string or null | `Low`, `Medium` or `High`. |
+| `detection_source` | string | `model` when the detector judged the pixels, `c2pa` when the result comes from the file's C2PA content credentials. |
+| `heatmap` | object or null | `{ "grid": number[][], "patch_stride": number }`. `grid` holds an AI score from 0 to 1 for each image patch, row by row. |
+| `metadata` | object | File metadata found by the detector, such as Content Credentials (`c2pa`), camera and software. |
+| `thumbnail` | object or null | `{ "data_url": string, "width": number, "height": number }`. |
+| `version` | string or null | Detector version. |
+| `cost_usd` | number | Price of the check in USD. |
+| `pricing` | object | Amount charged and the balance it was charged to (`USD` or `XNO`). |
+
+The request returns when the check finishes. The server stops waiting for the detector after about 280 seconds and returns `504` with code `timeout`.
+
+## Example
+
+```bash
+curl -sS -X POST "https://nano-gpt.com/api/v1/ai-detection/image" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"image_url":"https://example.com/photo.jpg","model":"pangram-image-1"}'
+```
+
+Send a local file as base64:
+
+```bash
+printf '{"image":"%s"}' "$(base64 < photo.png | tr -d '\n')" > request.json
+
+curl -sS -X POST "https://nano-gpt.com/api/v1/ai-detection/image" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data-binary @request.json
+```
+
+## Common Errors
+
+Errors use this shape:
+
+```json
+{
+  "error": {
+    "message": "Use a PNG, JPEG or WebP image.",
+    "code": "unsupported_image_type"
+  }
+}
+```
+
+| Status | Code | Description |
+| --- | --- | --- |
+| 400 | `invalid_json` | Request body is not valid JSON. |
+| 400 | `invalid_request` | Neither or both of `image` and `image_url` were sent. |
+| 400 | `invalid_model` | `model` is not `pangram-image-1` or `pangram-image-flash-1`. |
+| 400 | `invalid_image` | `image` is not valid base64 or a valid base64 data URL. |
+| 400 | `invalid_image_url` | The link is not a public `http`/`https` URL, or no image could be loaded from it. |
+| 401 | `missing_api_key` | API key is required. |
+| 401 | `invalid_api_key` | API key is not valid. |
+| 402 | `insufficient_balance` | Balance is too low for the check. |
+| 403 | `paid_features_disabled` | Paid models are disabled for API use on this subscription. |
+| 403 | `model_not_allowed` | The API key's allowed-model list does not include this detection model. |
+| 403 | `zdr_provider_required` | The API key or request requires Zero Data Retention (ZDR), for example `"provider": { "zdr": true }`. AI detection is not available on ZDR requests. |
+| 413 | `request_body_too_large` | JSON body is over 4,400,000 bytes. |
+| 413 | `image_too_large` | Image is over 32 MiB. |
+| 413 | `file_too_large` | The detector refused the file as too large. |
+| 415 | `unsupported_image_type` | Image is not PNG, JPEG or WebP, or a data URL's type does not match the file. |
+| 422 | `invalid_image` | The detector could not read the image. |
+| 422 | `unsafe_content` | The file can't be checked. |
+| 429 | `link_rate_limited` | Too many link fetches. Try again later. |
+| 429 | `too_many_concurrent_requests` | 10 AI detection checks are already running for this account. Check `Retry-After`. |
+| 429 | API key limit code | An API key spend limit was reached, for example `daily_usd_limit_exceeded`. Check `Retry-After`. |
+| 502 | `upstream_error`, `upstream_task_failed`, `upstream_malformed_result`, `upstream_missing_task_id` | The detector failed. Not charged. |
+| 503 | `link_quota_unavailable` | Link checks are temporarily unavailable. |
+| 503 | `service_unavailable`, `service_busy` | The detector is unavailable or busy. Try again later. |
+| 504 | `timeout` | The detector did not finish in time. |

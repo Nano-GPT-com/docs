@@ -1,0 +1,205 @@
+---
+title: "AI Video Detection"
+api: "POST https://nano-gpt.com/api/v1/ai-detection/video"
+description: "Check whether a video was made with AI, frame by frame"
+---
+
+## Overview
+
+Use `POST /api/v1/ai-detection/video` to check whether a video is AI-generated. Send a direct link to an MP4, MOV or WebM file up to 2 minutes long. The result covers the whole video, time segments and individual frames. Detection is run by Pangram.
+
+<Tip>
+  To upload a video file instead of sending a link, use the [AI video detector](https://nano-gpt.com/ai-detection/video) on nano-gpt.com. It uses the same detector and price.
+</Tip>
+
+## Endpoint
+
+```text
+POST https://nano-gpt.com/api/v1/ai-detection/video
+```
+
+## Authentication
+
+An API key is required. Browser sessions are not accepted.
+
+- `Authorization: Bearer YOUR_API_KEY`
+- `x-api-key: YOUR_API_KEY`
+
+## Request Body
+
+```json
+{
+  "video_url": "https://example.com/clip.mp4"
+}
+```
+
+## Parameters
+
+| Field | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `video_url` | string | Yes | - | Public `http` or `https` link to the video file. |
+
+There is one video detection model; the request takes no `model` field.
+
+## Pricing
+
+| Item | Amount |
+| --- | --- |
+| Price | $0.0625 per second of video, rounded up to whole seconds |
+| Maximum charge | $7.50 (a 2-minute video) |
+| Required before the download | $7.50 of balance and API key spend limit |
+
+The server downloads the video only after your balance and any API key spend limits cover $7.50, the price of the longest video it accepts. The charge is then based on the duration the detector reports, or the duration the server measured when the detector reports none, and is never more than $7.50. For example, an 11.1-second video is billed as 12 seconds: $0.75.
+
+You are charged only when a result is returned; a detector failure is not charged. If you disconnect after the video reaches the detector, the check still finishes and is charged.
+
+For API keys with an allowed-model list, the list must include `pangram-video-detection`.
+
+## Video Rules
+
+- `video_url` must be a direct link to the video file, not a web page that plays it. Links with a username or password are refused.
+- The link must return a successful response with a `Content-Type` of `video/mp4`, `video/quicktime` or `video/webm`. A `text/*` response, such as an HTML page, is refused.
+- The file must start with an MP4/MOV or WebM container header. A file that is not a video is refused even when the server labels it as one.
+- Size: up to 500 MiB (524,288,000 bytes).
+- Length: up to 2 minutes (120 seconds after rounding up to whole seconds). The server reads the length from the file before charging.
+- The download must finish within 5 minutes.
+- Link downloads count against the same per-account and per-IP request and byte quotas as other NanoGPT remote file fetches.
+- Up to 2 video checks can run at once per account.
+
+The server keeps a private copy of the video for the check and deletes it when the check ends.
+
+## Response
+
+```json
+{
+  "object": "ai_detection.video",
+  "duration_ms": 11100,
+  "cost_usd": 0.75,
+  "stage": "STAGE_SUCCESS",
+  "schema_version": "1.1",
+  "headline": "AI Detected",
+  "prediction": "AI Detected",
+  "prediction_short": "ai",
+  "version": "detector version",
+  "source": {
+    "content_type": "video/mp4",
+    "size_bytes": 4194304,
+    "duration_ms": 11100,
+    "fps": 30,
+    "width": 1280,
+    "height": 720
+  },
+  "sampling": {
+    "fps": 3
+  },
+  "frames": [
+    {
+      "frame_id": 0,
+      "timestamp_ms": 0,
+      "result": {
+        "prediction": "AI Detected",
+        "ai_likelihood": 0.97,
+        "confidence": "High",
+        "detection_source": "model",
+        "version": "detector version",
+        "heatmap": null,
+        "metadata": {},
+        "thumbnail": null
+      }
+    }
+  ],
+  "segments": [
+    {
+      "id": 0,
+      "range": { "start_ms": 0, "end_ms": 11100 },
+      "prediction_short": "ai",
+      "prediction": "AI Detected",
+      "frame_ids": [0]
+    }
+  ],
+  "frames_processed": 34,
+  "total_frames": 34,
+  "fraction_ai": 1,
+  "fraction_human": 0,
+  "fraction_mixed": 0,
+  "pricing": {
+    "amount": 0.75,
+    "currency": "USD"
+  }
+}
+```
+
+The example is shortened to one frame.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `object` | string | Always `ai_detection.video`. |
+| `duration_ms` | number | Billed duration in milliseconds. |
+| `cost_usd` | number | Price of the check in USD. |
+| `stage` | string | `STAGE_SUCCESS`. |
+| `schema_version` | string | Result schema version. |
+| `headline` | string | Short summary of the result. |
+| `prediction` | string | Overall verdict. |
+| `prediction_short` | string | `no_ai`, `mixed`, `ai` or `unsure`. |
+| `version` | string | Detector version. |
+| `source` | object | The checked file: `content_type`, `size_bytes`, `duration_ms`, `fps`, `width`, `height`. |
+| `sampling` | object | `fps`: frames sampled per second of video. |
+| `frames` | array | Sampled frames. Each has `frame_id`, `timestamp_ms` and a `result` with the same fields as an [image detection](/api-reference/endpoint/ai-detection-image) result: `prediction`, `ai_likelihood`, `confidence`, `detection_source`, `version`, `heatmap`, `metadata`, `thumbnail`. |
+| `segments` | array | Time ranges with one verdict each: `id`, `range` (`start_ms`, `end_ms`), `prediction`, `prediction_short` (`human`, `likely_human`, `unsure`, `likely_ai`, `ai` or `mixed`) and the `frame_ids` in the range. |
+| `frames_processed` | number | Number of sampled frames analyzed. |
+| `total_frames` | number | Number of frames sampled for analysis. |
+| `fraction_ai`, `fraction_human`, `fraction_mixed` | number | Share of the video judged AI, human or mixed, from 0 to 1. Other `fraction_*` fields may appear. |
+| `pricing` | object | Amount charged and the balance it was charged to (`USD` or `XNO`). |
+
+The request returns when the check finishes, which can take several minutes. Set your client timeout to at least 30 minutes. The server stops waiting for the detector after about 28 minutes and returns `504` with code `timeout`.
+
+## Example
+
+```bash
+curl -sS -X POST "https://nano-gpt.com/api/v1/ai-detection/video" \
+  -H "Authorization: Bearer $NANOGPT_API_KEY" \
+  -H "Content-Type: application/json" \
+  --max-time 1800 \
+  -d '{"video_url":"https://example.com/clip.mp4"}'
+```
+
+## Common Errors
+
+Errors use this shape:
+
+```json
+{
+  "error": {
+    "message": "Videos can be up to 2 minutes long.",
+    "code": "video_too_long"
+  }
+}
+```
+
+| Status | Code | Description |
+| --- | --- | --- |
+| 400 | `invalid_json` | Request body is not valid JSON. |
+| 400 | `invalid_video_url` | `video_url` is missing, is not a public `http`/`https` URL, or the video could not be downloaded. |
+| 401 | `missing_api_key` | API key is required. |
+| 401 | `invalid_api_key` | API key is not valid. |
+| 402 | `insufficient_balance` | Balance does not cover the $7.50 required before the download. |
+| 403 | `paid_features_disabled` | Paid models are disabled for API use on this subscription. |
+| 403 | `model_not_allowed` | The API key's allowed-model list does not include `pangram-video-detection`. |
+| 403 | `zdr_provider_required` | The API key or request requires Zero Data Retention (ZDR), for example `"provider": { "zdr": true }`. AI detection is not available on ZDR requests. |
+| 413 | `request_body_too_large` | JSON body is over 4,400,000 bytes. |
+| 413 | `video_too_large` | Video is over 500 MiB. |
+| 413 | `file_too_large` | The detector refused the file as too large. |
+| 415 | `not_a_video_file` | The link returns a web page or other non-video file. |
+| 415 | `unsupported_video_type` | The video is not MP4, MOV or WebM. |
+| 422 | `unreadable_duration` | The server could not read the video's length. Try an MP4 file. |
+| 422 | `video_too_long` | Video is longer than 2 minutes. |
+| 422 | `invalid_video` | The detector could not read the video. |
+| 422 | `unsafe_content` | The file can't be checked. |
+| 429 | `link_rate_limited` | Too many link fetches. Try again later. |
+| 429 | `too_many_concurrent_requests` | 2 video checks are already running for this account. Check `Retry-After`. |
+| 429 | API key limit code | An API key spend limit was reached, for example `daily_usd_limit_exceeded`. Check `Retry-After`. |
+| 502 | `upstream_error`, `upstream_task_failed`, `upstream_malformed_result`, `upstream_missing_task_id` | The detector failed. Not charged. |
+| 503 | `link_quota_unavailable` | Link checks are temporarily unavailable. |
+| 503 | `storage_unavailable`, `ai_detection_input_cleanup_unavailable` | Temporary video storage is unavailable. Retry. |
+| 503 | `service_unavailable`, `service_busy` | The detector is unavailable or busy. Try again later. |
+| 504 | `timeout` | The detector did not finish in time. |

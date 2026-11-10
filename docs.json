@@ -58,6 +58,8 @@
           "api-reference/endpoint/moderation-models",
           "api-reference/endpoint/moderations",
           "api-reference/endpoint/ai-detection",
+          "api-reference/endpoint/ai-detection-image",
+          "api-reference/endpoint/ai-detection-video",
           "api-reference/endpoint/transcribe",
           "api-reference/endpoint/transcribe-status",
           "api-reference/endpoint/youtube-transcribe",
