@@ -18,6 +18,10 @@ Use `POST /api/v1/ai-detection/image` to check whether an image is AI-generated.
 POST https://nano-gpt.com/api/v1/ai-detection/image
 ```
 
+<Note>
+  Send these requests to `nano-gpt.com`. Unlike most endpoints in these docs, this one is not served at `api.nano-gpt.com`.
+</Note>
+
 ## Authentication
 
 An API key is required. Browser sessions are not accepted.
@@ -112,7 +116,7 @@ For API keys with an allowed-model list, the list must include `pangram-image-de
 | `cost_usd` | number | Price of the check in USD. |
 | `pricing` | object | Amount charged and the balance it was charged to (`USD` or `XNO`). |
 
-The request returns when the check finishes. The server stops waiting for the detector after about 280 seconds and returns `504` with code `timeout`.
+The request returns when the check finishes. The server stops waiting for the detector about 280 seconds after the request starts and returns `504` with code `timeout`.
 
 ## Example
 

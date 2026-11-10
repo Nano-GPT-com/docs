@@ -18,6 +18,10 @@ Use `POST /api/v1/ai-detection/video` to check whether a video is AI-generated. 
 POST https://nano-gpt.com/api/v1/ai-detection/video
 ```
 
+<Note>
+  Send these requests to `nano-gpt.com`. Unlike most endpoints in these docs, this one is not served at `api.nano-gpt.com`.
+</Note>
+
 ## Authentication
 
 An API key is required. Browser sessions are not accepted.
@@ -66,7 +70,7 @@ For API keys with an allowed-model list, the list must include `pangram-video-de
 - Link downloads count against the same per-account and per-IP request and byte quotas as other NanoGPT remote file fetches.
 - Up to 2 video checks can run at once per account.
 
-The server keeps a private copy of the video for the check and deletes it when the check ends.
+The server keeps a private copy of the video only for the check. The copy is removed when the check ends and permanently deleted within about two hours.
 
 ## Response
 
@@ -151,7 +155,7 @@ The example is shortened to one frame.
 | `fraction_ai`, `fraction_human`, `fraction_mixed` | number | Share of the video judged AI, human or mixed, from 0 to 1. Other `fraction_*` fields may appear. |
 | `pricing` | object | Amount charged and the balance it was charged to (`USD` or `XNO`). |
 
-The request returns when the check finishes, which can take several minutes. Set your client timeout to at least 30 minutes. The server stops waiting for the detector after about 28 minutes and returns `504` with code `timeout`.
+The request returns when the check finishes, which can take several minutes. Set your client timeout to at least 30 minutes. The server stops waiting for the detector about 29 minutes after the request starts and returns `504` with code `timeout`.
 
 ## Example
 
