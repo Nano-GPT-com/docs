@@ -20,7 +20,7 @@ Confidentiality and logging outcomes are provider-specific, and plaintext may st
 | `TEE/glm-5.1`, `TEE/glm-5.1-thinking`, `TEE/glm-5.2`, `TEE/glm-5.2:thinking` | Chutes TEE first, then RedPill if Chutes can't serve the request | Only if RedPill answers |
 | `TEE/kimi-k2.6` | Chutes TEE, or RedPill if you send `"provider": "redpill"` | Only if RedPill answers |
 | `TEE/gemma4-31b`, `TEE/gemma4-31b:thinking` | Chutes TEE first, then Tinfoil | No |
-| `TEE/kimi-k3` | Chutes TEE, or Tinfoil if you send `"provider": "tinfoil"` | No |
+| `TEE/kimi-k3` | Chutes TEE | No |
 | `TEE/glm-5.3`, `TEE/gpt-oss-120b` | RedPill first, then Tinfoil if RedPill can't serve the request | Only if RedPill answers |
 | `TEE/gemma-4-31b-it` | RedPill, and NanoGPT rewrites its replies | Yes, but it covers RedPill's bytes rather than the ones you receive |
 | Other RedPill `TEE/` models | RedPill | Yes |
