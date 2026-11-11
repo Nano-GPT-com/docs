@@ -163,7 +163,7 @@ Notes:
 - Recommended: use `X-Provider` or body `provider` for explicit provider overrides. The API also accepts a trailing provider suffix for user-selectable providers, such as `model-id:cerebras`, but request fields are clearer and easier to validate against provider-discovery responses.
 - To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `novita`, `cloudflare`, `baseten`, or `inceptron`.
 - If the request would otherwise be subscription-covered, explicit provider selection still bypasses subscription coverage and bills the request as pay-as-you-go. You do not need to also send `billing_mode: "paygo"` or `X-Billing-Mode: paygo`.
-- If **Enable paid models on API** is off and the request doesn't force pay-as-you-go with `billing_mode: "paygo"` or `X-Billing-Mode: paygo`, a provider pick returns an error and nothing is charged. `X-Provider` or a `provider` string returns `403 provider_selected`. `provider.only` or `provider.allow_fallbacks: false` returns `400 provider_selection_not_available`. Other `provider` object fields, such as `order`, `sort` and `ignore`, are ignored for that subscription.
+- If **Enable paid models on API** is off and the request doesn't force pay-as-you-go with `billing_mode: "paygo"` or `X-Billing-Mode: paygo`, a provider pick returns an error and nothing is charged. `X-Provider` or a `provider` string returns `403 provider_selected`. `provider.only`, `provider.ignore` or `provider.allow_fallbacks: false` returns `400 provider_selection_not_available`. Other `provider` object fields, such as `order` and `sort`, are ignored for that subscription.
 
 ## Provider Routing Object
 
