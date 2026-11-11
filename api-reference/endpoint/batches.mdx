@@ -104,6 +104,8 @@ All rows must use the same endpoint and model. `stream: true` is rejected.
 
 Chat Completions rows require a non-empty `messages` array and a positive `max_tokens` or `max_completion_tokens`. They support text and compatible `image_url` content. Image URLs may use HTTP, HTTPS, or base64 data URLs for PNG, JPEG, GIF, and WebP images.
 
+For Gemini models, NanoGPT downloads each HTTP or HTTPS image link when the file is uploaded and stores the image in the batch file, so the model never fetches the link itself. A link must reach a public PNG, JPEG, GIF, or WebP image of at most 30 MB; a web page, another file type, or a private address is refused with `media_url_not_fetchable` and the line number. The image's own bytes decide its type, so an image served as a generic download works. Images larger than 3,072 pixels on a side are scaled down, and one still over 5 MB is re-encoded as JPEG. One file can link up to 1,000 different images, and all of them must download within about 75 seconds, so send larger sets as several files or as base64 data URLs. Stored images count toward the 200 MiB file limit.
+
 ### YouTube videos with Gemini
 
 Batches for `google/gemini-3.8-flash`, `google/gemini-3.7-flash`, `google/gemini-3.5-flash`, `google/gemini-3-flash-preview`, and `google/gemini-3.1-pro-preview` also accept public YouTube links as `video_url` parts in user messages:
