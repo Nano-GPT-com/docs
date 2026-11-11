@@ -18,6 +18,8 @@ PII redaction is opt-in. You choose between two providers:
 
 Tinfoil is the default in web chat and for new setups, and Grepture is opt-in. An account or API key default turned on before November 6, 2026 with no provider chosen stays on Grepture for now. In web chat, you may need to choose Grepture again.
 
+When redaction is on for a zero data retention request, it always uses Tinfoil, even when Grepture is chosen in the request, the API key or your settings, so the request never passes through Grepture. See [Zero data retention](#zero-data-retention) for which requests count.
+
 This is useful when you want to keep personal or sensitive data away from model providers and other services while still getting a useful final answer.
 
 ## How Redaction Works
@@ -57,7 +59,7 @@ PII redaction can be enabled on:
 
 On Decisions, Tinfoil redaction covers `state` and each question's instructions and criteria, including choice option names, and answers come back with the original names. Tinfoil-hosted decision models (`vllm-sr/decision-large`, `vllm-sr/decision-medium`, `vllm-sr/decision-small`; the earlier `decision-large`, `decision-medium` and `decision-small` IDs remain accepted) already run in an attested enclave and do not support redaction.
 
-Responses API requests that need OpenAI's built-in tools (web search, file search, computer use and similar) are always redacted through Grepture and billed at its price, whichever provider you chose.
+Responses API requests that need OpenAI's built-in tools (web search, file search, computer use and similar) are always redacted through Grepture and billed at its price, whichever provider you chose. Zero data retention requests are the exception: Tinfoil cannot redact them, so with redaction on they are refused (see [Zero data retention](#zero-data-retention)).
 
 ## Enable With API Headers
 
@@ -85,7 +87,7 @@ Recommended header:
 redaction: tinfoil
 ```
 
-`true` and the other truthy values use the provider set on your API key, then your account (`Settings > Privacy`), then Tinfoil. An older account or API key default with no provider chosen keeps Grepture.
+`true` and the other truthy values use the provider set on your API key, then your account (`Settings > Privacy`), then Tinfoil. An older account or API key default with no provider chosen keeps Grepture. Redaction of a zero data retention request always uses Tinfoil, whichever provider is named.
 
 ### Chat Completions Example
 
@@ -228,7 +230,7 @@ API keys can also be configured individually from the API key settings modal:
 | Never redact | Do not apply the account-level API redaction default to this API key. |
 | Redaction provider | Inherit account, Tinfoil or Grepture, for this key's redacted requests. |
 
-The provider is chosen in this order: the request header (`redaction: tinfoil` or `redaction: grepture`), the API key, the account, then Tinfoil. Turning on an account or API key default now saves Tinfoil as its provider when there is none to inherit. A default turned on before November 6, 2026 with no provider chosen stays on Grepture for now.
+The provider is chosen in this order: Tinfoil for a zero data retention request with redaction on, otherwise the request header (`redaction: tinfoil` or `redaction: grepture`), the API key, the account, then Tinfoil. Turning on an account or API key default now saves Tinfoil as its provider when there is none to inherit. A default turned on before November 6, 2026 with no provider chosen stays on Grepture for now.
 
 Explicit per-request headers and model suffixes are still the clearest way to control redaction for a single request.
 
@@ -285,6 +287,12 @@ The charge appears as a separate PII redaction add-on in usage details, with the
 Redaction is fail-closed. With Tinfoil, if the detector cannot be reached, its attestation does not verify, or it does not answer in time, NanoGPT refuses the request with HTTP 503 and code `pii_redaction_unavailable` instead of sending it unredacted. A request with more new text than redaction can scan at once (about 160,000 tokens) is refused with HTTP 413 and code `pii_redaction_too_large`. Tinfoil charges for each detection call, including calls for requests that are then refused, fail or end without an answer (for example, a stream stopped before its first token); once an account has 100 such unpaid calls in a day, further detection is refused with HTTP 429 and code `pii_redaction_unbilled_limit` until the day's count resets.
 
 Private (TEE) models already keep your prompt confidential from the provider; requests for them with redaction enabled are refused with HTTP 400 and code `pii_redaction_unsupported_model`.
+
+## Zero Data Retention
+
+When PII redaction is on for a zero data retention request, NanoGPT redacts it with Tinfoil, whatever provider the request, API key or account names, and never sends it through Grepture. Zero data retention comes from an API key or account set to zero data retention (an API key's setting takes precedence over the account's), a team set to zero data retention for team-billed requests, or `provider.zdr: true` on the request. Tinfoil's pricing applies. Zero data retention never turns redaction on by itself.
+
+Where Tinfoil cannot be used for a zero data retention request, NanoGPT refuses it with HTTP 400 and code `pii_redaction_zdr_tinfoil_only` rather than use Grepture. This covers Responses API requests that need the native Responses API, such as those using OpenAI's built-in tools (web search, file search, computer use and similar), native custom tools or input items, or explicit cache controls. Remove what needs the native API, turn off redaction for the request, or turn off zero data retention. Tinfoil outages and oversized requests still return the 503 and 413 errors described under [Failure behavior](#failure-behavior).
 
 ## Limitations
 
