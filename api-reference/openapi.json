@@ -12403,6 +12403,23 @@
                 "description": "Percentage of attempts that succeeded over the window; omitted when there were too few requests",
                 "example": 99.42
               },
+              "failures": {
+                "type": "object",
+                "description": "The failed share of the window split by kind, as percentages of all attempts; present when uptimePct is. Both kinds count against uptimePct.",
+                "required": ["rateLimitedPct", "errorPct"],
+                "properties": {
+                  "rateLimitedPct": {
+                    "type": "number",
+                    "description": "Percentage of attempts the provider rate limited (HTTP 429)",
+                    "example": 0.41
+                  },
+                  "errorPct": {
+                    "type": "number",
+                    "description": "Percentage of attempts that failed for any other reason",
+                    "example": 0.17
+                  }
+                }
+              },
               "hourly": {
                 "type": "array",
                 "description": "One value per hour, oldest first: the percentage of attempts that succeeded, or null when the hour had too few requests",
