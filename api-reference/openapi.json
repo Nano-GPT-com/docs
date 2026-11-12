@@ -7217,7 +7217,7 @@
           },
           "max_tool_calls": {
             "type": "integer",
-            "description": "Maximum number of built-in tool calls, such as native web searches, page opens and searches within a page, the model can make in one response. Applies to requests NanoGPT sends to OpenAI's Responses API, including GPT-5+ and o-series native search and your own OpenAI key (BYOK); calls past the cap are not run or billed. Other routes, and rerouted requests such as Auto Model, ignore it."
+            "description": "Maximum number of built-in tool calls, such as native web searches, page opens and searches within a page, the model can make in one response. Applies to requests NanoGPT sends to OpenAI's Responses API, including GPT-5+ and o-series native search, your own OpenAI key (BYOK) and fallback routes; calls past the cap are not run or billed. Native search on these models (except instant chat variants and deep-research models) defaults to 5 when this is omitted; set a higher value to allow more searches, each billed per search. Other routes ignore it."
           },
           "prompt_caching": {
             "type": "object",
