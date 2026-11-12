@@ -1,0 +1,63 @@
+---
+title: "Prompt Metadata in Downloaded Images"
+description: "Opt in to write the prompt and settings into images you download from the NanoGPT web app"
+---
+
+# Prompt Metadata in Downloaded Images
+
+The NanoGPT web app can write an image's prompt and generation settings into the file when you download it. Tools such as SD Prompt Reader and Civitai can then read them back, and you keep a record of how each image was made.
+
+This setting is off by default. Anyone you share a file with can read the prompt in it.
+
+## Turn It On
+
+1. Open **Settings** in the web app.
+2. Go to **Privacy & analytics**.
+3. Turn on **Embed prompt in downloaded images**.
+
+The setting syncs to your other devices along with your other settings. Images you downloaded before you turned it on stay as they were.
+
+## What Gets Written
+
+NanoGPT writes the text in the Automatic1111 `parameters` format:
+
+```text
+a lighthouse at dusk, oil painting
+Negative prompt: blurry, low quality
+Steps: 30, Sampler: euler, CFG scale: 7, Seed: 1234, Size: 1024x1024, Model: flux-dev, Software: NanoGPT
+```
+
+- The first line is the image prompt.
+- A `Negative prompt:` line appears only when you set a negative prompt.
+- The settings line always starts with `Steps:`, because readers look for it there. `Steps: 0` means the model has no step count NanoGPT knows.
+- Sampler, CFG scale and seed are included when the request set them. The seed is written only when the request made a single image.
+- Size is read from the image itself. Model is the public model ID.
+
+Only the image prompt and these settings are written. Your chat messages, reference images and request IDs are never added.
+
+## Supported File Types
+
+| Format | Where the text goes |
+| --- | --- |
+| PNG | A `parameters` text chunk |
+| JPEG | EXIF `UserComment` |
+| WebP | EXIF `UserComment` |
+
+The image's pixels are not re-encoded, so quality stays exactly the same. Other formats, and images signed with C2PA content credentials, download unchanged. The text would make a signed image look tampered with.
+
+## Where It Applies
+
+With the setting on, the prompt is written when you save a generated image with NanoGPT's own download controls:
+
+- the download button in the image viewer, in chat and in Image Studio
+- downloads from your gallery
+- gallery ZIP exports (images over 25 MB in a ZIP export are left unchanged)
+- images made by the image generation tool in chat
+
+Only images NanoGPT generated with a known prompt get metadata. Images you uploaded, and results of tools that take no prompt such as upscaling or background removal, download unchanged.
+
+## Not Covered Yet
+
+- Saving with your browser's own **Save image as** (right-click or long-press). Use the download button instead.
+- Images returned by the API. They come back exactly as the model made them.
+- Videos.
