@@ -34,7 +34,8 @@ Confidentiality and logging outcomes are provider-specific, and plaintext may st
 | `X-TEE-Signature-ID` | The same receipt ID. |
 | `X-TEE-Completion-ID` | Non-streaming only. The response body `id`, which also finds the receipt. |
 | `X-Aci-Version`, `X-Aci-Keyset-Digest` | The receipt format version and the digest of the gateway's signing keys. |
-| `X-TEE-Verification-Route` | On models with more than one route, a token naming the route that answered. |
+| `X-TEE-Provider` | The route that answered: `redpill`, `chutes-tee` or `tinfoil`. Use it to tell, for example, when a Chutes-first model fell back to Tinfoil. Requests that use your own provider keys don't get it. |
+| `X-TEE-Verification-Route` | On models with more than one route, a token naming the route that answered. Send it on the receipt and attestation requests. |
 
 Receipts are available on Chat Completions. Non-streaming Responses API replies don't include one, and the Messages API and streaming Responses API reject these models.
 
@@ -116,7 +117,7 @@ Evidence for the upstream is in the session the receipt names in `upstream.verif
 `report=aci` returns a `400` for models with no RedPill route, such as `TEE/kimi-k3`, `TEE/gemma4-31b` and the models Tinfoil serves. Without it, `X-TEE-Provider` on the response names the route the report describes:
 
 - `TEE/deepseek-v3.2` and `TEE/qwen3.6-27b` run on Chutes TEE behind RedPill. With a nonce, which must be 64 hex characters, you get Chutes TEE evidence for your nonce from the deployment RedPill uses. A receipt's upstream session names the instance that served the reply in `channel_binding[].key_id`, and that instance appears in the evidence. Without a nonce, you get RedPill's older report, whose Chutes instances carry a nonce RedPill picked.
-- On other models RedPill serves, you get RedPill's older report for that model. Its quote covers the signing address and your nonce, not the receipt keys.
+- On other models RedPill serves, you get RedPill's older report for that model. Its quote covers the signing address and your nonce, not the receipt keys. Its GPU evidence (`nvidia_payload`) isn't covered by the quote's report data, and the report doesn't say whose GPUs they are, so don't treat it as evidence for the upstream that answered. Use the upstream session instead.
 - On the models Chutes TEE answers first, you get Chutes TEE evidence carrying your nonce. If `X-TEE-Verification-Route` names another route, you get that route's evidence instead. For RedPill on `TEE/kimi-k2.6`, `TEE/glm-5.1` and `TEE/glm-5.2`, that's also Chutes TEE evidence for your nonce, because RedPill serves them from the same Chutes deployments.
 - On models Tinfoil serves, you get Tinfoil's enclave report, and a nonce returns a `400`. Tinfoil ties its attestation to the enclave's TLS key rather than to a nonce, so check freshness with Tinfoil's own client, or use the `private/` models, which do this for you.
 
@@ -126,10 +127,14 @@ Chutes TEE evidence covers every instance of the model and can take up to about 
 
 ### What the upstream evidence doesn't cover
 
-The upstream session is RedPill's record of how it verified the upstream. Some upstreams don't give it GPU evidence:
+The upstream session is RedPill's record of how it verified the upstream. The receipt's `route.selected` event names the upstream that served each reply in `target_route_id`. On Nov 12, RedPill sent `TEE/gpt-oss-120b` and `TEE/gemma-4-31b-it` to Tinfoil, `TEE/qwen3.6-35b-a3b` to NEAR AI, and `TEE/deepseek-v3.2` and `TEE/qwen3.6-27b` to Chutes TEE. RedPill can change these routes.
 
-- For models RedPill serves through Tinfoil, 0G or NEAR AI, the session reports GPU attestation as unknown. For NEAR AI it covers only NEAR's gateway, not the machine running the model.
-- For Chutes TEE, the GPU check matches the session's nonce, but it doesn't tie the GPU to the CPU enclave. The end-to-end encryption key in `channel_binding` comes from Chutes' instance list rather than from the TDX quote.
+Gaps to know about:
+
+- For models RedPill serves through Tinfoil, 0G or NEAR AI, the session reports GPU attestation as unknown, and for Tinfoil it holds no hardware evidence. For NEAR AI it covers only NEAR's gateway, not the machine running the model.
+- For Chutes TEE, each session covers one instance and is several megabytes, and the receipt doesn't name the instance, so you need the session to find it. The end-to-end encryption key in `channel_binding` comes from Chutes' instance list rather than from the TDX quote.
+
+Replies that Chutes TEE or Tinfoil answer directly aren't signed, so `X-TEE-Provider` and the attestation report are what you can check for them.
 
 ## Python example
 
