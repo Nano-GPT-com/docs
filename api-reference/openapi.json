@@ -1087,7 +1087,7 @@
           "Decisions"
         ],
         "summary": "Create typed decisions with a decision model",
-        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.2 (perplexity/pplx-decider-v1.2), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). PPLX Decider v1.2 accepts only the zdr and data_collection routing controls in provider. Clef and Clef Flash support NanoGPT provider selection and reject zdr true. PPLX Decider v1.2, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. Check GET /api/v1/decision-models on your chosen host for model availability, supported_endpoints and decision_input capabilities. The retired perplexity/pplx-decider-v1.1-27b ID remains accepted as an alias for v1.2; the native Decisions response model field identifies the version that answered.",
+        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.2 (perplexity/pplx-decider-v1.2), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). PPLX Decider v1.2 accepts only the zdr and data_collection routing controls in provider. Clef and Clef Flash support NanoGPT provider selection and reject zdr true. PPLX Decider v1.2, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. Check GET /api/v1/decision-models on your chosen host for model availability, supported_endpoints and decision_input capabilities. Requests for the retired perplexity/pplx-decider-v1.1-27b ID return HTTP 410 with code model_retired; select perplexity/pplx-decider-v1.2 explicitly.",
         "security": [
           {
             "bearerAuth": []
@@ -1129,6 +1129,16 @@
           },
           "401": {
             "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionsError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "The requested model is retired (code model_retired)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1199,6 +1209,16 @@
           },
           "401": {
             "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionsError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "The requested model is retired (code model_retired)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6052,7 +6072,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX; perplexity/pplx-decider-v1.1-27b remains accepted as a compatibility alias for v1.2.",
+            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX. The retired perplexity/pplx-decider-v1.1-27b ID returns HTTP 410 with code model_retired.",
             "enum": [
               "typesafe/jev-1.13",
               "~typesafe/jev-latest",
@@ -6061,8 +6081,7 @@
               "cloudflare/clef",
               "clef",
               "cloudflare/clef-flash",
-              "perplexity/pplx-decider-v1.2",
-              "perplexity/pplx-decider-v1.1-27b"
+              "perplexity/pplx-decider-v1.2"
             ]
           },
           "state": {
@@ -6136,7 +6155,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX; perplexity/pplx-decider-v1.1-27b remains accepted as a compatibility alias for v1.2.",
+            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX. The retired perplexity/pplx-decider-v1.1-27b ID returns HTTP 410 with code model_retired.",
             "enum": [
               "jev-1.13",
               "jev-latest",
@@ -6147,8 +6166,7 @@
               "cloudflare/clef",
               "clef",
               "cloudflare/clef-flash",
-              "perplexity/pplx-decider-v1.2",
-              "perplexity/pplx-decider-v1.1-27b"
+              "perplexity/pplx-decider-v1.2"
             ]
           },
           "state": {

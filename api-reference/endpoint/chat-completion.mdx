@@ -13,7 +13,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 </Note>
 
 <Note>
-  Decision models (Jev, Liquid D1, PPLX Decider v1.1, Clef and Clef Flash) use `response_format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `choices[0].message.content`. `usage.estimated_cost` is returned by default; send `include_usage: true` for the exact `usage.cost`. See [Decisions](/api-reference/endpoint/decisions) for complete examples and limitations.
+  Decision models (Jev, Liquid D1, PPLX Decider v1.2, Clef and Clef Flash) use `response_format: {"type":"questions","questions":{...}}`, accept only non-streaming user text, and return the answer object as JSON text in `choices[0].message.content`. `usage.estimated_cost` is returned by default; send `include_usage: true` for the exact `usage.cost`. See [Decisions](/api-reference/endpoint/decisions) for complete examples and limitations.
 </Note>
 
 <Note>
@@ -599,7 +599,7 @@ Native search uses the model's own built-in web search instead of a separate sea
 
 On GPT-5+ and o-series models, the top-level `max_tool_calls` field caps how many built-in tool calls the model can make while answering. Searches, page opens, and searches within a page all count toward the cap, so a response bills at most that many searches (one search can cover several queries). Once it is reached, the model answers with what it has found; further calls are not run and not billed.
 
-Without `max_tool_calls`, NanoGPT sends a cap of 5. A lower value is kept. To allow more searches, set a higher value; each extra search is billed at the normal per-search rate. The instant chat variants (such as `gpt-5.1-chat-latest`) and deep-research models get no default cap.
+Without `max_tool_calls`, NanoGPT sends a cap of 5. A lower value is kept. To allow more searches, set a higher value; each extra search is billed at the normal per-search rate. The instant chat variants and deep-research models get no default cap.
 
 The cap applies when NanoGPT sends the request to OpenAI, including with your own OpenAI key (BYOK) and on fallback routes. OpenRouter accepts at most 30.
 

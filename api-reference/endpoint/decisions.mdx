@@ -39,7 +39,7 @@ Only input tokens are billed. Browse every decision model, with current pricing,
 | `cloudflare/clef` | 1,800 text tokens | Yes | Cloudflare's open decision model. |
 | `cloudflare/clef-flash` | 1,800 text tokens | Yes | Lower-cost Clef variant. |
 
-Use `perplexity/pplx-decider-v1.2` for new PPLX integrations. The retired `perplexity/pplx-decider-v1.1-27b` ID remains accepted as a compatibility alias and runs v1.2; the native Decisions response `model` field identifies the version that answered. The price remains $0.02 per million input tokens, with free output.
+Use `perplexity/pplx-decider-v1.2` for PPLX integrations. Requests for the retired `perplexity/pplx-decider-v1.1-27b` ID return HTTP 410 with code `model_retired`; update the model ID explicitly to use v1.2. The v1.2 price is $0.02 per million input tokens, with free output.
 
 Clef also accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. `GET /api/v1/models` leaves decision models out, because they reject plain chat requests. List them with `GET /api/v1/decision-models`, which returns detailed entries by default (`detailed=false` for IDs only), or add `output_modalities=decisions` to `/api/v1/models` and its subscription, paid and personalized variants. Each entry has `architecture.output_modalities: ["decisions"]`, a `supported_endpoints` list, and a `decision_input` object. `decision_input.image_input` is `true` for the image-capable models, and `decision_input.image_limits` lists their limits.
 
