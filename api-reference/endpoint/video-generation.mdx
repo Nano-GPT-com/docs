@@ -9,6 +9,10 @@ openapi: 'POST /generate-video'
 
 `POST /generate-video` submits an asynchronous job to create, extend, or edit a video. The endpoint responds immediately with `runId`, `id`, `model`, and `status: "pending"`. `runId` and `id` are the same NanoGPT job identifier (format `vid_...`). Poll the unified Video Status endpoint with that job ID until you receive final assets. Duration-based billing is assessed after completion.
 
+<Note>
+Zero Data Retention (ZDR) does not cover video generation or 3D requests through this endpoint. These requests still run when ZDR-only routing is enabled, and providers may store your prompts, input media and outputs. See the [Privacy Policy](https://nano-gpt.com/legal/privacy-policy).
+</Note>
+
 Errors include descriptive JSON payloads. Surface the `error.message` (and HTTP status) to help users correct content-policy or validation issues.
 
 ## Extend Workflows
@@ -23,7 +27,7 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 
 | field | type | required | details |
 | --- | --- | --- | --- |
-| `model` | string | yes | Video model ID. Model availability changes; discover models via `GET /api/v1/models?detailed=true`. |
+| `model` | string | yes | Video model ID. Model availability changes; discover models via `GET /api/v1/video-models?detailed=true`. |
 | `conversationUUID` | string | no | Attach the request to a conversation thread. |
 | `prompt` | string | conditional | Required for text-to-video and edit models unless a structured script is supplied. |
 | `negative_prompt` | string | no | Suppresses specific content. Respected by Veo, Wan, Runway, Pixverse, and other models noted below. |

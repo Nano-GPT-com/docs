@@ -7,6 +7,10 @@ description: "Discover image models, inspect endpoint metadata and pricing, and 
 
 NanoGPT provides a dedicated Image API for discovering image models, inspecting supported parameters and pricing, and generating images through a normalized endpoint.
 
+<Note>
+Zero Data Retention (ZDR) does not cover image generation or editing. These requests still run when ZDR-only routing is enabled, and providers may store your prompts, input media and outputs. See the [Privacy Policy](https://nano-gpt.com/legal/privacy-policy).
+</Note>
+
 Use this API when you want one image workflow:
 
 - Discover available image models with machine-readable capabilities.

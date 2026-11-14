@@ -8,6 +8,10 @@ description: "Generate text-to-image and image-to-image outputs through NanoGPT'
 
 Use `POST /api/v1/images` to generate images through NanoGPT's normalized Image API. The endpoint accepts JSON only and supports text-to-image and image-to-image requests for models that expose those capabilities.
 
+<Note>
+Zero Data Retention (ZDR) does not cover image generation or editing. These requests still run when ZDR-only routing is enabled, and providers may store your prompts, input media and outputs. See the [Privacy Policy](https://nano-gpt.com/legal/privacy-policy).
+</Note>
+
 Discover model-specific parameters first with:
 
 - `GET /api/v1/images/models`

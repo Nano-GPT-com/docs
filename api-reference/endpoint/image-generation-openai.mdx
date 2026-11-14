@@ -6,6 +6,10 @@ openapi: 'POST /v1/images/generations'
 
 Generate images from text prompts or base64 image inputs using the OpenAI-compatible endpoint. Responses include base64 bytes (`b64_json`) by default or signed URLs (`url`) when `response_format: "url"`.
 
+<Note>
+Zero Data Retention (ZDR) does not cover image generation or editing. These requests still run when ZDR-only routing is enabled, and providers may store your prompts, input media and outputs. See the [Privacy Policy](https://nano-gpt.com/legal/privacy-policy).
+</Note>
+
 For new integrations that do not need OpenAI-compatible request shapes, use the dedicated [Image API](/api-reference/image-generation). It supports image model discovery, endpoint metadata, public pricing metadata, and normalized generation through `POST /api/v1/images`.
 
 ## Endpoint

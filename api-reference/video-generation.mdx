@@ -7,6 +7,10 @@ description: "Complete guide to video generation APIs"
 
 The NanoGPT API provides advanced video generation capabilities using state-of-the-art models. This guide covers how to use our video generation endpoints.
 
+<Note>
+Zero Data Retention (ZDR) does not cover video generation or 3D requests through the video endpoint. These requests still run when ZDR-only routing is enabled, and providers may store your prompts, input media and outputs. See the [Privacy Policy](https://nano-gpt.com/legal/privacy-policy).
+</Note>
+
 For authenticated API-key requests, you can opt in to a paid input safety preflight by sending the `moderation` header. See [Inline Moderation](/api-reference/miscellaneous/inline-moderation) for supported video routes, inspectable image inputs, billing behavior, and error codes.
 
 ## API Authentication
