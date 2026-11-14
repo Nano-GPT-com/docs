@@ -53,7 +53,7 @@ For OpenAI-compatible image editing, use [Image Edits](/api-reference/endpoint/i
 
 - Each `data[i]` contains either `b64_json` (default) or `url` (when `response_format: "url"`), never both.
 - When requesting `response_format: "url"`, the API may still return `b64_json` if URL generation (upload/presign) fails, as a fallback.
-- Signed URLs expire after a short period (currently ~1 hour). Download promptly for long-term storage.
+- Signed URLs expire after 24 hours, and the stored image is deleted after about a day. Download promptly for long-term storage.
 
 ## Examples
 
