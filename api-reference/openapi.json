@@ -4271,7 +4271,7 @@
       "post": {
         "summary": "Request the Lightning L402 invoice for an existing quote",
         "operationId": "requestX402LightningInvoice",
-        "description": "The paymentId is a bearer capability. Creates at most one BTCPay invoice per paymentId, including concurrent requests and retries after ambiguous timeouts. Returns the same invoice on retry. Quotes must be pending and unexpired; new invoices require at least 90 seconds remaining. No account balance is credited. Keep paymentId private.",
+        "description": "The paymentId is a bearer capability. Returns the same published invoice on retry. Fresh claims prevent concurrent creation. After 45 seconds, one caller takes over a stale claim and looks up invoices by orderId=paymentId, adopting the oldest New, unexpired invoice with matching BTC amount and quote identity. Only a successful empty lookup permits creation; lookup failure never permits a POST. Quotes must be pending and unexpired; new invoices require at least 90 seconds remaining. No account balance is credited. Keep paymentId private.",
         "security": [],
         "parameters": [
           {
@@ -4330,10 +4330,10 @@
             "description": "Missing payment or wrong scheme"
           },
           "409": {
-            "description": "Terminal payment, or invoice creation pending/uncertain. For invoice_pending, retry the same URL later; never request a second purchase to retry an ambiguous invoice."
+            "description": "Terminal payment, or invoice creation pending/uncertain. For invoice_pending, retry the same URL with backoff; stale claims recover by BTCPay orderId lookup after 45 seconds."
           },
           "410": {
-            "description": "Quote expired or too close to expiry"
+            "description": "Quote expired or too close to expiry. Start a new purchase with a fresh quote and Idempotency-Key."
           },
           "429": {
             "description": "30 requests per minute per IP exceeded"
