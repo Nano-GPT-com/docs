@@ -65,7 +65,7 @@ Production 402 quotes currently advertise these schemes when enabled:
 | `base-usdc` | Base | USDC | Send USDC on Base to a unique address, then call `completeUrl`. |
 | `x402-exact` | Base | USDC | Use an EIP-3009 authorization in `X-PAYMENT`, then replay the original request. |
 | `x402-solana-usdc` | Solana/SVM | USDC | Use a Solana/SVM exact payment in `X-PAYMENT`, then replay the original request. |
-| `lightning-l402` | `bitcoin-lightning` | sats | Pay the Lightning invoice, then replay the original request with `Authorization: L402 <token>:<preimage>`. |
+| `lightning-l402` | `bitcoin-lightning` | sats | POST `invoiceUrl`, pay the returned Lightning invoice, then replay the original request with `Authorization: L402 <token>:<preimage>`. |
 
 Solana USDT and native SOL are not documented x402 exact rails. Do not list either as a supported accountless x402 scheme until it appears in `GET /api/v1/x402/endpoints`.
 
@@ -189,10 +189,8 @@ For accountless payment challenges, key off the stable top-level `payment` objec
         "amount": "9",
         "amountFormatted": "9 sats",
         "amountUsd": "0.0054",
-        "payTo": "lnbc...",
-        "invoice": "lnbc...",
-        "paymentHash": "...",
-        "l402Token": "...",
+        "payTo": "/api/x402/lightning/pay_.../invoice",
+        "invoiceUrl": "https://api.nano-gpt.com/api/x402/lightning/pay_.../invoice",
         "discountRate": 0.1,
         "undiscountedAmountUsd": "0.006"
       }
@@ -310,7 +308,7 @@ curl -i https://api.nano-gpt.com/api/v1/data/web/search \
   }'
 ```
 
-When `lightning-l402` is enabled, the `402 Payment Required` response includes a Lightning option in `payment.accepted[]` and a `WWW-Authenticate: Payment ...` challenge header. For most API clients, the easiest path is to read `payment.accepted[].invoice` or `payment.accepted[].payTo`, then read `payment.accepted[].l402Token` for the replay token. The challenge header is useful for clients that already implement L402 or HTTP auth challenge handling.
+When `lightning-l402` is enabled, the `402 Payment Required` response advertises a Lightning quote in `payment.accepted[]`, with sats, USD price, discount, payment ID, expiration and `invoiceUrl`. Legacy `accepts[]` exposes `extra.invoiceUrl`. The quote contains no BOLT11 invoice, payment hash, token or Lightning `WWW-Authenticate` header. Its `payTo` is the invoice URL, not a BOLT11 string. The NanoGPT server creates no BTCPay invoice until the client requests one.
 
 Example Lightning option:
 
@@ -322,16 +320,32 @@ Example Lightning option:
   "amount": "9",
   "amountFormatted": "9 sats",
   "amountUsd": "0.0054",
-  "payTo": "lnbc...",
-  "invoice": "lnbc...",
-  "paymentHash": "...",
-  "l402Token": "...",
+  "payTo": "/api/x402/lightning/pay_.../invoice",
+  "invoiceUrl": "https://api.nano-gpt.com/api/x402/lightning/pay_.../invoice",
   "discountRate": 0.1,
   "undiscountedAmountUsd": "0.006"
 }
 ```
 
-The `WWW-Authenticate` challenge includes the same token in `id="<token>"` and a base64-encoded request value:
+POST the option's `invoiceUrl` with no body. Possession of the payment ID authorizes this call; no NanoGPT account or API key is required. Keep the payment ID and invoice URL private.
+
+```http
+POST /api/x402/lightning/<paymentId>/invoice
+```
+
+The response contains:
+
+```json
+{
+  "paymentId": "pay_...",
+  "invoice": "lnbc...",
+  "paymentHash": "...",
+  "l402Token": "...",
+  "expiresAt": 1794873600
+}
+```
+
+The invoice response also includes the `WWW-Authenticate` challenge with the same token in `id="<token>"` and a base64-encoded request value:
 
 ```http
 WWW-Authenticate: Payment id="<token>", realm="https://api.nano-gpt.com", method="lightning", intent="charge", request="<base64-json>", description="...", expires="..."
@@ -351,7 +365,7 @@ After decoding the `request` value, the JSON contains the Lightning invoice:
 }
 ```
 
-Pay the advertised invoice with a Lightning wallet, node, or payment API that returns the payment preimage. Some consumer Lightning wallets do not expose the payment preimage; L402 clients need a wallet, node, or payment API that returns it after payment.
+Pay the returned invoice with a Lightning wallet, node, or payment API that returns the payment preimage. Some consumer Lightning wallets do not expose the payment preimage; L402 clients need a wallet, node, or payment API that returns it after payment.
 
 Replay the exact original request with the same method, path, and JSON body, adding:
 
@@ -381,6 +395,10 @@ curl -i https://api.nano-gpt.com/api/v1/chat/completions \
     "stream": false
   }'
 ```
+
+Retrying the same `invoiceUrl` returns the same invoice and token, including concurrent requests. A `409 invoice_pending` or `503 invoice_unavailable` means creation may still be pending or uncertain: retry the same URL later; do not create another purchase to retry an ambiguous invoice. Expired quotes return `410`; terminal payments return `409`. Invoice creation is refused in the last 90 seconds of a quote. The server rounds the BTCPay lifetime down and reserves transport time, so the invoice may expire earlier than the quoted deadline; use the invoice response's `expiresAt` (Unix seconds). Invoice requests are limited to 30 per minute per IP.
+
+`Idempotency-Key` on the original request continues to reuse the Lightning quote. A fresh quote key means a new purchase. Invoice creation is always guarded by payment ID, even without an idempotency header; an ambiguous BTCPay failure never releases the invoice claim.
 
 The L402 token is bound to the original method, path, request body hash, amount, and expiration. The token/preimage pair is single-use and expires with the quote. Lightning L402 quotes currently receive a 10% discount versus the normal accountless quote; when present, the Lightning option exposes `discountRate` and `undiscountedAmountUsd`.
 
@@ -417,14 +435,17 @@ if (!lightning) {
   throw new Error('Lightning L402 is not advertised for this endpoint');
 }
 
-// Pay lightning.invoice with a Lightning client that returns the preimage.
-const preimage = await payLightningInvoiceAndReturnPreimage(lightning.invoice);
+const invoiceResponse = await fetch(new URL(lightning.invoiceUrl, quoteResponse.url), { method: 'POST' });
+if (!invoiceResponse.ok) throw new Error(`Invoice unavailable: ${invoiceResponse.status}`);
+const invoice = await invoiceResponse.json();
+// Pay with a Lightning client that returns the preimage.
+const preimage = await payLightningInvoiceAndReturnPreimage(invoice.invoice);
 
 const paidResponse = await fetch(`https://api.nano-gpt.com${original.path}`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    Authorization: `L402 ${lightning.l402Token}:${preimage}`,
+    Authorization: `L402 ${invoice.l402Token}:${preimage}`,
   },
   body: JSON.stringify(original.body),
 });

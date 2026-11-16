@@ -4267,6 +4267,83 @@
         }
       }
     },
+    "/x402/lightning/{paymentId}/invoice": {
+      "post": {
+        "summary": "Request the Lightning L402 invoice for an existing quote",
+        "operationId": "requestX402LightningInvoice",
+        "description": "The paymentId is a bearer capability. Creates at most one BTCPay invoice per paymentId, including concurrent requests and retries after ambiguous timeouts. Returns the same invoice on retry. Quotes must be pending and unexpired; new invoices require at least 90 seconds remaining. No account balance is credited. Keep paymentId private.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice and preimage replay credential. expiresAt is Unix seconds and never exceeds the quote deadline.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Existing L402 Payment challenge containing the invoice and token."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "paymentId",
+                    "invoice",
+                    "paymentHash",
+                    "l402Token",
+                    "expiresAt"
+                  ],
+                  "properties": {
+                    "paymentId": {
+                      "type": "string"
+                    },
+                    "invoice": {
+                      "type": "string"
+                    },
+                    "paymentHash": {
+                      "type": "string"
+                    },
+                    "l402Token": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing payment or wrong scheme"
+          },
+          "409": {
+            "description": "Terminal payment, or invoice creation pending/uncertain. For invoice_pending, retry the same URL later; never request a second purchase to retry an ambiguous invoice."
+          },
+          "410": {
+            "description": "Quote expired or too close to expiry"
+          },
+          "429": {
+            "description": "30 requests per minute per IP exceeded"
+          },
+          "503": {
+            "description": "Invoice unavailable; retry the same URL later"
+          }
+        }
+      }
+    },
     "/x402/status/{paymentId}": {
       "get": {
         "description": "Poll the status of an X-402 payment by paymentId.",
@@ -11383,17 +11460,9 @@
           "amountFormatted": { "type": "string" },
           "amountUsd": { "type": "string" },
           "payTo": { "type": "string" },
-          "invoice": {
+          "invoiceUrl": {
             "type": "string",
-            "description": "Lightning invoice for lightning-l402 quotes. Same value as payTo for most clients."
-          },
-          "paymentHash": {
-            "type": "string",
-            "description": "Lightning payment hash for lightning-l402 quotes."
-          },
-          "l402Token": {
-            "type": "string",
-            "description": "L402 token to pair with the Lightning payment preimage in Authorization: L402 <token>:<preimage>."
+            "description": "For lightning-l402, POST this URL to request the invoice and L402 token. The 402 quote contains neither an invoice nor a Lightning challenge. Repeated calls reuse one invoice per paymentId."
           },
           "discountRate": {
             "type": "number",
