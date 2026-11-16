@@ -31,7 +31,7 @@ The `/v1/responses` API is an OpenAI Responses API-compatible endpoint for creat
 </Note>
 
 <Note>
-  **Large request bodies:** The examples below use `https://api.nano-gpt.com/api/v1`, which takes request bodies up to NanoGPT's 32 MiB application limit. `https://nano-gpt.com` has a smaller ingress limit; long-running agents may need the direct host and a model available there.
+  **Large request bodies:** The examples below use `https://api.nano-gpt.com/api/v1`, which takes request bodies up to 32 MiB (compressed and decompressed). `https://nano-gpt.com` has an edge limit of about 4.5 MB per request, compressed or not; use `https://api.nano-gpt.com` for large requests. Long-running agents may need the direct host and a model available there.
 </Note>
 
 <Note>
@@ -355,7 +355,7 @@ Content can be a string or an array of content parts:
 
 The `detail` parameter can be: `auto`, `low`, or `high`.
 
-For many or large images, prefer public HTTPS URLs over inline base64 data. See [Image Input](/api-reference/endpoint/chat-completion#image-input) for the 32 MB request limit and when to send images inline.
+For many or large images, prefer public HTTPS URLs over inline base64 data. See [Image Input](/api-reference/endpoint/chat-completion#image-input) for the 32 MiB request limit on `https://api.nano-gpt.com` (compressed and decompressed) and when to send images inline. `https://nano-gpt.com` has an edge limit of about 4.5 MB per request, compressed or not; use `https://api.nano-gpt.com` for large requests.
 
 #### Video Input
 

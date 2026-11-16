@@ -5,7 +5,7 @@ description: "Choose the direct API host for inference, uploads, and long-runnin
 
 ## Recommended host
 
-Use `https://api.nano-gpt.com` for API-key requests. The direct API host has a higher request size limit and a longer request runtime than `https://nano-gpt.com`, so it is the better choice for large attachments, long conversations, and model calls that take time to finish. The website host rejects request bodies over about 4.5 MB with HTTP 413. Batch file uploads also use the direct API host.
+Use `https://api.nano-gpt.com` for API-key requests. The direct API host has a higher request size limit and a longer request runtime than `https://nano-gpt.com`, so it is the better choice for large attachments, long conversations, and model calls that take time to finish. The website host rejects request bodies over about 4.5 MB with HTTP 413, compressed or not. Batch file uploads also use the direct API host.
 
 | Client or request | Base URL or endpoint |
 | --- | --- |
@@ -19,7 +19,7 @@ Use `https://api.nano-gpt.com` for API-key requests. The direct API host has a h
 
 The endpoint path and request format stay the same when switching from the website host to the direct API host. For example, replace `https://nano-gpt.com/api/v1/chat/completions` with `https://api.nano-gpt.com/api/v1/chat/completions`. `https://nano-gpt.com/api/v1` keeps working, with the lower limits above.
 
-The direct host's higher ingress limit does not override the application, model, file-type, or provider limits for a particular endpoint. For authenticated Chat Completions, Responses, and Messages JSON requests, the application body limit is 32 MiB; check endpoint documentation for multipart and file limits. A long-running call also needs a sufficiently long timeout in your HTTP client.
+The direct host's higher ingress limit does not override the application, model, file-type, or provider limits for a particular endpoint. For authenticated Chat Completions, Responses, and Messages JSON requests, the application body limit on `https://api.nano-gpt.com` is 32 MiB, enforced on both compressed and decompressed bodies; check endpoint documentation for multipart and file limits. A long-running call also needs a sufficiently long timeout in your HTTP client.
 
 Check `GET https://api.nano-gpt.com/api/v1/models?detailed=true` for model availability on the direct host. The website and direct API host can have different model catalogs during deployment rollouts; a model listed on one host is not automatically available on the other.
 

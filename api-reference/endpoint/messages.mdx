@@ -150,7 +150,7 @@ Or with URL:
 }
 ```
 
-For many or large images, prefer `url` sources over `base64`. See [Image Input](/api-reference/endpoint/chat-completion#image-input) for the 32 MB request limit and when to send images inline.
+For many or large images, prefer `url` sources over `base64`. See [Image Input](/api-reference/endpoint/chat-completion#image-input) for the 32 MiB request limit on `https://api.nano-gpt.com` (compressed and decompressed) and when to send images inline. `https://nano-gpt.com` has an edge limit of about 4.5 MB per request, compressed or not; use `https://api.nano-gpt.com` for large requests.
 
 Supported media types: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
 

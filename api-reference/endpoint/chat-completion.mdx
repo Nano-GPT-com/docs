@@ -980,11 +980,11 @@ Send images using the OpenAI‑compatible chat format. Provide image parts along
 - Base64 data URL: `{"type":"image_url","image_url":{"url":"data:image/png;base64,...."}}`
 
 Notes:
-- For many or large images, send HTTPS URLs. A base64 data URL puts the whole image in the request body, about a third larger than the image file. Request bodies are limited to 32 MB, and large bodies take longer to upload and process before the model starts. A URL keeps the request small; the image is fetched separately.
+- For many or large images, send HTTPS URLs. A base64 data URL puts the whole image in the request body, about a third larger than the image file. Request bodies on `https://api.nano-gpt.com` are limited to 32 MiB (compressed and decompressed), and large bodies take longer to upload and process before the model starts. A URL keeps the request small; the image is fetched separately.
 - URLs must be public HTTPS addresses that load without a login or cookies. Some upstreams reject non‑HTTPS URLs.
 - Use base64 data URLs for local or private images, and for models that accept only inline images. Those models return an `unsupported_parameter` error saying that no available route supports remote image URLs.
 - The number of images a request can carry varies by route, and images in conversation history count.
-- On `https://nano-gpt.com`, a request body over about 4.5 MB gets HTTP 413 before it reaches the API. For larger requests, use `https://api.nano-gpt.com/api/v1`.
+- On `https://nano-gpt.com`, a request body over about 4.5 MB gets HTTP 413, compressed or not, before it reaches the API. For larger requests, use `https://api.nano-gpt.com/api/v1`.
 - Resize large images before sending them. Most vision models scale images down before reading them, so full-resolution photos, screenshots and video frames mostly add upload time. About 1,500 pixels on the longest side, saved as JPEG or WebP, is usually enough.
 - For video, send the clip as [`video_url`](#video-input) to a model that supports video input, or sample fewer frames, instead of sending hundreds of frames as images.
 - Accepted mime types: `image/png`, `image/jpeg`, `image/jpg`, `image/webp`.
@@ -1280,7 +1280,7 @@ If cache consistency is more important than availability for your use case, you 
 ### Troubleshooting
 
 - 400 unsupported image: ensure the image is a valid PNG/JPEG/WebP, not a tiny 1×1 pixel, and either HTTPS URL or a base64 data URL.
-- 413 request body too large: send images as HTTPS URLs or resize them. Request bodies are limited to 32 MB, and to about 4.5 MB on `https://nano-gpt.com`; use `https://api.nano-gpt.com/api/v1` for larger requests.
+- 413 request body too large: send images as HTTPS URLs or resize them. Request bodies on `https://api.nano-gpt.com` are limited to 32 MiB (compressed and decompressed). `https://nano-gpt.com` has an edge limit of about 4.5 MB per request, compressed or not; use `https://api.nano-gpt.com/api/v1` for larger requests.
 - 503 after fallbacks: try a different model, verify API key/session, and prefer base64 data URL for local or protected assets.
 - Missing usage events: confirm `include_usage` is `true` in the payload or that prompt caching is enabled.
 
@@ -1746,7 +1746,7 @@ LinkUp achieves state-of-the-art performance on OpenAI's SimpleQA benchmark:
 
 ## Compressed Request Bodies
 
-Request bodies may be sent gzip, deflate, or Brotli compressed by adding a `Content-Encoding` header (e.g. `Content-Encoding: gzip`). Conversation-history payloads compress roughly 5:1, which cuts upload time — and therefore time-to-first-token — on long conversations. Requires a JSON `Content-Type` and authentication; the 32 MB body limit applies to both the compressed and decompressed body. See [Compressed Request Bodies](/api-reference/miscellaneous/request-compression) for SDK-ready snippets.
+Request bodies may be sent gzip, deflate, or Brotli compressed by adding a `Content-Encoding` header (e.g. `Content-Encoding: gzip`). Conversation-history payloads compress roughly 5:1, which cuts upload time — and therefore time-to-first-token — on long conversations. Requires a JSON `Content-Type` and authentication; the 32 MiB body limit on `https://api.nano-gpt.com` applies to both the compressed and decompressed body. `https://nano-gpt.com` has an edge limit of about 4.5 MB per request, compressed or not; use `https://api.nano-gpt.com` for large requests. See [Compressed Request Bodies](/api-reference/miscellaneous/request-compression) for SDK-ready snippets.
 
 ## Important Notes
 

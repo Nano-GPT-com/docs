@@ -35,7 +35,9 @@ If your bodies are small (a few KB), compression won't hurt but also won't buy y
 | Encodings | `gzip` (also `x-gzip`), `deflate` (zlib-wrapped or raw), `br` (Brotli) |
 | Content-Type | Must be JSON (`application/json`, `text/json`, or `*+json`) |
 | Authentication | Required — compressed bodies are only decompressed for authenticated requests, so send your API key as usual |
-| Size limit | 32 MB, enforced on both the compressed and the decompressed body |
+| Size limit | 32 MiB on `https://api.nano-gpt.com`, enforced on both the compressed and the decompressed body |
+
+`https://nano-gpt.com` has an edge limit of about 4.5 MB per request, compressed or not; larger requests return HTTP 413 `FUNCTION_PAYLOAD_TOO_LARGE`. Use `https://api.nano-gpt.com` for large requests.
 
 A comma-separated `Content-Encoding` list (e.g. `gzip, identity`) is accepted and decoded in reverse order per the HTTP spec, but a single encoding is all you need.
 
@@ -195,6 +197,6 @@ const completion = await client.chat.completions.create({
 | `415` | `unsupported_content_encoding` | `Content-Encoding` value we don't support (e.g. `zstd`) |
 | `415` | `unsupported_media_type` | Compressed body without a JSON `Content-Type` |
 | `401` | `authentication_error` | Compressed body on an unauthenticated request |
-| `413` | — | Body exceeds the 32 MB limit (compressed or decompressed) |
+| `413` | — | Body exceeds 32 MiB on `api.nano-gpt.com` (compressed or decompressed), or the website host’s edge limit of about 4.5 MB |
 
 Everything else — validation, billing, streaming — behaves exactly as with uncompressed requests.
