@@ -21,7 +21,7 @@ function getFamilyConfig(exampleTextModel) {
     { label: 'Xiaomi MiMo', ids: ['xiaomi/mimo-v2.6-pro'] },
     { label: 'DeepSeek', ids: ['deepseek/deepseek-v4.1-flash-1017', 'deepseek/deepseek-v4-flash-latest', 'deepseek/deepseek-latest'] },
     { label: 'MiniMax', ids: ['minimax/minimax-m3.1-flash', 'minimax/minimax-m3', 'minimax/minimax-latest'] },
-    { label: 'Qwen', ids: ['qwen/qwen3.8-max', 'qwen/qwen3-coder-next'] },
+    { label: 'Qwen', ids: ['qwen/qwen4-max', 'qwen/qwen3.8-max', 'qwen/qwen3-coder-next'] },
   ];
 }
 
