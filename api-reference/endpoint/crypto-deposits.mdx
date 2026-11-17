@@ -36,7 +36,8 @@ and polling headers, and use bounded backoff for temporary failures.
 
 `POST /api/deposit/create` creates a network-specific payment window, separate
 from the invoice endpoints below. Authenticate with the same account API key.
-The following native-asset contract is available for POL on Polygon PoS:
+Two flows are documented: native POL on Polygon PoS, and
+[USDT on BNB Smart Chain](#usdt-on-bnb-smart-chain). The native POL contract:
 
 | Request or response | Native POL |
 | --- | --- |
@@ -55,7 +56,7 @@ not the token quantity. The quote is not price-locked: one slightly smaller or
 larger transfer is valued from the amount actually received. Do not split a
 payment across multiple transfers.
 
-Native POL supports an optional `Idempotency-Key` of 8-128 visible ASCII characters
+Native POL (and [USDT on BNB Smart Chain](#usdt-on-bnb-smart-chain)) supports an optional `Idempotency-Key` of 8-128 visible ASCII characters
 without spaces, retained for 24 hours. Use a unique key per top-up and keep the key
 and request unchanged on retries. A replay neither extends expiry nor authorizes
 another wallet transfer. If creation returns an existing pending payment or an
@@ -66,6 +67,78 @@ Send early enough for inclusion on-chain within the window. Confirmation can
 continue afterward, but late arrivals are not guaranteed automatic credit.
 An expired status does not mean that a transfer was reversed or that no funds
 were sent. Contact support with the original transaction ID and hash if needed.
+
+### USDT on BNB Smart Chain
+
+The same endpoint opens a window for USDT (BEP-20) on BNB Smart Chain. It suits
+server wallets and contract wallets such as a Safe: the window matches the USDT
+transfer to your address, whoever sends it.
+
+| Request or response | USDT on BNB Smart Chain |
+| --- | --- |
+| Request | `network: "bnb"`, `token: "USDT"` (uppercase), `amount` in USD |
+| Network | BNB Smart Chain, chain ID `56`; USDT contract `0x55d398326f99059fF775485246999027B3197955`, 18 decimals |
+| Limits | Up to $25,000 per window. After the quoted consolidation fee the credit must be at least $0.10; a smaller `amount` returns `400` with `requiredGrossUsd` |
+| Amount to send | `quotedTokenAmount` USDT (decimal string), or `quotedTokenAmountAtomic` as the `uint256` of `transfer(address,uint256)`. 1 USDT is credited as $1 |
+| Destination and expiry | The returned `address` and `expiresAt` (Unix seconds); the default window is 30 minutes |
+| Optional expiry | `expires_at`, a future Unix timestamp in seconds, at most 30 minutes from creation |
+| Status | Poll the returned `statusUrl`, or `/api/transaction/status/bnb/{txId}` with the complete ID URL-encoded |
+| Confirmed credit | `status: "COMPLETED"` and `balanceCredited: true`; the USD credited is `settlement.creditedUsdExact` |
+
+Your address is the same every time, but it is only watched while a window is
+open. **Open the window first, wait for the `200` response, then broadcast the
+transfer.** A transfer mined before the window opened, or after it expired, is not
+credited automatically; contact support with the transaction hash. For a Safe,
+open the window just before you execute the transaction, not when you propose it.
+
+- Send one USDT transfer per window. Any amount is credited; it does not have to
+  equal `quotedTokenAmount`. A second transfer in the same window is not credited
+  automatically, so open a new window for the next payment.
+- Send USDT only. Other tokens (USDC, BNB, BUSD) are not credited by a USDT window.
+- One USDT window can be open per account. Creating another while one is open
+  returns `409` with `code: "deposit_already_pending"` and the open window in
+  `transaction`; pay into that one or wait for it to finish. Match windows by
+  `jobId`: the address inside `txId` can differ in letter case between responses,
+  and either form works on the status endpoint.
+- `Idempotency-Key` works the same way as for native POL. Keyed calls, including
+  replays, are limited to 30 per 10 minutes per account, and every create call
+  counts toward 30 per 10 minutes per account. Follow `Retry-After` on `429` and
+  `503`.
+- `PROCESSING` means the transfer was seen and the ledger credit is on its way;
+  keep polling. `EXPIRED` means the window closed without a credited transfer.
+
+```bash
+# 1. Open a window (amount is USD = USDT to send)
+curl -X POST https://nano-gpt.com/api/deposit/create \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: topup-2026-11-17-0001" \
+  -d '{"network":"bnb","token":"USDT","amount":150}'
+
+# Response (abridged)
+# {
+#   "txId": "0xYourAddress:6f1c...:1795392000",
+#   "address": "0xYourAddress",
+#   "network": "bnb", "token": "USDT", "chainId": 56,
+#   "tokenContract": "0x55d398326f99059fF775485246999027B3197955",
+#   "tokenDecimals": 18,
+#   "quotedTokenAmount": "150",
+#   "quotedTokenAmountAtomic": "150000000000000000000",
+#   "expiresAt": 1795392000,
+#   "statusUrl": "/api/transaction/status/bnb/0xYourAddress%3A6f1c...%3A1795392000",
+#   "status": "PENDING"
+# }
+
+# 2. Send 150 USDT to "address" on BNB Smart Chain before expiresAt
+
+# 3. Poll until COMPLETED with balanceCredited: true
+curl "https://nano-gpt.com/api/transaction/status/bnb/0xYourAddress%3A6f1c...%3A1795392000" \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+For USDT, settlement credits the USDT received at $1, minus the consolidation fee
+quoted for the window (`consolidationFeeUsdExact`), plus the 3% bonus for eligible
+deposits. `creditEstimate` itemizes this for the requested amount.
 
 ## Deposit fees and credit
 
@@ -146,7 +219,7 @@ curl -H "x-api-key: YOUR_API_KEY"
 
 Pick the endpoint based on the payment method:
 
-- Monitored native deposits: `POST /api/deposit/create` (see [Monitored deposits](#monitored-deposits))
+- Monitored deposits (native POL on Polygon, USDT on BNB Smart Chain): `POST /api/deposit/create` (see [Monitored deposits](#monitored-deposits))
 - Crypto invoice / swap deposits: `POST /api/transaction/create/{ticker}`
 - Daimo Pay (multi-chain): `POST /api/transaction/create/daimo/{ticker}`
 - Card (Stripe): `POST /api/transaction/create/usd`

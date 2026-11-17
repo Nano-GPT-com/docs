@@ -31,8 +31,8 @@
         "tags": [
           "Transactions"
         ],
-        "summary": "Create a native POL payment window",
-        "description": "Create an API-key-authenticated native POL top-up on Polygon PoS. amount is USD, token POL or POLYGON. The address is reused but monitoring requires a new active request for each transfer. A quote is not a locked exchange rate. Use one transfer per request and keep a wallet-side payment record to avoid sending twice. Other deposit/create network flows are outside this documented POL contract. Requests with Idempotency-Key, including replays, are limited to 30 per 10 minutes per account and tenant. Follow Retry-After and bounded backoff.",
+        "summary": "Create a native POL (Polygon) or USDT (BNB Smart Chain) payment window",
+        "description": "Create an API-key-authenticated top-up window: native POL on Polygon PoS (network polygon, token POL or POLYGON) or USDT on BNB Smart Chain (network bnb, token USDT). amount is USD. The receiving address is reused, but it is only watched while a window is open: open a window, wait for a 2xx with a txId, then broadcast exactly one transfer before expiresAt. A transfer mined before the window opened is not credited automatically. One open window per account, network and token; creating another while one is open returns 409 deposit_already_pending with the open window. POL quotes are not a locked rate; USDT is credited 1:1 in USD minus the quoted consolidation fee. Contract wallets (for example a Safe) work: the window matches the token transfer to the address, not the sender. Other deposit/create networks and tokens are outside this documented contract. Every call counts against 30 creations per 10 minutes per account; requests with Idempotency-Key, including replays, are also limited to 30 per 10 minutes per account, tenant and network. When a limiter cannot be checked the request is refused with 503. Follow Retry-After and bounded backoff.",
         "security": [
           {
             "bearerAuth": []
@@ -46,7 +46,7 @@
             "name": "Idempotency-Key",
             "in": "header",
             "required": false,
-            "description": "Recommended unique key per logical top-up, 8-128 visible ASCII characters without spaces. Receipts last 24 hours. Retry with the same key and unchanged amount/token/expiry after a timeout. Changed payload returns 409. Replays verify current status and never create a new window. Uncertain attempts remain claimed; repeated idempotency_in_progress requires investigation rather than a new key or another transfer. Never reuse keys for later payments. Does not deduplicate wallet transfers. Supported only for native POL.",
+            "description": "Recommended unique key per logical top-up, 8-128 visible ASCII characters without spaces. Receipts last 24 hours. Retry with the same key and unchanged amount/token/expiry after a timeout. Changed payload returns 409. Replays verify current status and never create a new window. Uncertain attempts remain claimed; repeated idempotency_in_progress requires investigation rather than a new key or another transfer. Never reuse keys for later payments. Does not deduplicate wallet transfers. Supported only for native POL on Polygon and USDT on BNB Smart Chain; any other network or token returns 400.",
             "schema": {
               "type": "string",
               "minLength": 8,
@@ -60,12 +60,32 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PolygonDepositRequest"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PolygonDepositRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BnbUsdtDepositRequest"
+                  }
+                ]
               },
-              "example": {
-                "network": "polygon",
-                "token": "POL",
-                "amount": 150
+              "examples": {
+                "pol": {
+                  "summary": "Native POL on Polygon",
+                  "value": {
+                    "network": "polygon",
+                    "token": "POL",
+                    "amount": 150
+                  }
+                },
+                "usdtBsc": {
+                  "summary": "USDT on BNB Smart Chain",
+                  "value": {
+                    "network": "bnb",
+                    "token": "USDT",
+                    "amount": 150
+                  }
+                }
               }
             }
           }
@@ -76,7 +96,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolygonDeposit"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PolygonDeposit"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BnbUsdtDeposit"
+                    }
+                  ]
                 }
               }
             },
@@ -93,21 +120,35 @@
             }
           },
           "400": {
-            "description": "Invalid body, expiry or idempotency key.",
+            "description": "Invalid body, network, token, amount, expiry or idempotency key. Wrong network names (bsc, BNB) and other tokens are refused before any window is created.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolygonDepositError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PolygonDepositError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BnbUsdtDepositError"
+                    }
+                  ]
                 }
               }
             }
           },
           "401": {
-            "description": "Missing or invalid authentication.",
+            "description": "Missing or invalid authentication. If the account is deleted while the request runs, the body is plain text (Session deleted).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolygonDepositError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PolygonDepositError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BnbUsdtDepositError"
+                    }
+                  ]
                 }
               }
             }
@@ -117,7 +158,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolygonDepositError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PolygonDepositError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BnbUsdtDepositError"
+                    }
+                  ]
                 }
               }
             },
@@ -135,7 +183,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolygonDepositError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PolygonDepositError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BnbUsdtDepositError"
+                    }
+                  ]
                 }
               }
             },
@@ -161,7 +216,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolygonDepositError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PolygonDepositError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BnbUsdtDepositError"
+                    }
+                  ]
                 }
               }
             }
@@ -257,6 +319,101 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PolygonDepositError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transaction/status/bnb/{txId}": {
+      "servers": [
+        {
+          "url": "https://nano-gpt.com/api",
+          "description": "Website host"
+        }
+      ],
+      "get": {
+        "operationId": "getBnbDepositStatus",
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Verify a USDT (BNB Smart Chain) deposit and its credited balance",
+        "description": "Poll with the original account API key and complete URL-encoded txId. Unknown or foreign IDs return 404, not an inferred PENDING state. COMPLETED and balanceCredited true require a matching completed ledger deposit. EXPIRED means the acceptance window closed; it does not prove that no transfer was sent or rule out later reconciliation. Never resend solely because polling failed or the window expired. PROCESSING means the transfer was seen and the window completed but the ledger credit is not yet visible; keep polling. A Polygon txId is not found here.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "txId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Complete opaque txId returned by create. Encode the entire value as one URL path segment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current owner-scoped deposit state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BnbUsdtDeposit"
+                }
+              }
+            },
+            "headers": {
+              "X-Poll-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Recommended seconds before another poll (currently 2)."
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed txId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BnbUsdtDepositError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BnbUsdtDepositError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No matching deposit for this account, BNB Smart Chain and address.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BnbUsdtDepositError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Status could not be verified; retry with backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BnbUsdtDepositError"
                 }
               }
             }
@@ -5950,6 +6107,315 @@
           },
           "transaction": {
             "$ref": "#/components/schemas/PolygonDeposit"
+          }
+        },
+        "additionalProperties": true
+      },
+      "BnbUsdtDepositRequest": {
+        "type": "object",
+        "required": [
+          "network",
+          "token",
+          "amount"
+        ],
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "bnb"
+            ],
+            "description": "BNB Smart Chain (chain ID 56). Not bsc, BNB or bep20."
+          },
+          "token": {
+            "type": "string",
+            "enum": [
+              "USDT"
+            ],
+            "description": "USDT (BEP-20, contract 0x55d398326f99059fF775485246999027B3197955, 18 decimals). Uppercase only. Send only this token to the window."
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 25000,
+            "description": "Requested gross USD, which is also the USDT to send (1 USDT credits as $1). The net credit after the quoted consolidation fee must be at least $0.10; a smaller amount returns 400 with requiredGrossUsd."
+          },
+          "expires_at": {
+            "type": "integer",
+            "description": "Optional future Unix timestamp in seconds, at most 30 minutes from now. Omit to use the default 30-minute window. Keep unchanged on idempotent retries."
+          }
+        },
+        "additionalProperties": true
+      },
+      "BnbUsdtDepositCreditEstimate": {
+        "type": "object",
+        "description": "USD breakdown for the requested amount: no conversion spread for USDT (1 USDT = $1), the consolidation fee quoted for this window, then the eligible crypto bonus. Final credit uses the USDT actually received.",
+        "required": [
+          "grossUsdExact",
+          "conversionSpreadRateExact",
+          "conversionSpreadUsdExact",
+          "consolidationFeeUsdExact",
+          "netBeforeBonusUsdExact",
+          "bonusRateExact",
+          "bonusUsdExact",
+          "estimatedCreditedUsdExact",
+          "basis"
+        ],
+        "properties": {
+          "grossUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "conversionSpreadRateExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "conversionSpreadUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "consolidationFeeUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "netBeforeBonusUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "bonusRateExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "bonusUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "estimatedCreditedUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "requested_usd_at_quote_price"
+            ]
+          }
+        }
+      },
+      "BnbUsdtDeposit": {
+        "type": "object",
+        "description": "USDT on BNB Smart Chain: creation instructions or current status. Fields labeled quoted or estimated are not settled credit.",
+        "properties": {
+          "network": {
+            "type": "string",
+            "enum": [
+              "bnb"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "enum": [
+              "USDT"
+            ]
+          },
+          "chainId": {
+            "type": "integer",
+            "enum": [
+              56
+            ]
+          },
+          "tokenDecimals": {
+            "type": "integer",
+            "enum": [
+              18
+            ]
+          },
+          "address": {
+            "type": "string",
+            "description": "The account's receiving address (the same on every EVM chain). It is only watched while a window is open: open a window, then send. A transfer mined before the window opened or after it closed is not credited automatically."
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string",
+            "description": "Opaque status identifier: address:jobId:expiry. Persist exactly and URL-encode when polling."
+          },
+          "statusUrl": {
+            "type": "string",
+            "description": "Relative URL to poll on https://nano-gpt.com with the same account API key."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CONFIRMING",
+              "PROCESSING",
+              "COMPLETED",
+              "EXPIRED",
+              "FAILED"
+            ]
+          },
+          "balanceCredited": {
+            "type": "boolean",
+            "description": "True only when the status endpoint verifies a completed account-owned ledger deposit. Present in status responses."
+          },
+          "creditedUsd": {
+            "type": "number",
+            "description": "Final credited USD when balanceCredited is true; prefer settlement.creditedUsdExact for exact accounting."
+          },
+          "requestedUsd": {
+            "type": "number",
+            "description": "Original requested gross USD estimate."
+          },
+          "quotedTokenAmount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "USDT to send for the requested amount, as a decimal string. Any amount of USDT received in the window is credited; it does not have to match exactly."
+          },
+          "quotedTokenAmountAtomic": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "quotedTokenAmount in atomic units (18 decimals), the uint256 for transfer(address,uint256). Parse as BigInt or another exact integer, never a floating-point Number."
+          },
+          "quotedTokenUsdPrice": {
+            "type": "number",
+            "enum": [
+              1
+            ],
+            "description": "1 USDT is credited as $1."
+          },
+          "creditEstimate": {
+            "$ref": "#/components/schemas/BnbUsdtDepositCreditEstimate"
+          },
+          "expiresAt": {
+            "type": "integer",
+            "description": "Payment-window expiry as Unix seconds. Do not send against expired or cancelled requests."
+          },
+          "remainingTime": {
+            "type": "integer",
+            "description": "Seconds remaining when this response was built."
+          },
+          "minimumDepositUsd": {
+            "type": "number",
+            "description": "Minimum requested gross USD estimate."
+          },
+          "consolidationFeeUsd": {
+            "type": "number"
+          },
+          "consolidationFeeUsdExact": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Exact decimal string. Use decimal arithmetic."
+          },
+          "estimatedCreditUsd": {
+            "type": "number",
+            "description": "Legacy estimate after the consolidation fee, before bonus."
+          },
+          "amountCrypto": {
+            "deprecated": true,
+            "description": "Legacy field. Creation responses contain the USD estimate. Use quotedTokenAmount.",
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "txHash": {
+            "type": "string"
+          },
+          "paidTokenAmount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+)?$",
+            "description": "Observed USDT received, as an exact decimal string. Final USD credit is only in settlement."
+          },
+          "paidTokenAmountAtomic": {
+            "type": "string"
+          },
+          "settlement": {
+            "type": "object",
+            "description": "Only returned for verified COMPLETED ledger rows. Historical bonus components are null if unavailable or inconsistent; no bonus is inferred.",
+            "required": [
+              "creditedUsdExact",
+              "baseUsdExact",
+              "bonusUsdExact",
+              "bonusRateExact",
+              "breakdownSource"
+            ],
+            "properties": {
+              "creditedUsdExact": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d+)?$",
+                "description": "Exact decimal string. Use decimal arithmetic."
+              },
+              "baseUsdExact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bonusUsdExact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bonusRateExact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "breakdownSource": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "cryptoBonus",
+                  null
+                ]
+              }
+            }
+          },
+          "tokenContract": {
+            "type": "string",
+            "enum": [
+              "0x55d398326f99059fF775485246999027B3197955"
+            ],
+            "description": "BSC USDT (BEP-20) contract. Other tokens sent to the address are not credited by this window."
+          },
+          "paymentLink": {
+            "type": "string",
+            "description": "EIP-681 link: ethereum:<contract>@56/transfer?address=<address>&uint256=<atomic>."
+          }
+        },
+        "additionalProperties": true
+      },
+      "BnbUsdtDepositError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/BnbUsdtDeposit"
           }
         },
         "additionalProperties": true
