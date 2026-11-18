@@ -19,7 +19,7 @@ Set `NANOGPT_API_KEY` in your local environment, then start an explicitly select
 
 ```bash
 export NANOGPT_API_KEY="YOUR_NANOGPT_API_KEY"
-npx --yes @nanogpt/private-mode@0.2.30
+npx --yes @nanogpt/private-mode@0.2.31
 ```
 
 The proxy listens at `http://127.0.0.1:8787/v1`. Keep your NanoGPT key in the proxy process; the calling application can use `unused` as its API key.
@@ -51,7 +51,7 @@ Omitting `stream` returns a single JSON response. Long reasoning requests may ta
 The default upstream host is `https://nano-gpt.com`. Set `--api-base` to change the host contacted by the proxy:
 
 ```bash
-npx --yes @nanogpt/private-mode@0.2.30 --api-base https://api.nano-gpt.com
+npx --yes @nanogpt/private-mode@0.2.31 --api-base https://api.nano-gpt.com
 ```
 
 Pass an **origin without `/api` or `/v1`**. The proxy appends its own `/api/v1/private/tinfoil/*` paths. Your application's base URL remains `http://127.0.0.1:8787/v1`. See [API Hosts](/api-reference/miscellaneous/api-hosts) for host differences.
@@ -59,7 +59,7 @@ Pass an **origin without `/api` or `/v1`**. The proxy appends its own `/api/v1/p
 The proxy permits same-machine clients only and rejects browser origins by default. If a local browser application needs access, allow its exact origin:
 
 ```bash
-npx --yes @nanogpt/private-mode@0.2.30 --allow-origin http://localhost:3000
+npx --yes @nanogpt/private-mode@0.2.31 --allow-origin http://localhost:3000
 ```
 
 Wildcard origins are not supported. Any application you allow can make requests using the proxy's NanoGPT key.
@@ -78,7 +78,7 @@ curl http://127.0.0.1:8787/v1/private-mode/attestation
 
 ## Supported models
 
-Release 0.2.30 bundles these model IDs. Use the local `/v1/models` endpoint to check availability for your installed release.
+Release 0.2.31 bundles these model IDs. Use the local `/v1/models` endpoint to check availability for your installed release.
 
 | Model ID | Model |
 | --- | --- |
@@ -105,7 +105,7 @@ Attestation covers Tinfoil's router. It does not independently prove which model
 The NanoGPT web app can produce a receipt that you can verify locally:
 
 ```bash
-npx --yes @nanogpt/private-mode@0.2.30 verify receipt.json
+npx --yes @nanogpt/private-mode@0.2.31 verify receipt.json
 ```
 
 The verifier checks freshly fetched evidence against its built-in policy and compares it with the receipt. The receipt itself is unsigned; a successful check does not authenticate every claim recorded in it or prove that fresh evidence describes the original request. The [package README](https://www.npmjs.com/package/@nanogpt/private-mode?activeTab=readme) explains the output and limitations.
@@ -132,4 +132,13 @@ curl --fail-with-body http://127.0.0.1:8787/v1/convert/file \
 
 Private Mode is **not currently available through NanoGPT's onion gateway**. The gateway does not forward the `/api/v1/private/tinfoil/*` routes and returns `404 onion_route_not_available`. Setting `--api-base` to the onion address does not enable those routes or configure Tor transport.
 
-The published 0.2.30 proxy has no built-in SOCKS option. Use the HTTPS hosts above for Private Mode. Check the package's release notes and this page before attempting onion access; ordinary onion API support does not imply Private Mode support.
+Version 0.2.31 adds optional SOCKS5 transport with remote DNS. With your own Tor client already running, you can reach the regular HTTPS API through Tor:
+
+```bash
+npx --yes @nanogpt/private-mode@0.2.31 \
+  --api-base https://nano-gpt.com --proxy socks5h://127.0.0.1:9050
+```
+
+All outbound proxy fetches, including redirects and attestation evidence, use the SOCKS connection. A proxy failure fails the request; there is no direct-connection fallback. The option also applies to `verify`. It covers the proxy process, not npm package downloads or your application's own network requests. SOCKS URLs must use `socks5h://` and cannot include credentials.
+
+This does **not** enable NanoGPT's onion gateway. When an HTTP `.onion` API base is configured, the SDK still requires HTTPS attestation bundles; the proxy obtains those from `https://nano-gpt.com` through SOCKS. Other verification evidence can also use HTTPS hosts through Tor exits. This is not an onion-only network path. Account identity remains visible to NanoGPT, and TLS certificate, hostname and attestation verification stay enabled. Check this page before attempting onion access; ordinary onion API support does not imply Private Mode support.
