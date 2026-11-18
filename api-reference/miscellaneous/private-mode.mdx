@@ -1,0 +1,135 @@
+---
+title: "Private Mode API"
+description: "Use an OpenAI-compatible local proxy to verify attestation and encrypt prompts before they reach NanoGPT."
+---
+
+Private Mode encrypts your prompt on your device before NanoGPT receives it, and decrypts the answer locally. The [@nanogpt/private-mode npm package](https://www.npmjs.com/package/@nanogpt/private-mode) runs a localhost proxy for API clients, CLIs and agents that support OpenAI Chat Completions.
+
+The proxy verifies Tinfoil's trusted execution environment (TEE) attestation locally, then uses Encrypted HTTP Bodies Protocol (EHBP) to encrypt request and response bodies. NanoGPT relays the ciphertext and handles authentication and billing.
+
+<Warning>
+Sending a `private/*` model ID to NanoGPT's standard Chat Completions endpoint does not enable Private Mode. Your application must send requests through the local proxy. Standard `TEE/*` routes are different: NanoGPT can receive plaintext on those routes.
+</Warning>
+
+## Set up the local proxy
+
+Use Node.js 22.23.4, 24.22.1 or 26.12.1, or a later supported release. Older runtimes are refused because of known security vulnerabilities.
+
+Set `NANOGPT_API_KEY` in your local environment, then start an explicitly selected release:
+
+```bash
+export NANOGPT_API_KEY="YOUR_NANOGPT_API_KEY"
+npx --yes @nanogpt/private-mode@0.2.30
+```
+
+The proxy listens at `http://127.0.0.1:8787/v1`. Keep your NanoGPT key in the proxy process; the calling application can use `unused` as its API key.
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://127.0.0.1:8787/v1",
+    api_key="unused",
+    timeout=1800.0,
+)
+
+stream = client.chat.completions.create(
+    model="private/glm-5-3",
+    messages=[{"role": "user", "content": "Hello"}],
+    stream=True,
+)
+
+for chunk in stream:
+    if chunk.choices and chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)
+```
+
+Omitting `stream` returns a single JSON response. Long reasoning requests may take more than five minutes; configure the calling application's timeout accordingly.
+
+### Choose NanoGPT's upstream host
+
+The default upstream host is `https://nano-gpt.com`. Set `--api-base` to change the host contacted by the proxy:
+
+```bash
+npx --yes @nanogpt/private-mode@0.2.30 --api-base https://api.nano-gpt.com
+```
+
+Pass an **origin without `/api` or `/v1`**. The proxy appends its own `/api/v1/private/tinfoil/*` paths. Your application's base URL remains `http://127.0.0.1:8787/v1`. See [API Hosts](/api-reference/miscellaneous/api-hosts) for host differences.
+
+The proxy permits same-machine clients only and rejects browser origins by default. If a local browser application needs access, allow its exact origin:
+
+```bash
+npx --yes @nanogpt/private-mode@0.2.30 --allow-origin http://localhost:3000
+```
+
+Wildcard origins are not supported. Any application you allow can make requests using the proxy's NanoGPT key.
+
+### Updates and model discovery
+
+The proxy does not update itself or download new model mappings. Review releases before explicitly installing another version. The npm release includes a shrinkwrap that pins its runtime dependencies for registry installs; see the [package README](https://www.npmjs.com/package/@nanogpt/private-mode?activeTab=readme) for persistent installation and lockfile guidance.
+
+The model list is bundled with the installed release. At startup, the proxy checks the hosted catalog and warns about additions or removals. Retired models are disabled. If the catalog cannot be fetched, the proxy warns and uses its bundled list; requests still require NanoGPT preflight and verified attestation.
+
+```bash
+curl http://127.0.0.1:8787/v1/models
+curl http://127.0.0.1:8787/v1/private-mode/status
+curl http://127.0.0.1:8787/v1/private-mode/attestation
+```
+
+## Supported models
+
+Release 0.2.30 bundles these model IDs. Use the local `/v1/models` endpoint to check availability for your installed release.
+
+| Model ID | Model |
+| --- | --- |
+| `private/deepseek-v4-1-flash` | DeepSeek V4.1 Flash 1017 |
+| `private/kimi-k3-1-pro` | Kimi K3.1 Pro |
+| `private/gpt-oss-120b` | GPT OSS 120B |
+| `private/llama3-3-70b` | Llama 3.3 70B |
+| `private/glm-5-3` | GLM 5.3 |
+| `private/gemma4-31b` | Gemma 4 31B |
+| `private/gemma4-31b:thinking` | Gemma 4 31B with thinking |
+
+Keep the same private model ID when enabling reasoning. Kimi K3.1 Pro and GLM 5.3 always generate reasoning; GLM 5.3 accepts `low`, `high` or `max` effort. DeepSeek V4.1 Flash and Gemma 4 support optional thinking. `reasoning: { "exclude": true }` hides reasoning in the response without disabling its generation.
+
+Model context windows include both input and output. The `context_length` and `max_output_tokens` values returned by the model list are not additive.
+
+## Attestation and privacy boundaries
+
+The proxy verifies the router's hardware evidence, signed code release and measurements against its verifier policy before establishing encrypted transport. Failed or incomplete verification prevents inference. After five idle minutes by default, the next request creates a fresh verified transport; verification also has a freshness window.
+
+NanoGPT still sees account identity, selected model and TEE target metadata, timing, request and response sizes, status and usage metadata. Private Mode protects supported prompt and completion bodies from NanoGPT; it does not provide account anonymity. Your calling application and local proxy handle plaintext, so their logs, plugins, tools and device security remain part of your privacy boundary.
+
+Attestation covers Tinfoil's router. It does not independently prove which model answered, usage correctness or prompt non-retention. Usage metadata remains trusted rather than end-to-end signed. See [Private Mode verification details](https://nano-gpt.com/private-mode-verification) for the verification contract.
+
+The NanoGPT web app can produce a receipt that you can verify locally:
+
+```bash
+npx --yes @nanogpt/private-mode@0.2.30 verify receipt.json
+```
+
+The verifier checks freshly fetched evidence against its built-in policy and compares it with the receipt. The receipt itself is unsigned; a successful check does not authenticate every claim recorded in it or prove that fresh evidence describes the original request. The [package README](https://www.npmjs.com/package/@nanogpt/private-mode?activeTab=readme) explains the output and limitations.
+
+## Supported operations and limits
+
+- **Chat Completions:** text generation, streaming and supported model features through the local `/v1/chat/completions` endpoint. The Responses API and Batch API are unavailable in Private Mode.
+- **Vision:** supported models accept inline image bytes inside the encrypted request. A remote image URL is not equivalent to sending an encrypted local image; check the model's capabilities and the package guide.
+- **PDF text extraction:** send exactly one PDF, up to 3 MiB, to the local `/v1/convert/file` endpoint with an `X-NanoGPT-Private-Model` header. This encrypted conversion returns Markdown and is billed separately from model tokens. A model's `pdf_upload: false` describes native PDF prompts, not this conversion step.
+- **Web search:** unavailable. Search flags and native web-search tool declarations are rejected before inference. If your application runs external tools itself, those calls have their own privacy boundaries.
+- **Billing:** a funded account and API-key spend-limit headroom are required. Streaming may temporarily reserve enough balance for up to 32,768 output tokens even when the encrypted request asks for fewer. Unused reserve is refunded after verified usage metadata is available; this is not the final charge.
+- **Duration:** hosted generation has a 29-minute soft deadline within a 30-minute route limit. If a stream ends without a finish reason and the final `[DONE]` marker, the proxy emits `private_stream_incomplete`; preceding text may be partial.
+- **Local prompt cache:** the proxy's cache-isolation key is held in memory. Restarting the proxy starts a new cache namespace and can increase input-token cost and time to first token.
+
+Example PDF conversion:
+
+```bash
+curl --fail-with-body http://127.0.0.1:8787/v1/convert/file \
+  -H 'X-NanoGPT-Private-Model: private/glm-5-3' \
+  -F 'files=@document.pdf;type=application/pdf'
+```
+
+## Tor and the onion API
+
+Private Mode is **not currently available through NanoGPT's onion gateway**. The gateway does not forward the `/api/v1/private/tinfoil/*` routes and returns `404 onion_route_not_available`. Setting `--api-base` to the onion address does not enable those routes or configure Tor transport.
+
+The published 0.2.30 proxy has no built-in SOCKS option. Use the HTTPS hosts above for Private Mode. Check the package's release notes and this page before attempting onion access; ordinary onion API support does not imply Private Mode support.
