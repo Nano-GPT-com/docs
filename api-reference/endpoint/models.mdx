@@ -32,7 +32,7 @@ Model availability changes frequently. Use `GET /api/v1/models` as the authorita
 Examples below include canonical IDs and public moving aliases; legacy compatibility aliases are intentionally omitted.
 
 {/* AUTO-GENERATED: notable-model-ids:start */}
-- **OpenAI**: <code>{exampleTextModel}</code>, `openai/gpt-6-astra`, `openai/gpt-latest`
+- **OpenAI**: <code>{exampleTextModel}</code>, `openai/gpt-6.2-sol`, `openai/gpt-6.2-astra`, `openai/gpt-latest`
 - **Anthropic**: `anthropic/claude-opus-5.5`, `anthropic/claude-sonnet-5.5`, `anthropic/claude-fable-5.2`
 - **Google Gemini**: `google/gemini-flash-latest`, `google/gemini-3.8-flash`, `google/gemini-3.1-pro-preview`
 - **SpaceXAI Grok**: `x-ai/grok-4.7`, `x-ai/grok-latest`
@@ -43,6 +43,26 @@ Examples below include canonical IDs and public moving aliases; legacy compatibi
 - **MiniMax**: `minimax/minimax-m3.1-flash`, `minimax/minimax-m3`, `minimax/minimax-latest`
 - **Qwen**: `qwen/qwen4-max`, `qwen/qwen3.8-max`, `qwen/qwen3-coder-next`
 {/* AUTO-GENERATED: notable-model-ids:end */}
+
+### GPT 6.2 Astra and Sol
+
+Choose `openai/gpt-6.2-astra` or `openai/gpt-6.2-sol` explicitly to use GPT-6.2.
+Both support text and image input, function tools, structured output, and reasoning
+levels `low`, `medium`, `high`, `xhigh`, and `max`. They are pay-as-you-go models
+and are not included in subscriptions.
+
+The `openai/gpt-6.2-astra-pro` and `openai/gpt-6.2-sol-pro` IDs enable Pro
+reasoning mode on the corresponding base model. Per-token rates stay the same,
+but additional model work can increase token usage, total cost, and latency.
+
+NanoGPT currently supports Standard processing and function tools for these models.
+Hosted tools, multi-agent requests, background mode, and zero data retention are
+not currently supported. Check the [live catalog](https://api.nano-gpt.com/api/v1/models?detailed=true)
+for current limits, prices, and supported Batch endpoints before switching an integration.
+
+`openai/gpt-sol-latest` still resolves to <code>{exampleTextModel}</code>, and
+`openai/gpt-astra-latest` still resolves to `openai/gpt-6-astra`. The general chat
+default and this site's examples continue to use GPT-6.1 Sol.
 
 ### Qwen 4 Max
 
@@ -111,9 +131,11 @@ and remaining context. Thinking is always enabled with `low`, `high`, or `max`
 effort; NanoGPT defaults to `max`. Hiding reasoning does not disable thinking or
 its token usage. Start a new conversation when switching from K3 to K3.1 Pro.
 
-K3.1 Pro currently costs $2 per million input tokens, $10 per million output
-tokens, and $0.20 per million cached-input tokens. K3 Auto prices vary by route;
-check current pricing before switching. K3.1 Pro does not support the Batch API
+K3.1 Pro and Kimi Latest currently cost $1.40 per million input tokens, $7 per
+million output tokens, and $0.14 per million cached-input tokens in Auto. Cache
+writes cost $1.40/M for five minutes or $2.80/M for one hour. Explicit provider
+selection can change these rates. K3 Auto prices also vary by route; check current
+pricing before switching. K3.1 Pro does not support the Batch API
 and is excluded from subscriber discounts. It does not inherit K3-specific
 discounts, and neither model is included in subscriptions. Keep explicit K3
 for integrations that need its batch support. Availability, privacy options and route limits can differ;
