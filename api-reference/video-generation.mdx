@@ -442,14 +442,15 @@ Recover recent video generation runs for a user.
 **Rate Limit**: 20 requests/minute
 
 ### GET `/api/generate-video/content`
-Proxy content retrieval for Sora 2 videos.
+Serves a video NanoGPT stores. Status responses return these URLs signed (`expires`, `sig`): they work without an API key for 24 hours, after which you poll the status endpoint again for a fresh one. Without a valid signature, only the creating account's API key or session can fetch the video; anyone else gets `404`.
 
 **Query Parameters**
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `runId` | string | Yes | The run ID |
-| `model` | string | Yes | Must be `sora-2` |
-| `variant` | string | No | `video`, `thumbnail`, or `spritesheet` |
+| `runId` | string | Yes | The job ID (`vid_...`) or provider run ID, as in the returned URL |
+| `model` | string | Yes | The model, as in the returned URL |
+| `variant` | string | No | `video` (default); for Sora 2 also `thumbnail` or `spritesheet` |
+| `expires`, `sig` | string | No | The signature a status response added |
 
 ## Complete Examples
 

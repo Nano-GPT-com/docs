@@ -5,7 +5,11 @@ openapi: 'GET /generate-video/content'
 
 ## Overview
 
-Proxy content retrieval for Sora 2 videos.
+Serves a finished video (or a Sora 2 thumbnail or spritesheet) that NanoGPT stores. You normally don't build these URLs: the status endpoints return them, signed.
+
+### Access
+
+A URL from a status response carries `expires` and `sig` and works without an API key for 24 hours. Without a valid signature, only the account that created the job can fetch it, with its API key (`x-api-key`) or session; anyone else gets `404`, as for a job that doesn't exist. Poll the status endpoint again for a fresh signed URL.
 
 ### Endpoint
 ```
@@ -16,9 +20,10 @@ GET /api/generate-video/content
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `runId` | string | Yes | The run ID |
-| `model` | string | Yes | Must be `sora-2` |
-| `variant` | string | No | `video`, `thumbnail`, or `spritesheet` |
+| `runId` | string | Yes | The job ID (`vid_...`) or provider run ID, as in the URL a status response returned |
+| `model` | string | Yes | The model, as in that URL |
+| `variant` | string | No | `video` (default); for Sora 2 also `thumbnail` or `spritesheet` |
+| `expires`, `sig` | string | No | The signature a status response added; good for 24 hours |
 
 ## Usage
 

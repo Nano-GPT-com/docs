@@ -2337,7 +2337,7 @@
             }
           },
           "404": {
-            "description": "Request not found",
+            "description": "Request not found, or created by another account",
             "content": {
               "application/json": {
                 "schema": {
@@ -2428,7 +2428,7 @@
     },
     "/generate-video/content": {
       "get": {
-        "description": "Proxy content retrieval for Sora 2 videos.",
+        "description": "Serves a video NanoGPT stores. Status responses return these URLs signed (expires, sig), good for 24 hours without an API key. Without a valid signature only the creating account's API key or session can fetch it; anyone else gets 404.",
         "security": [
           {
             "apiKeyAuth": []
@@ -2447,7 +2447,7 @@
           {
             "name": "model",
             "in": "query",
-            "description": "Must be sora-2",
+            "description": "The model, as in the URL a status response returned",
             "required": true,
             "schema": {
               "type": "string"
@@ -2456,7 +2456,25 @@
           {
             "name": "variant",
             "in": "query",
-            "description": "video, thumbnail, or spritesheet",
+            "description": "video (default); for Sora 2 also thumbnail or spritesheet",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expires",
+            "in": "query",
+            "description": "Expiry (Unix seconds) of the signature a status response added",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sig",
+            "in": "query",
+            "description": "Signature a status response added; valid until expires",
             "required": false,
             "schema": {
               "type": "string"
@@ -2488,6 +2506,9 @@
           "401": {
             "description": "Unauthorized - Invalid or missing API key"
           },
+          "404": {
+            "description": "Not found: an unknown job, or no valid signature and not the creating account"
+          },
           "500": {
             "description": "Server Error - Failed to retrieve content",
             "content": {
@@ -2503,7 +2524,7 @@
     },
     "/video/status": {
       "get": {
-        "description": "Unified video status endpoint that works across all video backends. Check the status of a video generation request using only the request ID and receive normalized status information.",
+        "description": "Unified video status endpoint that works across all video backends. Check the status of a video generation request and receive normalized status information. Only the account that created the job can read it, with its API key or session; another account's job answers 404 like an unknown one. Jobs paid anonymously with x402, and the statusUrl returned at submission for some private models (valid 24 hours), are read by the job ID alone. Output URLs on NanoGPT's content route are signed and work for 24 hours; poll again for a fresh one.",
         "security": [
           {
             "apiKeyAuth": []
@@ -2543,7 +2564,7 @@
             }
           },
           "404": {
-            "description": "Video generation request not found",
+            "description": "Video generation request not found, or created by another account",
             "content": {
               "application/json": {
                 "schema": {

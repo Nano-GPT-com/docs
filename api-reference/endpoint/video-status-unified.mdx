@@ -5,7 +5,7 @@ openapi: 'GET /video/status'
 
 ## Overview
 
-Check the status of an asynchronous video generation job using a single, provider-agnostic endpoint. This endpoint accepts NanoGPT job IDs (`vid_...`) and legacy provider request IDs. No `model` parameter is required. Session ownership is enforced (returns `403` when the job is not yours).
+Check the status of an asynchronous video generation job using a single, provider-agnostic endpoint. This endpoint accepts NanoGPT job IDs (`vid_...`) and legacy provider request IDs. No `model` parameter is required.
 
 ### Query parameters
 
@@ -18,7 +18,11 @@ Check the status of an asynchronous video generation job using a single, provide
 
 ### Authentication
 
-Provide `x-api-key` or a valid session cookie.
+Only the account that created a job can read its status: send that account's API key (`x-api-key`) or session. A job created by another account answers `404`, exactly like one that doesn't exist, so the response never confirms that someone else's job exists. Two exceptions keep the job ID enough on its own: jobs paid anonymously with x402, and the `statusUrl` (and `eventsUrl`) returned when some private models are submitted, which carry their own access parameters and work for 24 hours.
+
+### Output URLs
+
+When a video is served from NanoGPT's content route (`/api/generate-video/content?...`), its URL carries `expires` and `sig` parameters. It works without an API key for 24 hours, so you can hand it to a player or a download tool. After that, poll the status endpoint again for a fresh URL, or fetch the content route with the creating account's API key. URLs hosted by the model's provider are returned as the provider gives them and can expire sooner.
 
 ## Usage
 
