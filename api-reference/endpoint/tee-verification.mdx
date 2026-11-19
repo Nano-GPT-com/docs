@@ -11,11 +11,26 @@ RedPill signs a receipt for each response. A receipt records what its gateway re
 
 Confidentiality and logging outcomes are provider-specific, and plaintext may still exist at gateway or proxy layers outside the enclave.
 
+## Model availability
+
+Choose a model from the [live text-model catalog](https://api.nano-gpt.com/api/v1/models).
+TEE routes are withheld while enclave measurements await independent verification.
+A model with no available verified route is omitted from the catalog; requests
+blocked by this verification check return `503` with code
+`tee_verification_unavailable`.
+
+As of November 19, 2026, this affects `TEE/glm-5.1`, `TEE/glm-5.1-thinking`,
+`TEE/glm-5.2`, `TEE/glm-5.2:thinking`, `TEE/kimi-k2.6`, `TEE/kimi-k3`,
+`TEE/deepseek-v3.2` and `TEE/qwen3.6-27b`. This is a temporary availability
+restriction, not a model retirement. The routing and attestation descriptions below
+apply only when the relevant route is available; a dated observation does not
+establish current availability.
+
 ## Which replies have a receipt
 
 `TEE/` models don't all answer from the same route, so check `X-TEE-Signature-Available` on each reply.
 
-| Models | Who answers | Receipt |
+| Models | Configured route when available | Receipt |
 | --- | --- | --- |
 | `TEE/kimi-k2.6`, `TEE/kimi-k3`, `TEE/glm-5.1`, `TEE/glm-5.1-thinking`, `TEE/glm-5.2`, `TEE/glm-5.2:thinking`, `TEE/gemma4-31b`, `TEE/gemma4-31b:thinking` | Chutes TEE first, then another TEE route if it can't serve the request | Only if RedPill answers |
 | `TEE/gemma-4-31b-it` | RedPill, and NanoGPT rewrites its replies | Yes, but it covers RedPill's bytes rather than the ones you receive |
