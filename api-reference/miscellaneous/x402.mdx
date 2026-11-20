@@ -189,7 +189,7 @@ For accountless payment challenges, key off the stable top-level `payment` objec
 
 Treat the presence of `payment` as the accountless payment signal; do not depend on a single legacy `error.code` value.
 
-Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary advertised payment option when that option is a polling-style rail. When choosing a specific payment scheme, prefer the fields inside that option in `payment.accepted[]`. The exact replay option `nano-exact` does not include `statusUrl` or `completeUrl`; successful replay settles through the `X-PAYMENT` response path rather than updating the original quote record. Lightning L402 options also do not use `completeUrl`; successful completion is the replay of the original endpoint with the `Authorization: L402 <token>:<preimage>` header.
+Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary advertised payment option when that option is a polling-style rail. When choosing a specific payment scheme, prefer the fields inside that option in `payment.accepted[]`. The exact replay option `nano-exact` has a `statusUrl` but no `completeUrl`: replay the original request with the signed block in `X-PAYMENT`, and the settlement marks the original quote record completed, so its `statusUrl` shows the result. Lightning L402 options also do not use `completeUrl`; successful completion is the replay of the original endpoint with the `Authorization: L402 <token>:<preimage>` header.
 
 After paying a `nano` quote, call:
 
