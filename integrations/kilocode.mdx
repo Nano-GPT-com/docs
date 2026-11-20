@@ -21,4 +21,8 @@ A quick guide to setting up Kilo Code with NanoGPT's API.
    - API Key: Your key from step 1
    - Model ID: {exampleTextModel}
 
+## Subscribers
+
+With the Base URL above, Kilo Code lists every NanoGPT model, including models your subscription doesn't cover. To see only the models your subscription includes, use `https://api.nano-gpt.com/api/subscription/v1/` as the Base URL instead: Kilo Code then loads its model list from [`/api/subscription/v1/models`](/api-reference/endpoint/models). To keep a key from ever billing your balance, set its billing mode to **Subscription only** (see [API key billing settings](/api-reference/miscellaneous/billing-override#api-key-billing-settings)); requests your subscription doesn't cover are then rejected instead of charged.
+
 That's it! You can now use Kilo Code with every model you can think of. Model names are on our [pricing page](https://nano-gpt.com/pricing) - important ones are {exampleTextModel}, anthropic/claude-opus-5.5, google/gemini-flash-latest, or just any other model you fancy.

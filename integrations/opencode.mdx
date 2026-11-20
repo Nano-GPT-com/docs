@@ -45,6 +45,10 @@ Setup replaces NanoGPT authentication with your chosen login or pasted key. It r
 
 If you install OpenCode 2 after running setup, run setup again or follow [Add your API key](#1-add-your-api-key).
 
+<Note>
+**Subscribers:** OpenCode shows NanoGPT's full model catalogue, including models your subscription doesn't cover. The models your subscription includes are listed at [`https://api.nano-gpt.com/api/subscription/v1/models`](/api-reference/endpoint/models). Changing OpenCode's `baseURL` doesn't filter its list, so add the model IDs you want from that list to `whitelist`, as shown in [Limiting the Model List](#limiting-the-model-list). To keep a key from ever billing your balance, set its billing mode to **Subscription only** (see [API key billing settings](/api-reference/miscellaneous/billing-override#api-key-billing-settings)); requests your subscription doesn't cover are then rejected instead of charged.
+</Note>
+
 ## Manual Setup
 
 If you prefer to configure manually:
@@ -302,6 +306,10 @@ Use `opencode.json` or `opencode.jsonc`, without a leading dot:
 - Project config: `opencode.json` in your project.
 
 OpenCode merges config sources. Project settings can override global settings, and a custom config set with `OPENCODE_CONFIG` can add another source. See [OpenCode's config documentation](https://opencode.ai/docs/config/#locations) for the full precedence rules.
+
+**A model returns `402` on a subscription?**
+
+That model isn't included in your subscription, and your balance is too low to pay for it. Pick one from [`/api/subscription/v1/models`](/api-reference/endpoint/models), or add balance to use it pay-as-you-go. A key set to **Subscription only** rejects these requests even with balance. To hide uncovered models, see [Limiting the Model List](#limiting-the-model-list).
 
 **More models appear than expected?**
 

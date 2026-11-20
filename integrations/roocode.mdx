@@ -23,4 +23,8 @@ A quick guide to setting up Roo Code with NanoGPT's API.
 
 > **Tip:** Roo Code surfaces the `thinking` and `response` channels side-by-side. Pointing it at `https://api.nano-gpt.com/api/v1thinking/` keeps that richer reasoning stream intact for models like Minimax M2 or Kimi K2 Thinking.
 
+## Subscribers
+
+With the Base URL above, Roo Code lists every NanoGPT model, including models your subscription doesn't cover. To see only the models your subscription includes, use `https://api.nano-gpt.com/api/subscription/v1/` as the Base URL instead: Roo Code then loads its model list from [`/api/subscription/v1/models`](/api-reference/endpoint/models). The subscription Base URL has no `v1thinking` variant, so it uses the standard reasoning stream shape. To keep a key from ever billing your balance, set its billing mode to **Subscription only** (see [API key billing settings](/api-reference/miscellaneous/billing-override#api-key-billing-settings)); requests your subscription doesn't cover are then rejected instead of charged.
+
 That's it! You can now use Roo Code with every model you can think of. Model names are on our [pricing page](https://nano-gpt.com/pricing) - important ones are {exampleTextModel}, anthropic/claude-opus-5.5, google/gemini-flash-latest, or just any other model you fancy.
