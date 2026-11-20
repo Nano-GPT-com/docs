@@ -20,6 +20,11 @@ Want to clone a custom voice from a reference audio clip? See [Voice Cloning](/a
 - **gpt-4o-mini-tts**: Ultra-low cost ($0.0006/1k chars)
 - **MiniMax Speech models**: Supports cloned voices via custom voice IDs (see [Voice Cloning](/api-reference/endpoint/voice-cloning))
 - **Qwen-3-TTS-1.7B**: Supports cloned voices via speaker embeddings (see [Voice Cloning](/api-reference/endpoint/voice-cloning))
+- **google/gemini-3.8-flash-tts** ($0.05/1k spoken chars) and **google/gemini-3.8-flash-lite-tts** ($0.03/1k spoken chars): Gemini 3.8 speech with 30 voices and unbilled `instructions`; Flash also supports two-speaker dialogue
+
+<Note>
+`gemini-2.5-flash-preview-tts`, `gemini-2.5-pro-preview-tts` and `gemini-3.1-flash-tts-preview` will be retired when Google shuts them down on December 18, 2026. See [Gemini preview TTS retirement](/api-reference/text-to-speech#gemini-preview-tts-retirement-december-18-2026) for how to move to Gemini 3.8.
+</Note>
 
 ## Basic Usage
 
@@ -488,4 +493,5 @@ Common errors:
 - **400**: Invalid parameters or missing text
 - **401**: Invalid or missing API key
 - **413**: Text exceeds model character limit
+- **410** (`TTS_MODEL_UNAVAILABLE`): The model has been retired. The response names its replacements in the message and a `replacements` array, and the request is not charged
 - **429**: Rate limit exceeded 

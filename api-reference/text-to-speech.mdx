@@ -24,6 +24,55 @@ NanoGPT also supports text-to-music generation via the OpenAI-compatible `POST /
 - **MiniMax Speech models**: Supports cloned voices via custom voice IDs
 - **Qwen-3-TTS-1.7B**: Supports cloned voices via speaker embeddings
 
+## Gemini preview TTS retirement (December 18, 2026)
+
+Google shuts down three preview speech models on **December 18, 2026**:
+
+| Retiring model | Recommended replacement |
+|----------------|-------------------------|
+| `gemini-2.5-flash-preview-tts` | `google/gemini-3.8-flash-lite-tts` for narration, `google/gemini-3.8-flash-tts` for two-speaker dialogue |
+| `gemini-2.5-pro-preview-tts` | `google/gemini-3.8-flash-tts` |
+| `gemini-3.1-flash-tts-preview` | `google/gemini-3.8-flash-tts` (dialogue and narration) or `google/gemini-3.8-flash-lite-tts` (narration only) |
+
+Both replacements are available now. Gemini 3.8 Flash TTS costs $0.05 and Gemini 3.8 Flash-Lite TTS costs $0.03 per 1,000 spoken characters, with no per-request minimum. Voice instructions are not billed.
+
+**What happens on the retirement date.** We keep serving each old model ID for as long as Google does. Once that ID can no longer be served, requests to it return HTTP `410` with code `TTS_MODEL_UNAVAILABLE` and an error message that names the replacements (`POST /api/tts` also returns them in a `replacements` array; `POST /v1/audio/speech` uses the OpenAI error envelope). These requests are not charged. We never switch a request to a different model without telling you. Switch to a 3.8 model yourself, before or after the date.
+
+### Moving a request to Gemini 3.8
+
+Most narration requests only need a new `model` value. The same 30 voices are available (for example `Kore` and `Puck`), though a voice can sound slightly different on the new model. Check these points:
+
+1. **Keep directions out of `input`.** Gemini 3.8 reads `input` word for word. Directions written into the text (such as "Say cheerfully: ...") will be spoken aloud. Send them in `instructions` instead. They control tone, emotion, accent and pace, and they are never spoken or billed.
+2. **Use angle-bracket vocal tags.** Inline events such as `<laugh>`, `<sigh>`, `<breath>` and `<short pause>` go directly in `input`.
+3. **Send dialogue as turns.** Instead of `Speaker: line` prefixes in one string, send `input` as an array of turns with exactly two distinct voices (Gemini 3.8 Flash TTS only; Flash-Lite is single-speaker):
+
+```json
+{
+  "model": "google/gemini-3.8-flash-tts",
+  "input": [
+    { "text": "Did you hear the news?", "voice": "Kore" },
+    { "text": "<laugh> I did. Finally!", "voice": "Puck", "instructions": "warm and excited" }
+  ]
+}
+```
+
+4. **WAV output, no speed control.** Gemini 3.8 returns WAV audio. `response_format`, if sent, must be `wav`, and `speed` must be `1` (use `instructions` such as "speak slowly" to change pace).
+5. **Input limit.** The complete input is limited to 8,192 tokens; turn-array input is also limited to 8,192 bytes after normalization and 100 turns.
+
+Narration example:
+
+```bash
+curl -X POST https://api.nano-gpt.com/api/v1/audio/speech \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "google/gemini-3.8-flash-lite-tts",
+    "input": "Welcome back. <short pause> Here is the summary for today.",
+    "voice": "Kore",
+    "instructions": "calm and friendly"
+  }' --output speech.wav
+```
+
 ## Streaming support in `POST /v1/audio/speech`
 
 Set `stream: true` to request chunked audio streaming. Default remains buffered (`stream: false`).
