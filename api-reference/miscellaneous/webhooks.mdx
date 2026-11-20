@@ -165,7 +165,7 @@ Job events carry IDs and status. Team events carry IDs and, depending on the eve
 `data.id` is the job's `runId` (`vid_...`). Use it with `GET /api/video/status?requestId={id}`.
 
 <Warning>
-Reading the job's status needs the API key or session of the account that created it, except for jobs paid anonymously with x402, which are read by their ID alone. Output URLs on NanoGPT's own content route are signed and work for 24 hours; poll the status endpoint again for a fresh one. Keep webhook bodies and any logs of them private.
+Reading the job's status needs the API key or session of the account that created it, except for jobs paid anonymously with x402 and older jobs NanoGPT has no job record for, which are read by their ID alone. Output URLs on NanoGPT's own content route are signed and work for 24 hours; poll the status endpoint again for a fresh one. Keep webhook bodies and any logs of them private.
 </Warning>
 
 ### Team events

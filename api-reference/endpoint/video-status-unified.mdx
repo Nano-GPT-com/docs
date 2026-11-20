@@ -18,7 +18,7 @@ Check the status of an asynchronous video generation job using a single, provide
 
 ### Authentication
 
-Only the account that created a job can read its status: send that account's API key (`x-api-key`) or session. A job created by another account answers `404`, exactly like one that doesn't exist, so the response never confirms that someone else's job exists. Two exceptions keep the job ID enough on its own: jobs paid anonymously with x402, and the `statusUrl` (and `eventsUrl`) returned when some private models are submitted, which carry their own access parameters and work for 24 hours.
+Only the account that created a job can read its status: send that account's API key (`x-api-key`) or session. A job created by another account answers `404`, exactly like one that doesn't exist, so the response never confirms that someone else's job exists. Three exceptions keep the job ID enough on its own: jobs paid anonymously with x402; the `statusUrl` (and `eventsUrl`) returned when some private models are submitted, which carry their own access parameters and work for 24 hours; and older jobs NanoGPT has no job record for, whose status is still read by ID alone, as before.
 
 ### Output URLs
 
