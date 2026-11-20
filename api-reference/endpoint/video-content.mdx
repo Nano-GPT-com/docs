@@ -7,6 +7,8 @@ openapi: 'GET /generate-video/content'
 
 Serves a finished video (or a Sora 2 thumbnail or spritesheet) that NanoGPT stores. NanoGPT keeps it on its servers for about a day after storing it, so download the videos you want to keep. You normally don't build these URLs: the status endpoints return them.
 
+In the NanoGPT web app, new generated videos are saved in the browser where they finish when storage space is available. If a video cannot be saved, the app asks you to download it. Clearing browser data removes these saved videos, so download the ones you want to keep for good. API clients must download and store their own copies; this endpoint does not save videos on their devices.
+
 ### Access
 
 A status response signs these URLs (`expires`, `sig`) when it is read by the account that created the job, for a job paid anonymously with x402, or through a `statusUrl`; a signed URL works without an API key for 24 hours. Anyone else reading an older job by its ID alone gets no URL: NanoGPT never hands out an unsigned one. After that, poll the status endpoint again for a fresh signed URL, or fetch the URL with the creating account's API key (`x-api-key`) or session.
