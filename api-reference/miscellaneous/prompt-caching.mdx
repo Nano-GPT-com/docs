@@ -444,5 +444,5 @@ In the NanoGPT web UI, models with explicit prompt-caching controls show a promp
 - Some models report aggregate prompt usage differently; use `cache_creation_input_tokens` and `cache_read_input_tokens` for authoritative cached token counts.
 - On cache hits, a small non-zero `cache_creation_input_tokens` can appear due to per-request overhead and does not necessarily indicate a cache miss.
 - Implicit caching behavior (eligibility, TTL behavior, and exact discounts) is provider-dependent.
-- Caches are per model. After a model switch mid-conversation, the next request cannot read the previous model's cache: the full history is billed as uncached input, or as a new cache write where caching is requested.
+- Caches are per model. After a model switch mid-conversation, the new model cannot reuse the previous model's cache. It reads from cache only the part of the prompt it cached itself earlier, if that entry has not expired.
 - Gemini 4 Argon supports implicit caching only. See [Gemini implicit caching](#gemini-implicit-caching) for the request shapes that reuse cached input.
