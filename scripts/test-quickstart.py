@@ -96,6 +96,14 @@ class QuickstartTest(unittest.TestCase):
         self.assertIn('stream failed', err)
         self.assertEqual(closed, [True])
 
+    def test_error_finish_reason_is_not_success(self):
+        frame = {'id': 'c', 'object': 'chat.completion.chunk', 'created': 1, 'model': 'fixture', 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'error'}]}
+        out, err, closed, error = self.run_example(blocks('quickstart.mdx')[1], frames=[frame])
+        self.assertIsInstance(error, RuntimeError)
+        self.assertIn('Generation failed in-stream', err)
+        self.assertIn('req-stream', out)
+        self.assertEqual(closed, [True])
+
     def test_premature_end_is_not_success(self):
         out, err, closed, error = self.run_example(blocks('quickstart.mdx')[1], frames=[])
         self.assertIsInstance(error, RuntimeError)

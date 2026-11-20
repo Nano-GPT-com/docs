@@ -63,6 +63,8 @@ with OpenAI(
                 # Usage-only frames can have no choices; never assume choices[0].
                 for choice in chunk.choices or []:
                     seen_choices.add(choice.index)
+                    if choice.finish_reason == "error":
+                        raise RuntimeError("Generation failed in-stream; save the request ID before retrying.")
                     if choice.finish_reason is not None:
                         finished_choices.add(choice.index)
                     delta = choice.delta
