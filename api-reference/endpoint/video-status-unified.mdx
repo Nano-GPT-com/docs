@@ -22,7 +22,7 @@ Only the account that created a job can read its status or its event stream: sen
 
 ### Output URLs
 
-When a video is served from NanoGPT's content route (`/api/generate-video/content?...`), a response to the account that created the job (or for an x402 job, or through a `statusUrl`) gives its URL `expires` and `sig` parameters. Such a URL works without an API key for 24 hours, so you can hand it to a player or a download tool. After that, poll the status endpoint again for a fresh URL, or fetch the content route with the creating account's API key. Anyone else reading an older job by its ID alone gets these URL fields empty: NanoGPT never hands out an unsigned content URL. URLs hosted by the model's provider are returned as the provider gives them and can expire sooner.
+When a video is served from NanoGPT's content route (`/api/generate-video/content?...`), a response to the account that created the job (or for an x402 job, or through a `statusUrl`) gives its URL `expires` and `sig` parameters. Such a URL works without an API key for 24 hours, so you can hand it to a player or a download tool. After that, poll the status endpoint again for a fresh URL, or fetch the content route with the creating account's API key. Anyone else reading an older job by its ID alone gets these URL fields empty: NanoGPT never hands out an unsigned content URL. NanoGPT keeps a video it stores on its servers for about a day after storing it, so download the ones you want to keep; for most stored videos `output.expiresAt` gives that date. URLs hosted by the model's provider are returned as the provider gives them and can expire sooner.
 
 ## Usage
 
