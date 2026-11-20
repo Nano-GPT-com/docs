@@ -18,11 +18,11 @@ Check the status of an asynchronous video generation job using a single, provide
 
 ### Authentication
 
-Only the account that created a job can read its status: send that account's API key (`x-api-key`) or session. A job created by another account answers `404`, exactly like one that doesn't exist, so the response never confirms that someone else's job exists. Three exceptions keep the job ID enough on its own: jobs paid anonymously with x402; the `statusUrl` (and `eventsUrl`) returned when some private models are submitted, which carry their own access parameters and work for 24 hours; and older jobs NanoGPT has no job record for, whose status is still read by ID alone, as before.
+Only the account that created a job can read its status or its event stream: send that account's API key (`x-api-key`) or session. A job created by another account answers `404`, exactly like one that doesn't exist, so the response never confirms that someone else's job exists. Three exceptions keep the job ID enough on its own: jobs paid anonymously with x402; the `statusUrl` (and `eventsUrl`) returned when some private models are submitted, which carry their own access parameters and work for 24 hours; and older jobs NanoGPT has no job record for, whose status is still read by ID alone, as before.
 
 ### Output URLs
 
-When a video is served from NanoGPT's content route (`/api/generate-video/content?...`), a response to the account that created the job (or for an x402 job, or through a `statusUrl`) gives its URL `expires` and `sig` parameters. Such a URL works without an API key for 24 hours, so you can hand it to a player or a download tool. After that, poll the status endpoint again for a fresh URL, or fetch the content route with the creating account's API key. An older job read by its ID alone gets unsigned URLs, which open only with the creating account's API key or session. URLs hosted by the model's provider are returned as the provider gives them and can expire sooner.
+When a video is served from NanoGPT's content route (`/api/generate-video/content?...`), a response to the account that created the job (or for an x402 job, or through a `statusUrl`) gives its URL `expires` and `sig` parameters. Such a URL works without an API key for 24 hours, so you can hand it to a player or a download tool. After that, poll the status endpoint again for a fresh URL, or fetch the content route with the creating account's API key. Anyone else reading an older job by its ID alone gets these URL fields empty: NanoGPT never hands out an unsigned content URL. URLs hosted by the model's provider are returned as the provider gives them and can expire sooner.
 
 ## Usage
 
