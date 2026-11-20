@@ -1,107 +1,43 @@
 ---
 title: "Introduction"
-description: "Welcome to the Nano-GPT.com API"
+description: "Make your first NanoGPT API request with the OpenAI SDK."
 ---
 
-## Overview
+## Your first request
 
-The NanoGPT API allows you to generate text, images and video using any AI model available. Our implementation for text generation generally matches the OpenAI standards.
+Create an [API key](https://nano-gpt.com/api), add [balance](https://nano-gpt.com/balance), and install the official Python SDK with `pip install openai`.
+Set `NANOGPT_API_KEY` in your environment. Keep the key on your server, outside source control.
 
-For API-key integrations, use `https://api.nano-gpt.com` as your API host. It accepts larger requests and allows longer-running requests than the website host, which matters for attachments and long model calls. See [API Hosts](/api-reference/miscellaneous/api-hosts) for SDK base URLs and the website flows that should stay on `nano-gpt.com`.
-
-<Note>
-  Partner domains such as [ai.bitcoin.com](https://ai.bitcoin.com), [bcashgpt.com](https://bcashgpt.com), and [cake.nano-gpt.com](https://cake.nano-gpt.com) may use the same API paths and request formats. Their request size and runtime limits can differ from `api.nano-gpt.com`.
-</Note>
-
-## Main API Endpoints
-
-| Endpoint | Purpose |
-| --- | --- |
-| `POST /api/v1/chat/completions` | OpenAI-compatible chat generation |
-| `POST https://api.nano-gpt.com/api/v1/batches` | Asynchronous Batch API jobs for Chat Completions and Responses requests |
-| `POST /api/v1/responses` | OpenAI-compatible Responses API |
-| `POST /v1/images/generations` | OpenAI-compatible image generation |
-| `POST /api/generate-video` | Video generation, editing, extension, and upscaling |
-| `POST /api/v1/messages` | Anthropic-compatible Messages API |
-
-For selected endpoints, you can also use [Accountless x402 API Payments](/api-reference/miscellaneous/x402) to receive a payment quote without an account or API key by including `x-x402: true` on the initial unauthenticated quote request. Check `GET /api/v1/x402/endpoints` for the current supported matrix.
-
-## Chat Completion example
-
-Here's a simple python example using our OpenAI-compatible chat completions endpoint:
+Use the exact SDK base URL `https://api.nano-gpt.com/api/v1`. The SDK appends `/chat/completions`, producing `POST /api/v1/chat/completions`. Do not append that endpoint to `base_url` yourself.
 
 ```python
-import requests
-import json
+import os
+from openai import OpenAI
 
-BASE_URL = "https://api.nano-gpt.com/api/v1"
-API_KEY = "YOUR_API_KEY"  # Replace with your API key
-
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json",
-    "Accept": "text/event-stream"  # Required for SSE streaming
-}
-
-def stream_chat_completion(messages, model="minimax/minimax-m2.7"):
-    """
-    Send a streaming chat completion request using the OpenAI-compatible endpoint.
-    """
-    data = {
-        "model": model,
-        "messages": messages,
-        "stream": True  # Enable streaming
-    }
-
-    response = requests.post(
-        f"{BASE_URL}/chat/completions",
-        headers=headers,
-        json=data,
-        stream=True
+with OpenAI(
+    api_key=os.environ["NANOGPT_API_KEY"],
+    base_url="https://api.nano-gpt.com/api/v1",
+    timeout=60.0,
+    max_retries=0,
+) as client:
+    response = client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[{"role": "user", "content": "Say hello in one sentence."}],
     )
-
-    if response.status_code != 200:
-        raise Exception(f"Error: {response.status_code}")
-
-    for line in response.iter_lines():
-        if line:
-            line = line.decode('utf-8')
-            if line.startswith('data: '):
-                line = line[6:]
-            if line == '[DONE]':
-                break
-            try:
-                chunk = json.loads(line)
-                if chunk['choices'][0]['delta'].get('content'):
-                    yield chunk['choices'][0]['delta']['content']
-            except json.JSONDecodeError:
-                continue
-
-# Example usage
-messages = [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "Please explain the concept of artificial intelligence."}
-]
-
-try:
-    print("Assistant's Response:")
-    for content_chunk in stream_chat_completion(messages):
-        print(content_chunk, end='', flush=True)
-    print("")
-except Exception as e:
-    print(f"Error: {str(e)}")
+    print("Request ID:", response._request_id)
+    print(response.choices[0].message.content)
 ```
 
-## Quick Start
+The request ID helps support find a failed request. Save it with your application logs. For streaming, errors, usage and tool calls, copy the tested [Quickstart](/quickstart) example.
 
-The quickest way to get started with our API is to explore our [Endpoint Examples](/api-reference/endpoint/chat-completion). Each endpoint page provides comprehensive documentation with request/response formats and example code. The [Chat Completion](/api-reference/endpoint/chat-completion) endpoint is a great starting point for text generation.
+## Explore the API
 
-## Documentation Sections
+- [Chat Completions](/api-reference/endpoint/chat-completion): `POST /api/v1/chat/completions`
+- [Responses](/api-reference/endpoint/responses): `POST /api/v1/responses`
+- [Messages](/api-reference/endpoint/messages): `POST /api/v1/messages`
+- [Image generation](/api-reference/image-generation): `POST /api/v1/images/generations`
+- [Video generation](/api-reference/video-generation): job submission and polling
+- [API Hosts](/api-reference/miscellaneous/api-hosts): direct API host, partner domains and runtime limits
+- [Private Mode](/api-reference/miscellaneous/private-mode): local encryption proxy
 
-For prompts and responses encrypted on your device before they reach NanoGPT, see the [Private Mode API guide](/api-reference/miscellaneous/private-mode) and its local proxy setup.
-
-For detailed documentation on each feature, please refer to the following sections:
-
-- [Text Generation](/api-reference/text-generation) - Complete guide to text generation APIs including OpenAI-compatible endpoints and legacy options
-- [Image Generation](/api-reference/image-generation) - Learn how to generate images using various models like Recraft, Flux, and Stable Diffusion.
-- [Video Generation](/api-reference/video-generation) - Create high-quality videos with our video generation API
+For selected endpoints, you can also use [Accountless x402 API Payments](/api-reference/miscellaneous/x402) to receive a payment quote without an account or API key by including `x-x402: true` on the initial unauthenticated quote request. Check `GET /api/v1/x402/endpoints` for the current supported matrix.

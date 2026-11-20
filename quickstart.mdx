@@ -1,175 +1,100 @@
 ---
-title: 'Quickstart'
-description: 'Start querying any model within 2 minutes.'
+title: "Quickstart"
+description: "A first request, then streaming with errors, usage and request IDs."
 ---
 
-## Get your API key
+## Setup
 
-Generate an API key on our [API page](https://nano-gpt.com/api).
+Create an [API key](https://nano-gpt.com/api) and add [balance](https://nano-gpt.com/balance). Install `pip install openai` and set `NANOGPT_API_KEY` in your environment. Never put your key in browser code or source control.
 
-## Add Balance
+## First, a complete response
 
-If you haven't deposited yet, add some funds to [your balance](https://nano-gpt.com/balance). Minimum deposit is just \$1, or \$0.10 when using crypto.
+The SDK base URL is `https://api.nano-gpt.com/api/v1`. This calls `POST /api/v1/chat/completions`.
 
-Send API requests to `https://api.nano-gpt.com`. The direct API host allows larger uploads and longer-running calls than the website host. See [API Hosts](/api-reference/miscellaneous/api-hosts) for SDK base URLs.
+```python
+import os
+from openai import OpenAI
 
-### API usage examples
+with OpenAI(
+    api_key=os.environ["NANOGPT_API_KEY"],
+    base_url="https://api.nano-gpt.com/api/v1",
+    timeout=60.0,
+    max_retries=0,
+) as client:
+    response = client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[{"role": "user", "content": "Say hello in one sentence."}],
+    )
+    print("Request ID:", response._request_id)
+    print(response.choices[0].message.content)
+```
 
-<AccordionGroup>
-  <Accordion icon="message-bot" title="Text Generation">
-    Here's a simple example using our OpenAI-compatible chat completions endpoint:
+## Then, streaming
 
-    ```python
-    import requests
-    import json
+This example closes the HTTP connection even if parsing fails or you stop consuming the stream. The timeout bounds network operations, including time waiting for another chunk; it is not a total generation deadline.
 
-    BASE_URL = "https://api.nano-gpt.com/api/v1"
-    API_KEY = "YOUR_API_KEY"  # Replace with your API key
+```python
+import json
+import os
+import sys
+from openai import APIError, APIStatusError, OpenAI
 
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "text/event-stream"  # Required for SSE streaming
-    }
-
-    def stream_chat_completion(messages, model="minimax/minimax-m2.7"):
-        """
-        Send a streaming chat completion request using the OpenAI-compatible endpoint.
-        """
-        data = {
-            "model": model,
-            "messages": messages,
-            "stream": True  # Enable streaming
-        }
-
-        response = requests.post(
-            f"{BASE_URL}/chat/completions",
-            headers=headers,
-            json=data,
-            stream=True
-        )
-
-        if response.status_code != 200:
-            raise Exception(f"Error: {response.status_code}")
-
-        for line in response.iter_lines():
-            if line:
-                line = line.decode('utf-8')
-                if line.startswith('data: '):
-                    line = line[6:]
-                if line == '[DONE]':
-                    break
-                try:
-                    chunk = json.loads(line)
-                    if chunk['choices'][0]['delta'].get('content'):
-                        yield chunk['choices'][0]['delta']['content']
-                except json.JSONDecodeError:
-                    continue
-
-    # Example usage
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Please explain the concept of artificial intelligence."}
-    ]
-
+# No automatic retries: retrying an interrupted generation can create a new charge.
+with OpenAI(
+    api_key=os.environ["NANOGPT_API_KEY"],
+    base_url="https://api.nano-gpt.com/api/v1",
+    timeout=60.0,
+    max_retries=0,
+) as client:
     try:
-        print("Assistant's Response:")
-        for content_chunk in stream_chat_completion(messages):
-            print(content_chunk, end='', flush=True)
-        print("")
-    except Exception as e:
-        print(f"Error: {str(e)}")
-    ```
+        with client.chat.completions.with_streaming_response.create(
+            model="openai/gpt-4o-mini",
+            messages=[{"role": "user", "content": "Say hello in one sentence."}],
+            stream=True,
+            stream_options={"include_usage": True},
+        ) as response:
+            print("Request ID:", response.headers.get("x-request-id", "not supplied"))
+            tools = {}
+            for chunk in response.parse():
+                if chunk.usage:
+                    print("Usage:", chunk.usage.model_dump(), file=sys.stderr)
+                # Usage-only frames can have no choices; never assume choices[0].
+                for choice in chunk.choices or []:
+                    delta = choice.delta
+                    reasoning = getattr(delta, "reasoning_content", None) or getattr(delta, "reasoning", None)
+                    if reasoning:
+                        print(reasoning, end="", file=sys.stderr, flush=True)
+                    if delta.content:
+                        print(delta.content, end="", flush=True)
+                    for part in delta.tool_calls or []:
+                        key = (choice.index, part.index)
+                        tool = tools.setdefault(key, {"id": "", "name": "", "arguments": ""})
+                        if part.id:
+                            tool["id"] = part.id
+                        if part.function:
+                            tool["name"] += part.function.name or ""
+                            tool["arguments"] += part.function.arguments or ""
+            print()
+            # Inspect completed calls; validate names/arguments before executing anything.
+            for tool in tools.values():
+                print("Tool call:", json.dumps(tool), file=sys.stderr)
+    except APIStatusError as error:
+        print("Request ID:", error.request_id, file=sys.stderr)
+        print("HTTP error:", error.status_code, error.response.text, file=sys.stderr)
+        raise
+    except APIError as error:
+        # Includes in-stream error frames and connection/time-out failures.
+        print("Generation failed:", error, file=sys.stderr)
+        raise
+```
 
-    #### Routing preferences
+The SDK parses SSE and raises for HTTP and in-stream error frames. Usage-only frames, empty deltas, reasoning and fragmented tool calls are handled separately. Reasoning and tool support depend on the selected model; this prompt does not request tools. The tool-call collector shows how to handle models that emit them; it never executes a tool.
 
-    For supported open-source models, you can request routing preferences with model suffixes:
+Keep the request ID printed before streaming when reporting an interrupted request. HTTP failures show the status, response body and request ID; avoid exposing raw error bodies or reasoning in public logs. A timeout or interrupted stream does not prove the request was unbilled. Inspect the failure before retrying; honor `Retry-After` on rate limits, and do not retry authentication or validation failures without correcting the request.
 
-    ```json
-    { "model": "zai-org/glm-5:fast", "messages": [{ "role": "user", "content": "Hello" }] }
-    { "model": "zai-org/glm-5:cheap", "messages": [{ "role": "user", "content": "Hello" }] }
-    { "model": "moonshotai/kimi-k2.6:thinking:caching", "messages": [{ "role": "user", "content": "Hello" }] }
-    ```
+## Other endpoints
 
-    Use `:fast` for fastest estimated completion, `:cheap` for lowest provider price, and `:caching` to require a cache-capable provider. These are pay-as-you-go provider-selection requests. See [Model Suffixes](/api-reference/miscellaneous/model-suffixes) for the full list.
-
-    For more detailed examples and other text generation endpoints, check out our [Text Generation Guide](/api-reference/text-generation).
-  </Accordion>
-
-  <Accordion icon="image" title="Image Generation">
-    #### OpenAI-Compatible Endpoint (v1/images/generations)
-
-    You can also generate images using our OpenAI-compatible endpoint:
-
-    ```bash
-    curl https://api.nano-gpt.com/v1/images/generations \
-      -H "Authorization: Bearer YOUR_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d '{
-        "model": "hidream",
-        "prompt": "A serene landscape at sunset",
-        "n": 1,
-        "size": "1024x1024"
-      }'
-    ```
-
-    Here's an example using the OpenAI-compatible endpoint in Python:
-
-    ```python
-    import base64
-    import requests
-
-    API_KEY = "YOUR_API_KEY"
-
-    def generate_image(prompt, model="hidream", size="1024x1024"):
-        response = requests.post(
-            "https://api.nano-gpt.com/v1/images/generations",
-            headers={
-                "Authorization": f"Bearer {API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": model,
-                "prompt": prompt,
-                "n": 1,
-                "size": size,
-                "response_format": "b64_json"
-            }
-        )
-        response.raise_for_status()
-        return response.json()
-
-    # Example usage
-    prompt = "A serene landscape with mountains and a lake at sunset, digital art style"
-    result = generate_image(prompt)
-
-    image_bytes = base64.b64decode(result["data"][0]["b64_json"])
-    with open("generated_image.png", "wb") as f:
-        f.write(image_bytes)
-
-    print("Image generated successfully!")
-    print("Image saved as 'generated_image.png'")
-    ```
-
-    For more detailed examples and other image generation options, check out our [Image Generation Guide](/api-reference/image-generation).
-  </Accordion> 
-
-  <Accordion icon="video" title="Video Generation">
-    Submit a video generation job, then poll the status endpoint until the video is ready:
-
-    ```bash
-    RUN_ID=$(curl -s -X POST https://api.nano-gpt.com/api/generate-video \
-      -H "Authorization: Bearer YOUR_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d '{
-        "model": "veo2-video",
-        "prompt": "A cinematic shot of a mountain lake at sunrise"
-      }' | jq -r '.runId')
-
-    curl "https://api.nano-gpt.com/api/video/status?requestId=$RUN_ID" \
-      -H "Authorization: Bearer YOUR_API_KEY"
-    ```
-
-    For more detailed examples and model-specific options, check out our [Video Generation Guide](/api-reference/video-generation).
-  </Accordion>
-</AccordionGroup> 
+- [Text generation](/api-reference/text-generation)
+- [Image generation](/api-reference/image-generation), including `POST /api/v1/images/generations`
+- [Video generation](/api-reference/video-generation), including asynchronous job polling
+- [API Hosts](/api-reference/miscellaneous/api-hosts)

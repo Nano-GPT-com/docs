@@ -32,3 +32,14 @@ jobs:
 
       - name: Verify OpenAPI examples use canonical text model
         run: node scripts/sync-example-text-model.mjs --check
+
+      - name: Setup Python for executable quickstart examples
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install quickstart fixture dependencies
+        run: python -m pip install openai==2.8.1 httpx==0.28.1
+
+      - name: Execute published quickstart examples against HTTP and SSE fixtures
+        run: python scripts/test-quickstart.py
