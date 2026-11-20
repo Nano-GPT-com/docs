@@ -37,6 +37,7 @@ This example closes the HTTP connection even if parsing fails or you stop consum
 import json
 import os
 import sys
+import httpx
 from openai import APIError, APIStatusError, OpenAI
 
 # No automatic retries: retrying an interrupted generation can create a new charge.
@@ -55,12 +56,18 @@ with OpenAI(
         ) as response:
             print("Request ID:", response.headers.get("x-request-id", "not supplied"))
             tools = {}
+            seen_choices, finished_choices = set(), set()
             for chunk in response.parse():
                 if chunk.usage:
                     print("Usage:", chunk.usage.model_dump(), file=sys.stderr)
                 # Usage-only frames can have no choices; never assume choices[0].
                 for choice in chunk.choices or []:
+                    seen_choices.add(choice.index)
+                    if choice.finish_reason is not None:
+                        finished_choices.add(choice.index)
                     delta = choice.delta
+                    if delta is None:
+                        continue
                     reasoning = getattr(delta, "reasoning_content", None) or getattr(delta, "reasoning", None)
                     if reasoning:
                         print(reasoning, end="", file=sys.stderr, flush=True)
@@ -74,6 +81,8 @@ with OpenAI(
                         if part.function:
                             tool["name"] += part.function.name or ""
                             tool["arguments"] += part.function.arguments or ""
+            if not seen_choices or seen_choices != finished_choices:
+                raise RuntimeError("Stream ended before completion; save the request ID before retrying.")
             print()
             # Inspect completed calls; validate names/arguments before executing anything.
             for tool in tools.values():
@@ -82,13 +91,15 @@ with OpenAI(
         print("Request ID:", error.request_id, file=sys.stderr)
         print("HTTP error:", error.status_code, error.response.text, file=sys.stderr)
         raise
-    except APIError as error:
-        # Includes in-stream error frames and connection/time-out failures.
+    except (APIError, httpx.HTTPError, json.JSONDecodeError, RuntimeError) as error:
+        # Mid-stream reads can raise httpx errors directly, outside the SDK wrapper.
         print("Generation failed:", error, file=sys.stderr)
+        if isinstance(error, APIError) and error.body is not None:
+            print("Error details:", error.body, file=sys.stderr)
         raise
 ```
 
-The SDK parses SSE and raises for HTTP and in-stream error frames. Usage-only frames, empty deltas, reasoning and fragmented tool calls are handled separately. Reasoning and tool support depend on the selected model; this prompt does not request tools. The tool-call collector shows how to handle models that emit them; it never executes a tool.
+The SDK parses SSE and raises for HTTP and in-stream error frames. Usage-only frames, empty deltas, reasoning and fragmented tool calls are handled separately. An early end without a finish reason is treated as an incomplete generation; malformed frames and read timeouts also fail explicitly. Reasoning and tool support depend on the selected model; this prompt does not request tools. The tool-call collector shows how to handle models that emit them; it never executes a tool.
 
 Keep the request ID printed before streaming when reporting an interrupted request. HTTP failures show the status, response body and request ID; avoid exposing raw error bodies or reasoning in public logs. A timeout or interrupted stream does not prove the request was unbilled. Inspect the failure before retrying; honor `Retry-After` on rate limits, and do not retry authentication or validation failures without correcting the request.
 

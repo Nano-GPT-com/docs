@@ -15,7 +15,7 @@ def blocks(page):
     return re.findall(r'```python\n(.*?)```', (ROOT / page).read_text(), re.S)
 
 class QuickstartTest(unittest.TestCase):
-    def run_example(self, code, *, frames=None, status=200):
+    def run_example(self, code, *, frames=None, status=200, read_timeout=False):
         requests = []
         closed = []
         class Body(httpx.SyncByteStream):
@@ -25,6 +25,8 @@ class QuickstartTest(unittest.TestCase):
                     data = ('data: ' + json.dumps(frame) + '\n\n').encode()
                     yield data[:7]
                     yield data[7:]
+                if read_timeout:
+                    raise httpx.ReadTimeout('fixture timeout')
                 yield b'data: [DONE]\n\n'
             def close(self):
                 closed.append(True)
@@ -69,6 +71,7 @@ class QuickstartTest(unittest.TestCase):
         frames = [chunk({}), chunk({'reasoning_content': 'Thinking'}), chunk({'content': 'Hello'}),
                   chunk({'tool_calls': [{'index': 0, 'id': 'call-1', 'type': 'function', 'function': {'name': 'weather', 'arguments': '{"city":'}}]}),
                   chunk({'tool_calls': [{'index': 0, 'function': {'arguments': '"Paris"}'}}]}),
+                  {'id': 'c', 'object': 'chat.completion.chunk', 'created': 1, 'model': 'fixture', 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'tool_calls'}]},
                   {'id': 'c', 'object': 'chat.completion.chunk', 'created': 1, 'model': 'fixture', 'choices': [], 'usage': {'prompt_tokens': 1, 'completion_tokens': 2, 'total_tokens': 3}}]
         out, err, closed, error = self.run_example(blocks('quickstart.mdx')[1], frames=frames)
         self.assertIsNone(error)
@@ -77,7 +80,8 @@ class QuickstartTest(unittest.TestCase):
         self.assertIn('Thinking', err)
         self.assertIn('Usage:', err)
         self.assertIn('weather', err)
-        self.assertIn('Paris', err)
+        tool = json.loads(err.split('Tool call: ', 1)[1].strip())
+        self.assertEqual(tool, {'id': 'call-1', 'name': 'weather', 'arguments': '{"city":"Paris"}'})
         self.assertEqual(closed, [True])
 
     def test_http_error_body_and_request_id(self):
@@ -90,6 +94,20 @@ class QuickstartTest(unittest.TestCase):
         _, err, closed, error = self.run_example(blocks('quickstart.mdx')[1], frames=[{'error': {'message': 'stream failed'}}])
         self.assertIsInstance(error, openai.APIError)
         self.assertIn('stream failed', err)
+        self.assertEqual(closed, [True])
+
+    def test_premature_end_is_not_success(self):
+        out, err, closed, error = self.run_example(blocks('quickstart.mdx')[1], frames=[])
+        self.assertIsInstance(error, RuntimeError)
+        self.assertIn('Stream ended before completion', err)
+        self.assertIn('req-stream', out)
+        self.assertEqual(closed, [True])
+
+    def test_mid_stream_timeout_is_reported_and_closed(self):
+        out, err, closed, error = self.run_example(blocks('quickstart.mdx')[1], frames=[], read_timeout=True)
+        self.assertIsInstance(error, httpx.ReadTimeout)
+        self.assertIn('fixture timeout', err)
+        self.assertIn('req-stream', out)
         self.assertEqual(closed, [True])
 
 if __name__ == '__main__':
