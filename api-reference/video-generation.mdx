@@ -353,9 +353,14 @@ async function pollVideoStatus(runId) {
   const delayMs = 5000; // 5 seconds (max ~10 minutes)
 
   for (let i = 0; i < maxAttempts; i++) {
+    // Send the API key that submitted the job: another account's job, or no key, answers 404.
     const response = await fetch(
-      `/api/video/status?requestId=${runId}`
+      `/api/video/status?requestId=${runId}`,
+      { headers: { 'x-api-key': 'YOUR_API_KEY' } }
     );
+    if (!response.ok) {
+      throw new Error(`Status check failed: ${response.status}`);
+    }
     const result = await response.json();
 
     if (result.data.status === 'COMPLETED') {
