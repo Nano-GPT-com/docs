@@ -49,14 +49,10 @@ Typical responses include a data payload and billing metadata:
 | `/api/v1/data/firecrawl` | `/api/v1/firecrawl` | POST | Web page scraping, site maps, and crawls. |
 | `/api/v1/data/google-maps/search` | `/api/v1/googlemaps` | GET, POST | Google Maps place search and detail extraction. |
 | `/api/v1/data/google-maps/reviews` | `/api/v1/googlemaps/reviews` | POST | Google Maps review extraction. |
-| `/api/v1/data/instagram/profile` | `/api/v1/instagram/profile` | POST | Instagram profile extraction. |
-| `/api/v1/data/instagram/posts` | `/api/v1/instagram/posts` | POST | Instagram post extraction. |
-| `/api/v1/data/instagram/reels` | `/api/v1/instagram/reels` | POST | Instagram Reels extraction. |
 | `/api/v1/data/reddit` | `/api/v1/reddit` | POST | Reddit post, comment, community, and user extraction. |
 | `/api/v1/data/tiktok` | `/api/v1/tiktok` | POST | TikTok hashtag, profile, search, and post extraction. |
 | `/api/v1/data/linkedin/profile` | `/api/v1/linkedin/profile` | POST | LinkedIn profile enrichment. |
 | `/api/v1/data/hunter/{path}` | `/api/v1/hunter/{path}` | GET, POST | Email/domain intelligence pass-through with path selection. |
-| Not in Data API catalog | `/api/v1/facebook/ads` | POST | Facebook/Meta ad library extraction. |
 
 <Note>
   The direct endpoints remain available. Use the Data API paths when you want endpoint discovery, stable public tool IDs, body-style dispatch for dynamic clients, or response headers identifying both the Data API endpoint and direct endpoint.
@@ -149,57 +145,6 @@ Provide at least one of:
 <Note>
   If you use `reviewsStartDate`, sort reviews by newest first.
 </Note>
-
-## Facebook Ads
-
-```text
-POST https://api.nano-gpt.com/api/v1/facebook/ads
-```
-
-### Required Input
-
-- `startUrls`: at least one Facebook Page URL or Meta Ad Library URL.
-
-### Important Parameters
-
-- `resultsLimit`
-- `activeStatus`: `active` or `inactive`
-- `maxTotalChargeUsd`
-- `resultLimit`
-
-## Instagram Profile
-
-```text
-POST https://api.nano-gpt.com/api/v1/instagram/profile
-```
-
-### Required Input
-
-- `username` or `usernames`: Instagram username, profile URL, or profile ID.
-
-### Important Parameters
-
-- `includeAboutSection`
-- `maxTotalChargeUsd`
-- `resultLimit`
-
-## Instagram Posts
-
-```text
-POST https://api.nano-gpt.com/api/v1/instagram/posts
-```
-
-### Required Input
-
-- `username`: one or more Instagram usernames, profile URLs, or post URLs.
-
-### Important Parameters
-
-- `resultsLimit`
-- `dataDetailLevel`: `basicData` or `detailedData`
-- `skipPinnedPosts`
-- `maxTotalChargeUsd`
-- `resultLimit`
 
 ## Reddit
 
