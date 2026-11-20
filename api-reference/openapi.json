@@ -1506,7 +1506,7 @@
     },
     "/v1/models": {
       "get": {
-        "description": "List available models. The default response is intentionally minimal for OpenAI compatibility; use `detailed=true` for capabilities, supported service tiers, and pricing.",
+        "description": "List available models. The default response is intentionally minimal for OpenAI compatibility; use `detailed=true` for capabilities, supported service tiers, pricing, and paused TEE entries marked with `available: false`. Exclude entries with `available: false` when choosing a model; active entries may omit the field.",
         "security": [
           {
             "bearerAuth": []
@@ -1519,7 +1519,7 @@
           {
             "name": "detailed",
             "in": "query",
-            "description": "Returns detailed model information including capabilities, `supported_service_tiers`, and pricing. Inspect `supported_service_tiers` to discover whether a model accepts `flex`, `fast`, or the legacy `priority` alias; an empty array means only the default tier is available.",
+            "description": "Returns detailed model information including capabilities, `supported_service_tiers`, and pricing. Inspect `supported_service_tiers` to discover whether a model accepts `flex`, `fast`, or the legacy `priority` alias; an empty array means only the default tier is available. Detailed mode also retains paused TEE entries with available=false, status=paused, unavailable_reason=tee_verification and providers=[]. Exclude them when selecting a model.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -1553,7 +1553,7 @@
         ],
         "responses": {
           "200": {
-            "description": "List of available models",
+            "description": "Model list; detailed mode also includes paused TEE entries marked unavailable.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9832,7 +9832,7 @@
           },
           "data": {
             "type": "array",
-            "description": "List of available models",
+            "description": "Model list. Detailed mode retains paused TEE entries marked unavailable; basic mode omits them.",
             "items": {
               "type": "object",
               "example": {
@@ -9870,6 +9870,28 @@
                   "type": "string",
                   "description": "Organization that owns the model",
                   "example": "openai"
+                },
+                "available": {
+                  "type": "boolean",
+                  "description": "Optional detailed-mode availability flag. False for a retained paused TEE entry. Active entries may omit the field; do not require true when selecting models.",
+                  "example": false
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Optional detailed-mode availability status. Paused TEE entries use paused.",
+                  "example": "paused"
+                },
+                "unavailable_reason": {
+                  "type": "string",
+                  "description": "Optional detailed-mode reason for unavailability. tee_verification means enclave verification prevents the model from serving requests.",
+                  "example": "tee_verification"
+                },
+                "providers": {
+                  "type": "array",
+                  "description": "Optional public provider IDs in detailed mode. Paused TEE entries return an empty array. Use GET /api/models/:canonicalId/providers for route details.",
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "name": {
                   "type": "string",

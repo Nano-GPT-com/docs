@@ -10,7 +10,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 
 ## Overview
 
-The `/api/v1/models` endpoint provides a list of available text generation models. It supports optional detailed information including capabilities, supported service tiers, and pricing data. The endpoint maintains full backwards compatibility while adding powerful new features.
+The `/api/v1/models` endpoint provides a list of available text generation models. Detailed responses also include capabilities, supported service tiers, pricing, and paused TEE entries with explicit availability metadata.
 
 The default response deliberately stays close to OpenAI's minimal Models API shape. Enhanced fields such as `supported_service_tiers` are returned only when you add `?detailed=true`.
 
@@ -195,7 +195,7 @@ Each model minimally includes:
 ## Features
 
 - **Basic Mode**: Standard OpenAI-compatible model listing. Capability and service-tier metadata is omitted.
-- **Detailed Mode**: Enhanced information with capabilities, supported service tiers, pricing, and model descriptions.
+- **Detailed Mode**: Enhanced information with capabilities, supported service tiers, pricing, model descriptions, and paused TEE entries marked unavailable.
 
 ## Provider Selection Discovery
 
@@ -226,13 +226,42 @@ When `detailed=true`, additional fields may be included per model:
 - `category` — optional category tag (for example `"flagship"`, `"mini"`, `"reasoning"`)
 - `distillationPolicy` — optional policy metadata indicating whether model outputs may be used for distillation or output-based training under NanoGPT's recorded model-license rules
 
+### Choosing callable models
+
+The ordinary `GET /api/v1/models` list omits TEE models paused for enclave
+verification. With `?detailed=true`, those entries remain visible for inspection:
+
+```json
+{
+  "id": "TEE/glm-5.1",
+  "available": false,
+  "status": "paused",
+  "unavailable_reason": "tee_verification",
+  "providers": []
+}
+```
+
+This is an excerpt of a paused entry, not an available model recommendation.
+Exclude entries whose `available` field is `false` before choosing a model:
+
+```bash
+curl -s "https://api.nano-gpt.com/api/v1/models?detailed=true" \
+  | jq '.data[] | select(.available != false) | .id'
+```
+
+These fields are optional. Do not require `available: true`: ordinary active
+entries can omit the field. Availability can change after discovery. Requests
+blocked by the TEE verification check return `503` with code
+`tee_verification_unavailable`; choose another available TEE model. See
+[TEE Verification](/api-reference/tee-verification#model-availability).
+
 ### Discovering service-tier support
 
 Service-tier availability is model-specific. To discover it programmatically, request the detailed model list and inspect each model's `supported_service_tiers` array:
 
 ```bash
 curl -s "https://api.nano-gpt.com/api/v1/models?detailed=true" \
-  | jq '.data[] | select(.supported_service_tiers | length > 0) | {id, supported_service_tiers}'
+  | jq '.data[] | select(.available != false) | select(.supported_service_tiers | length > 0) | {id, supported_service_tiers}'
 ```
 
 For example:
@@ -253,7 +282,7 @@ The basic `GET /api/v1/models` response intentionally omits this field for OpenA
 
 ### Discovering video-capable models
 
-For multimodal input, call `GET /api/v1/models?detailed=true` and select a model whose catalog entry advertises video input. Catalog fields are additive, so inspect both the architecture modalities and capability flags when present:
+For multimodal input, call `GET /api/v1/models?detailed=true`, exclude entries with `available: false`, and select a model whose catalog entry advertises video input. Catalog fields are additive, so inspect both the architecture modalities and capability flags when present:
 
 ```json
 {
@@ -445,6 +474,10 @@ Enhanced format with model descriptions, context lengths, and pricing:
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `available` | boolean | Optional. `false` when a retained TEE entry is paused; active entries may omit this field. |
+| `status` | string | Optional. `paused` for a retained TEE entry that cannot currently serve requests. |
+| `unavailable_reason` | string | Optional. `tee_verification` when enclave verification prevents availability. |
+| `providers` | string[] | Optional public provider IDs. Empty for a paused TEE entry. Use the provider endpoint for route details. |
 | `name` | string | Human-readable model name |
 | `description` | string | Detailed model description |
 | `context_length` | number or null | Total context window shared by input and generated output (null if not available) |

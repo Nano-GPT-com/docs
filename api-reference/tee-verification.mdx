@@ -15,8 +15,11 @@ Confidentiality and logging outcomes are provider-specific, and plaintext may st
 
 Choose a model from the [live text-model catalog](https://api.nano-gpt.com/api/v1/models).
 TEE routes are withheld while enclave measurements await independent verification.
-A model with no available verified route is omitted from the catalog; requests
-blocked by this verification check return `503` with code
+A model with no available verified route is omitted from the ordinary catalog.
+With `?detailed=true`, paused entries remain visible with `available: false`,
+`status: "paused"`, `unavailable_reason: "tee_verification"` and `providers: []`.
+[Exclude these entries when choosing a model](/api-reference/endpoint/models#choosing-callable-models).
+Requests blocked by this verification check return `503` with code
 `tee_verification_unavailable`.
 
 As of November 19, 2026, this affects `TEE/glm-5.1`, `TEE/glm-5.1-thinking`,
