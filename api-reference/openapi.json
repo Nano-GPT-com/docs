@@ -2428,7 +2428,7 @@
     },
     "/generate-video/content": {
       "get": {
-        "description": "Serves a video NanoGPT stores. Status responses return these URLs signed (expires, sig), good for 24 hours without an API key. Without a valid signature only the creating account's API key or session can fetch it; anyone else gets 404.",
+        "description": "Serves a video NanoGPT stores. Status responses read by the creating account (or for an x402 job, or through a statusUrl) return these URLs signed (expires, sig), good for 24 hours without an API key; an older job read by its ID alone gets them unsigned. Without a valid signature only the creating account's API key or session can fetch it; anyone else gets 404.",
         "security": [
           {
             "apiKeyAuth": []
@@ -2524,7 +2524,7 @@
     },
     "/video/status": {
       "get": {
-        "description": "Unified video status endpoint that works across all video backends. Check the status of a video generation request and receive normalized status information. Only the account that created the job can read it, with its API key or session; another account's job answers 404 like an unknown one. Jobs paid anonymously with x402, older jobs NanoGPT has no job record for, and the statusUrl returned at submission for some private models (valid 24 hours), are read by the job ID alone. Output URLs on NanoGPT's content route are signed and work for 24 hours; poll again for a fresh one.",
+        "description": "Unified video status endpoint that works across all video backends. Check the status of a video generation request and receive normalized status information. Only the account that created the job can read it, with its API key or session; another account's job answers 404 like an unknown one. Jobs paid anonymously with x402, older jobs NanoGPT has no job record for, and the statusUrl returned at submission for some private models (valid 24 hours), are read by the job ID alone. Output URLs on NanoGPT's content route are signed for those readers (not for an older job read by its ID alone) and work for 24 hours; poll again for a fresh one.",
         "security": [
           {
             "apiKeyAuth": []

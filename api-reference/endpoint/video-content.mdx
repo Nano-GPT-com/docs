@@ -5,11 +5,11 @@ openapi: 'GET /generate-video/content'
 
 ## Overview
 
-Serves a finished video (or a Sora 2 thumbnail or spritesheet) that NanoGPT stores. You normally don't build these URLs: the status endpoints return them, signed.
+Serves a finished video (or a Sora 2 thumbnail or spritesheet) that NanoGPT stores. You normally don't build these URLs: the status endpoints return them.
 
 ### Access
 
-A URL from a status response carries `expires` and `sig` and works without an API key for 24 hours. Without a valid signature, only the account that created the job can fetch it, with its API key (`x-api-key`) or session; anyone else gets `404`, as for a job that doesn't exist. Poll the status endpoint again for a fresh signed URL.
+A status response signs these URLs (`expires`, `sig`) when it is read by the account that created the job, for a job paid anonymously with x402, or through a `statusUrl`; a signed URL works without an API key for 24 hours. An older job read by its ID alone gets unsigned URLs. Without a valid signature, only the account that created the job can fetch it, with its API key (`x-api-key`) or session; anyone else gets `404`, as for a job that doesn't exist. Poll the status endpoint again for a fresh signed URL.
 
 ### Endpoint
 ```
