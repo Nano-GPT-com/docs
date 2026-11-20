@@ -294,15 +294,13 @@ Detect accountless x402 by checking for the top-level `payment` object, not a si
         "completeUrl": "https://api.nano-gpt.com/api/x402/complete/pay_..."
       },
       {
-        "scheme": "x402-solana-usdc",
+        "scheme": "nano-exact",
         "protocolScheme": "exact",
-        "network": "solana",
-        "amount": "1500",
-        "amountFormatted": "0.0015 USDC",
-        "amountUsd": "0.0015",
-        "payTo": "<solana treasury address from quote>",
-        "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        "feePayer": "<solana facilitator fee payer from quote>",
+        "network": "nano:mainnet",
+        "amount": "...",
+        "amountFormatted": "0.17067988 XNO",
+        "amountUsd": "0.0714",
+        "payTo": "nano_...",
         "paymentId": "pay_...",
         "expiresAt": "2026-06-09T12:00:00.000Z"
       },
@@ -323,7 +321,7 @@ Detect accountless x402 by checking for the top-level `payment` object, not a si
 }
 ```
 
-The legacy `accepts` array may still appear for backwards-compatible and lower-level protocol clients, but new clients should use `payment.accepted[]`. Exact rails such as `nano-exact`, `x402-exact`, and `x402-solana-usdc` replay the original request with `X-PAYMENT`; polling-style rails such as `nano` and `base-usdc` use `statusUrl` and `completeUrl`; Lightning L402 first POSTs the option’s `invoiceUrl` to get an invoice and token, pays the returned invoice, then replays the exact original request with `Authorization: L402 <token>:<preimage>` and does not use `X-PAYMENT` or `completeUrl`. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the complete flow and supported endpoint matrix.
+The legacy `accepts` array may still appear for backwards-compatible and lower-level protocol clients, but new clients should use `payment.accepted[]`. The exact rail `nano-exact` replays the original request with `X-PAYMENT`; the polling-style rail `nano` uses `statusUrl` and `completeUrl`; Lightning L402 first POSTs the option’s `invoiceUrl` to get an invoice and token, pays the returned invoice, then replays the exact original request with `Authorization: L402 <token>:<preimage>` and does not use `X-PAYMENT` or `completeUrl`. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the complete flow and supported endpoint matrix.
 
 Feature-specific variants may include a structured error `code` such as `memory_balance_required` or `webSearch_balance_required`.
 

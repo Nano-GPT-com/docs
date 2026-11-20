@@ -11865,7 +11865,7 @@
         "properties": {
           "scheme": {
             "type": "string",
-            "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc", "lightning-l402"]
+            "enum": ["nano", "nano-exact", "lightning-l402"]
           },
           "protocolScheme": { "type": "string" },
           "network": { "type": "string" },
@@ -11885,10 +11885,6 @@
           "undiscountedAmountUsd": {
             "type": "string",
             "description": "Undiscounted USD quote amount when a discount is applied."
-          },
-          "feePayer": {
-            "type": "string",
-            "description": "Solana facilitator fee payer for x402-solana-usdc quotes. Copy from the quote; do not hardcode."
           },
           "paymentId": { "type": "string" },
           "statusUrl": { "type": "string", "format": "uri" },
@@ -11948,7 +11944,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["nano", "nano-exact", "base-usdc", "x402-exact", "x402-solana-usdc", "lightning-l402"]
+              "enum": ["nano", "nano-exact", "lightning-l402"]
             }
           },
           "streaming": {
