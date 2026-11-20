@@ -309,7 +309,7 @@ OpenCode merges config sources. Project settings can override global settings, a
 
 **A model returns `402` on a subscription?**
 
-That model isn't included in your subscription, and your balance is too low to pay for it. Pick one from [`/api/subscription/v1/models`](/api-reference/endpoint/models), or add balance to use it pay-as-you-go. A key set to **Subscription only** rejects these requests even with balance. To hide uncovered models, see [Limiting the Model List](#limiting-the-model-list).
+If the error includes `subscriptionBillingReason: "model_not_included"`, that model isn't included in your subscription and your balance is too low to pay for it. Pick one from [`/api/subscription/v1/models`](/api-reference/endpoint/models), or add balance to use it pay-as-you-go. To hide uncovered models, see [Limiting the Model List](#limiting-the-model-list). A `402` without that field has another cause, such as a paid add-on on an included model; follow the error message.
 
 **More models appear than expected?**
 

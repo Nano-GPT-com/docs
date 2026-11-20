@@ -233,7 +233,7 @@ Once a request is forwarded, the underlying endpoint may return its own existing
 | Endpoint ID | Data API Path | Direct Endpoint | Methods | Category | Provider | Pricing Note |
 | --- | --- | --- | --- | --- | --- | --- |
 | `web.search` | `/api/v1/data/web/search` | `/api/web` | `POST` | search | NanoGPT | Usage-based; estimated from provider, depth, and partner markup. |
-| `url.scrape` | `/api/v1/data/url/scrape` | `/api/scrape-urls` | `POST` | scraping | NanoGPT | \$0.0015 per URL, or per PDF page; higher for stealth mode. |
+| `url.scrape` | `/api/v1/data/url/scrape` | `/api/scrape-urls` | `POST` | scraping | NanoGPT | \$0.0015 per URL (automatic routing bills PDFs per page); higher for stealth mode. |
 | `firecrawl` | `/api/v1/data/firecrawl` | `/api/v1/firecrawl` | `POST` | scraping | Firecrawl | Credit-based Firecrawl pricing with NanoGPT markup. |
 | `google_maps.search` | `/api/v1/data/google-maps/search` | `/api/v1/googlemaps` | `GET`, `POST` | maps | Apify | Apify charged-event pricing with NanoGPT markup. |
 | `google_maps.reviews` | `/api/v1/data/google-maps/reviews` | `/api/v1/googlemaps/reviews` | `POST` | maps | Apify | Apify charged-event pricing with NanoGPT markup. |
