@@ -12,7 +12,7 @@ Decision models answer named, typed questions about the state you provide instea
 - `score` returns an expected score over an ordered rubric.
 - `noul` returns the probability that a yes/no statement is true.
 
-PPLX Decider v1.2, Clef and Clef Flash can also evaluate images: send up to four photos with your questions and get the same typed answers. See [Image input](#image-input).
+Image-capable decision models can also evaluate photos and return the same typed answers. Supported formats and limits vary by model; see [Image input](#image-input), [Bison-1 and Groundhog-1](#bison-1-and-groundhog-1), and [Mercury Decide](#mercury-decide).
 
 For new HTTP integrations, use the native `POST /api/v1/decisions` endpoint. If you already use the official TypeSafe SDK, point it at NanoGPT's `POST /api/v1/systemone` compatibility endpoint. Most decision models are also available through NanoGPT's OpenAI-compatible Chat Completions and Responses APIs and the Anthropic-compatible Messages API. Mercury Decide requires the native Decisions endpoint.
 
@@ -35,6 +35,8 @@ Only input tokens are billed. Browse every decision model, with current pricing,
 | `typesafe/jev-1.13` | 32K | No | TypeSafe Jev 1.13, pinned for integrations that should not follow alias upgrades. |
 | `typesafe/jev-latest` | 32K | No | Moving alias for the latest TypeSafe Jev release. |
 | `liquid/d1` | 64K | No | Liquid AI's D1. |
+| `baselabs/bison-1` | 32,768 per question | Yes, PNG | Base Labs' dense decision model for classification, routing and scoring. |
+| `baselabs/groundhog-1` | 16,384 per question | Yes, PNG | Lower-cost Base Labs decision model. |
 | `inception/mercury-decide` | 65,536; 32,768 for extraction | Yes | Native Decisions endpoint only; supports exact text-span extraction. |
 | `perplexity/pplx-decider-v1.2` | 262K | Yes | Perplexity's PPLX Decider v1.2. Supports zero data retention. |
 | `cloudflare/clef` | 1,800 text tokens | Yes | Cloudflare's open decision model. |
@@ -45,6 +47,43 @@ Use `perplexity/pplx-decider-v1.2` for PPLX integrations. Requests for the retir
 Clef also accepts `clef`. The System One compatibility endpoint also accepts the official SDK model names `jev-1.13` and `jev-latest`. `GET /api/v1/models` leaves decision models out, because they reject plain chat requests. List them with `GET /api/v1/decision-models`, which returns detailed entries by default (`detailed=false` for IDs only), or add `output_modalities=decisions` to `/api/v1/models` and its subscription, paid and personalized variants. Each entry has `architecture.output_modalities: ["decisions"]`, a `supported_endpoints` list, and a `decision_input` object. `decision_input.image_input` is `true` for the image-capable models, and `decision_input.image_limits` lists their limits.
 
 For Clef and Clef Flash, the 1,800-token limit covers all text in the request, including `state` text, `questions` and request overhead. Images are counted separately; see [Image input](#image-input).
+
+### Bison-1 and Groundhog-1
+
+Use `baselabs/bison-1` or `baselabs/groundhog-1` with the native Decisions or
+System One endpoint. The short IDs `bison-1` and `groundhog-1` also work. Typed
+questions are supported through Chat Completions, Messages and Responses with
+text input. Neither model generates prose or supports streaming, tools or reasoning.
+
+Bison-1 costs $0.10 per million input tokens; Groundhog-1 costs $0.035. Answer
+tokens are free. Shared state is billed once, plus each question, including image
+tokens. Cached input uses the ordinary input rate. Both models are excluded from
+subscriptions and subscriber discounts.
+
+Each request accepts 1–256 questions with non-empty text `instructions` and
+non-empty text criterion descriptions. A `choice` question accepts 1–255 options;
+a `score` question requires 2–10 levels. Across all questions, the maximum is 512
+options, with each `noul` question counting as two. For `noul`, omit `criteria` or
+provide exactly `true` and `false` descriptions.
+
+NanoGPT applies conservative input admission limits of 32,768 tokens per question
+for Bison-1 and 16,384 for Groundhog-1. Each limit includes shared state, the
+question, criteria, formatting and images. Aggregate billed input across multiple
+questions can exceed one question's context limit.
+
+Send text, a JSON object, or an array as `state`. A top-level `null` or an object
+with a `messages` key is unsupported. Image input must be placed directly in a
+`state` array: up to four static inline PNG images, each at most 512 × 512 pixels.
+All images together may contain at most 240,000 base64 characters (180,000 decoded
+bytes), within a 1 MiB JSON request body. Remote URLs, JPEG and WebP are unsupported.
+Omit `image_url.detail` or set it to `auto`.
+
+Omit `user`, `session_id` and `trace`, including when adapting the examples below.
+The `provider` object accepts only `zdr` and `data_collection`; provider selection
+is unavailable. Zero data retention is unverified: requests requiring
+`provider.zdr: true`, an API-key ZDR policy, or `provider.data_collection: "deny"`
+return `400 zdr_not_supported`. Transport redaction is unsupported, and image
+input cannot be combined with PII redaction.
 
 ### Mercury Decide
 
@@ -451,6 +490,9 @@ print(response.json()["answers"])
 
 To compare several images, put a label before each one, for example `["Photo 1", image1, "Photo 2", image2]`, and refer to the labels in your question criteria.
 
+The following limits apply to PPLX Decider v1.2, Clef and Clef Flash. For the PNG-only
+Base Labs models, use the [Bison-1 and Groundhog-1 limits](#bison-1-and-groundhog-1).
+
 | Limit | Value |
 | --- | --- |
 | Images per request | Up to 4 |
@@ -488,7 +530,7 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 | `score` | `instructions` and 2-10 ordered `criteria` entries | Fractional `score`, `confidence`, `legend`, and `probabilities` keyed from `0` |
 | `noul` | `instructions`; optional `criteria.true` and `criteria.false` descriptions | `noul`, a probability from `0` to `1` |
 
-`instructions` and criterion descriptions can be strings, non-empty JSON objects, or non-empty arrays. A `choice` criterion may also be `null` when its label is self-explanatory. The top-level `state` can be a string, JSON object, or JSON array. Question names become keys in `answers`. Any question can come back [declined](#declined-questions) instead.
+`instructions` and criterion descriptions can be strings, non-empty JSON objects, or non-empty arrays on models that support structured criteria. A `choice` criterion may also be `null` when its label is self-explanatory. Bison-1 and Groundhog-1 require non-empty text instructions and criterion descriptions. The top-level `state` can be a string, JSON object, or JSON array. Question names become keys in `answers`. Any question can come back [declined](#declined-questions) instead.
 
 ## Model-specific rules
 
@@ -505,9 +547,9 @@ The Chat Completions, Responses and Messages compatibility endpoints accept text
 | `model` | string | Yes | A decision model from the table above. |
 | `state` | string, object, or array | Yes | Application state for the model to evaluate. Image-capable models also accept image parts in a `state` array; see [Image input](#image-input). |
 | `questions` | object | Yes | One or more named `choice`, `score`, or `noul` questions. Mercury Decide also supports `extract`. |
-| `user` | string | No | Your end-user identifier, up to 256 characters. Unsupported by Mercury Decide; omit it. |
-| `session_id` | string | No | Your session identifier, up to 256 characters. Unsupported by Mercury Decide; omit it. |
-| `trace` | object | No | Caller-supplied trace metadata. Unsupported by Mercury Decide; omit it. |
+| `user` | string | No | Your end-user identifier, up to 256 characters. Unsupported by Mercury Decide, Bison-1 and Groundhog-1; omit it for these models. |
+| `session_id` | string | No | Your session identifier, up to 256 characters. Unsupported by Mercury Decide, Bison-1 and Groundhog-1; omit it for these models. |
+| `trace` | object | No | Caller-supplied trace metadata. Unsupported by Mercury Decide, Bison-1 and Groundhog-1; omit it for these models. |
 | `provider` | object or null | No | Model-specific routing controls, described below. Usually omit this field. |
 | `include_usage` | boolean | No | Wait for billing to settle and report the exact charge as `usage.cost`. Defaults to `false`, which returns `usage.estimated_cost` without waiting. See [Usage and cost](#usage-and-cost). |
 
@@ -519,7 +561,7 @@ API-key provider restrictions and zero-data-retention requirements apply to ever
 
 ## Official TypeSafe SDK
 
-NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call supported decision models without changing their request types. Mercury Decide is not supported on this endpoint. Set the model to `jev-latest`, `jev-1.13`, `liquid/d1`, `perplexity/pplx-decider-v1.2`, `clef` or `cloudflare/clef-flash`. Image input and `include_usage` work the same way as on the native endpoint.
+NanoGPT exposes `POST /api/v1/systemone` so the official TypeSafe JavaScript and Python SDKs can call supported decision models without changing their request types. Mercury Decide is not supported on this endpoint. Set the model to `jev-latest`, `jev-1.13`, `liquid/d1`, `perplexity/pplx-decider-v1.2`, `clef`, `cloudflare/clef-flash`, `baselabs/bison-1` or `baselabs/groundhog-1`. Image input and `include_usage` work the same way as on the native endpoint; preserve each model's request restrictions above.
 
 <CodeGroup>
 
@@ -673,7 +715,7 @@ Parse `content[0].text` as JSON. `max_tokens` is accepted for Anthropic SDK comp
 
 Decision-model requests are deliberately narrower than chat generation requests:
 
-- Only non-streaming text input in `user` messages is supported on compatibility endpoints. PPLX Decider v1.2, Clef and Clef Flash accept images on the native Decisions and System One endpoints. Mercury Decide accepts inline PNG images on the native Decisions endpoint only.
+- Only non-streaming text input in `user` messages is supported on Chat Completions, Messages and Responses compatibility endpoints. PPLX Decider v1.2, Clef, Clef Flash, Bison-1 and Groundhog-1 accept images on the native Decisions and System One endpoints, subject to each model's format and size limits. Mercury Decide accepts inline PNG images on the native Decisions endpoint only.
 - System, developer, assistant, tool, audio, video, and file input is not supported. Compatibility endpoints also reject images.
 - Tools, sampling controls, log probabilities, and reasoning generation controls are not supported.
 - On compatibility endpoints, output-token-limit fields are accepted where an SDK requires them, but they do not change the fixed typed output. Mercury Decide rejects these fields.

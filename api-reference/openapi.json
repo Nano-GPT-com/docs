@@ -1244,7 +1244,7 @@
           "Decisions"
         ],
         "summary": "Create typed decisions with a decision model",
-        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.2 (perplexity/pplx-decider-v1.2), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). PPLX Decider v1.2 accepts only the zdr and data_collection routing controls in provider. Clef and Clef Flash support NanoGPT provider selection and reject zdr true. PPLX Decider v1.2, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. Check GET /api/v1/decision-models on your chosen host for model availability, supported_endpoints and decision_input capabilities. Requests for the retired perplexity/pplx-decider-v1.1-27b ID return HTTP 410 with code model_retired; select perplexity/pplx-decider-v1.2 explicitly.",
+        "description": "Evaluates application state with one or more typed Choice, Score, or Noul (yes/no) questions. Decision models return typed answers with calibrated probabilities instead of generated text, and only input tokens are billed. Supported models: TypeSafe Jev (typesafe/jev-1.13, typesafe/jev-latest), Liquid AI's D1 (liquid/d1), Perplexity's PPLX Decider v1.2 (perplexity/pplx-decider-v1.2), and Cloudflare's Clef (cloudflare/clef) and Clef Flash (cloudflare/clef-flash). PPLX Decider v1.2 accepts only the zdr and data_collection routing controls in provider. Clef and Clef Flash support NanoGPT provider selection and reject zdr true. PPLX Decider v1.2, Clef and Clef Flash also accept up to four inline images in the state array; Clef and Clef Flash limit text input to 1,800 tokens. By default the response returns before billing settles and reports usage.estimated_cost; set include_usage to true for the exact usage.cost. Check GET /api/v1/decision-models on your chosen host for model availability, supported_endpoints and decision_input capabilities. Requests for the retired perplexity/pplx-decider-v1.1-27b ID return HTTP 410 with code model_retired; select perplexity/pplx-decider-v1.2 explicitly. Bison-1 (baselabs/bison-1) and Groundhog-1 (baselabs/groundhog-1) support this endpoint with text, JSON or up to four inline PNG images. They accept 1–256 questions, 1–255 choice options, 2–10 score levels and at most 512 total options (each noul counts as two). Instructions and criterion descriptions must be non-empty text. Context admission is 32,768 tokens per question for Bison-1 and 16,384 for Groundhog-1, including shared state, formatting and images. Input costs $0.10 and $0.035 per million tokens respectively, including cached input; answer tokens are free. Shared state is billed once plus each question. Neither model is included in subscriptions or subscriber discounts. Omit user, session_id and trace. Only provider.zdr and provider.data_collection are accepted; ZDR requirements and data_collection deny return 400 zdr_not_supported. No streaming, tools, reasoning or transport redaction.",
         "security": [
           {
             "bearerAuth": []
@@ -1324,7 +1324,7 @@
           "Decisions"
         ],
         "summary": "Create a typed decision with the official TypeSafe SDK shape",
-        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://api.nano-gpt.com/api (or https://nano-gpt.com/api); the SDK appends /v1/systemone. It accepts every decision model listed for /v1/decisions. Bare model IDs jev-1.13, jev-latest and clef are mapped to the matching NanoGPT models. Image input and include_usage work as on /v1/decisions. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape.",
+        "description": "Compatibility endpoint for the official TypeSafe JavaScript and Python SDKs. Configure the SDK base URL as https://api.nano-gpt.com/api (or https://nano-gpt.com/api); the SDK appends /v1/systemone. Use models whose live catalog entry lists /api/v1/systemone in supported_endpoints. Mercury Decide is native Decisions only. Bare model IDs jev-1.13, jev-latest and clef are mapped to the matching NanoGPT models. Image input and include_usage work as on /v1/decisions. The SDK model-list method remains unsupported because NanoGPT's /api/v1/models endpoint uses the NanoGPT/OpenAI-compatible response shape. Bison-1 (baselabs/bison-1) and Groundhog-1 (baselabs/groundhog-1) support this endpoint with text, JSON or up to four inline PNG images. They accept 1–256 questions, 1–255 choice options, 2–10 score levels and at most 512 total options (each noul counts as two). Instructions and criterion descriptions must be non-empty text. Context admission is 32,768 tokens per question for Bison-1 and 16,384 for Groundhog-1, including shared state, formatting and images. Input costs $0.10 and $0.035 per million tokens respectively, including cached input; answer tokens are free. Shared state is billed once plus each question. Neither model is included in subscriptions or subscriber discounts. Omit user, session_id and trace. Only provider.zdr and provider.data_collection are accepted; ZDR requirements and data_collection deny return 400 zdr_not_supported. No streaming, tools, reasoning or transport redaction.",
         "security": [
           {
             "bearerAuth": []
@@ -7028,7 +7028,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX. The retired perplexity/pplx-decider-v1.1-27b ID returns HTTP 410 with code model_retired.",
+            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX. The retired perplexity/pplx-decider-v1.1-27b ID returns HTTP 410 with code model_retired. Bison-1 uses baselabs/bison-1 (alias bison-1); Groundhog-1 uses baselabs/groundhog-1 (alias groundhog-1).",
             "enum": [
               "typesafe/jev-1.13",
               "~typesafe/jev-latest",
@@ -7037,11 +7037,15 @@
               "cloudflare/clef",
               "clef",
               "cloudflare/clef-flash",
-              "perplexity/pplx-decider-v1.2"
+              "perplexity/pplx-decider-v1.2",
+              "baselabs/bison-1",
+              "bison-1",
+              "baselabs/groundhog-1",
+              "groundhog-1"
             ]
           },
           "state": {
-            "description": "Application state to evaluate. PPLX Decider v1.2, Clef and Clef Flash also accept an array that mixes plain strings with up to four image_url parts holding static PNG, JPEG or WebP base64 data URLs, each at most 512x512 pixels (240,000 base64 characters in total). Remote image URLs are not fetched.",
+            "description": "Application state to evaluate. PPLX Decider v1.2, Clef and Clef Flash also accept an array that mixes plain strings with up to four image_url parts holding static PNG, JPEG or WebP base64 data URLs, each at most 512x512 pixels (240,000 base64 characters in total). Remote image URLs are not fetched. For Bison-1 and Groundhog-1, state must be text, an array or a JSON object without a messages key; null is unsupported. Images must be direct state-array image_url parts with static PNG base64 data URLs. Maximum: four images, 512x512 pixels each, 240,000 aggregate base64 characters / 180,000 decoded bytes, within a 1 MiB request body. Omit image_url.detail or set auto. JPEG, WebP, remote URLs and image input with PII redaction are unsupported.",
             "oneOf": [
               {
                 "type": "string"
@@ -7071,10 +7075,11 @@
                   "$ref": "#/components/schemas/DecisionsNoulQuestion"
                 }
               ]
-            }
+            },
+            "description": "Bison-1 and Groundhog-1 accept 1–256 questions with non-empty text instructions and criterion descriptions. Choice supports 1–255 options, score requires 2–10 levels, and noul criteria must be omitted or contain exactly true and false. At most 512 options total; each noul counts as two."
           },
           "provider": {
-            "description": "Optional model-specific routing controls. Jev 1.13, Jev Latest and Liquid D1 use native Decisions endpoint names. PPLX Decider v1.2 accepts only zdr and data_collection. Clef and Clef Flash support NanoGPT provider selection and reject zdr true.",
+            "description": "Optional model-specific routing controls. Jev 1.13, Jev Latest and Liquid D1 use native Decisions endpoint names. PPLX Decider v1.2 accepts only zdr and data_collection. Clef and Clef Flash support NanoGPT provider selection and reject zdr true. Bison-1 and Groundhog-1 accept only zdr and data_collection; provider selection is unavailable. Requiring zdr true or data_collection deny returns 400 zdr_not_supported.",
             "type": [
               "object",
               "null"
@@ -7083,15 +7088,18 @@
           },
           "session_id": {
             "type": "string",
-            "maxLength": 256
+            "maxLength": 256,
+            "description": "Unsupported by Bison-1 and Groundhog-1; omit this field for these models."
           },
           "trace": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Unsupported by Bison-1 and Groundhog-1; omit this field for these models."
           },
           "user": {
             "type": "string",
-            "maxLength": 256
+            "maxLength": 256,
+            "description": "Unsupported by Bison-1 and Groundhog-1; omit this field for these models."
           },
           "include_usage": {
             "type": "boolean",
@@ -7111,7 +7119,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX. The retired perplexity/pplx-decider-v1.1-27b ID returns HTTP 410 with code model_retired.",
+            "description": "Decision model ID. clef is an alias of the prefixed IDs. Use perplexity/pplx-decider-v1.2 for PPLX. The retired perplexity/pplx-decider-v1.1-27b ID returns HTTP 410 with code model_retired. Bison-1 uses baselabs/bison-1 (alias bison-1); Groundhog-1 uses baselabs/groundhog-1 (alias groundhog-1).",
             "enum": [
               "jev-1.13",
               "jev-latest",
@@ -7122,11 +7130,15 @@
               "cloudflare/clef",
               "clef",
               "cloudflare/clef-flash",
-              "perplexity/pplx-decider-v1.2"
+              "perplexity/pplx-decider-v1.2",
+              "baselabs/bison-1",
+              "bison-1",
+              "baselabs/groundhog-1",
+              "groundhog-1"
             ]
           },
           "state": {
-            "description": "Text, a JSON object or array, or null.",
+            "description": "Text, a JSON object or array, or null. For Bison-1 and Groundhog-1, state must be text, an array or a JSON object without a messages key; null is unsupported. Images must be direct state-array image_url parts with static PNG base64 data URLs. Maximum: four images, 512x512 pixels each, 240,000 aggregate base64 characters / 180,000 decoded bytes, within a 1 MiB request body. Omit image_url.detail or set auto. JPEG, WebP, remote URLs and image input with PII redaction are unsupported.",
             "oneOf": [
               {
                 "type": "string"
@@ -7164,26 +7176,31 @@
                 "instructions": {},
                 "criteria": {}
               }
-            }
+            },
+            "description": "Bison-1 and Groundhog-1 accept 1–256 questions with non-empty text instructions and criterion descriptions. Choice supports 1–255 options, score requires 2–10 levels, and noul criteria must be omitted or contain exactly true and false. At most 512 options total; each noul counts as two."
           },
           "provider": {
             "type": [
               "object",
               "null"
             ],
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Optional model-specific routing controls. Bison-1 and Groundhog-1 accept only zdr and data_collection; provider selection is unavailable. Requiring zdr true or data_collection deny returns 400 zdr_not_supported."
           },
           "session_id": {
             "type": "string",
-            "maxLength": 256
+            "maxLength": 256,
+            "description": "Unsupported by Bison-1 and Groundhog-1; omit this field for these models."
           },
           "trace": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Unsupported by Bison-1 and Groundhog-1; omit this field for these models."
           },
           "user": {
             "type": "string",
-            "maxLength": 256
+            "maxLength": 256,
+            "description": "Unsupported by Bison-1 and Groundhog-1; omit this field for these models."
           },
           "include_usage": {
             "type": "boolean",
