@@ -1181,7 +1181,7 @@
           {
             "name": "x-x402",
             "in": "header",
-            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "description": "Historical header name retained for Lightning L402: set to true on unauthenticated accountless Lightning L402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1222,7 +1222,7 @@
             }
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote for supported non-streaming requests",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless Lightning L402 quote for supported non-streaming requests",
             "content": {
               "application/json": {
                 "schema": {
@@ -2594,7 +2594,7 @@
         }
       ],
       "post": {
-        "description": "Creates an image generation for the provided prompt (OpenAI-compatible). For unauthenticated accountless x402 quote requests, include x-x402: true.",
+        "description": "Creates an image generation for the provided prompt (OpenAI-compatible). For unauthenticated accountless Lightning L402 quote requests, include x-x402: true.",
         "security": [
           { "bearerAuth": [] },
           {}
@@ -2603,7 +2603,7 @@
           {
             "name": "x-x402",
             "in": "header",
-            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "description": "Historical header name retained for Lightning L402: set to true on unauthenticated accountless Lightning L402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
             "required": false,
             "schema": {
               "type": "string",
@@ -2664,7 +2664,7 @@
             }
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless Lightning L402 quote",
             "content": {
               "application/json": {
                 "schema": {
@@ -2681,7 +2681,7 @@
     },
     "/v1/images/edits": {
       "post": {
-        "description": "Edit images with JSON inputs. Multipart uploads require normal authentication before conversion; accountless x402 applies to JSON edit requests only when the unauthenticated quote request includes x-x402: true.",
+        "description": "Edit images with JSON inputs. Multipart uploads require normal authentication before conversion; accountless Lightning L402 applies to JSON edit requests only when the unauthenticated quote request includes x-x402: true.",
         "security": [
           { "bearerAuth": [] },
           { "apiKeyAuth": [] },
@@ -2691,7 +2691,7 @@
           {
             "name": "x-x402",
             "in": "header",
-            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "description": "Historical header name retained for Lightning L402: set to true on unauthenticated accountless Lightning L402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
             "required": false,
             "schema": {
               "type": "string",
@@ -2700,7 +2700,7 @@
           }
         ],
         "requestBody": {
-          "description": "JSON image edit parameters. Provide imageDataUrl or imageDataUrls for accountless x402 quote requests.",
+          "description": "JSON image edit parameters. Provide imageDataUrl or imageDataUrls for accountless Lightning L402 quote requests.",
           "required": true,
           "content": {
             "application/json": {
@@ -2745,7 +2745,7 @@
             "description": "Unauthorized - Invalid or missing API key"
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote for JSON edit requests",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless Lightning L402 quote for JSON edit requests",
             "content": {
               "application/json": {
                 "schema": {
@@ -3195,7 +3195,7 @@
     },
     "/v1/data/web/search": {
       "post": {
-        "description": "Public Data API facade for web search. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key and with x-x402: true.",
+        "description": "Public Data API facade for web search. Supports normal API-key billing and accountless Lightning L402 quotes when called without Authorization or x-api-key and with x-x402: true.",
         "security": [
           { "apiKeyAuth": [] },
           { "bearerAuth": [] },
@@ -3205,7 +3205,7 @@
           {
             "name": "x-x402",
             "in": "header",
-            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "description": "Historical header name retained for Lightning L402: set to true on unauthenticated accountless Lightning L402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
             "required": false,
             "schema": {
               "type": "string",
@@ -3249,7 +3249,7 @@
             "description": "Unauthorized - Invalid session or API key"
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless Lightning L402 quote",
             "content": {
               "application/json": {
                 "schema": {
@@ -3296,7 +3296,7 @@
     },
     "/v1/data/url/scrape": {
       "post": {
-        "description": "Public Data API facade for URL scraping. Supports normal API-key billing and accountless x402 quotes when called without Authorization or x-api-key and with x-x402: true. The request body uses urls: [...].",
+        "description": "Public Data API facade for URL scraping. Supports normal API-key billing and accountless Lightning L402 quotes when called without Authorization or x-api-key and with x-x402: true. The request body uses urls: [...].",
         "security": [
           { "apiKeyAuth": [] },
           { "bearerAuth": [] },
@@ -3306,7 +3306,7 @@
           {
             "name": "x-x402",
             "in": "header",
-            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "description": "Historical header name retained for Lightning L402: set to true on unauthenticated accountless Lightning L402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
             "required": false,
             "schema": {
               "type": "string",
@@ -3350,7 +3350,7 @@
             "description": "Unauthorized - Invalid session or API key"
           },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless Lightning L402 quote",
             "content": {
               "application/json": {
                 "schema": {
@@ -4263,7 +4263,7 @@
     },
     "/v1/x402/endpoints": {
       "get": {
-        "description": "List endpoints supported by accountless x402 in the running deployment. By default only supported endpoints are returned; pass supported=all to include beta and deferred entries. If x402 is disabled, payment storage is unavailable, or completion replay is not configured, the default supported list is empty.",
+        "description": "List endpoints supported by accountless Lightning L402 in the running deployment. All x402 rails (including XNO, Base USDC and Solana) were removed on 2026-11-20; /x402 paths and x-x402 header names are historical compatibility names. Only lightning-l402 is advertised. By default only supported endpoints are returned; pass supported=all to include beta and deferred entries. If Lightning L402 is disabled, payment storage is unavailable, or completion replay is not configured, the default supported list is empty.",
         "parameters": [
           {
             "name": "supported",
@@ -4278,7 +4278,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Accountless x402 endpoint support matrix for this deployment",
+            "description": "Accountless Lightning L402 endpoint support matrix for this deployment",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/X402EndpointSupportListResponse" }
@@ -4367,7 +4367,7 @@
     },
     "/x402/status/{paymentId}": {
       "get": {
-        "description": "Poll the status of an X-402 payment by paymentId.",
+        "description": "Historical payment status route. Lightning L402 completes by replaying the original request with L402 proof, not by polling or calling completeUrl.",
         "parameters": [
           {
             "name": "paymentId",
@@ -4406,7 +4406,7 @@
     },
     "/x402/complete/{paymentId}": {
       "post": {
-        "description": "Complete a paid X-402 request and execute the original API request associated with the paymentId.",
+        "description": "Historical completion route for removed x402 rails; not the Lightning L402 payment flow. For L402, POST the quoted invoiceUrl, pay the invoice and replay the original endpoint with Authorization: L402 <token>:<preimage>.",
         "parameters": [
           {
             "name": "paymentId",
@@ -5330,7 +5330,7 @@
           {
             "name": "x-x402",
             "in": "header",
-            "description": "Set to true on unauthenticated accountless x402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
+            "description": "Historical header name retained for Lightning L402: set to true on unauthenticated accountless Lightning L402 quote requests. Without this header, unauthenticated requests return 401 missing_api_key.",
             "required": false,
             "schema": {
               "type": "string",
@@ -5360,7 +5360,7 @@
           },
           "401": { "description": "Unauthorized - Invalid or missing API key" },
           "402": {
-            "description": "Payment Required - authenticated insufficient balance or opted-in accountless x402 quote for supported non-streaming requests",
+            "description": "Payment Required - authenticated insufficient balance or opted-in accountless Lightning L402 quote for supported non-streaming requests",
             "content": {
               "application/json": {
                 "schema": {
@@ -5449,7 +5449,7 @@
           "Feedback"
         ],
         "summary": "Submit private API feedback",
-        "description": "Submit a bug, feature request, documentation issue or model-quality report when the user asks, or when a NanoGPT problem is reproducible and blocks the task. Do not submit reports for transient errors, timeouts, rate limits or insufficient balance. The @nanogpt/mcp server exposes this as nanogpt_send_feedback. Requires a valid inference API key and Idempotency-Key. The key's account, or the team that pays for it, must have a balance or an active subscription; other accounts get 403 feedback_requires_funded_account and can use the website. Feedback requests do not incur usage charges. Browser cookies, management credentials, partner tokens and accountless x402 grant no access. All reports are private and are never published to the public feedback board. Support sees each report as submitted through an API key, not as a verified request from the account owner, so it cannot be used to request refunds, balance or account changes. Submission explicitly stores the supplied text; inference no-logging settings do not prevent feedback storage. Never send credentials or full prompts/responses. No logs are fetched or support-access permissions changed. Uncompressed JSON only, at most 16 KiB. Concurrent retries with the same key, Idempotency-Key and normalized fields return the original 201 receipt; changed fields return 409. Deleted or archived reports return 410 rather than being recreated. Quotas include retries: 5 submissions/minute and 20/day per account and per paying account (members of a team share their team's allowance), 60 requests/minute per key, 120/minute per IP, plus a shared daily limit on valid submissions across all accounts (429 feedback_capacity_reached). Aliases: /v1/feedback. Read the current status using GET; receipt acceptance does not promise a fix. Limit automatic retries to three total attempts per failed operation, honoring Retry-After when present and using backoff otherwise; use website support if failures persist.",
+        "description": "Submit a bug, feature request, documentation issue or model-quality report when the user asks, or when a NanoGPT problem is reproducible and blocks the task. Do not submit reports for transient errors, timeouts, rate limits or insufficient balance. The @nanogpt/mcp server exposes this as nanogpt_send_feedback. Requires a valid inference API key and Idempotency-Key. The key's account, or the team that pays for it, must have a balance or an active subscription; other accounts get 403 feedback_requires_funded_account and can use the website. Feedback requests do not incur usage charges. Browser cookies, management credentials, partner tokens and accountless Lightning L402 grant no access. All reports are private and are never published to the public feedback board. Support sees each report as submitted through an API key, not as a verified request from the account owner, so it cannot be used to request refunds, balance or account changes. Submission explicitly stores the supplied text; inference no-logging settings do not prevent feedback storage. Never send credentials or full prompts/responses. No logs are fetched or support-access permissions changed. Uncompressed JSON only, at most 16 KiB. Concurrent retries with the same key, Idempotency-Key and normalized fields return the original 201 receipt; changed fields return 409. Deleted or archived reports return 410 rather than being recreated. Quotas include retries: 5 submissions/minute and 20/day per account and per paying account (members of a team share their team's allowance), 60 requests/minute per key, 120/minute per IP, plus a shared daily limit on valid submissions across all accounts (429 feedback_capacity_reached). Aliases: /v1/feedback. Read the current status using GET; receipt acceptance does not promise a fix. Limit automatic retries to three total attempts per failed operation, honoring Retry-After when present and using backoff otherwise; use website support if failures persist.",
         "parameters": [
           {
             "name": "Idempotency-Key",
@@ -8296,7 +8296,7 @@
       },
       "AdvisorConfig": {
         "type": "object",
-        "description": "Allows the executor model to consult one different advisor model. Auto mode lets the executor decide whether to consult; required mode forces one consultation request. Advisor is non-streaming and available only for platform-billed pay-as-you-go API-key requests. Subscriptions, BYOK, accountless x402, Private Mode, inline moderation, client tools, structured outputs, memory, and server-side content enhancements are rejected before orchestration. Each completed executor, advisor, and continuation phase is billed separately.",
+        "description": "Allows the executor model to consult one different advisor model. Auto mode lets the executor decide whether to consult; required mode forces one consultation request. Advisor is non-streaming and available only for platform-billed pay-as-you-go API-key requests. Subscriptions, BYOK, accountless Lightning L402, Private Mode, inline moderation, client tools, structured outputs, memory, and server-side content enhancements are rejected before orchestration. Each completed executor, advisor, and continuation phase is billed separately.",
         "properties": {
           "model": {
             "type": "string",
@@ -11876,7 +11876,7 @@
       },
       "X402AcceptOption": {
         "type": "object",
-        "description": "Legacy lower-level payment option offered in an x402 402 response.",
+        "description": "Legacy lower-level Lightning L402 quote option; the X402 schema name is retained for compatibility.",
         "additionalProperties": true,
         "properties": {
           "scheme": { "type": "string" },
@@ -11898,12 +11898,12 @@
       },
       "X402PaymentAcceptedOption": {
         "type": "object",
-        "description": "Normalized public accountless x402 payment option.",
+        "description": "Normalized public accountless Lightning L402 payment option.",
         "additionalProperties": true,
         "properties": {
           "scheme": {
             "type": "string",
-            "enum": ["nano", "nano-exact", "lightning-l402"]
+            "enum": ["lightning-l402"]
           },
           "protocolScheme": { "type": "string" },
           "network": { "type": "string" },
@@ -11926,13 +11926,13 @@
           },
           "paymentId": { "type": "string" },
           "statusUrl": { "type": "string", "format": "uri" },
-          "completeUrl": { "type": "string", "format": "uri" },
+          "completeUrl": { "type": "string", "format": "uri", "deprecated": true, "description": "Historical field for removed x402 rails; not used by Lightning L402." },
           "expiresAt": { "type": "string", "format": "date-time" }
         }
       },
       "X402PaymentQuote": {
         "type": "object",
-        "description": "Canonical accountless x402 payment quote.",
+        "description": "Canonical accountless Lightning L402 payment quote.",
         "additionalProperties": true,
         "properties": {
           "version": { "type": "integer", "example": 1 },
@@ -11941,7 +11941,7 @@
           "expiresAt": { "type": "string", "format": "date-time" },
           "amountUsd": { "type": "string", "example": "0.0714" },
           "statusUrl": { "type": "string", "format": "uri" },
-          "completeUrl": { "type": "string", "format": "uri" },
+          "completeUrl": { "type": "string", "format": "uri", "deprecated": true, "description": "Historical field for removed x402 rails; not used by Lightning L402." },
           "accepted": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/X402PaymentAcceptedOption" }
@@ -11950,7 +11950,7 @@
       },
       "X402PaymentRequiredResponse": {
         "type": "object",
-        "description": "402 Payment Required body for accountless x402. New clients should key off the top-level payment object; accepts is retained for backwards compatibility.",
+        "description": "402 Payment Required body for accountless Lightning L402. New clients should key off the top-level payment object; accepts is retained for backwards compatibility.",
         "additionalProperties": true,
         "properties": {
           "error": {
@@ -11982,7 +11982,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["nano", "nano-exact", "lightning-l402"]
+              "enum": ["lightning-l402"]
             }
           },
           "streaming": {

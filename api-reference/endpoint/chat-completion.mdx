@@ -25,7 +25,7 @@ import ExampleModelHostNotice from '/snippets/example-model-host-notice.mdx';
 </Note>
 
 <Note>
-  **Accountless x402 payments**: Non-streaming `POST /api/v1/chat/completions` requests can be quoted without an account or API key on supported deployments when the initial quote request includes `x-x402: true`. Streaming chat has implementation coverage but is not part of the stable public accountless contract. This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
+  **Accountless Lightning L402 payments**: Non-streaming `POST /api/v1/chat/completions` requests can be quoted without an account or API key on supported deployments when the initial quote request includes `x-x402: true`. Streaming chat has implementation coverage but is not part of the stable public accountless contract. This endpoint supports accountless Lightning L402 payments where listed by `GET /api/v1/x402/endpoints`, using only Lightning L402 when advertised. See [Accountless Lightning L402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
 </Note>
 
 <Note>

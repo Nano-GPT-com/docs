@@ -257,13 +257,13 @@ Some endpoints return `402 Payment Required` when payment is needed before the r
 
 This is the ordinary insufficient-balance response for authenticated requests.
 
-### Accountless x402 Payment Challenge
+### Accountless Lightning L402 Payment Challenge
 
-Supported endpoints can also be called without `Authorization` or `x-api-key` when the client explicitly opts in to accountless x402 quote generation. To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options and a stable top-level `payment` object plus legacy OpenAI-compatible error fields.
+Supported endpoints can also be called without `Authorization` or `x-api-key` when the client explicitly opts in to accountless Lightning L402 quote generation. To request an accountless Lightning L402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with the Lightning L402 payment option when available and a stable top-level `payment` object plus legacy OpenAI-compatible error fields.
 
-If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the x402 quote flow.
+If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the accountless quote flow.
 
-Detect accountless x402 by checking for the top-level `payment` object, not a single `error.code` value.
+Detect accountless Lightning L402 by checking for the top-level `payment` object, not a single `error.code` value.
 
 ```json
 {
@@ -278,32 +278,7 @@ Detect accountless x402 by checking for the top-level `payment` object, not a si
     "requestHash": "sha256:...",
     "expiresAt": "2026-06-09T12:00:00.000Z",
     "amountUsd": "0.0714",
-    "statusUrl": "https://api.nano-gpt.com/api/x402/status/pay_...",
-    "completeUrl": "https://api.nano-gpt.com/api/x402/complete/pay_...",
     "accepted": [
-      {
-        "scheme": "nano",
-        "protocolScheme": "nano",
-        "network": "nano-mainnet",
-        "amount": "...",
-        "amountFormatted": "0.17067988 XNO",
-        "amountUsd": "0.0714",
-        "payTo": "nano_...",
-        "paymentId": "pay_...",
-        "statusUrl": "https://api.nano-gpt.com/api/x402/status/pay_...",
-        "completeUrl": "https://api.nano-gpt.com/api/x402/complete/pay_..."
-      },
-      {
-        "scheme": "nano-exact",
-        "protocolScheme": "exact",
-        "network": "nano:mainnet",
-        "amount": "...",
-        "amountFormatted": "0.17067988 XNO",
-        "amountUsd": "0.0714",
-        "payTo": "nano_...",
-        "paymentId": "pay_...",
-        "expiresAt": "2026-06-09T12:00:00.000Z"
-      },
       {
         "scheme": "lightning-l402",
         "protocolScheme": "lightning-l402",
@@ -321,7 +296,7 @@ Detect accountless x402 by checking for the top-level `payment` object, not a si
 }
 ```
 
-The legacy `accepts` array may still appear for backwards-compatible and lower-level protocol clients, but new clients should use `payment.accepted[]`. The exact rail `nano-exact` replays the original request with `X-PAYMENT`; the polling-style rail `nano` uses `statusUrl` and `completeUrl`; Lightning L402 first POSTs the option’s `invoiceUrl` to get an invoice and token, pays the returned invoice, then replays the exact original request with `Authorization: L402 <token>:<preimage>` and does not use `X-PAYMENT` or `completeUrl`. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the complete flow and supported endpoint matrix.
+The historical `accepts` and `x402Version` fields may remain for compatibility. All x402 rails, including XNO/Nano, USDC on Base, and Solana, were removed on 2026-11-20. Lightning L402 is the only remaining accountless payment scheme. POST the option's `invoiceUrl` to obtain `invoice`, `paymentHash`, `l402Token`, and `expiresAt`; pay the BOLT11 invoice, then replay the original request with `Authorization: L402 <token>:<preimage>`. The quote contains no invoice or `WWW-Authenticate` challenge. L402 does not use `X-PAYMENT` or `completeUrl`. The `/x402` paths and `x-x402: true` header retain historical names. See [Accountless Lightning L402 API Payments](/api-reference/miscellaneous/x402).
 
 Feature-specific variants may include a structured error `code` such as `memory_balance_required` or `webSearch_balance_required`.
 

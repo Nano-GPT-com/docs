@@ -40,4 +40,4 @@ The request ID helps support find a failed request. Save it with your applicatio
 - [API Hosts](/api-reference/miscellaneous/api-hosts): direct API host, partner domains and runtime limits
 - [Private Mode](/api-reference/miscellaneous/private-mode): local encryption proxy
 
-For selected endpoints, you can also use [Accountless x402 API Payments](/api-reference/miscellaneous/x402) to receive a payment quote without an account or API key by including `x-x402: true` on the initial unauthenticated quote request. Check `GET /api/v1/x402/endpoints` for the current supported matrix.
+For selected endpoints, you can also use [Accountless Lightning L402 API Payments](/api-reference/miscellaneous/x402) to receive a payment quote without an account or API key by including `x-x402: true` on the initial unauthenticated quote request. All x402 rails, including XNO, were removed on 2026-11-20; the header and API paths retain historical names for Lightning L402. Check `GET /api/v1/x402/endpoints` for the current supported matrix.

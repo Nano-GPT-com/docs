@@ -1,25 +1,21 @@
 ---
-title: "Accountless x402 API Payments"
-description: "Opt in to accountless payment quotes for supported NanoGPT API endpoints, pay with a supported crypto rail, and complete or replay the original request."
+title: "Accountless Lightning L402 API Payments"
+description: "Request a quote without an account, obtain and pay a Lightning invoice, then replay the original API request with L402 payment proof."
 ---
 
 ## Overview
 
-NanoGPT supports accountless API calls for selected endpoints. To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options. After paying, call the quoted `completeUrl`, replay the original endpoint with `X-PAYMENT`, or replay the original endpoint with `Authorization: L402 <token>:<preimage>` for Lightning L402.
+x402 was removed entirely on 2026-11-20, including XNO/Nano (`nano`, `nano-exact`), USDC on Base, and Solana. Lightning L402 remains available for accountless pay-per-call API requests; no NanoGPT account or API key is needed.
 
-An unauthenticated API request without `x-x402: true` is treated as a normal unauthenticated request and returns `401 missing_api_key`. NanoGPT does not generate x402 quotes for every unauthenticated request.
+The `/x402` API paths, `x-x402: true` quote opt-in header, and compatibility fields such as `x402Version` retain their historical names. They do not indicate that x402 payment rails are still supported. Do not send XNO or USDC, submit `X-PAYMENT`, or call `completeUrl` to pay a new request.
 
-Live demo: [https://nano-gpt.com/x402](https://nano-gpt.com/x402)
+Send a supported API request without `Authorization` or `x-api-key`, with `x-x402: true`. When Lightning L402 is available, the response is `402 Payment Required` with `payment.accepted[]` containing `lightning-l402`. POST that option's `invoiceUrl`, pay the returned BOLT11 invoice, then replay the exact original request with `Authorization: L402 <token>:<preimage>`.
 
-Only endpoints returned by `GET /api/v1/x402/endpoints` should be treated as public accountless x402 endpoints. Treat broad x402 support claims as release-gated by live smoke tests against localhost and production.
-
-Streaming chat/responses and long-running video generation have implementation coverage but are not the stable public contract yet.
+An unauthenticated request without the opt-in header follows normal authentication handling. If Lightning is unavailable, an opted-in request can return `401 account_required` instead of a payable quote. Check the deployment matrix before assuming an endpoint is accountless-payable.
 
 ## API Host
 
-Use `https://api.nano-gpt.com` for accountless requests, as the examples below do. Quotes name the host you called, so use the `statusUrl` and `completeUrl` from your quote as given. IPv6-only clients can use `https://nano-gpt.com` with the same paths; see [API Hosts](/api-reference/miscellaneous/api-hosts#ipv6-only-clients).
-
-Every public endpoint below returns quotes on `https://api.nano-gpt.com`. Quotes there are paid in XNO (`nano`, `nano-exact`) or, when configured, with Lightning (`lightning-l402`).
+Use `https://api.nano-gpt.com` and the quoted `invoiceUrl` as returned. IPv6-only clients can use `https://nano-gpt.com` with the same paths; see [API Hosts](/api-reference/miscellaneous/api-hosts#ipv6-only-clients).
 
 ## Endpoint Matrix
 
@@ -29,7 +25,7 @@ The supported endpoint matrix is machine-readable. Its `schemes` list reflects t
 curl https://api.nano-gpt.com/api/v1/x402/endpoints
 ```
 
-As of 2026-06-14, production advertises `lightning-l402` on the public endpoints listed below. Continue to use `GET /api/v1/x402/endpoints` as the source of truth because enabled rails can be deployment-gated.
+The only remaining accountless scheme is `lightning-l402`, when enabled for the public endpoints listed below. Continue to use `GET /api/v1/x402/endpoints` as the source of truth because enabled rails can be deployment-gated.
 
 Use `?supported=all` to include beta and deferred routes:
 
@@ -37,7 +33,7 @@ Use `?supported=all` to include beta and deferred routes:
 curl "https://api.nano-gpt.com/api/v1/x402/endpoints?supported=all"
 ```
 
-If x402 is disabled, payment storage is unavailable, or completion replay is not configured, the default supported list is empty.
+If Lightning L402 is disabled, payment storage is unavailable, or completion replay is not configured, the default supported list is empty.
 
 The matrix is generated from `lib/x402/publicEndpointContract.ts`, which is also used by the runnable smoke test examples.
 
@@ -54,187 +50,9 @@ Current public accountless endpoints:
 
 Only endpoints that return a valid 402 quote in smoke tests should be listed as supported. Do not assume other API endpoints support accountless payment until they appear as supported in the matrix and have passed live smoke tests.
 
-## Payment Schemes
+## Lightning L402: Quote, Invoice, Pay, Replay
 
-Production 402 quotes currently advertise these schemes when enabled:
-
-| Public scheme | Network | Asset | Flow |
-| --- | --- | --- | --- |
-| `nano` | `nano-mainnet` | XNO | Send XNO to a unique Nano address, then call `completeUrl`. |
-| `nano-exact` | Nano mainnet exact settlement | XNO | Sign an exact payment payload and replay the original request with `X-PAYMENT`. |
-| `lightning-l402` | `bitcoin-lightning` | sats | POST `invoiceUrl`, pay the returned Lightning invoice, then replay the original request with `Authorization: L402 <token>:<preimage>`. |
-
-XNO (`nano`, `nano-exact`) and Lightning L402 (`lightning-l402`) are the x402 payment options.
-
-x402 payments in USDC on Base and Solana (`x402-exact`, `base-usdc`, `x402-solana-usdc`) were removed on 2026-11-20. A signed Base or Solana `X-PAYMENT` now gets HTTP `410` with `payment_method_removed`.
-
-## Working Quote Examples
-
-All initial quote examples below intentionally omit `Authorization` and `x-api-key` and include `x-x402: true`.
-
-### Text Chat
-
-```bash
-curl -i https://api.nano-gpt.com/api/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "x-x402: true" \
-  -d '{
-    "model": "gpt-4.1-nano",
-    "messages": [{"role": "user", "content": "Say ok"}],
-    "stream": false
-  }'
-```
-
-### Image Generation
-
-```bash
-curl -i https://api.nano-gpt.com/api/v1/images/generations \
-  -H "Content-Type: application/json" \
-  -H "x-x402: true" \
-  -d '{
-    "model": "openai/gpt-image-2.5/flare/text-to-image",
-    "prompt": "a product photo of a brushed steel desk lamp",
-    "size": "1024x1024",
-    "n": 1
-  }'
-```
-
-### Web Search
-
-```bash
-curl -i https://api.nano-gpt.com/api/v1/data/web/search \
-  -H "Content-Type: application/json" \
-  -H "x-x402: true" \
-  -d '{
-    "query": "NanoGPT x402 accountless payments",
-    "max_results": 3
-  }'
-```
-
-### URL Scrape
-
-```bash
-curl -i https://api.nano-gpt.com/api/v1/data/url/scrape \
-  -H "Content-Type: application/json" \
-  -H "x-x402: true" \
-  -d '{
-    "urls": ["https://nano-gpt.com"]
-  }'
-```
-
-## Flow 1: Quote, Pay, Complete
-
-To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options.
-
-```bash
-curl -i https://api.nano-gpt.com/api/v1/images/generations \
-  -H "Content-Type: application/json" \
-  -H "x-x402: true" \
-  -d '{
-    "model": "openai/gpt-image-2.5/flare/text-to-image",
-    "prompt": "a product photo of a brushed steel desk lamp",
-    "size": "1024x1024",
-    "n": 1
-  }'
-```
-
-For accountless payment challenges, key off the stable top-level `payment` object. The `error` object is kept for OpenAI-compatible error handling and may vary by endpoint. The legacy `accepts`, `x402Version`, and top-level `requestHash` fields may still appear for backwards compatibility and advanced protocol clients.
-
-```json
-{
-  "error": {
-    "type": "insufficient_quota",
-    "code": "insufficient_quota",
-    "message": "Payment required to complete this request."
-  },
-  "payment": {
-    "version": 1,
-    "paymentId": "pay_...",
-    "requestHash": "sha256:...",
-    "expiresAt": "2026-06-09T12:00:00.000Z",
-    "amountUsd": "0.0714",
-    "statusUrl": "https://api.nano-gpt.com/api/x402/status/pay_...",
-    "completeUrl": "https://api.nano-gpt.com/api/x402/complete/pay_...",
-    "accepted": [
-      {
-        "scheme": "nano",
-        "protocolScheme": "nano",
-        "network": "nano-mainnet",
-        "amount": "...",
-        "amountFormatted": "0.17067988 XNO",
-        "amountUsd": "0.0714",
-        "payTo": "nano_...",
-        "paymentId": "pay_...",
-        "statusUrl": "https://api.nano-gpt.com/api/x402/status/pay_...",
-        "completeUrl": "https://api.nano-gpt.com/api/x402/complete/pay_..."
-      },
-      {
-        "scheme": "lightning-l402",
-        "protocolScheme": "lightning-l402",
-        "network": "bitcoin-lightning",
-        "amount": "9",
-        "amountFormatted": "9 sats",
-        "amountUsd": "0.0054",
-        "payTo": "/api/x402/lightning/pay_.../invoice",
-        "invoiceUrl": "https://api.nano-gpt.com/api/x402/lightning/pay_.../invoice",
-        "discountRate": 0.1,
-        "undiscountedAmountUsd": "0.006"
-      }
-    ]
-  },
-  "x402Version": 1,
-  "accepts": []
-}
-```
-
-Treat the presence of `payment` as the accountless payment signal; do not depend on a single legacy `error.code` value.
-
-Top-level `payment.statusUrl` and `payment.completeUrl` mirror the primary advertised payment option when that option is a polling-style rail. When choosing a specific payment scheme, prefer the fields inside that option in `payment.accepted[]`. The exact replay option `nano-exact` has a `statusUrl` but no `completeUrl`: replay the original request with the signed block in `X-PAYMENT`, and the settlement marks the original quote record completed, so its `statusUrl` shows the result. Lightning L402 options also do not use `completeUrl`; successful completion is the replay of the original endpoint with the `Authorization: L402 <token>:<preimage>` header.
-
-After paying a `nano` quote, call:
-
-```bash
-curl -i -X POST "https://api.nano-gpt.com/api/x402/complete/pay_..."
-```
-
-Completion replays the stored original request. A payment is bound to the original method, path, body hash, quoted amount, and expiration. Expired, underpaid, already processing, or already completed payments are rejected.
-
-Nano quote-and-complete rails use `scheme: "nano"` and a unique `payTo` Nano address. Clients should copy the option-specific `amountFormatted`, `payTo`, `statusUrl`, and `completeUrl` from `payment.accepted[]`.
-
-## Flow 2: x402 Exact Replay
-
-For `nano-exact`, sign the advertised exact payment requirement and replay the original endpoint with:
-
-```bash
-curl -i https://api.nano-gpt.com/api/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "X-PAYMENT: $BASE64_PAYMENT_PAYLOAD" \
-  -d '{
-    "model": "gpt-4.1-nano",
-    "messages": [{"role": "user", "content": "Say ok"}]
-  }'
-```
-
-Successful exact-settlement responses include `X-PAYMENT-RESPONSE` when a settlement hash is available.
-
-The exact replay request must use the same method, path, and JSON body that produced the quote:
-
-```bash
-curl -i https://api.nano-gpt.com/api/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "X-PAYMENT: $BASE64_PAYMENT_PAYLOAD" \
-  -d '{
-    "model": "gpt-4.1-nano",
-    "messages": [{"role": "user", "content": "Say ok"}],
-    "stream": false
-  }'
-```
-
-NanoGPT validates exact `X-PAYMENT` replay against the quoted resource, amount, and expiration. Clients should replay the same request they quoted unless endpoint docs state otherwise.
-
-## Flow 3: Lightning L402 Replay
-
-NanoGPT also supports Lightning L402 for accountless API payments. Instead of signing an `X-PAYMENT` payload, the client pays a Lightning invoice and proves payment by replaying the original request with the invoice preimage.
+NanoGPT supports Lightning L402 for accountless API payments. Instead of signing an `X-PAYMENT` payload, the client pays a Lightning invoice and proves payment by replaying the original request with the invoice preimage.
 
 To request an accountless Lightning L402 quote, send the original request without `Authorization` or `x-api-key`, and include `x-x402: true`:
 
@@ -396,77 +214,15 @@ const result = await paidResponse.json();
 console.log(result);
 ```
 
-## Status Polling
+## Reconciliation and Request Binding
 
-For the `nano` quote-and-complete rail, use the quoted `statusUrl` to watch payment state:
+Image and data endpoint quotes are deterministic for the submitted request parameters. Chat Completions and Responses quotes are estimates reconciled after provider usage is returned; do not assume every quote is an exact final charge.
 
-```bash
-curl "https://api.nano-gpt.com/api/x402/status/pay_..."
-```
-
-Known statuses:
-
-- `pending`
-- `underpaid`
-- `paid`
-- `processing`
-- `completed`
-- `failed`
-- `refunded`
-- `expired`
-
-Status responses include `pollAfterSeconds`, plus `Retry-After` and `X-Poll-After` headers.
-
-Async media status URLs are not documented as stable accountless x402 behavior until signed unauthenticated status and media URL behavior is smoke-tested and expiration is explicitly documented.
-
-## Troubleshooting
-
-If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the x402 quote flow.
-
-## Reconciliation
-
-Image and data endpoint quotes are deterministic for the submitted request parameters.
-
-Chat Completions and Responses quotes are estimates and are reconciled after the provider returns usage. If provider execution fails after direct x402 settlement, the endpoint-specific failure path attempts the documented refund or failed-fee reconciliation.
-
-For `completeUrl`, NanoGPT replays the stored original request, so the completed request is bound to the quoted method, path, and body. For exact `X-PAYMENT` replay, NanoGPT validates the payment against the quoted resource, amount, and expiration. For Lightning L402 replay, NanoGPT validates the token and preimage against the quoted method, path, request body hash, amount, and expiration. Clients should replay the same request they quoted unless endpoint docs state otherwise. A tool follow-up, a request that sends back results for tool calls a paid response returned, is quoted and paid like any other request. Sending the earlier payment's ID in `x-x402-payment-id` links the follow-up to those tool calls but does not pay for it. The link requires a completed payment, and each tool call can be continued by only one follow-up request; re-sending that same request, for example to pay its quote, still counts as that follow-up. Any wallet can pay for a follow-up: on `/v1/responses` it continues the same stored conversation, and its own payment ID links the next follow-up in the same way. Keep payment IDs private, because a payment ID is what lets a follow-up continue the conversation.
-
-Do not assume every accountless x402 payment is an exact final charge.
-
-## Helper Examples And Smoke Tests
-
-Helper examples live in `examples/x402`. They cover:
-
-- quote request
-- choosing a payment rail
-- status polling
-- `completeUrl`
-- exact replay with `X-PAYMENT`
-- Lightning L402 replay with `Authorization: L402 <token>:<preimage>`
-- expired, underpaid, and failed completion handling via status/complete responses
-
-Run the smoke tests against localhost or production:
-
-```bash
-pnpm x402:smoke -- --base http://localhost:3000
-pnpm x402:smoke -- --base https://api.nano-gpt.com
-```
-
-Paid smoke paths are opt-in because the payment payload is wallet-specific:
-
-```bash
-X402_PAYMENT_HEADER="$BASE64_PAYMENT_PAYLOAD" pnpm x402:smoke -- --endpoint chat-completions
-X402_COMPLETE_URL="https://api.nano-gpt.com/api/x402/complete/pay_..." pnpm x402:smoke
-```
+Replay the same method, path, and body that produced the quote. A tool follow-up is a separate request that needs its own quote and payment. The historically named `x-x402-payment-id` links a follow-up to a completed payment's tool calls; it does not pay for the follow-up. Keep payment IDs private.
 
 ## Safety Notes
 
-- `completeUrl` payments are bound to the original request method, path, body hash, quote amount, and expiration.
-- Exact `X-PAYMENT` replay is validated against the quoted resource, amount, and expiration.
-- Lightning L402 replay is validated against the quoted method, path, request body hash, amount, and expiration.
-- `Authorization: L402 <token>:<preimage>` is bearer payment proof. Do not log full L402 authorization headers.
-- Expired payments cannot be completed.
-- Underpaid payments cannot be completed.
-- Completed or processing payments cannot be completed twice.
-- Store the original request only as long as needed for payment completion.
-- Do not log `X-PAYMENT` payloads, private keys, provider credentials, or full request bodies beyond existing request logging policy.
+- L402 proof is bound to the quoted method, path, request body hash, amount, and expiration.
+- The token/preimage pair is single-use. Expired, completed, or processing payments cannot be used for another purchase.
+- Keep payment IDs, invoice URLs, tokens, preimages, and full L402 authorization headers private.
+- Use a Lightning wallet, node, or payment API that returns the payment preimage.

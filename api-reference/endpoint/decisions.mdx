@@ -719,7 +719,7 @@ Decision-model requests are deliberately narrower than chat generation requests:
 - System, developer, assistant, tool, audio, video, and file input is not supported. Compatibility endpoints also reject images.
 - Tools, sampling controls, log probabilities, and reasoning generation controls are not supported.
 - On compatibility endpoints, output-token-limit fields are accepted where an SDK requires them, but they do not change the fixed typed output. Mercury Decide rejects these fields.
-- BYOK and accountless x402 payments are not supported.
+- BYOK and accountless Lightning L402 payments are not supported.
 - Standard NanoGPT or `X-Provider` provider pins are not supported. Use the native Decisions `provider` object only when you need endpoint-level routing controls.
 
 Unsupported combinations return a `400` error instead of being silently ignored.

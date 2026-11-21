@@ -24,7 +24,7 @@ x-api-key: YOUR_API_KEY
 Authorization: Bearer YOUR_API_KEY
 ```
 
-## Accountless x402 Payment
+## Accountless Lightning L402 Payment
 
 For accountless payment, prefer the public Data API path:
 
@@ -38,9 +38,9 @@ curl -i https://api.nano-gpt.com/api/v1/data/url/scrape \
   }'
 ```
 
-To request an accountless x402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with available payment options. This endpoint supports accountless x402 payments where listed by `GET /api/v1/x402/endpoints`, including Lightning L402 when advertised. See [Accountless x402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
+To request an accountless Lightning L402 quote, send the API request without `Authorization` or `x-api-key`, and include `x-x402: true`. NanoGPT will return `402 Payment Required` with the Lightning L402 payment option when available. This endpoint supports accountless Lightning L402 payments where listed by `GET /api/v1/x402/endpoints`, using only Lightning L402 when advertised. See [Accountless Lightning L402 API Payments](/api-reference/miscellaneous/x402) for the full flow.
 
-If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the x402 quote flow.
+If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the accountless quote flow.
 
 ## Request Format
 
