@@ -17,7 +17,7 @@ Errors include descriptive JSON payloads. Surface the `error.message` (and HTTP 
 
 ## Extend Workflows
 
-Use `POST /api/generate-video` with an extend model plus `prompt` and a source video (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`). `video` is only accepted by select models (for example, `wan-wavespeed-25-extend`). Max source video length: 120 seconds.
+Use `POST /api/generate-video` with an extend model plus `prompt` and a source video (`videoUrl` or `videoDataUrl`). `video` is only accepted by select models (for example, `wan-wavespeed-25-extend`). Max source video length: 120 seconds.
 
 ## Request Schema
 
@@ -63,7 +63,7 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | --- | --- | --- | --- |
 | `imageDataUrl` | string | conditional | Base64-encoded data URL. Recommended for private assets or files larger than 4 MB. |
 | `imageUrl` | string | conditional | HTTPS link to a source image. |
-| `imageAttachmentId` | string | conditional | Reference to a library-stored image. |
+| `imageAttachmentId` | string | no | Web app only. The API refuses it (400 `attachment_id_not_supported`) unless the same image is also sent as `imageUrl` or `imageDataUrl`. Send the image that way instead. |
 | `image` | string | conditional | Alternate image field accepted by select models. Prefer `imageUrl` unless the model explicitly requires `image`. |
 | `reference_image` | string | conditional | Optional still image guiding `runwayml-gen4-aleph`. |
 | `referenceImages` | array | conditional | Multiple reference images for reference-to-video flows. |
@@ -75,7 +75,7 @@ Only include the fields required by your chosen `model`. Unknown keys are ignore
 | `videoUrl` | string | conditional | HTTPS link to a source video (edit, extend, upscaler, or lipsync jobs). |
 | `videoDataUrl` | string | conditional | Base64 data URL for a source video. |
 | `video` | string | conditional | Alternate video field accepted by select models. Prefer `videoUrl` unless the model explicitly requires `video`. |
-| `videoAttachmentId` | string | conditional | Reference to a library-stored video. |
+| `videoAttachmentId` | string | no | Web app only. The API refuses it (400 `attachment_id_not_supported`) unless the same video is also sent as `videoUrl` or `videoDataUrl`. Send the video that way instead. |
 | `swapImage` | string | conditional | Swap image (face-swap models). |
 | `targetVideo` | string | conditional | Target video (face-swap models). |
 | `targetFaceIndex` | number | no | Optional face index (face-swap models). |

@@ -10663,12 +10663,13 @@
           },
           "imageUrl": {
             "type": "string",
-            "description": "Public HTTPS URL of the input image (interchangeable with imageDataUrl). The service will prioritize whichever field you supply before falling back to library attachments.",
+            "description": "Public HTTPS URL of the input image (interchangeable with imageDataUrl).",
             "example": "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?w=1024"
           },
           "imageAttachmentId": {
-            "type": "string", 
-            "description": "Library attachment ID for input image"
+            "type": "string",
+            "deprecated": true,
+            "description": "Web app only: names a file in the NanoGPT web app's browser library. The API refuses it with HTTP 400 (code attachment_id_not_supported) before any charge unless the same image is also sent as imageUrl or imageDataUrl. Send the image as a URL or base64 data URL instead."
           },
           "videoUrl": {
             "type": "string",
@@ -10684,7 +10685,8 @@
           },
           "videoAttachmentId": {
             "type": "string",
-            "description": "Library attachment ID for input video."
+            "deprecated": true,
+            "description": "Web app only: names a file in the NanoGPT web app's browser library. The API refuses it with HTTP 400 (code attachment_id_not_supported) before any charge unless the same video is also sent as videoUrl or videoDataUrl. Send the video as a URL or base64 data URL instead."
           },
           "prompt_optimizer": {
             "type": "boolean",

@@ -57,7 +57,7 @@ x-api-key: YOUR_API_KEY  # Optional, for API key auth
 
 #### Image-to-Video Request
 
-Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a public HTTPS link). The platform always uses the explicit field you send before falling back to any library attachments.
+Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a public HTTPS link). Attachment IDs such as `imageAttachmentId` and `videoAttachmentId` name files in the NanoGPT web app's browser library and work only from the web app. The API refuses a request that sends one without the media itself, with HTTP 400 and code `attachment_id_not_supported`, before any quote or charge. Send each image, video or audio input as a URL or base64 data URL instead.
 
 > Uploads sent via the API must be 4 MB or smaller. For larger assets, host them externally and provide an `imageUrl`.
 
@@ -92,10 +92,10 @@ These parameters are available across models. Only send the fields your chosen m
 | --- | --- | --- |
 | `conversationUUID` | string | Link a generation to a conversation |
 | `resolution` | string | Output resolution (`480p`, `720p`, `1080p`) |
-| `imageAttachmentId` | string | Reference to a library-stored image |
+| `imageAttachmentId` | string | Web app only. The API refuses it (400 `attachment_id_not_supported`) unless the same image is also sent as `imageUrl` or `imageDataUrl`. Send the image that way instead. |
 | `videoUrl` | string | Public HTTPS link to a source video (extend/edit/upscale) |
 | `videoDataUrl` | string | Base64-encoded data URL for a source video (max 4 MB) |
-| `videoAttachmentId` | string | Reference to a library-stored video |
+| `videoAttachmentId` | string | Web app only. The API refuses it (400 `attachment_id_not_supported`) unless the same video is also sent as `videoUrl` or `videoDataUrl`. Send the video that way instead. |
 | `video` | string | Alternate video field accepted by select models (for example, `wan-wavespeed-25-extend`) |
 | `referenceImages` | array | Multiple reference images for reference-to-video mode |
 | `referenceVideos` | array | Multiple reference videos |
@@ -275,7 +275,7 @@ Gemini Omni 1.2 generation reserves $15, then refunds unused funds before delive
 
 ### Extension Models
 
-Extend models run through `POST /api/generate-video` with `prompt` plus a source video input (`videoUrl`, `videoDataUrl`, or `videoAttachmentId`).
+Extend models run through `POST /api/generate-video` with `prompt` plus a source video input (`videoUrl` or `videoDataUrl`).
 Max source video length: 120 seconds.
 
 | Model | Purpose |
@@ -459,7 +459,7 @@ Serves a video NanoGPT stores. Status responses read by the creating account (or
 
 ## Complete Examples
 
-The submit + poll flow works the same regardless of how you supply the image: image-conditioned models accept either `imageDataUrl` (base64) or a public `imageUrl`, and the platform prefers whichever field you send before checking library attachments.
+The submit + poll flow works the same regardless of how you supply the image: image-conditioned models accept either `imageDataUrl` (base64) or a public `imageUrl`.
 
 ### Example 1: Text-to-Video with cURL
 ```bash
