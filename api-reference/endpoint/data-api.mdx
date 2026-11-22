@@ -86,8 +86,8 @@ Cache-Control: public, max-age=300, stale-while-revalidate=3600
   ],
   "meta": {
     "count": 20,
-    "providers": ["Apify", "Firecrawl", "Hunter", "NanoGPT"],
-    "categories": ["business", "maps", "scraping", "search", "social"],
+    "providers": ["Firecrawl", "Hunter", "NanoGPT"],
+    "categories": ["business", "scraping", "search", "social"],
     "dispatch": {
       "endpoint": "/api/v1/data",
       "body": {
@@ -235,11 +235,6 @@ Once a request is forwarded, the underlying endpoint may return its own existing
 | `web.search` | `/api/v1/data/web/search` | `/api/web` | `POST` | search | NanoGPT | Usage-based; estimated from provider, depth, and partner markup. |
 | `url.scrape` | `/api/v1/data/url/scrape` | `/api/scrape-urls` | `POST` | scraping | NanoGPT | \$0.0015 per URL (automatic routing bills PDFs per page); higher for stealth mode. |
 | `firecrawl` | `/api/v1/data/firecrawl` | `/api/v1/firecrawl` | `POST` | scraping | Firecrawl | Credit-based Firecrawl pricing with NanoGPT markup. |
-| `google_maps.search` | `/api/v1/data/google-maps/search` | `/api/v1/googlemaps` | `GET`, `POST` | maps | Apify | Apify charged-event pricing with NanoGPT markup. |
-| `google_maps.reviews` | `/api/v1/data/google-maps/reviews` | `/api/v1/googlemaps/reviews` | `POST` | maps | Apify | Apify charged-event pricing with NanoGPT markup. |
-| `reddit.scrape` | `/api/v1/data/reddit` | `/api/v1/reddit` | `POST` | social | Apify | Apify charged-event pricing with NanoGPT markup. |
-| `linkedin.profile` | `/api/v1/data/linkedin/profile` | `/api/v1/linkedin/profile` | `POST` | business | Apify | Apify charged-event pricing with NanoGPT markup. |
-| `tiktok.scrape` | `/api/v1/data/tiktok` | `/api/v1/tiktok` | `POST` | social | Apify | Apify charged-event pricing with NanoGPT markup. |
 | `x.read` | `/api/v1/data/x` | `/api/v1/x` | `GET`, `POST` | social | NanoGPT | Endpoint-specific usage pricing. |
 | `hunter.discover` | `/api/v1/data/hunter/discover` | `/api/v1/hunter/discover` | `POST` | business | Hunter | Free. |
 | `hunter.domain_search` | `/api/v1/data/hunter/domain-search` | `/api/v1/hunter/domain-search` | `GET`, `POST` | business | Hunter | Hunter search-credit pricing with NanoGPT markup. |
@@ -256,13 +251,6 @@ Body-style dispatch accepts canonical endpoint IDs and these aliases:
 
 | Alias | Resolves To |
 | --- | --- |
-| `googlemaps` | `google_maps.search` |
-| `googlemaps.search` | `google_maps.search` |
-| `google-maps.search` | `google_maps.search` |
-| `maps.search` | `google_maps.search` |
-| `maps.reviews` | `google_maps.reviews` |
-| `linkedin` | `linkedin.profile` |
-| `linked-in.profile` | `linkedin.profile` |
 | `twitter.read` | `x.read` |
 | `twitter` | `x.read` |
 | `x` | `x.read` |
@@ -374,20 +362,6 @@ curl -i https://api.nano-gpt.com/api/v1/data/url/scrape \
 ```
 
 Both examples return `402 Payment Required` with a `payment` object when accountless Lightning L402 is enabled and the request can be quoted. If you receive `401 missing_api_key` immediately, check that the initial quote request includes `x-x402: true`. Without that header, NanoGPT does not enter the accountless quote flow.
-
-### Google Maps Search
-
-```bash
-curl https://api.nano-gpt.com/api/v1/data/google-maps/search \
-  -H "Authorization: Bearer $NANOGPT_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "searchStringsArray": ["coffee shops in Amsterdam"],
-    "maxCrawledPlacesPerSearch": 10
-  }'
-```
-
-Google Maps search also supports `GET` for the same behavior exposed by the direct `/api/v1/googlemaps` endpoint, including polling async runs when applicable.
 
 ### Hunter Domain Search
 

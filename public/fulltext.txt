@@ -43,7 +43,7 @@ Full guide: https://docs.nano-gpt.com/api-reference/miscellaneous/hosted-tool-se
 
 Unified discovery and dispatch layer for NanoGPT data tools. Use `GET /api/v1/data` to list available tools, `POST /api/v1/data/{path}` for path-style dispatch, or `POST /api/v1/data` with an `endpoint`/`id`/`type` field for body-style dispatch.
 
-The Data API wraps existing direct endpoints for web search, URL scraping, Firecrawl, Google Maps, Reddit, LinkedIn, Instagram, TikTok, X/Twitter, and Hunter enrichment. It preserves underlying response bodies, validation, billing, rate limits, async behavior, provider options, authentication, and x402 behavior. Direct endpoints remain available.
+The Data API wraps existing direct endpoints for web search, URL scraping, Firecrawl, X/Twitter, and Hunter enrichment. It preserves underlying response bodies, validation, billing, rate limits, async behavior, provider options, authentication, and x402 behavior. Direct endpoints remain available.
 
 **Examples:**
 ```

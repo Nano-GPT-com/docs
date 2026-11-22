@@ -1,12 +1,12 @@
 ---
 title: "Data Extraction APIs"
 api: "POST https://api.nano-gpt.com/api/v1/firecrawl"
-description: "Public data extraction endpoints for web, maps, social, and email/domain intelligence workflows"
+description: "Public data extraction endpoints for web and email/domain intelligence workflows"
 ---
 
 ## Overview
 
-NanoGPT exposes data extraction APIs for web, maps, social, and email/domain intelligence workflows.
+NanoGPT exposes data extraction APIs for web and email/domain intelligence workflows.
 
 For new integrations that need a stable, discoverable entry point across these tools, use the unified [Data API](/api-reference/endpoint/data-api) under `/api/v1/data`. It wraps the direct endpoints documented here without changing their response bodies, billing, validation rules, async behavior, or provider-specific options.
 
@@ -23,7 +23,7 @@ Use either header:
 
 - Responses include returned data plus NanoGPT billing metadata.
 - Partial results may still be billed if the extraction job produced usable data before failing.
-- Result limits exist, commonly up to 5,000 returned items for social and data scrapers.
+- Result limits exist; each endpoint documents its own.
 - Long-running calls can take up to several minutes.
 - For unbounded searches, set `maxTotalChargeUsd` to cap spend.
 - Use `resultLimit`, `resultsLimit`, or endpoint-specific max-count fields to keep runs bounded.
@@ -47,11 +47,6 @@ Typical responses include a data payload and billing metadata:
 | Data API Path | Direct Endpoint | Method | Purpose |
 | --- | --- | --- | --- |
 | `/api/v1/data/firecrawl` | `/api/v1/firecrawl` | POST | Web page scraping, site maps, and crawls. |
-| `/api/v1/data/google-maps/search` | `/api/v1/googlemaps` | GET, POST | Google Maps place search and detail extraction. |
-| `/api/v1/data/google-maps/reviews` | `/api/v1/googlemaps/reviews` | POST | Google Maps review extraction. |
-| `/api/v1/data/reddit` | `/api/v1/reddit` | POST | Reddit post, comment, community, and user extraction. |
-| `/api/v1/data/tiktok` | `/api/v1/tiktok` | POST | TikTok hashtag, profile, search, and post extraction. |
-| `/api/v1/data/linkedin/profile` | `/api/v1/linkedin/profile` | POST | LinkedIn profile enrichment. |
 | `/api/v1/data/hunter/{path}` | `/api/v1/hunter/{path}` | GET, POST | Email/domain intelligence pass-through with path selection. |
 
 <Note>
@@ -93,109 +88,6 @@ POST https://api.nano-gpt.com/api/v1/firecrawl
 | `waitForFinishSecs` | Wait time, capped at 240 seconds. |
 
 PDF parsing has max page controls when PDF parsing is enabled.
-
-## Google Maps
-
-```text
-POST https://api.nano-gpt.com/api/v1/googlemaps
-```
-
-### Required Input
-
-Provide at least one of:
-
-- `searchStringsArray`
-- `startUrls`
-- `placeIds`
-- scrape-all-places option, when supported
-
-### Important Parameters
-
-- `maxTotalChargeUsd`
-- `resultLimit`
-- `maxCrawledPlacesPerSearch`
-- `scrapePlaceDetailPage`
-- `scrapeContacts`
-- `scrapeSocialMediaProfiles`
-- `maxReviews`
-- `maxImages`
-- filters such as category, rating, website availability, and closed-place handling when supported
-
-## Google Maps Reviews
-
-```text
-POST https://api.nano-gpt.com/api/v1/googlemaps/reviews
-```
-
-### Required Input
-
-Provide at least one of:
-
-- `startUrls`
-- `placeIds`
-
-### Important Parameters
-
-- `maxReviews`
-- `reviewsSort`
-- `reviewsStartDate`
-- `maxTotalChargeUsd`
-- `resultLimit`
-
-<Note>
-  If you use `reviewsStartDate`, sort reviews by newest first.
-</Note>
-
-## Reddit
-
-```text
-POST https://api.nano-gpt.com/api/v1/reddit
-```
-
-### Required Input
-
-Provide at least one of:
-
-- `startUrls`: Reddit URLs from `reddit.com` or `redd.it`
-- `searches`: search terms
-
-### Important Parameters
-
-- `maxItems`
-- `maxPostCount`
-- `maxComments`
-- `maxCommunities`
-- `maxUsers`
-- `searchPosts`
-- `searchComments`
-- `searchCommunities`
-- `searchUsers`
-- `maxTotalChargeUsd`
-- `resultLimit`
-
-## TikTok
-
-```text
-POST https://api.nano-gpt.com/api/v1/tiktok
-```
-
-### Required Input
-
-Provide at least one of:
-
-- `hashtags`
-- `profiles`
-- `searchQueries`
-- `postURLs`
-
-### Important Parameters
-
-- `resultsPerPage`
-- `maxProfilesPerQuery`
-- `searchSection`
-- transcription options, if exposed
-- `maxTotalChargeUsd`
-- `resultLimit`
 
 ## Hunter
 
@@ -246,13 +138,12 @@ For `POST`, JSON body params are forwarded. Use `endpoint` or `path` to select t
 ## Example
 
 ```bash
-curl -X POST https://api.nano-gpt.com/api/v1/googlemaps \
+curl -X POST https://api.nano-gpt.com/api/v1/firecrawl \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "searchStringsArray": ["coffee shops in Amsterdam"],
-    "resultLimit": 25,
-    "maxTotalChargeUsd": 1.00,
-    "scrapePlaceDetailPage": true
+    "operation": "scrape",
+    "url": "https://example.com",
+    "formats": ["markdown"]
   }'
 ```
