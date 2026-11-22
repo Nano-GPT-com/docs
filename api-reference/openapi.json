@@ -10669,7 +10669,7 @@
           "imageAttachmentId": {
             "type": "string",
             "deprecated": true,
-            "description": "Web app only: names a file in the NanoGPT web app's browser library. The API refuses it with HTTP 400 (code attachment_id_not_supported) before any charge unless the same image is also sent as imageUrl or imageDataUrl. Send the image as a URL or base64 data URL instead."
+            "description": "Web app only: names a file in the NanoGPT web app's browser library, which the API cannot read. Send the image as imageUrl or imageDataUrl instead. A request that relies on this ID is refused with HTTP 400 (code attachment_id_not_supported) before any charge."
           },
           "videoUrl": {
             "type": "string",
@@ -10686,7 +10686,7 @@
           "videoAttachmentId": {
             "type": "string",
             "deprecated": true,
-            "description": "Web app only: names a file in the NanoGPT web app's browser library. The API refuses it with HTTP 400 (code attachment_id_not_supported) before any charge unless the same video is also sent as videoUrl or videoDataUrl. Send the video as a URL or base64 data URL instead."
+            "description": "Web app only: names a file in the NanoGPT web app's browser library, which the API cannot read. Send the video as videoUrl or videoDataUrl instead. A request that relies on this ID is refused with HTTP 400 (code attachment_id_not_supported) before any charge."
           },
           "prompt_optimizer": {
             "type": "boolean",

@@ -57,7 +57,7 @@ x-api-key: YOUR_API_KEY  # Optional, for API key auth
 
 #### Image-to-Video Request
 
-Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a public HTTPS link). Attachment IDs such as `imageAttachmentId` and `videoAttachmentId` name files in the NanoGPT web app's browser library and work only from the web app. The API refuses a request that sends one without the media itself, with HTTP 400 and code `attachment_id_not_supported`, before any quote or charge. Send each image, video or audio input as a URL or base64 data URL instead.
+Image-conditioned models accept either `imageDataUrl` (base64) or `imageUrl` (a public HTTPS link). Attachment IDs such as `imageAttachmentId` and `videoAttachmentId` name files in the NanoGPT web app's browser library and work only from the web app. The API cannot read them and refuses a request that relies on one, with HTTP 400 and code `attachment_id_not_supported`, before any quote or charge. Send each image, video or audio input as a URL or base64 data URL instead.
 
 > Uploads sent via the API must be 4 MB or smaller. For larger assets, host them externally and provide an `imageUrl`.
 
@@ -92,10 +92,10 @@ These parameters are available across models. Only send the fields your chosen m
 | --- | --- | --- |
 | `conversationUUID` | string | Link a generation to a conversation |
 | `resolution` | string | Output resolution (`480p`, `720p`, `1080p`) |
-| `imageAttachmentId` | string | Web app only. The API refuses it (400 `attachment_id_not_supported`) unless the same image is also sent as `imageUrl` or `imageDataUrl`. Send the image that way instead. |
+| `imageAttachmentId` | string | Web app only: the API cannot read it. Send the image as `imageUrl` or `imageDataUrl` instead; a request that relies on this ID is refused with 400 `attachment_id_not_supported` before any charge. |
 | `videoUrl` | string | Public HTTPS link to a source video (extend/edit/upscale) |
 | `videoDataUrl` | string | Base64-encoded data URL for a source video (max 4 MB) |
-| `videoAttachmentId` | string | Web app only. The API refuses it (400 `attachment_id_not_supported`) unless the same video is also sent as `videoUrl` or `videoDataUrl`. Send the video that way instead. |
+| `videoAttachmentId` | string | Web app only: the API cannot read it. Send the video as `videoUrl` or `videoDataUrl` instead; a request that relies on this ID is refused with 400 `attachment_id_not_supported` before any charge. |
 | `video` | string | Alternate video field accepted by select models (for example, `wan-wavespeed-25-extend`) |
 | `referenceImages` | array | Multiple reference images for reference-to-video mode |
 | `referenceVideos` | array | Multiple reference videos |
