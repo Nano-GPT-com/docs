@@ -517,7 +517,7 @@ Some models charge more once a prompt passes a threshold. A request whose prompt
 | `inputPer1kTokensAboveFirstThreshold`, `outputPer1kTokensAboveFirstThreshold` | number | Input and output prices above the first threshold, in USD per 1,000 tokens |
 | `cacheReadInputPer1kTokensAboveFirstThreshold`, `cacheWriteInputPer1kTokensAboveFirstThreshold`, `cacheWriteInputPer1kTokens1hAboveFirstThreshold` | number | Cache read, 5-minute cache write and 1-hour cache write prices above the first threshold, in USD per 1,000 tokens, when the model has those cache prices |
 | `highContextThresholdTokens` | number | Optional. Prompts longer than this many tokens are billed at the `Above200k` prices. Despite the field names, the threshold is not always 200,000 |
-| `highContextThresholdCountsOutputTokens` | boolean | Optional. `true` when input plus output tokens count toward `highContextThresholdTokens` (Grok 4.3 and Grok Build) |
+| `highContextThresholdCountsOutputTokens` | boolean | Optional. `true` when input plus output tokens count toward `highContextThresholdTokens`. No current model sets it: Grok 4.3 and Grok Build count the prompt alone, like every other model |
 | `inputPer1kTokensAbove200k`, `outputPer1kTokensAbove200k` | number | Input and output prices above the high threshold, in USD per 1,000 tokens |
 | `cacheReadInputPer1kTokensAbove200k`, `cacheWriteInputPer1kTokensAbove200k`, `cacheWriteInputPer1kTokens1hAbove200k` | number | Cache read, 5-minute cache write and 1-hour cache write prices above the high threshold, in USD per 1,000 tokens, when the model has those cache prices |
 
