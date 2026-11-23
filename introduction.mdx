@@ -5,10 +5,13 @@ description: "Make your first NanoGPT API request with the OpenAI SDK."
 
 ## Your first request
 
-Create an [API key](https://nano-gpt.com/api), add [balance](https://nano-gpt.com/balance), and install the official Python SDK with `pip install openai`.
-Set `NANOGPT_API_KEY` in your environment. Keep the key on your server, outside source control.
+Install the official Python SDK with `pip install openai`, create an [API key](https://nano-gpt.com/api) and set it as `NANOGPT_API_KEY` in your environment. Keep the key on your server, outside source control. Pick the example for how you pay.
 
 Use the exact SDK base URL `https://api.nano-gpt.com/api/v1`. The SDK appends `/chat/completions`, producing `POST /api/v1/chat/completions`. Do not append that endpoint to `base_url` yourself.
+
+### Use my Pro allowance
+
+Set the key's **Billing mode** to **Subscription only** (on the API page, in the key's options). Requests then count against your Pro allowance and never use balance. This example uses GLM 5.3, which Pro includes at 1×. [`GET /api/subscription/v1/models`](/api-reference/endpoint/models) lists every model Pro includes.
 
 ```python
 import os
@@ -21,8 +24,31 @@ with OpenAI(
     max_retries=0,
 ) as client:
     response = client.chat.completions.create(
-        model="openai/gpt-4o-mini",
+        model="z-ai/glm-5.3",
         messages=[{"role": "user", "content": "Say hello in one sentence."}],
+    )
+    print("Request ID:", response._request_id)
+    print(response.choices[0].message.content)
+```
+
+### Use my balance
+
+Add [balance](https://nano-gpt.com/balance) and use a key whose billing mode is not Subscription only (a Subscription only key refuses balance requests). `billing_mode: "paygo"` bills the request to balance, even if you also have Pro.
+
+```python
+import os
+from openai import OpenAI
+
+with OpenAI(
+    api_key=os.environ["NANOGPT_API_KEY"],
+    base_url="https://api.nano-gpt.com/api/v1",
+    timeout=60.0,
+    max_retries=0,
+) as client:
+    response = client.chat.completions.create(
+        model="openai/gpt-6.1-sol",
+        messages=[{"role": "user", "content": "Say hello in one sentence."}],
+        extra_body={"billing_mode": "paygo"},
     )
     print("Request ID:", response._request_id)
     print(response.choices[0].message.content)
