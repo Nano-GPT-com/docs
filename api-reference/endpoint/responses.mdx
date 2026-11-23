@@ -451,6 +451,13 @@ In practice, append the provider-returned `output` array rather than constructin
 
 Provide function tools and built-in tools the model can use:
 
+For GPT-6.2 Sol, Astra, and their Pro modes, only function tools and the hosted
+`web_search` / `web_search_preview` tools are supported. Declare these in `tools`;
+in-band `additional_tools` catalogs and other hosted tools are not supported for
+GPT-6.2. Native search requires a supported OpenAI Responses route. See the
+[model restrictions](/api-reference/endpoint/models#gpt-62-astra-and-sol) and
+[native-search routing, pricing, and limits](/api-reference/endpoint/chat-completion#native-search).
+
 ### Function Tool
 
 Define functions that the model can call:

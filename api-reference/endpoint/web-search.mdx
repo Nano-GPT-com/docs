@@ -23,7 +23,7 @@ See [hosted-key pricing](#pricing-hosted-key) before choosing a provider. Chat s
 | You want the model to answer with web context in one call | `POST /api/v1/chat/completions` + `:online...` |
 | You want one discoverable endpoint family for data tools | `POST /api/v1/data/web/search` |
 | You need explicit control over `query`, `outputType`, domain/date filters, or structured schema output | `POST /api/web` |
-| You need OpenAI-native web search | `POST /api/v1/chat/completions` only |
+| You need OpenAI-native web search | `POST /api/v1/chat/completions` or [Responses](/api-reference/endpoint/responses#web-search-tool) (`POST /api/v1/responses`), on supported routes |
 
 ## Authentication
 

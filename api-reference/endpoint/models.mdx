@@ -55,9 +55,12 @@ The `openai/gpt-6.2-astra-pro` and `openai/gpt-6.2-sol-pro` IDs enable Pro
 reasoning mode on the corresponding base model. Per-token rates stay the same,
 but additional model work can increase token usage, total cost, and latency.
 
-NanoGPT currently supports Standard processing and function tools for these models.
-Hosted tools, multi-agent requests, background mode, and zero data retention are
-not currently supported. Check the [live catalog](https://api.nano-gpt.com/api/v1/models?detailed=true)
+NanoGPT supports Standard processing, function tools, and
+[native web search](/api-reference/endpoint/chat-completion#native-search) for
+these models. Native search requires a supported OpenAI Responses route and can
+be requested through Chat Completions or the [Responses API](/api-reference/endpoint/responses#web-search-tool).
+Other hosted tools, multi-agent requests, background mode, and zero data retention
+are not currently supported. Check the [live catalog](https://api.nano-gpt.com/api/v1/models?detailed=true)
 for current limits, prices, and supported Batch endpoints before switching an integration.
 
 `openai/gpt-sol-latest` still resolves to <code>{exampleTextModel}</code>, and

@@ -589,11 +589,19 @@ Native search uses the model's own built-in web search instead of a separate sea
 - GPT-5+ and o-series models use native search by default whenever web search is on. To use another provider, set `provider` or use a suffix such as `:online/linkup`.
 - Other models, including older GPT models, use Linkup by default. Request native search with `"provider": "native"` or the `:online/native` suffix.
 - If you request native search on a model without it, the request searches with the suffix's provider or Linkup instead.
-- Native requests on Claude, Gemini, or Grok can fail with `400` and code `native_web_search_unavailable` when your provider restrictions leave no route that can run native search. On GPT models, such restrictions can instead leave the request answering without a search.
+- Native requests on Claude, Gemini, or Grok can fail with `400` and code `native_web_search_unavailable` when your provider restrictions leave no route that can run native search. On GPT models other than GPT-6.2, such restrictions can instead leave the request answering without a search.
 - With your own provider keys (BYOK), native search runs on OpenAI keys (GPT and o-series models) and Anthropic keys (Claude). The searches are billed to your provider account, not by NanoGPT. Other BYOK routes use Linkup instead. On Anthropic, an organization admin can turn web search off; requests then fail with Anthropic's `400` error.
 - The model decides how many searches to run, up to a limit. On GPT-5+ and o-series models the limit is 5 by default (instant chat variants and deep-research models excepted); change it with `max_tool_calls` (see [Limit native search](#limit-native-search)). On Claude, NanoGPT normally caps this at 2 (`low`), 3 (`medium`, the default), or 5 (`high`) searches per request, and skips native search when `tool_choice` is `none` or when you define your own function named `web_search`.
 - Each search the model runs is billed once at the native rate (see [Pricing by provider](#pricing-by-provider)), even when it covers several queries. On GPT-5+ and o-series models, NanoGPT does not bill opening a page, searching within a page, or calls stopped by `max_tool_calls`. Every search that ran is billed, whether or not the answer shows source links. With your own OpenAI key (BYOK), OpenAI bills the searches to your account instead. Where a route reports no count, NanoGPT may bill an estimate: 1 search for `low`, 2 otherwise.
 - The search results are added to the model's input and billed at the model's input token rate, on top of the search fees. On larger models this is often most of the cost: a GPT-5.5 answer that searches several times can read tens of thousands of input tokens.
+
+GPT-6.2 Sol, Astra, and their Pro modes support native search only on a supported
+OpenAI Responses route. Use `:online/native`, bare `:online`, or declare a
+`web_search` or `web_search_preview` tool. If no eligible search route is available,
+the request returns an error instead of falling back to a route without search;
+upstream errors are also returned without that fallback. Use `:online/linkup` for
+standard web search when native search is unavailable. The model still decides
+whether to use its search tool. See the [GPT-6.2 model IDs and restrictions](/api-reference/endpoint/models#gpt-62-astra-and-sol).
 
 #### Limit native search
 
