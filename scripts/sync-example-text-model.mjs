@@ -9,8 +9,6 @@ const MODEL_SNIPPET_PATH = 'snippets/example-text-model.mdx';
 const OPENAPI_TARGETS = [
   ['components', 'schemas', 'ChatCompletionRequest', 'properties', 'model', 'examples', 3],
   ['components', 'schemas', 'ChatCompletionRequest', 'properties', 'model', 'examples', 4],
-  ['components', 'schemas', 'CompletionRequest', 'properties', 'model', 'examples', 3],
-  ['components', 'schemas', 'CompletionRequest', 'properties', 'model', 'examples', 4],
   ['components', 'schemas', 'TalkToGptRequest', 'properties', 'model', 'examples', 3],
   ['components', 'schemas', 'ModelsResponse', 'properties', 'data', 'items', 'properties', 'id', 'example'],
   ['components', 'schemas', 'ModelsLegacyResponse', 'properties', 'models', 'items', 'example'],

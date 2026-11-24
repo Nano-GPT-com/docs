@@ -6,7 +6,7 @@ description: "OpenAI-compatible speech-to-text transcription endpoint"
 
 ## Overview
 
-NanoGPT provides a drop-in OpenAI-compatible endpoint for speech-to-text (STT) transcription.
+NanoGPT provides an OpenAI-compatible endpoint for synchronous speech-to-text (STT) models. `Elevenlabs-STT` uses the asynchronous workflow below and is not a drop-in SDK transcription response.
 
 ## Endpoint
 
@@ -53,13 +53,13 @@ NanoGPT accepts `file_url` or `audio_url` for URL-based transcription.
 
 ## Supported Models (Examples)
 
-Model availability changes; use `GET /api/v1/models?detailed=true` for discovery.
+Model availability changes; use `GET /api/v1/models?output_modalities=transcription&detailed=true` to discover synchronous transcription models. This catalog excludes voice-cloning workflows and asynchronous `Elevenlabs-STT`; see the [async workflow and model list](/api-reference/endpoint/transcribe) for those models.
 
 | Model | Notes |
 | --- | --- |
 | `Whisper-Large-V3` | High-accuracy transcription |
 | `Wizper` | Fast processing |
-| `Elevenlabs-STT` | Speaker diarization + audio event tagging |
+| `Elevenlabs-STT` | Asynchronous (HTTP 202); poll for speaker diarization + audio event tagging |
 | `gpt-4o-mini-transcribe` | Improved accuracy vs Whisper (OpenAI-family) |
 | `openai-whisper-with-video` | Accepts video files (MP4, MOV, etc.) |
 
@@ -70,7 +70,7 @@ Some special model IDs run voice-cloning workflows instead of returning plain tr
 - `qwen-voice-clone` — returns a reusable speaker embedding URL
 - `minimax-voice-clone` — returns a reusable custom voice ID (and/or preview output)
 
-## Response
+## Synchronous response (HTTP 200)
 
 ```json
 {
@@ -79,6 +79,72 @@ Some special model IDs run voice-cloning workflows instead of returning plain tr
   "duration": 45.2
 }
 ```
+
+## Asynchronous ElevenLabs transcription (HTTP 202)
+
+Submitting `Elevenlabs-STT` returns a job, not `text`:
+
+```json
+{"status":"pending","run_id":"your-run-id","request_id":"your-run-id"}
+```
+
+Poll `POST /api/transcribe/status` using the same API key. Translate the v1
+response's `run_id` into the polling request's `runId`. Do not resubmit the audio:
+resubmitting creates another job and can create another charge. Pending polls return `data.status` (for example `IN_PROGRESS`); failures return
+`data.status: "FAILED"` with `data.error`. Completion returns top-level
+`status: "completed"`. Respect `X-Poll-After` on pending polls and `Retry-After`
+on retryable HTTP 503 responses; otherwise wait at least three seconds.
+
+```python
+import os
+import time
+import requests
+
+headers = {"Authorization": f"Bearer {os.environ['NANOGPT_API_KEY']}"}
+with open("audio.mp3", "rb") as audio:
+    submitted = requests.post(
+        "https://api.nano-gpt.com/api/v1/audio/transcriptions",
+        headers=headers,
+        files={"file": audio},
+        data={"model": "Elevenlabs-STT"},
+        timeout=800,
+    )
+submitted.raise_for_status()
+job = submitted.json()
+if submitted.status_code != 202:
+    raise RuntimeError(f"Expected async job, got {submitted.status_code}")
+
+deadline = time.monotonic() + 1800
+while time.monotonic() < deadline:
+    polled = requests.post(
+        "https://api.nano-gpt.com/api/transcribe/status",
+        headers=headers,
+        json={"runId": job["run_id"]},
+        timeout=60,
+    )
+    if polled.status_code == 503:
+        time.sleep(float(polled.headers.get("Retry-After", "3")))
+        continue
+    polled.raise_for_status()
+    result = polled.json()
+    if result.get("status") == "completed":
+        print(result["transcription"])
+        break
+    state = result.get("data", result)
+    if str(state.get("status", "")).lower() == "failed":
+        raise RuntimeError(state.get("error", "Transcription failed"))
+    time.sleep(float(polled.headers.get("X-Poll-After", "3")))
+else:
+    raise TimeoutError("Keep the run_id and resume polling later; do not resubmit")
+```
+
+A completed poll returns a string in `transcription`, with metadata:
+
+```json
+{"status":"completed","transcription":"Transcribed text","metadata":{"model":"Elevenlabs-STT","language":"en"}}
+```
+
+Voice-cloning models have separate result shapes; see their workflow guide.
 
 ## Supported Formats
 
