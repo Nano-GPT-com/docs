@@ -46,7 +46,7 @@ with OpenAI(
     max_retries=0,
 ) as client:
     response = client.chat.completions.create(
-        model="openai/gpt-6.1-sol",
+        model="{{example-text-model}}",
         messages=[{"role": "user", "content": "Say hello in one sentence."}],
         extra_body={"billing_mode": "paygo"},
     )

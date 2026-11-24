@@ -10,12 +10,15 @@ import httpx
 import openai
 
 ROOT = Path(__file__).resolve().parents[1]
+EXAMPLE_TEXT_MODEL = json.loads((ROOT / 'docs.json').read_text())['variables']['example-text-model']
 
 def blocks(page):
-    return re.findall(r'```python\n(.*?)```', (ROOT / page).read_text(), re.S)
+    rendered = (ROOT / page).read_text().replace('{{example-text-model}}', EXAMPLE_TEXT_MODEL)
+    return re.findall(r'```python\n(.*?)```', rendered, re.S)
 
 class QuickstartTest(unittest.TestCase):
-    def run_example(self, code, *, frames=None, status=200, read_timeout=False):
+    def run_example(self, code, *, frames=None, status=200, read_timeout=False,
+                    expected_model='openai/gpt-4o-mini', expected_billing_mode=None):
         requests = []
         closed = []
         class Body(httpx.SyncByteStream):
@@ -35,12 +38,15 @@ class QuickstartTest(unittest.TestCase):
             self.assertEqual(str(request.url), 'https://api.nano-gpt.com/api/v1/chat/completions')
             self.assertEqual(request.headers['authorization'], 'Bearer fixture-key')
             self.assertEqual(request.extensions['timeout']['read'], 60)
+            body = json.loads(request.content)
+            self.assertEqual(body['model'], expected_model)
+            self.assertEqual(body.get('billing_mode'), expected_billing_mode)
             if status != 200:
                 return httpx.Response(status, headers={'x-request-id': 'req-error'}, json={'error': {'message': 'fixture failure', 'type': 'invalid_request_error'}})
             if frames is not None:
                 return httpx.Response(200, headers={'x-request-id': 'req-stream', 'content-type': 'text/event-stream'}, stream=Body())
             return httpx.Response(200, headers={'x-request-id': 'req-complete'}, json={
-                'id': 'chat-fixture', 'object': 'chat.completion', 'created': 1, 'model': 'openai/gpt-4o-mini',
+                'id': 'chat-fixture', 'object': 'chat.completion', 'created': 1, 'model': body['model'],
                 'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'Hello'}, 'finish_reason': 'stop'}],
             })
         real_client = openai.OpenAI
@@ -58,12 +64,19 @@ class QuickstartTest(unittest.TestCase):
         return stdout.getvalue(), stderr.getvalue(), closed, error
 
     def test_complete_examples(self):
-        self.assertEqual(blocks('introduction.mdx')[0], blocks('quickstart.mdx')[0])
-        for page in ['introduction.mdx', 'quickstart.mdx']:
-            out, _, _, error = self.run_example(blocks(page)[0])
-            self.assertIsNone(error)
-            self.assertIn('req-complete', out)
-            self.assertIn('Hello', out)
+        examples = [
+            ('introduction.mdx', 0, 'z-ai/glm-5.3', None),
+            ('introduction.mdx', 1, EXAMPLE_TEXT_MODEL, 'paygo'),
+            ('quickstart.mdx', 0, 'openai/gpt-4o-mini', None),
+        ]
+        for page, index, model, billing_mode in examples:
+            with self.subTest(page=page, model=model):
+                out, _, _, error = self.run_example(
+                    blocks(page)[index], expected_model=model, expected_billing_mode=billing_mode,
+                )
+                self.assertIsNone(error)
+                self.assertIn('req-complete', out)
+                self.assertIn('Hello', out)
 
     def test_stream_mixed_frames(self):
         def chunk(delta, index=0):
