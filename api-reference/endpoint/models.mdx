@@ -507,6 +507,20 @@ Enhanced format with model descriptions, context lengths, and pricing:
 
 Fields ending in `Per1kTokens` are USD per 1,000 tokens. Multiply them by 1,000 for the per-million price shown on the [pricing page](https://nano-gpt.com/api-pricing): Claude Opus 5.5's `cacheWriteInputPer1kTokens1h` of `0.008` is $8.00 per million tokens. Cache prices are left out for models with no cache pricing. These are base-context prices; models whose prices rise with prompt length also list [long-context tiers](#long-context-pricing).
 
+### Request-Priced Tools
+
+Two Kagi tools in the text catalog are not billed by input and output tokens. Their `pricing.note` says how they are billed. The prices in the extra fields below are USD per request. A request that Kagi answers from its cache is free.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `note` | string | Optional. `per_request` for a flat price per request, `capped_input` for input tokens billed up to a cap |
+| `request` | number | With `per_request`: USD per uncached request. `fastgpt` costs `0.015` |
+| `cached_request` | number | USD for a request answered from the cache. Always `0` |
+| `max_billable_prompt_tokens` | number | With `capped_input`: input tokens beyond this are not billed. `universal-summarizer` bills `prompt` ($30 per million) on at most 10,000 tokens, so at most $0.30 per uncached request with the default engine |
+| `muriel_request` | number | With `capped_input`: USD per uncached request with the Muriel engine, instead of the token price. `universal-summarizer` costs `1` |
+
+For these tools `completion` is `0` (or absent) and `unit` still describes only `prompt` and `completion`.
+
 ### Long-Context Pricing
 
 Some models charge more once a prompt passes a threshold. A request whose prompt is longer than the threshold is billed entirely at that tier's prices: every input, cached and output token, not only the tokens past the threshold. Prompt length counts all input tokens, cached ones included. A model lists up to two tiers, and each tier lists every price that applies in it, including any that equal the base price.
