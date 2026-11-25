@@ -92,6 +92,8 @@ To encrypt a stored response, include one of these headers on `POST /v1/response
 
 When retrieving or deleting an encrypted response, include the same header you used at creation time.
 
+NanoGPT does not store this key or passphrase, but the server receives it on every request that sends the header, and uses it to encrypt the stored response and to decrypt it when it is read. If the key should never leave your side, use `store: false` and [keep the history on your side](#keep-history-on-your-side).
+
 Example:
 
 ```bash
@@ -188,6 +190,8 @@ Set `store: false` to disable stored Responses API data for a request:
   "store": false
 }
 ```
+
+`store: false` does not switch off API-key request/response logging. That is a separate setting on the API key, and it is off unless you turned it on. To have a request refused instead of logged, send `X-Require-No-Logging: true`: if logging is enabled on the key, NanoGPT returns HTTP 403 `request_logging_enabled` instead of processing the request.
 
 When response storage is enabled and no override applies, stored Responses API records are retained for up to 7 days. You can override retention per request with either `retentionDays` or `retention_days`:
 
@@ -446,6 +450,100 @@ Clients that use `store: false` and do not use `previous_response_id` can replay
 ```
 
 In practice, append the provider-returned `output` array rather than constructing hosted-tool call items yourself.
+
+#### Keep History On Your Side
+
+To keep a conversation without creating a stored Responses API record at NanoGPT, send `store: false` on every request, save the items yourself, and send them again on the next turn. This example uses the OpenAI Python SDK and the `cryptography` package (`pip install openai cryptography`). It saves the history to a local file encrypted with a key that is never sent to NanoGPT, and continues the conversation after a restart.
+
+```python
+import json
+import os
+
+from cryptography.fernet import Fernet
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.nano-gpt.com/api/v1",
+    api_key=os.environ["NANOGPT_API_KEY"],
+    default_headers={"X-Require-No-Logging": "true"},
+)
+MODEL = "{{example-text-model}}"
+
+# Create the key once with Fernet.generate_key() and keep it on your side.
+fernet = Fernet(os.environ["HISTORY_KEY"])
+HISTORY_FILE = "history.bin"
+
+TOOLS = [{
+    "type": "function",
+    "name": "get_weather",
+    "description": "Get current weather for a location",
+    "parameters": {
+        "type": "object",
+        "properties": {"location": {"type": "string"}},
+        "required": ["location"],
+    },
+}]
+
+
+def load_history():
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    with open(HISTORY_FILE, "rb") as f:
+        return json.loads(fernet.decrypt(f.read()))
+
+
+def save_history(history):
+    with open(HISTORY_FILE, "wb") as f:
+        f.write(fernet.encrypt(json.dumps(history).encode()))
+
+
+def send(history, new_items, tool_choice):
+    history.extend(new_items)
+    response = client.responses.create(
+        model=MODEL,
+        input=history,
+        tools=TOOLS,
+        tool_choice=tool_choice,
+        parallel_tool_calls=False,
+        include=["reasoning.encrypted_content"],  # lets reasoning items be replayed
+        store=False,
+    )
+    # Keep every returned output item, in order.
+    history.extend(item.model_dump(exclude_none=True) for item in response.output)
+    return response
+
+
+history = load_history()
+
+if not history:
+    # First run: the model must call the tool, and the result goes back with the same call_id.
+    response = send(
+        history,
+        [{"role": "user", "content": "What's the weather in Paris?"}],
+        {"type": "function", "name": "get_weather"},
+    )
+    call = next(item for item in response.output if item.type == "function_call")
+    sample_result = {"temperature": 22, "condition": "sunny"}  # your real tool runs here
+    response = send(history, [{
+        "type": "function_call_output",
+        "call_id": call.call_id,
+        "output": json.dumps(sample_result),
+    }], "none")
+else:
+    # Later run, after a restart: the saved history is decrypted and sent again.
+    response = send(history, [{"role": "user", "content": "And what should I wear?"}], "none")
+
+# Save only once the exchange is complete, so the file never holds an unanswered tool call.
+save_history(history)
+print(response.output_text)
+```
+
+Run it once for the first question and the tool call. Run it again to continue from the saved file.
+
+- Keep `HISTORY_KEY` in your operating system's keychain or a secret manager, not next to the history file. If the key is lost, the saved history cannot be read.
+- Save every output item in order, and send a tool result with the `call_id` of its call.
+- The whole history is sent with each request. NanoGPT and the model provider process it to produce the reply, so this protects the saved history, not the request in transit.
+- A response created with `store: false` cannot be retrieved later or used as a `previous_response_id`, and background mode requires `store: true`.
 
 ## Tools
 
