@@ -208,6 +208,18 @@ Provider entries can use public NanoGPT provider IDs or accepted display names/a
 | `provider.allow_fallbacks` | boolean | When `false`, disables cross-provider fallback for this request, and `provider.order` becomes the full list of allowed providers. |
 | `provider.require_parameters` | boolean | When `true`, requires the selected provider to support the requested parameters on routes that support parameter-level capability checks. |
 
+### Minimum quantization per API key
+
+In an API key's settings, **Minimum quantization** sets an optional precision floor for text requests made with that key. The default is off. The supported levels are `int4`, `fp4`, `fp6`, `int8`, `fp8`, `fp16`, `bf16`, and `fp32`. Levels compare by bit width: `int4` and `fp4` share a floor, as do `int8` and `fp8`, and `fp16` and `bf16`.
+
+A request can raise the key's floor with `provider.min_quantization`, but cannot lower it. A request's `provider.quantizations` allowlist must also satisfy the key's floor. Providers with unknown or unpublished quantization are excluded when a minimum is set, just as they are with a request-level minimum. A floor is a constraint on reported weight precision, not a guarantee of answer quality.
+
+This can also exclude native text routes and requests using your own provider credentials when NanoGPT cannot verify the serving endpoint's precision.
+
+The minimum applies alongside provider restrictions and other routing constraints. If no route qualifies, the request fails rather than using a provider below the key's minimum. A stricter floor can reduce availability and change which provider serves a request.
+
+A key minimum is billed like a request-level quantization filter: text requests made with a key that has a minimum are billed pay-as-you-go with the usual provider-selection pricing, also with a subscription, and do not count toward included subscription usage. If your subscription has **Enable paid models on API** turned off, these requests are refused with `api_key_min_quantization_paygo`; turn that setting on, or remove the key's minimum to use your subscription. Per-request payments (x402 and L402) are not available with a key that has a minimum; these requests are paid from the account balance.
+
 Examples:
 
 ```json

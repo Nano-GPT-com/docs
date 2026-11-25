@@ -129,6 +129,10 @@ Creating an inference key requires an `Idempotency-Key` header. The new key secr
 
 Inference keys can have [daily, weekly and monthly limits](/api-reference/miscellaneous/rate-limits#limits-you-set-on-an-api-key), set with the fields on that page. For presets, see [Model Presets](/api-reference/miscellaneous/model-presets).
 
+Set `min_quantization` when creating or updating an inference key to require a minimum reported weight precision for text requests. Supported values are `int4`, `fp4`, `fp6`, `int8`, `fp8`, `fp16`, `bf16`, and `fp32`; `null` turns the minimum off. Omitting the field on creation leaves it off; omitting it on an update preserves the saved value. List and read responses include the saved `min_quantization` value.
+
+For example, `PATCH /api-keys/{id}` with `{"min_quantization":"fp8"}` excludes hosts with less than 8-bit precision and hosts with unknown quantization. Request-level preferences can tighten the key's minimum, but cannot loosen it. If no host satisfies all constraints, the request fails. Requests made with a key that has a minimum are billed pay-as-you-go, also with a subscription. See [Minimum quantization per API key](/api-reference/miscellaneous/provider-selection#minimum-quantization-per-api-key).
+
 See the [Management OpenAPI contract](https://nano-gpt.com/management-openapi.json) for request and response schemas. Ordinary inference API keys cannot call the Management API.
 
 ## Errors
