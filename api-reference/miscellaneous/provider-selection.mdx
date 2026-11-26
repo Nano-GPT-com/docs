@@ -5,7 +5,7 @@ description: 'Choose the upstream provider for supported open-source models'
 
 # Provider Selection
 
-Provider selection chooses the upstream provider for a supported model. It does not change the model ID. For example, to use Kimi K2.6 through Novita, keep the model as `moonshotai/kimi-k2.6`, or another supported alias for that model, and send the provider separately with `X-Provider`.
+Provider selection chooses the upstream provider for a supported model. It does not change the model ID. For example, to use Kimi K2.6 through Inceptron, keep the model as `moonshotai/kimi-k2.6`, or another supported alias for that model, and send the provider separately with `X-Provider`.
 
 Provider selection is optional; if you do nothing, the platform picks the provider. `X-Provider`, a body `provider` string, or a body `provider` object can select or constrain providers for a request. Explicit provider selection is always pay-as-you-go and is charged at the selected provider's price, including provider-selection markup. For subscription users, sending an explicit provider selection bypasses subscription coverage for that request.
 
@@ -85,29 +85,31 @@ Example response:
       "available": true
     },
     {
-      "provider": "novita",
+      "provider": "inceptron",
       "available": true,
       "maxInputTokens": 262144,
-      "maxOutputTokens": 262144,
+      "maxOutputTokens": 65536,
+      "quantization": "int4",
       "features": {
         "toolCalling": true,
+        "structuredOutput": true,
         "imageInput": true,
         "promptCaching": true
       },
       "distillationPolicy": {
-        "status": "allowed",
-        "label": "License permits distillation",
-        "basis": "permissive-open-weights",
-        "sourceUrl": "https://example.com/license-or-terms",
-        "note": "Provider terms do not record an output-training restriction, and the model-level policy allows distillation."
+        "status": "disallowed",
+        "label": "Provider terms restrict distillation",
+        "basis": "provider-output-use-restriction",
+        "sourceUrl": "https://www.inceptron.io/termsofservice",
+        "note": "Inceptron terms allow lawful output use but restrict using outputs to build competing foundation models."
       }
     },
     {
-      "provider": "cloudflare",
+      "provider": "deepinfra",
       "available": true
     },
     {
-      "provider": "baseten",
+      "provider": "parasail",
       "available": true
     }
   ]
@@ -146,7 +148,7 @@ For a single request, send the provider ID in the `X-Provider` header.
 curl https://api.nano-gpt.com/api/v1/chat/completions \
   -H "Authorization: Bearer $NANOGPT_API_KEY" \
   -H "Content-Type: application/json" \
-  -H "X-Provider: novita" \
+  -H "X-Provider: inceptron" \
   -d '{
     "model": "kimi-k2.6",
     "messages": [
@@ -161,7 +163,7 @@ Notes:
 - The provider ID must be one of the values returned by the providers endpoint.
 - The body `provider` field also accepts the same provider ID as a string on `POST /api/v1/chat/completions`, `POST /api/v1/completions`, and `POST /api/talk-to-gpt`.
 - Recommended: use `X-Provider` or body `provider` for explicit provider overrides. The API also accepts a trailing provider suffix for user-selectable providers, such as `model-id:cerebras`, but request fields are clearer and easier to validate against provider-discovery responses.
-- To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `novita`, `cloudflare`, `baseten`, or `inceptron`.
+- To avoid Moonshot for Kimi K2.6, select any available non-Moonshot provider ID returned by the provider-discovery endpoint, such as `inceptron`, `deepinfra` or `parasail`, when listed as available.
 - If the request would otherwise be subscription-covered, explicit provider selection still bypasses subscription coverage and bills the request as pay-as-you-go. You do not need to also send `billing_mode: "paygo"` or `X-Billing-Mode: paygo`.
 - If **Enable paid models on API** is off and the request doesn't force pay-as-you-go with `billing_mode: "paygo"` or `X-Billing-Mode: paygo`, a provider pick returns an error and nothing is charged. `X-Provider` or a `provider` string returns `403 provider_selected`. `provider.only`, `provider.ignore` or `provider.allow_fallbacks: false` returns `400 provider_selection_not_available`. Other `provider` object fields, such as `order` and `sort`, are ignored for that subscription.
 
