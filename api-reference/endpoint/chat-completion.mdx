@@ -107,7 +107,6 @@ Use the jump list below to navigate the long-form reference quickly.
   <Accordion title="Other">
     - [Service tiers (Flex and Fast/Priority)](#service-tiers-priority)
     - [Compressed Request Bodies](#compressed-request-bodies)
-    - [YouTube Transcripts](#youtube-transcripts)
     - [Performance Benchmarks](#performance-benchmarks)
     - [Important Notes](#important-notes)
   </Accordion>
@@ -1701,43 +1700,6 @@ Response note:
 ```
 
 Use `"priority"` instead only when maintaining compatibility with an older integration or a provider route that still uses that name.
-
-## YouTube Transcripts
-
-Automatically fetch and prepend YouTube video transcripts when the latest user message contains YouTube links.
-
-### Defaults
-
-- Parameter: `youtube_transcripts` (boolean)
-- Default: `false` (opt-in)
-- Opt-in: set `youtube_transcripts` to `true` (string `"true"` is also accepted) to fetch transcripts
-- Limit: Up to 3 YouTube URLs processed per request
-- Higher volume: Use the standalone [`POST /api/youtube-transcribe`](/api-reference/endpoint/youtube-transcribe) endpoint for up to 10 URLs per request
-- Injection: Transcripts are added as a system message before your messages
-- Billing: $0.01 per transcript fetched
-
-### Enable automatic transcripts
-
-By default, YouTube links are ignored. Set `youtube_transcripts` to `true` when you want the system to retrieve and bill for transcripts.
-
-```bash
-curl -X POST https://api.nano-gpt.com/api/v1/chat/completions \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "google/gemini-3-flash-preview",
-    "messages": [
-      {"role": "user", "content": "Summarize this: https://youtu.be/dQw4w9WgXcQ"}
-    ],
-    "youtube_transcripts": true
-  }'
-```
-
-### Notes
-
-- Web scraping is separate. To scrape non‑YouTube URLs, set `scraping: true`. YouTube transcripts do not require `scraping: true`.
-- When not requested, YouTube links are ignored for transcript fetching and are not billed.
-- If your balance is insufficient when enabled, the request may be blocked with a 402.
 
 ## Performance Benchmarks
 

@@ -88,7 +88,7 @@ The response `summary` includes `stealthModeUsed` so you can track when the surc
 - Must be valid HTTP or HTTPS URLs
 - Must have standard web ports (80, 443, or default)
 - Cannot be localhost, private IPs, or metadata endpoints
-- YouTube URLs are not supported (use the YouTube transcription endpoint instead)
+- YouTube URLs are not supported
 
 ## Response Format
 
@@ -291,7 +291,7 @@ A: URLs can be rejected for several reasons:
 - Invalid format (not HTTP/HTTPS)
 - Pointing to localhost or private IPs
 - Using non-standard ports
-- Being a YouTube URL (use the YouTube transcription endpoint)
+- Being a YouTube URL
 
 **Q: Can I scrape JavaScript-heavy sites?**
 A: The scraper fetches static HTML content. Sites that rely heavily on JavaScript may not return complete content.

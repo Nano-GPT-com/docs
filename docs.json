@@ -62,7 +62,6 @@
           "api-reference/endpoint/ai-detection-video",
           "api-reference/endpoint/transcribe",
           "api-reference/endpoint/transcribe-status",
-          "api-reference/endpoint/youtube-transcribe",
           "api-reference/endpoint/memory",
           "api-reference/endpoint/scrape-urls",
           "api-reference/endpoint/data-extraction",

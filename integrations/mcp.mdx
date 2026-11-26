@@ -19,7 +19,7 @@ The NanoGPT MCP server provides these tools:
 | Video | `nanogpt_video_generate` |
 | 3D | `nanogpt_3d_generate` |
 | Audio | `nanogpt_text_to_speech`, `nanogpt_music_generate`, `nanogpt_audio_transcribe` |
-| Web and research | `nanogpt_web_search`, `nanogpt_scrape_urls`, `nanogpt_firecrawl`, `nanogpt_youtube_transcribe`, `nanogpt_x_research`, `nanogpt_hunter` |
+| Web and research | `nanogpt_web_search`, `nanogpt_scrape_urls`, `nanogpt_firecrawl`, `nanogpt_x_research`, `nanogpt_hunter` |
 | Model catalogs (free) | `nanogpt_list_text_models`, `nanogpt_list_image_models`, `nanogpt_list_video_models`, `nanogpt_list_3d_models`, `nanogpt_list_audio_models` |
 | Feedback (free) | `nanogpt_send_feedback`, `nanogpt_get_feedback` |
 
@@ -157,10 +157,6 @@ The assistant will call `nanogpt_send_feedback` and return a report ID. Later, a
 
 > "Use NanoGPT to make a 3D model of a wooden rocking chair and give me the GLB link"
 
-### Get YouTube Transcripts
-
-> "Use NanoGPT to get the transcript of this YouTube video: https://www.youtube.com/watch?v=..."
-
 ### Scrape Web Pages
 
 > "Use NanoGPT to scrape the content from https://example.com"
@@ -286,19 +282,6 @@ Scrape content from web pages.
 }
 ```
 
-### nanogpt_youtube_transcribe
-
-Get transcripts from YouTube videos.
-
-**Parameters:**
-- `urls` (required): Array of YouTube URLs (max 10 per request)
-
-**Example:**
-```json
-{
-  "urls": ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
-}
-```
 
 ### nanogpt_video_generate
 

@@ -98,7 +98,7 @@ async function main() {
   }
 
   // Text recommendations must not lower upload/runtime limits for media operations.
-  const mediaPathPattern = /^\/(?:check-midjourney-status$|nsfw\/image$|generate-video(?:\/|$)|(?:v1\/)?video\/|v1\/(?:images\/edits|moderations|embeddings)$|transcribe(?:\/|$)|youtube-transcribe$|tts$|voice-clone\/)/;
+  const mediaPathPattern = /^\/(?:check-midjourney-status$|nsfw\/image$|generate-video(?:\/|$)|(?:v1\/)?video\/|v1\/(?:images\/edits|moderations|embeddings)$|transcribe(?:\/|$)|tts$|voice-clone\/)/;
   for (const [path, pathItem] of Object.entries(openApi.paths || {})) {
     if (!mediaPathPattern.test(path)) continue;
     for (const method of ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']) {
