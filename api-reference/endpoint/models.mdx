@@ -67,6 +67,18 @@ for current limits, prices, and supported Batch endpoints before switching an in
 `openai/gpt-astra-latest` still resolves to `openai/gpt-6-astra`. The general chat
 default and this site's examples continue to use GPT-6.1 Sol.
 
+### Ling-3.0-flash-Sante
+
+`inclusionai/ling-3.0-flash-sante` is included in Stripe and balance-funded
+subscriptions at the regular 1× input-token allowance. It appears in
+`/api/subscription/v1/models` and the subscription-filtered `/api/v1/models` list.
+Pay-as-you-go rates are $0.075/M input, $0.22/M output and $0.015/M cached input.
+
+This medical-domain research model is for research and general information only,
+never medical advice, diagnosis or treatment. Do not submit patient data. Outputs
+require independent verification and qualified human review. Zero data retention
+and Private Mode are unavailable.
+
 ### Qwen 4 Max
 
 Qwen 4 Max is available as `qwen/qwen4-max` or `qwen/qwen4-max:thinking`.
